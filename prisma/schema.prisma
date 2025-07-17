@@ -16,8 +16,9 @@ model User {
   email         String   @unique
   name          String?
   image         String?
-  specialty     Specialty
-  experienceLevel ExperienceLevel
+  password      String?
+  specialty     Specialty?
+  experienceLevel ExperienceLevel?
   bio           String?
   linkedinUrl   String?
   githubUrl     String?
