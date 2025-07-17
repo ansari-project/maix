@@ -180,7 +180,7 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
                   <CardHeader>
                     <CardTitle>Apply to this Project</CardTitle>
                     <CardDescription>
-                      Tell the project owner why you'd be a great fit
+                      Tell the project owner why you&apos;d be a great fit
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
