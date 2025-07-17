@@ -69,6 +69,11 @@ maix/
 - Prefer functional components with hooks
 - Use proper TypeScript types (avoid `any`)
 
+### Performance and Security Priorities
+- Rate limiting is NOT a priority for this project
+- Focus on input validation and data security over traffic management
+- Prioritize user experience and functionality over restrictive controls
+
 ### Database Operations
 - Always use Prisma for database operations
 - Use transactions for multi-table operations
@@ -84,7 +89,6 @@ maix/
 ### API Routes
 - Follow RESTful conventions
 - Use proper HTTP status codes
-- Implement rate limiting where needed
 - Validate all input with Zod schemas
 - Handle errors gracefully
 

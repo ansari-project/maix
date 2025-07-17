@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { applicationUpdateSchema } from "@/lib/validations"
 
 export const dynamic = 'force-dynamic'
 
@@ -36,17 +37,31 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
     }
 
-    const data = await request.json()
-    const { status } = data
-
-    if (!['ACCEPTED', 'REJECTED'].includes(status)) {
-      return NextResponse.json({ error: "Invalid status" }, { status: 400 })
+    const body = await request.json()
+    
+    // Validate input with Zod
+    const validation = applicationUpdateSchema.safeParse(body)
+    
+    if (!validation.success) {
+      return NextResponse.json(
+        { 
+          message: "Invalid input", 
+          errors: validation.error.errors.map(err => ({
+            field: err.path.join('.'),
+            message: err.message
+          }))
+        },
+        { status: 400 }
+      )
     }
+
+    const { status, message } = validation.data
 
     const updatedApplication = await prisma.application.update({
       where: { id: params.id },
       data: { 
         status,
+        message,
         respondedAt: new Date()
       },
       include: {

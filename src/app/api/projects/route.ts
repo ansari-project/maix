@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { projectCreateSchema } from "@/lib/validations"
 
 export const dynamic = 'force-dynamic'
 
@@ -52,32 +53,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
-    const data = await request.json()
-    const {
-      title,
-      description,
-      projectType,
-      helpType,
-      budgetRange,
-      maxVolunteers,
-      contactEmail,
-      organizationUrl,
-      timeline,
-      requiredSkills
-    } = data
+    const body = await request.json()
+    
+    // Validate input with Zod
+    const validation = projectCreateSchema.safeParse(body)
+    
+    if (!validation.success) {
+      return NextResponse.json(
+        { 
+          message: "Invalid input", 
+          errors: validation.error.errors.map(err => ({
+            field: err.path.join('.'),
+            message: err.message
+          }))
+        },
+        { status: 400 }
+      )
+    }
+
+    const validatedData = validation.data
 
     const project = await prisma.project.create({
       data: {
-        title,
-        description,
-        projectType,
-        helpType,
-        budgetRange,
-        maxVolunteers,
-        contactEmail,
-        organizationUrl,
-        timeline,
-        requiredSkills,
+        ...validatedData,
+        // Convert empty string to null for optional URL field
+        organizationUrl: validatedData.organizationUrl === '' ? null : validatedData.organizationUrl,
         ownerId: user.id
       },
       include: {

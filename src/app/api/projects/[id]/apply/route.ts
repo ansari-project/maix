@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { applicationCreateSchema } from "@/lib/validations"
 
 export const dynamic = 'force-dynamic'
 
@@ -54,8 +55,25 @@ export async function POST(
       return NextResponse.json({ error: "This project has reached its volunteer limit" }, { status: 400 })
     }
 
-    const data = await request.json()
-    const { message } = data
+    const body = await request.json()
+    
+    // Validate input with Zod
+    const validation = applicationCreateSchema.safeParse(body)
+    
+    if (!validation.success) {
+      return NextResponse.json(
+        { 
+          message: "Invalid input", 
+          errors: validation.error.errors.map(err => ({
+            field: err.path.join('.'),
+            message: err.message
+          }))
+        },
+        { status: 400 }
+      )
+    }
+
+    const { message } = validation.data
 
     const application = await prisma.application.create({
       data: {

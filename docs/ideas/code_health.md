@@ -32,33 +32,7 @@ const signupSchema = z.object({
 const validatedData = signupSchema.parse(await request.json())
 ```
 
-### 2. Rate Limiting Implementation
-**Current State:** No rate limiting on any API endpoints
-**Risk Level:** CRITICAL
-**Impact:** Vulnerable to brute force attacks, spam, and DDoS
-
-**Required Actions:**
-- Implement rate limiting middleware for all API routes
-- Different limits for different endpoint types:
-  - Authentication: 5 attempts per 15 minutes
-  - Project creation: 10 per hour
-  - Profile updates: 20 per hour
-  - General API calls: 1000 per hour
-- IP-based and user-based rate limiting
-- Redis integration for distributed rate limiting
-
-**Example Implementation:**
-```typescript
-import rateLimit from 'express-rate-limit'
-
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 attempts per window
-  message: 'Too many login attempts'
-})
-```
-
-### 3. CSRF Protection
+### 2. CSRF Protection
 **Current State:** Missing CSRF protection for state-changing operations
 **Risk Level:** CRITICAL
 **Impact:** Vulnerable to cross-site request forgery attacks
@@ -69,7 +43,7 @@ const authLimiter = rateLimit({
 - Add CSRF validation middleware
 - Implement proper token rotation
 
-### 4. Password Strength Validation
+### 3. Password Strength Validation
 **Current State:** No password strength requirements
 **Risk Level:** HIGH
 **Impact:** Weak passwords compromise user accounts
@@ -98,7 +72,7 @@ const passwordSchema = z.string()
   .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
 ```
 
-### 5. CORS Configuration
+### 4. CORS Configuration
 **Current State:** Missing proper CORS setup
 **Risk Level:** HIGH
 **Impact:** Potential for cross-origin attacks
@@ -262,9 +236,8 @@ export const withAuth = (handler: NextApiHandler) => {
 
 ### Phase 1: Critical Security (Week 1-2)
 1. Input validation with Zod schemas
-2. Rate limiting implementation
-3. CSRF protection
-4. Password strength validation
+2. CSRF protection
+3. Password strength validation
 
 ### Phase 2: Performance Optimization (Week 3-4)
 1. Database query optimization
@@ -288,7 +261,6 @@ export const withAuth = (handler: NextApiHandler) => {
 
 ### Security Metrics
 - Zero critical security vulnerabilities
-- Rate limiting effectiveness (blocked attacks)
 - Password strength compliance rate
 - CSRF attack prevention rate
 
@@ -309,7 +281,6 @@ export const withAuth = (handler: NextApiHandler) => {
 ### Security Testing
 - Penetration testing for authentication
 - Input validation testing
-- Rate limiting verification
 - CSRF protection testing
 
 ### Performance Testing

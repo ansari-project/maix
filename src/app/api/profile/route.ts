@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { profileUpdateSchema } from "@/lib/validations"
 
 export const dynamic = 'force-dynamic'
 
@@ -50,33 +51,34 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const data = await request.json()
-    const {
-      name,
-      bio,
-      specialty,
-      experienceLevel,
-      skills,
-      linkedinUrl,
-      githubUrl,
-      portfolioUrl,
-      availability,
-      timezone
-    } = data
+    const body = await request.json()
+    
+    // Validate input with Zod
+    const validation = profileUpdateSchema.safeParse(body)
+    
+    if (!validation.success) {
+      return NextResponse.json(
+        { 
+          error: "Invalid input", 
+          errors: validation.error.errors.map(err => ({
+            field: err.path.join('.'),
+            message: err.message
+          }))
+        },
+        { status: 400 }
+      )
+    }
+
+    const validatedData = validation.data
 
     const updatedUser = await prisma.user.update({
       where: { email: session.user.email },
       data: {
-        name,
-        bio,
-        specialty,
-        experienceLevel,
-        skills,
-        linkedinUrl,
-        githubUrl,
-        portfolioUrl,
-        availability,
-        timezone,
+        ...validatedData,
+        // Convert empty strings to null for optional URL fields
+        linkedinUrl: validatedData.linkedinUrl === '' ? null : validatedData.linkedinUrl,
+        githubUrl: validatedData.githubUrl === '' ? null : validatedData.githubUrl,
+        portfolioUrl: validatedData.portfolioUrl === '' ? null : validatedData.portfolioUrl,
       },
       select: {
         id: true,
@@ -86,6 +88,11 @@ export async function PUT(request: Request) {
         specialty: true,
         experienceLevel: true,
         skills: true,
+        linkedinUrl: true,
+        githubUrl: true,
+        portfolioUrl: true,
+        availability: true,
+        timezone: true,
       }
     })
 

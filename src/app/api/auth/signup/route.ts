@@ -1,18 +1,29 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { signupSchema } from "@/lib/validations"
 import bcrypt from "bcryptjs"
 
 export async function POST(request: Request) {
   try {
-    const { name, email, password } = await request.json()
-
-    // Validate input
-    if (!name || !email || !password) {
+    const body = await request.json()
+    
+    // Validate input with Zod
+    const validation = signupSchema.safeParse(body)
+    
+    if (!validation.success) {
       return NextResponse.json(
-        { message: "Name, email, and password are required" },
+        { 
+          message: "Invalid input", 
+          errors: validation.error.errors.map(err => ({
+            field: err.path.join('.'),
+            message: err.message
+          }))
+        },
         { status: 400 }
       )
     }
+
+    const { name, email, password } = validation.data
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({

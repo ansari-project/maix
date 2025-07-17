@@ -1,0 +1,140 @@
+import { z } from 'zod'
+
+// Password validation schema with strength requirements
+export const passwordSchema = z.string()
+  .min(8, 'Password must be at least 8 characters long')
+  .max(128, 'Password must be less than 128 characters long')
+  .regex(/^(?=.*[a-z])/, 'Password must contain at least one lowercase letter')
+  .regex(/^(?=.*[A-Z])/, 'Password must contain at least one uppercase letter')
+  .regex(/^(?=.*\d)/, 'Password must contain at least one number')
+  .regex(/^(?=.*[@$!%*?&])/, 'Password must contain at least one special character (@$!%*?&)')
+
+// Authentication schemas
+export const signupSchema = z.object({
+  name: z.string()
+    .min(2, 'Name must be at least 2 characters long')
+    .max(50, 'Name must be less than 50 characters long')
+    .regex(/^[a-zA-Z\s]+$/, 'Name can only contain letters and spaces'),
+  email: z.string()
+    .email('Invalid email address')
+    .max(255, 'Email must be less than 255 characters long'),
+  password: passwordSchema,
+})
+
+export const signinSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(1, 'Password is required'),
+})
+
+// Profile validation schemas
+export const profileUpdateSchema = z.object({
+  name: z.string()
+    .min(2, 'Name must be at least 2 characters long')
+    .max(50, 'Name must be less than 50 characters long')
+    .regex(/^[a-zA-Z\s]+$/, 'Name can only contain letters and spaces')
+    .optional(),
+  bio: z.string()
+    .max(1000, 'Bio must be less than 1000 characters long')
+    .optional(),
+  specialty: z.enum(['AI', 'FULL_STACK', 'PROGRAM_MANAGER']).optional(),
+  experienceLevel: z.enum(['HOBBYIST', 'INTERN', 'NEW_GRAD', 'SENIOR']).optional(),
+  skills: z.array(z.string().min(1).max(50))
+    .max(20, 'Maximum 20 skills allowed')
+    .optional(),
+  linkedinUrl: z.string()
+    .url('Invalid LinkedIn URL')
+    .regex(/^https:\/\/(www\.)?linkedin\.com\/in\/[a-zA-Z0-9-]+\/?$/, 'Must be a valid LinkedIn profile URL')
+    .optional()
+    .or(z.literal('')),
+  githubUrl: z.string()
+    .url('Invalid GitHub URL')
+    .regex(/^https:\/\/(www\.)?github\.com\/[a-zA-Z0-9-]+\/?$/, 'Must be a valid GitHub profile URL')
+    .optional()
+    .or(z.literal('')),
+  portfolioUrl: z.string()
+    .url('Invalid portfolio URL')
+    .optional()
+    .or(z.literal('')),
+  availability: z.string()
+    .max(100, 'Availability must be less than 100 characters long')
+    .optional(),
+  timezone: z.string()
+    .max(50, 'Timezone must be less than 50 characters long')
+    .optional(),
+})
+
+// Project validation schemas
+export const projectCreateSchema = z.object({
+  title: z.string()
+    .min(5, 'Title must be at least 5 characters long')
+    .max(255, 'Title must be less than 255 characters long'),
+  description: z.string()
+    .min(50, 'Description must be at least 50 characters long')
+    .max(5000, 'Description must be less than 5000 characters long'),
+  projectType: z.enum(['RESEARCH', 'STARTUP', 'NON_PROFIT', 'OPEN_SOURCE', 'CORPORATE']),
+  helpType: z.enum(['ADVICE', 'PROTOTYPE', 'MVP', 'FULL_PRODUCT']),
+  budgetRange: z.string()
+    .max(50, 'Budget range must be less than 50 characters long')
+    .optional(),
+  maxVolunteers: z.number()
+    .int('Max volunteers must be a whole number')
+    .min(1, 'Must allow at least 1 volunteer')
+    .max(50, 'Cannot exceed 50 volunteers'),
+  contactEmail: z.string()
+    .email('Invalid contact email address')
+    .max(255, 'Contact email must be less than 255 characters long'),
+  organizationUrl: z.string()
+    .url('Invalid organization URL')
+    .optional()
+    .or(z.literal('')),
+  timeline: z.object({
+    description: z.string()
+      .max(1000, 'Timeline description must be less than 1000 characters long')
+      .optional(),
+  }).optional(),
+  requiredSkills: z.array(z.string().min(1).max(50))
+    .max(20, 'Maximum 20 required skills allowed')
+    .optional(),
+})
+
+export const projectUpdateSchema = projectCreateSchema.partial()
+
+// Application validation schemas
+export const applicationCreateSchema = z.object({
+  message: z.string()
+    .min(10, 'Application message must be at least 10 characters long')
+    .max(2000, 'Application message must be less than 2000 characters long'),
+})
+
+export const applicationUpdateSchema = z.object({
+  status: z.enum(['PENDING', 'ACCEPTED', 'REJECTED', 'WITHDRAWN']).optional(),
+  message: z.string()
+    .max(1000, 'Response message must be less than 1000 characters long')
+    .optional(),
+})
+
+// Common validation helpers
+export const idSchema = z.string().cuid('Invalid ID format')
+
+export const paginationSchema = z.object({
+  page: z.number().int().min(1).default(1),
+  limit: z.number().int().min(1).max(100).default(10),
+})
+
+export const searchSchema = z.object({
+  query: z.string().max(255).optional(),
+  projectType: z.enum(['RESEARCH', 'STARTUP', 'NON_PROFIT', 'OPEN_SOURCE', 'CORPORATE']).optional(),
+  helpType: z.enum(['ADVICE', 'PROTOTYPE', 'MVP', 'FULL_PRODUCT']).optional(),
+  skills: z.array(z.string()).optional(),
+})
+
+// Type exports for TypeScript
+export type SignupInput = z.infer<typeof signupSchema>
+export type SigninInput = z.infer<typeof signinSchema>
+export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>
+export type ProjectCreateInput = z.infer<typeof projectCreateSchema>
+export type ProjectUpdateInput = z.infer<typeof projectUpdateSchema>
+export type ApplicationCreateInput = z.infer<typeof applicationCreateSchema>
+export type ApplicationUpdateInput = z.infer<typeof applicationUpdateSchema>
+export type SearchInput = z.infer<typeof searchSchema>
+export type PaginationInput = z.infer<typeof paginationSchema>
