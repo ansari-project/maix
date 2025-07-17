@@ -1,0 +1,132 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model for volunteer profiles
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String?
+  image         String?
+  specialty     Specialty
+  experienceLevel ExperienceLevel
+  bio           String?
+  linkedinUrl   String?
+  githubUrl     String?
+  portfolioUrl  String?
+  skills        String[] // Array of skill names
+  availability  String?  // e.g., "10 hours/week", "weekends only"
+  timezone      String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  applications  Application[]
+  projects      Project[]
+  messages      Message[]
+
+  @@map("users")
+}
+
+// Project model for AI/tech projects seeking help
+model Project {
+  id              String   @id @default(cuid())
+  title           String
+  description     String
+  timeline        Json     // JSONB field for flexible timeline data
+  requiredSkills  Json     // JSONB field for required skills with levels
+  projectType     ProjectType
+  helpType        HelpType
+  budgetRange     String?  // e.g., "volunteer", "$1000-5000", "equity"
+  contactEmail    String
+  organizationUrl String?
+  isActive        Boolean  @default(true)
+  maxVolunteers   Int      @default(1)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  owner         User          @relation(fields: [ownerId], references: [id])
+  ownerId       String
+  applications  Application[]
+
+  @@map("projects")
+}
+
+// Application model for volunteer applications to projects
+model Application {
+  id          String            @id @default(cuid())
+  message     String
+  status      ApplicationStatus @default(PENDING)
+  appliedAt   DateTime          @default(now())
+  respondedAt DateTime?
+
+  // Relations
+  user      User    @relation(fields: [userId], references: [id])
+  userId    String
+  project   Project @relation(fields: [projectId], references: [id])
+  projectId String
+
+  @@unique([userId, projectId])
+  @@map("applications")
+}
+
+// Message model for communication between users
+model Message {
+  id          String   @id @default(cuid())
+  content     String
+  isRead      Boolean  @default(false)
+  sentAt      DateTime @default(now())
+
+  // Relations
+  sender      User   @relation(fields: [senderId], references: [id])
+  senderId    String
+  recipientId String
+
+  @@map("messages")
+}
+
+// Enums
+enum Specialty {
+  AI
+  FULL_STACK
+  PROGRAM_MANAGER
+}
+
+enum ExperienceLevel {
+  HOBBYIST
+  INTERN
+  NEW_GRAD
+  SENIOR
+}
+
+enum ProjectType {
+  RESEARCH
+  STARTUP
+  NON_PROFIT
+  OPEN_SOURCE
+  CORPORATE
+}
+
+enum HelpType {
+  ADVICE
+  PROTOTYPE
+  MVP
+  FULL_PRODUCT
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
