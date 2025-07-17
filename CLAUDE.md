@@ -50,7 +50,14 @@ maix/
 │   └── styles/           # Global styles and themes
 ├── prisma/               # Database schema and seeds
 ├── public/               # Static assets
-└── tests/                # Test files
+├── tests/                # Test files
+└── docs/                 # Documentation
+    ├── plans/            # Execution plans and roadmaps
+    ├── guides/           # Extracted wisdom on how to use tools and features
+    ├── howtos/           # Step-by-step instructions for users
+    ├── faqs/             # Frequently asked questions
+    ├── ideas/            # Ideas still in incubation
+    └── ref/              # Reference material and API documentation
 ```
 
 ## Development Guidelines
@@ -354,8 +361,15 @@ npm run test:e2e        # End-to-end tests
 ### Community
 - GitHub Issues for bug reports
 - GitHub Discussions for feature requests
-- Implementation Guide in IMPLEMENTATION.md
 - README.md for general project information
+
+### Project Documentation Structure
+- `docs/plans/`: Execution plans and roadmaps
+- `docs/guides/`: Extracted wisdom on how to use tools and features
+- `docs/howtos/`: Step-by-step instructions for users
+- `docs/faqs/`: Frequently asked questions
+- `docs/ideas/`: Ideas still in incubation
+- `docs/ref/`: Reference material and API documentation
 
 ## Notes for Claude Code
 

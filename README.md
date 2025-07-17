@@ -163,6 +163,12 @@ maix/
 ├── public/               # Static assets
 ├── tests/                # Test files
 └── docs/                 # Documentation
+    ├── plans/            # Execution plans and roadmaps
+    ├── guides/           # Extracted wisdom on how to use tools and features
+    ├── howtos/           # Step-by-step instructions for users
+    ├── faqs/             # Frequently asked questions
+    ├── ideas/            # Ideas still in incubation
+    └── ref/              # Reference material and API documentation
 ```
 
 ## Core Features
@@ -228,7 +234,13 @@ npm run start
 ## Community
 
 ### Getting Help
-- **Documentation**: Check our [Implementation Guide](./IMPLEMENTATION.md)
+- **Documentation**: Check our documentation in the `docs/` directory
+  - **Plans**: Execution plans and roadmaps in `docs/plans/`
+  - **Guides**: Feature usage guides in `docs/guides/`
+  - **How-tos**: Step-by-step instructions in `docs/howtos/`
+  - **FAQs**: Common questions in `docs/faqs/`
+  - **Ideas**: Ideas still in incubation in `docs/ideas/`
+  - **Reference**: API and technical reference in `docs/ref/`
 - **Issues**: Report bugs and feature requests on GitHub
 - **Discussions**: Join community discussions in GitHub Discussions
 
