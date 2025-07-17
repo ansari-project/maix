@@ -130,4 +130,7 @@ temp/
 *.tmp
 *.bak
 node_modules
-node_modules
+.env
+.env.local
+.env.production
+.next
