@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { SignInButton } from "@/components/auth/sign-in-button"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 export default function Home() {
   return (
@@ -7,7 +8,14 @@ export default function Home() {
       <div className="container mx-auto px-4 py-16">
         <div className="text-center">
           <div className="flex justify-end mb-8">
-            <SignInButton />
+            <div className="flex gap-2">
+              <Button asChild variant="outline">
+                <Link href="/auth/signin">Sign In</Link>
+              </Button>
+              <Button asChild>
+                <Link href="/auth/signup">Sign Up</Link>
+              </Button>
+            </div>
           </div>
           <h1 className="text-4xl font-bold text-primary-foreground mb-6">
             MAIX - Muslim AI Exchange
