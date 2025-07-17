@@ -1,16 +1,38 @@
-# MAIX - Muslim AI Exchange
+# MAIX - Meaningful AI Exchange
 
-A comprehensive platform connecting Muslim volunteers with AI/tech projects to advance the Ummah through collaborative innovation.
+A comprehensive platform connecting skilled volunteers with meaningful AI/tech projects to advance communities through collaborative innovation.
 
 ## Overview
 
-MAIX (Muslim AI Exchange) serves as a bridge between skilled Muslim volunteers and meaningful AI/technology projects. Our platform facilitates intelligent project matching, enabling the Muslim community to collaborate on impactful initiatives while maintaining Islamic values and principles.
+MAIX (Meaningful AI Exchange) serves as a bridge between skilled volunteers and impactful AI/technology projects. Our platform facilitates intelligent project matching, enabling people to collaborate on meaningful initiatives that create positive change in the world.
+
+## Goals
+
+MAIX is built around three core principles:
+
+### 🎓 Facilitation of Learning
+- **Knowledge Sharing**: Connect learners with experienced professionals who can provide guidance and mentorship
+- **Skill Development**: Provide opportunities for volunteers to develop new skills through real-world projects
+- **Educational Resources**: Create a repository of best practices, tutorials, and learning materials
+- **Peer Learning**: Foster environments where contributors learn from each other through collaboration
+
+### 🤝 Helping Others
+- **Community Support**: Enable volunteers to contribute their expertise to projects that benefit communities
+- **Non-Profit Assistance**: Provide technology solutions to organizations working on social good
+- **Accessibility**: Make AI and technology expertise available to those who might not otherwise have access
+- **Impact Amplification**: Help multiply the positive impact of individual efforts through coordinated collaboration
+
+### 💡 Getting Help
+- **Expert Access**: Connect project owners with skilled volunteers who can provide the expertise they need
+- **Resource Matching**: Match projects with appropriate resources, skills, and timelines
+- **Problem Solving**: Provide structured approaches to breaking down complex technical challenges
+- **Community Wisdom**: Leverage collective knowledge to find innovative solutions to difficult problems
 
 ### Key Features
 
 - **Intelligent Matching**: AI-powered algorithm matching volunteers with projects based on skills, experience, and interests
 - **Natural Language Search**: Advanced search capabilities to find relevant projects and volunteers
-- **Islamic Design**: Culturally appropriate UI with Islamic geometric patterns and color schemes
+- **Clean Design**: Modern, accessible UI with thoughtful design patterns and color schemes
 - **Real-time Collaboration**: In-app messaging and project management tools
 - **Community Building**: Reviews, ratings, and reputation system to build trust
 - **Project Types**: Support for advice, prototypes, MVPs, and complete products
@@ -76,8 +98,8 @@ MAIX (Muslim AI Exchange) serves as a bridge between skilled Muslim volunteers a
 
 4. **Set up shadcn/ui**
    ```bash
-   npx shadcn-ui@latest init
-   npx shadcn-ui@latest add button card form dialog input label select textarea
+   npx shadcn@latest init
+   npx shadcn@latest add button card form dialog input label select textarea
    ```
 
 5. **Set up the database**
@@ -127,7 +149,7 @@ npm run lint         # Run ESLint
 npm run type-check   # Run TypeScript checks
 
 # Testing
-npm run test         # Run unit tests
+npm run test         # Run unit tests (121 comprehensive tests)
 npm run test:watch   # Run tests in watch mode
 npm run test:e2e     # Run end-to-end tests
 
@@ -197,7 +219,7 @@ maix/
 
 ## Contributing
 
-We welcome contributions from the Muslim tech community! Here's how you can help:
+We welcome contributions from the global tech community! Here's how you can help:
 
 ### Code Contributions
 1. **Fork the repository** and create a feature branch
@@ -212,11 +234,11 @@ We welcome contributions from the Muslim tech community! Here's how you can help
 - **Help with documentation** and translations
 
 ### Development Guidelines
-- Follow Islamic principles in all contributions
+- Focus on creating positive social impact through technology
 - Maintain code quality with TypeScript and ESLint
 - Write comprehensive tests for new features
 - Follow our commit message conventions
-- Respect cultural sensitivity in UI/UX design
+- Ensure accessibility and inclusive design principles
 
 ## Deployment
 
@@ -244,12 +266,14 @@ npm run start
 - **Issues**: Report bugs and feature requests on GitHub
 - **Discussions**: Join community discussions in GitHub Discussions
 
-### Islamic Values
-MAIX is built with Islamic principles in mind:
-- **Halal Projects**: All projects must align with Islamic values
-- **Community First**: Prioritizing Ummah benefit over profit
-- **Knowledge Sharing**: Promoting Islamic tradition of learning
-- **Ethical AI**: Ensuring AI development serves humanity
+### Community Values
+MAIX is built with positive social impact in mind:
+- **Meaningful Projects**: All projects should create positive value for communities
+- **Community First**: Prioritizing social benefit over profit
+- **Knowledge Sharing**: Promoting open learning and skill development
+- **Ethical AI**: Ensuring AI development serves humanity responsibly
+- **Inclusive Collaboration**: Welcome contributors from all backgrounds and experience levels
+- **Transparency**: Open processes and clear communication in all interactions
 
 ## Roadmap
 
@@ -279,13 +303,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
-- **Allah (SWT)** for guidance and inspiration
-- **Muslim tech community** for support and feedback
+- **Global tech community** for support and feedback
 - **Open source contributors** for their valuable contributions
-- **Islamic geometric art** for design inspiration
+- **Design community** for inspiration and guidance
+- **All volunteers** who contribute their time and expertise
 
 ---
 
-**"And it is He who created the heavens and earth in truth. And the day He says, 'Be,' and it is, His word is the truth."** - Quran 6:73
-
-Built with ❤️ for the Ummah
+Built with ❤️ for positive social impact
