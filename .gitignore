@@ -134,3 +134,6 @@ node_modules
 .env.local
 .env.production
 .next
+
+# Allow src/lib but ignore Python lib directories
+!src/lib/
