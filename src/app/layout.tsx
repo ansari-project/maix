@@ -6,8 +6,8 @@ import { NextAuthProvider } from '@/components/providers/session-provider'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'MAIX - Muslim AI Exchange',
-  description: 'A platform connecting Muslim volunteers with AI/tech projects',
+  title: 'MAIX - Meaningful AI Exchange',
+  description: 'A platform connecting volunteers with AI projects to advance humanity',
 }
 
 export default function RootLayout({
