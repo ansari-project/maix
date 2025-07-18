@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -56,13 +56,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
     }
   }, [status, router])
 
-  useEffect(() => {
-    if (session) {
-      fetchProduct()
-    }
-  }, [session, params.id])
-
-  const fetchProduct = async () => {
+  const fetchProduct = useCallback(async () => {
     try {
       const response = await fetch(`/api/products/${params.id}`)
       if (response.ok) {
@@ -75,7 +69,13 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
       console.error("Error fetching product:", error)
     }
     setLoading(false)
-  }
+  }, [params.id, router])
+
+  useEffect(() => {
+    if (session) {
+      fetchProduct()
+    }
+  }, [session, fetchProduct])
 
   const handleDelete = async () => {
     setDeleting(true)
@@ -191,7 +191,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
                         <AlertDialogHeader>
                           <AlertDialogTitle>Delete Product</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Are you sure you want to delete "{product.name}"? This action cannot be undone.
+                            Are you sure you want to delete &quot;{product.name}&quot;? This action cannot be undone.
                             {product.projects.length > 0 && (
                               <span className="block mt-2 text-red-600">
                                 This product has {product.projects.length} associated project{product.projects.length === 1 ? '' : 's'}. You cannot delete it until all projects are removed.

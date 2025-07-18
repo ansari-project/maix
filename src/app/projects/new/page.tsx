@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -36,18 +36,7 @@ export default function NewProjectPage() {
     productId: ""
   })
 
-  useEffect(() => {
-    if (session) {
-      fetchUserProducts()
-      // Set productId from query params if present
-      const productId = searchParams.get('productId')
-      if (productId) {
-        setProject(prev => ({ ...prev, productId }))
-      }
-    }
-  }, [session, searchParams])
-
-  const fetchUserProducts = async () => {
+  const fetchUserProducts = useCallback(async () => {
     setProductsLoading(true)
     try {
       const response = await fetch('/api/products')
@@ -61,7 +50,18 @@ export default function NewProjectPage() {
       console.error('Error fetching products:', error)
     }
     setProductsLoading(false)
-  }
+  }, [session?.user?.email])
+
+  useEffect(() => {
+    if (session) {
+      fetchUserProducts()
+      // Set productId from query params if present
+      const productId = searchParams.get('productId')
+      if (productId) {
+        setProject(prev => ({ ...prev, productId }))
+      }
+    }
+  }, [session, searchParams, fetchUserProducts])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

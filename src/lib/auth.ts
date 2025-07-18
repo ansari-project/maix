@@ -25,6 +25,17 @@ export const authOptions: NextAuthOptions = {
         
         if (!isPasswordValid) return null
         
+        // Check if password was hashed with old rounds (12) and upgrade to new rounds (8)
+        const oldRounds = user.password.substring(4, 6)
+        if (oldRounds === '12') {
+          console.log(`Upgrading password hash for ${user.email} from 12 to 8 rounds`)
+          const newHash = await bcrypt.hash(credentials.password, 8)
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { password: newHash }
+          })
+        }
+        
         return {
           id: user.id,
           email: user.email,

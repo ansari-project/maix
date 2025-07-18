@@ -32,7 +32,7 @@ export default function MessagesPage() {
   if (!session) return null
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 p-6">
+    <div className="bg-gradient-to-br from-primary/5 to-accent/5 px-4 py-2">
       <div className="container mx-auto">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
@@ -55,7 +55,7 @@ export default function MessagesPage() {
             <CardContent className="text-center py-12">
               <div className="space-y-4">
                 <p className="text-muted-foreground">
-                  We're building a secure messaging system to facilitate collaboration between Muslim volunteers and project owners.
+                  We&apos;re building a secure messaging system to facilitate collaboration between volunteers and project owners.
                 </p>
                 <div className="flex gap-4 justify-center">
                   <Button asChild>

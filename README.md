@@ -2,6 +2,12 @@
 
 A comprehensive platform connecting skilled volunteers with meaningful AI/tech projects to advance communities through collaborative innovation.
 
+## 🌐 Live Platform
+
+**Production**: https://maix.io (canonical domain)
+
+MAIX is deployed and available at **maix.io** - this is the official, canonical domain for the platform.
+
 ## Overview
 
 MAIX (Meaningful AI Exchange) serves as a bridge between skilled volunteers and impactful AI/technology projects. Our platform facilitates intelligent project matching, enabling people to collaborate on meaningful initiatives that create positive change in the world.
@@ -36,6 +42,7 @@ MAIX is built around three core principles:
 - **Real-time Collaboration**: In-app messaging and project management tools
 - **Community Building**: Reviews, ratings, and reputation system to build trust
 - **Project Types**: Support for advice, prototypes, MVPs, and complete products
+- **Claude Code Integration**: Remote MCP (Model Context Protocol) server for managing profiles and projects via Claude Code CLI
 
 ## Technology Stack
 
@@ -115,6 +122,26 @@ MAIX is built around three core principles:
 
 7. **Open your browser**
    Navigate to `http://localhost:3000`
+
+## Claude Code Integration
+
+MAIX provides a remote MCP (Model Context Protocol) server that allows you to manage your profile and projects directly through Claude Code CLI.
+
+### Quick Setup
+1. **Generate a Personal Access Token** at https://maix.io/settings (API Tokens section)
+2. **Add the MCP server** to Claude Code:
+   ```bash
+   claude mcp add --transport http --scope user maix-platform https://maix.io/api/mcp --header "Authorization: Bearer YOUR_PAT_TOKEN_HERE"
+   ```
+3. **Start using Claude Code** to manage your MAIX profile and projects
+
+### Available Commands
+- "Update my MAIX profile to add React and TypeScript skills"
+- "Create a new AI project for building a chatbot"
+- "List all my projects"
+- "Update project [id] to need 5 volunteers"
+
+For detailed setup instructions, see [docs/howtos/claude-code-setup.md](docs/howtos/claude-code-setup.md).
 
 ### Database Setup
 

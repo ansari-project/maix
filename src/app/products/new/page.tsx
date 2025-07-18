@@ -118,7 +118,7 @@ export default function NewProductPage() {
             <CardHeader>
               <CardTitle>Product Information</CardTitle>
               <CardDescription>
-                Provide details about your product to help others understand what you're building
+                Provide details about your product to help others understand what you&apos;re building
               </CardDescription>
             </CardHeader>
             <CardContent>

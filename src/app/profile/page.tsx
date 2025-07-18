@@ -105,7 +105,7 @@ export default function ProfilePage() {
   if (!session) return null
 
   return (
-    <div className="bg-gradient-to-br from-primary to-accent p-4">
+    <div className="bg-gradient-to-br from-primary to-accent px-4 py-2">
       <div className="container mx-auto">
         <Card className="max-w-2xl mx-auto">
           <CardHeader>

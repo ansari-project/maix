@@ -114,23 +114,6 @@ export function PATManagement() {
     }
   }
 
-  const isExpired = (token: PersonalAccessToken) => {
-    return token.expiresAt && new Date() > new Date(token.expiresAt)
-  }
-
-  const getExpirationStatus = (token: PersonalAccessToken) => {
-    if (!token.expiresAt) return { text: "Never", variant: "secondary" as const }
-    
-    const now = new Date()
-    const expiry = new Date(token.expiresAt)
-    const daysUntilExpiry = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-    
-    if (daysUntilExpiry < 0) return { text: "Expired", variant: "destructive" as const }
-    if (daysUntilExpiry <= 7) return { text: `${daysUntilExpiry} days`, variant: "destructive" as const }
-    if (daysUntilExpiry <= 30) return { text: `${daysUntilExpiry} days`, variant: "secondary" as const }
-    
-    return { text: format(expiry, "MMM dd, yyyy"), variant: "secondary" as const }
-  }
 
   if (loading) {
     return (
@@ -206,18 +189,14 @@ export function PATManagement() {
       ) : (
         <div className="space-y-4">
           {tokens.map((token) => {
-            const expiration = getExpirationStatus(token)
-            const expired = isExpired(token)
-            
             return (
-              <Card key={token.id} className={expired ? "opacity-60" : ""}>
+              <Card key={token.id}>
                 <CardContent className="pt-6">
                   <div className="flex justify-between items-start">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <Key className="h-4 w-4 text-muted-foreground" />
                         <h4 className="font-semibold">{token.name}</h4>
-                        {expired && <Badge variant="destructive">Expired</Badge>}
                       </div>
                       <p className="text-sm text-muted-foreground">
                         Created {format(new Date(token.createdAt), "MMM dd, yyyy")}
@@ -229,9 +208,6 @@ export function PATManagement() {
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant={expiration.variant}>
-                        Expires {expiration.text}
-                      </Badge>
                       <AlertDialog open={showDeleteDialog === token.id} onOpenChange={(open) => setShowDeleteDialog(open ? token.id : null)}>
                         <Button
                           variant="ghost"
@@ -346,7 +322,7 @@ export function PATManagement() {
                 </div>
                 <div>
                   <strong className="text-sm">Server URL:</strong>
-                  <code className="text-sm ml-2">https://api.maix.app/mcp</code>
+                  <code className="text-sm ml-2">https://maix.io/api/mcp</code>
                 </div>
                 <div>
                   <strong className="text-sm">Authentication Type:</strong>
@@ -375,7 +351,7 @@ export function PATManagement() {
   "servers": {
     "maix": {
       "type": "http",
-      "url": "https://api.maix.app/mcp",
+      "url": "https://maix.io/api/mcp",
       "headers": {
         "Authorization": "Bearer YOUR_TOKEN_HERE"
       },

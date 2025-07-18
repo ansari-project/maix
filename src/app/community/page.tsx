@@ -32,7 +32,7 @@ export default function CommunityPage() {
   if (!session) return null
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 p-6">
+    <div className="bg-gradient-to-br from-primary/5 to-accent/5 px-4 py-2">
       <div className="container mx-auto">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">

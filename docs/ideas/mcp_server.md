@@ -198,7 +198,7 @@ class MAIXAIServices {
       "env": {
         "DATABASE_URL": "postgresql://...",
         "ANTHROPIC_API_KEY": "sk-...",
-        "MAIX_API_BASE_URL": "https://api.maix.app"
+        "MAIX_API_BASE_URL": "https://api.maix.io"
       }
     }
   }
@@ -219,7 +219,7 @@ JWT_SECRET=your-jwt-secret
 API_KEY_SECRET=your-api-key-secret
 
 # Server Configuration
-MAIX_API_BASE_URL=https://api.maix.app
+MAIX_API_BASE_URL=https://api.maix.io
 MCP_SERVER_PORT=3001
 LOG_LEVEL=info
 ```

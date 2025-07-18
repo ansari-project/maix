@@ -55,7 +55,7 @@ export default function VolunteeringPage() {
             <CardContent className="text-center py-12">
               <div className="space-y-4">
                 <p className="text-muted-foreground">
-                  We're working on the volunteer management interface.
+                  We&apos;re working on the volunteer management interface.
                 </p>
                 <div className="flex gap-4 justify-center">
                   <Button asChild>

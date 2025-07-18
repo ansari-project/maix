@@ -23,7 +23,7 @@ User logs into MAIX web app → Generates API key → Configures Claude with key
       "command": "npx",
       "args": [
         "@maix/mcp-client",
-        "--server", "https://api.maix.app/mcp",
+        "--server", "https://maix.io/api/mcp",
         "--api-key", "maix_api_key_user123_abc..."
       ]
     }
@@ -324,14 +324,14 @@ Tool: maix_manage_project({
 2. **Generate Personal Access Token** → Copy token (shown once)
 3. **Configure Claude Desktop** → Add custom connector:
    - **Name**: "MAIX"
-   - **Remote MCP server URL**: `https://api.maix.app/mcp`
+   - **Remote MCP server URL**: `https://maix.io/api/mcp`
    - **Authentication**: Paste the Personal Access Token
 4. **Test connection** → "Update my MAIX profile"
 
 ### Claude Desktop Configuration
 When adding the custom connector, users will see:
 - **Name field**: Enter "MAIX" or "Meaningful AI Exchange"
-- **Remote MCP server URL field**: Enter `https://api.maix.app/mcp`
+- **Remote MCP server URL field**: Enter `https://maix.io/api/mcp`
 - **Authentication prompt**: Paste their Personal Access Token
 
 ### Usage Examples
