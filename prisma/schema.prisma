@@ -61,6 +61,7 @@ model Project {
   ownerId       String
   applications  Application[]
 
+  @@index([isActive, createdAt])
   @@map("projects")
 }
 
@@ -79,6 +80,8 @@ model Application {
   projectId String
 
   @@unique([userId, projectId])
+  @@index([userId])
+  @@index([projectId])
   @@map("applications")
 }
 
