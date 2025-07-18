@@ -45,11 +45,6 @@ The current homepage design presents users with 6 main action cards in a grid la
 
 ### Design Considerations
 
-**Islamic Design Elements:**
-- Maintain current color scheme (Islamic blue, green, gold)
-- Use geometric patterns for feed item dividers
-- Implement proper RTL support for Arabic content in feed
-
 **User Experience:**
 - Infinite scroll or pagination for feed
 - Filter options for feed content types

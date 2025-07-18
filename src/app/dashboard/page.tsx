@@ -144,6 +144,23 @@ export default function Dashboard() {
               <Button variant="outline" className="w-full">Join Community</Button>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Settings</CardTitle>
+              <CardDescription>
+                Manage your account and API tokens
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">
+                Configure your account settings and create API tokens for Claude Code integration.
+              </p>
+              <Button variant="outline" className="w-full" asChild>
+                <Link href="/settings">Open Settings</Link>
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

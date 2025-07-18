@@ -34,6 +34,7 @@ model User {
   applications  Application[]
   projects      Project[]
   messages      Message[]
+  personalAccessTokens PersonalAccessToken[]
 
   @@map("users")
 }
@@ -130,4 +131,19 @@ enum ApplicationStatus {
   ACCEPTED
   REJECTED
   WITHDRAWN
+}
+
+// Personal Access Token model for MCP API authentication
+model PersonalAccessToken {
+  id         String   @id @default(cuid())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  tokenHash  String   @unique  // CRITICAL: Store hash, not raw token
+  name       String   // User-friendly name like "Claude Code on MacBook"
+  createdAt  DateTime @default(now())
+  lastUsedAt DateTime?
+  expiresAt  DateTime?  // Optional expiration
+  
+  @@index([userId])
+  @@map("personal_access_tokens")
 }

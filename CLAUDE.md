@@ -62,12 +62,25 @@ maix/
 
 ## Development Guidelines
 
+### Project Management
+- **Phase-Based Development**: We organize work into phases, not time-based estimates
+- **Phases represent logical completion points**: Each phase delivers working functionality
+- **No week/time estimates**: Focus on completion criteria rather than duration
+- **Sequential phases**: Complete one phase before moving to the next
+
 ### Code Style
 - Use TypeScript strict mode
-- Follow Islamic principles in all naming and content
+- Follow meaningful naming conventions that reflect positive impact
 - Use descriptive, meaningful variable names
 - Prefer functional components with hooks
 - Use proper TypeScript types (avoid `any`)
+
+### Simplicity and Pragmatism
+- **Bias towards simple solutions**: Address problems we currently have, not hypothetical future scaling issues
+- **Avoid premature optimization**: Don't implement complex patterns for problems that don't exist yet
+- **Use straightforward Prisma queries**: Query existing models directly rather than complex abstraction layers
+- **Focus on current scale**: Design for the data and usage patterns we have today
+- **Iterative complexity**: Add architectural complexity only when simple solutions prove insufficient
 
 ### Performance and Security Priorities
 - Rate limiting is NOT a priority for this project
