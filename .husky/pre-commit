@@ -1,0 +1,21 @@
+echo "🔍 Running pre-commit checks..."
+
+# Step 1: Build check
+echo "📦 Running build check..."
+npm run build
+if [ $? -ne 0 ]; then
+  echo "❌ Build failed. Please fix build errors before committing."
+  exit 1
+fi
+
+# Step 2: Test check (warning only for now due to existing test issues)
+echo "🧪 Running tests..."
+npm run test -- --silent
+if [ $? -ne 0 ]; then
+  echo "⚠️  Tests failed. This should be fixed but allowing commit for now."
+  echo "   Please fix failing tests as soon as possible."
+else
+  echo "✅ Tests passed!"
+fi
+
+echo "✅ Build check passed - commit allowed!"

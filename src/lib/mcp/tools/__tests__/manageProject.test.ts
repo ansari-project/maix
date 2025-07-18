@@ -349,6 +349,8 @@ describe('manageProject tool', () => {
     });
 
     it('should handle unknown actions', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      
       const params = {
         action: 'unknown' as any,
       };
@@ -357,6 +359,8 @@ describe('manageProject tool', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('Validation error');
+      
+      consoleSpy.mockRestore();
     });
   });
 });

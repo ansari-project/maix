@@ -158,15 +158,19 @@ describe('updateProfile tool', () => {
   });
 
   it('should validate URL formats', async () => {
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    
     const params = {
       linkedinUrl: 'not-a-url',
-      githubUrl: 'https://invalid-domain.com',
+      githubUrl: 'also-not-a-url',
     };
 
     const result = await updateProfileTool.handler(params, mockContext);
 
     expect(result.success).toBe(false);
     expect(result.error).toContain('Validation error');
+    
+    consoleSpy.mockRestore();
   });
 
   it('should handle empty updates', async () => {

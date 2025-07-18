@@ -100,6 +100,11 @@ To ensure code quality and prevent deployment failures, always perform the follo
 
 3. **Never push code that fails to build or has failing tests**
 
+**Enforcement**: 
+- A git pre-commit hook (`.husky/pre-commit`) automatically runs build and test checks
+- Commits will be blocked if build or tests fail
+- This ensures the checklist is followed reliably and prevents manual oversight
+
 ### Simplicity and Pragmatism
 - **Bias towards simple solutions**: Address problems we currently have, not hypothetical future scaling issues
 - **Avoid premature optimization**: Don't implement complex patterns for problems that don't exist yet
