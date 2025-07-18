@@ -30,6 +30,7 @@ export default function ProductsPage() {
   const router = useRouter()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  const [showMyProducts, setShowMyProducts] = useState(false)
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -94,6 +95,10 @@ export default function ProductsPage() {
 
   if (!session) return null
 
+  const userProducts = products.filter(product => product.owner.email === session.user?.email)
+  const otherProducts = products.filter(product => product.owner.email !== session.user?.email)
+  const displayProducts = showMyProducts ? userProducts : otherProducts
+
   return (
     <div className="bg-gradient-to-br from-primary/5 to-accent/5 px-4 py-2">
       <div className="container mx-auto">
@@ -115,25 +120,52 @@ export default function ProductsPage() {
             </div>
           </div>
 
-          {products.length === 0 ? (
+          {/* Toggle between My Products and All Products */}
+          <div className="mb-6">
+            <div className="flex items-center gap-2">
+              <Button
+                variant={!showMyProducts ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowMyProducts(false)}
+              >
+                All Products ({otherProducts.length})
+              </Button>
+              <Button
+                variant={showMyProducts ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowMyProducts(true)}
+              >
+                My Products ({userProducts.length})
+              </Button>
+            </div>
+          </div>
+
+          {displayProducts.length === 0 ? (
             <Card>
               <CardContent className="text-center py-12">
                 <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No products yet</h3>
+                <h3 className="text-lg font-semibold mb-2">
+                  {showMyProducts ? "No products yet" : "No other products"}
+                </h3>
                 <p className="text-muted-foreground mb-4">
-                  Be the first to create a product and organize your projects
+                  {showMyProducts 
+                    ? "Create your first product to organize your projects" 
+                    : "Be the first to create a product in the community"
+                  }
                 </p>
-                <Button asChild>
-                  <Link href="/products/new">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create First Product
-                  </Link>
-                </Button>
+                {showMyProducts && (
+                  <Button asChild>
+                    <Link href="/products/new">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create First Product
+                    </Link>
+                  </Button>
+                )}
               </CardContent>
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {products.map((product) => (
+              {displayProducts.map((product) => (
                 <Card key={product.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <div className="flex items-start justify-between">

@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
+import { Package, ExternalLink } from "lucide-react"
 
 interface Project {
   id: string
@@ -21,6 +23,11 @@ interface Project {
   owner: {
     name: string
     email: string
+  }
+  product?: {
+    id: string
+    name: string
+    url: string | null
   }
   _count: {
     applications: number
@@ -164,6 +171,23 @@ export default function ProjectsPage() {
                       {project.helpType.replace('_', ' ')}
                     </span>
                   </div>
+                  {project.product && (
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge variant="secondary" className="text-xs">
+                        <Package className="h-3 w-3 mr-1" />
+                        <Link href={`/products/${project.product.id}`} className="hover:underline">
+                          {project.product.name}
+                        </Link>
+                      </Badge>
+                      {project.product.url && (
+                        <Button variant="ghost" size="sm" className="h-auto p-1" asChild>
+                          <Link href={project.product.url} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="h-3 w-3" />
+                          </Link>
+                        </Button>
+                      )}
+                    </div>
+                  )}
                   <CardDescription className="line-clamp-3">
                     {project.description}
                   </CardDescription>
