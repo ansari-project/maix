@@ -45,60 +45,6 @@ export default function DashboardHomePage() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Welcome Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Welcome back!
-                </CardTitle>
-                <CardDescription>
-                  {session.user?.name || session.user?.email}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button asChild size="sm" className="w-full">
-                  <Link href="/profile">
-                    <User className="h-4 w-4 mr-2" />
-                    Complete Profile
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" size="sm" className="w-full">
-                  <Link href="/settings">
-                    <Settings className="h-4 w-4 mr-2" />
-                    Settings
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Quick Actions */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-                <CardDescription>
-                  Common tasks to get you started
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button asChild size="sm" className="w-full">
-                  <Link href="/projects/new">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Post New Project
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" size="sm" className="w-full">
-                  <Link href="/projects">
-                    Browse Projects
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" size="sm" className="w-full">
-                  <Link href="/community">
-                    Join Community
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
 
             {/* Stats Card */}
             <Card>
