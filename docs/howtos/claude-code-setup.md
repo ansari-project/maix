@@ -1,217 +1,160 @@
-# Claude Code Setup for MAIX
+# Claude Code Setup for MAIX Development
 
 ## Overview
 
-This guide shows how to connect Claude Code to the MAIX MCP server to access your projects, profile, and collaborate through Claude's interface.
+This guide shows how to set up Claude Code to work with MAIX in two ways:
+1. **Local Development**: Using Claude Code for coding assistance
+2. **Remote MCP Access**: Connecting Claude Code to your MAIX account remotely
 
-## Prerequisites
+## Option 1: Local Development (Recommended for Developers)
 
-- Claude Code installed and authenticated
-- MAIX account with API access enabled
-- Personal Access Token from MAIX platform
+### Prerequisites
+- Claude Code CLI installed
+- Anthropic API key
+- MAIX project cloned locally
 
-## Getting Your API Token
+### Setup Steps
 
-1. **Log into MAIX**: Go to https://maix.app and sign in
-2. **Navigate to Settings**: Click your profile → Settings → API Keys
-3. **Create New Token**: 
-   - Click "Generate New Token"
-   - Give it a name like "Claude Code on MacBook"
-   - Copy the token (you won't see it again)
+#### 1. Install Claude Code
+```bash
+# Install via npm (recommended)
+npm install -g @anthropic-ai/claude-code
 
-## Connecting to MAIX MCP Server
+# Or via pip
+pip install claude-code
+```
 
-### Method 1: Claude Code Settings UI
+#### 2. Configure Your API Key
+```bash
+# Set your Anthropic API key
+claude-code auth login
 
-1. **Open Claude Code Settings**:
-   - On macOS: `Cmd + ,` or Claude Code → Settings
-   - On Windows/Linux: `Ctrl + ,` or File → Settings
+# Or set it as environment variable
+export ANTHROPIC_API_KEY="your-api-key-here"
+```
 
-2. **Add MCP Server**:
-   - Go to "Model Context Protocol" section
-   - Click "Add Server"
-   - Choose "HTTP Server" (not local/stdio server)
+#### 3. Navigate to Your Project
+```bash
+cd /path/to/maix
+```
 
-3. **Configure Server**:
-   ```
-   Name: MAIX Platform
-   Server URL: https://api.maix.app/mcp
-   ```
+#### 4. Start Claude Code
+```bash
+claude-code
+```
 
-4. **Add Authentication**:
-   - Authentication Type: Bearer Token
-   - Token: [Your API token from MAIX]
+Claude Code will automatically read your project files and understand the MAIX codebase structure.
 
-5. **Save Configuration**:
-   - Click "Save" 
-   - Restart Claude Code if prompted
+## Option 2: Remote MCP Access (For MAIX Users)
 
-### Method 2: Manual Configuration File
+### Prerequisites
+- MAIX account at https://maix.app
+- Claude Desktop or Claude Code installed
+- Personal Access Token from MAIX
 
-If you prefer editing config files directly:
+### Setup Steps
 
-1. **Find Claude Code config directory**:
-   - macOS: `~/Library/Application Support/Claude Code/`
-   - Windows: `%APPDATA%/Claude Code/`
-   - Linux: `~/.config/claude-code/`
+#### 1. Generate Personal Access Token
+1. Log into MAIX at https://maix.app
+2. Go to Settings → API Tokens
+3. Click "Generate New Token"
+4. Give it a name like "Claude Code on MacBook"
+5. Copy the token (you won't see it again)
 
-2. **Edit `mcp-servers.json`**:
-   ```json
-   {
-     "servers": {
-       "maix": {
-         "type": "http",
-         "url": "https://api.maix.app/mcp",
-         "headers": {
-           "Authorization": "Bearer YOUR_API_TOKEN_HERE"
-         },
-         "name": "MAIX Platform"
-       }
-     }
-   }
-   ```
+#### 2. Configure Claude Desktop
+1. Open Claude Desktop
+2. Go to Settings (⚙️)
+3. Click "MCP Servers" or "Connectors"
+4. Add a new server with these details:
+   - **Name**: MAIX Platform
+   - **Server URL**: `https://maix.app/api/mcp`
+   - **Authentication**: Bearer Token
+   - **Token**: [Paste your Personal Access Token]
 
-3. **Restart Claude Code**
+#### 3. Test Connection
+Ask Claude: "Can you list my MAIX projects?"
 
-## Verifying Connection
+If successful, you can now:
+- Update your MAIX profile through Claude
+- Create and manage projects
+- List your projects and applications
 
-1. **Open Claude Code**
-2. **Start new conversation**
-3. **Test MCP connection**:
-   ```
-   Can you list my MAIX projects?
-   ```
-
-If connected properly, Claude should be able to:
-- List your projects
-- Show your profile information  
-- Help you create new projects
-- Manage applications to projects
-
-## Available MCP Tools
+### Available MCP Tools
 
 Once connected, you can ask Claude to:
 
-### Project Management
-- `List my projects`
-- `Create a new project for [description]`
-- `Update project [project-name] with [changes]`
-- `Show applications for project [project-name]`
+#### Profile Management
+- "Update my MAIX profile bio to include my React expertise"
+- "Add Python and TypeScript to my skills"
+- "Update my availability to 15 hours per week"
+- "Add my GitHub URL to my profile"
 
-### Profile Management  
-- `Show my MAIX profile`
-- `Update my bio to [new-bio]`
-- `Add [skill] to my skills`
-- `Update my availability to [hours]`
-
-### Search and Discovery
-- `Find projects matching [criteria]`
-- `Search for projects needing [skill]`
-- `Show projects in [category]`
-
-### Applications
-- `Apply to project [project-name] with message [message]`
-- `Show my applications`
-- `Withdraw application to [project-name]`
+#### Project Management
+- "Create a new AI project for building a chatbot"
+- "List all my projects"
+- "Show me details for project [project-id]"
+- "Update project [project-id] to need 3 volunteers instead of 5"
+- "Delete project [project-id]"
 
 ## Troubleshooting
 
-### Connection Issues
+### Local Development Issues
 
-**Error: "Failed to connect to MCP server"**
-- Check your internet connection
-- Verify the server URL is exactly: `https://api.maix.app/mcp`  
-- Ensure your API token is valid
+1. **"No API key found"**
+   - Run `claude-code auth login` to set your key
 
-**Error: "Authentication failed"**
-- Regenerate your API token in MAIX settings
-- Make sure token is copied completely without extra spaces
-- Verify Bearer token format in headers
+2. **"Permission denied"**
+   - Ensure you're in the correct project directory
+   - Check file permissions
 
-**Error: "MCP server not responding"**
-- Check if MAIX platform is online: https://maix.app
-- Try disconnecting and reconnecting the MCP server
-- Restart Claude Code
+3. **"Context too large"**
+   - Focus on specific files/areas when asking questions
 
-### Permission Issues
+### Remote MCP Issues
 
-**Error: "Access denied"**
-- Check that your MAIX account has API access enabled
-- Verify your API token hasn't expired
-- Contact MAIX support if issue persists
+1. **"Failed to connect to MCP server"**
+   - Check your internet connection
+   - Verify the server URL is exactly: `https://maix.app/api/mcp`
+   - Ensure your Personal Access Token is valid
 
-### Performance Issues
+2. **"Authentication failed"**
+   - Regenerate your Personal Access Token in MAIX settings
+   - Make sure token is copied completely without extra spaces
 
-**Slow responses from MCP server**
-- This is normal for remote servers vs local ones
-- MAIX server may be processing complex requests
-- Try smaller, more specific requests
+3. **"Server not responding"**
+   - Check if MAIX platform is online: https://maix.app
+   - Try disconnecting and reconnecting the MCP server
 
 ## Security Best Practices
 
-1. **Protect Your API Token**:
-   - Never share your API token
+1. **Protect Your Tokens**
+   - Never share your Personal Access Token
    - Don't commit tokens to version control
    - Regenerate if potentially compromised
 
-2. **Token Management**:
+2. **Token Management**
    - Use descriptive names for different devices
    - Regularly review and revoke unused tokens
-   - Set expiration dates when available
-
-3. **Network Security**:
-   - Only connect over HTTPS (enforced by default)
-   - Use trusted networks when possible
-   - Monitor API usage in MAIX settings
-
-## Advanced Configuration
-
-### Custom Timeouts
-```json
-{
-  "servers": {
-    "maix": {
-      "type": "http",
-      "url": "https://api.maix.app/mcp",
-      "headers": {
-        "Authorization": "Bearer YOUR_TOKEN"
-      },
-      "timeout": 30000,
-      "retries": 3
-    }
-  }
-}
-```
-
-### Environment-Specific Servers
-```json
-{
-  "servers": {
-    "maix-prod": {
-      "type": "http", 
-      "url": "https://api.maix.app/mcp"
-    },
-    "maix-staging": {
-      "type": "http",
-      "url": "https://staging-api.maix.app/mcp"
-    }
-  }
-}
-```
+   - Monitor usage in MAIX settings
 
 ## Getting Help
 
-- **MAIX Documentation**: https://maix.app/docs
-- **Claude Code Documentation**: https://docs.anthropic.com/claude-code
-- **Report Issues**: https://github.com/maix-platform/maix/issues
-- **Community Support**: https://discord.gg/maix
+- Run `claude-code --help` for command options
+- Visit [Claude Code Documentation](https://docs.anthropic.com/en/docs/claude-code)
+- MAIX Support: Contact support through the platform
 
-## What's Next
+## Next Steps
 
-Once connected, you can:
-1. **Explore Projects**: Browse and search available projects
-2. **Manage Profile**: Keep your skills and availability updated  
-3. **Collaborate**: Apply to projects and work with other volunteers
-4. **Create Projects**: Post your own projects needing help
+### For Developers (Local)
+- Get help implementing new features
+- Review code for best practices  
+- Generate tests and documentation
+- Debug issues with AI assistance
 
-The MAIX MCP integration brings the full power of the platform directly into your Claude Code workflow, making it easier than ever to contribute to meaningful AI projects.
+### For Users (Remote MCP)
+- Keep your profile updated through Claude
+- Create and manage projects efficiently
+- Get AI assistance with project descriptions
+- Streamline your MAIX workflow
+
+The MCP integration brings the full power of the MAIX platform directly into your Claude Code workflow!
