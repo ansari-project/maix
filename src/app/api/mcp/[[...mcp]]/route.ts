@@ -306,7 +306,30 @@ const wrappedHandler = async (req: Request) => {
       try {
         const body = await req.text();
         console.log('MCP: Request body:', body);
-        // Create a new request with the body since we consumed it
+        
+        // Parse the JSON to check if it's an initialize request
+        let jsonBody;
+        try {
+          jsonBody = JSON.parse(body);
+        } catch {
+          jsonBody = null;
+        }
+        
+        // For initialize requests, temporarily allow without authentication
+        if (jsonBody && jsonBody.method === 'initialize') {
+          console.log('MCP: Initialize request detected, allowing without auth');
+          // Create a new request with the body since we consumed it
+          const newReq = new Request(req.url, {
+            method: req.method,
+            headers: req.headers,
+            body: body
+          });
+          const result = await mcpHandler(newReq);
+          console.log('MCP: Initialize request completed successfully');
+          return result;
+        }
+        
+        // For all other requests, use authentication
         const newReq = new Request(req.url, {
           method: req.method,
           headers: req.headers,
