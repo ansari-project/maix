@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -52,13 +52,7 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
     }
   }, [status, router])
 
-  useEffect(() => {
-    if (session && params.id) {
-      fetchProject()
-    }
-  }, [session, params.id])
-
-  const fetchProject = async () => {
+  const fetchProject = useCallback(async () => {
     try {
       const response = await fetch(`/api/projects/${params.id}`)
       if (response.ok) {
@@ -75,7 +69,13 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
       console.error("Error fetching project:", error)
     }
     setLoading(false)
-  }
+  }, [params.id, session])
+
+  useEffect(() => {
+    if (session && params.id) {
+      fetchProject()
+    }
+  }, [session, params.id, fetchProject])
 
   const handleApply = async () => {
     if (!applicationMessage.trim()) return

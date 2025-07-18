@@ -78,6 +78,8 @@ export async function POST(request: Request) {
         ...validatedData,
         // Convert empty string to null for optional URL field
         organizationUrl: validatedData.organizationUrl === '' ? null : validatedData.organizationUrl,
+        // Convert undefined timeline to null for JSON field
+        timeline: validatedData.timeline || null,
         ownerId: user.id
       },
       include: {
