@@ -325,7 +325,10 @@ const wrappedHandler = async (req: Request) => {
             body: body
           });
           const result = await mcpHandler(newReq);
-          console.log('MCP: Initialize request completed successfully');
+          console.log('MCP: Initialize request completed successfully', { 
+            status: result.status, 
+            headers: Object.fromEntries(result.headers.entries()) 
+          });
           return result;
         }
         
