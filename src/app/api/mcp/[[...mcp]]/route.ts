@@ -294,7 +294,32 @@ const authenticatedHandler = withMcpAuth(mcpHandler, verifyToken, {
 // Add error handling wrapper
 const wrappedHandler = async (req: Request) => {
   try {
-    console.log('MCP: Incoming request', { method: req.method, url: req.url });
+    console.log('MCP: Incoming request', { 
+      method: req.method, 
+      url: req.url, 
+      headers: Object.fromEntries(req.headers.entries()),
+      contentType: req.headers.get('content-type')
+    });
+    
+    // Log request body for debugging
+    if (req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH') {
+      try {
+        const body = await req.text();
+        console.log('MCP: Request body:', body);
+        // Create a new request with the body since we consumed it
+        const newReq = new Request(req.url, {
+          method: req.method,
+          headers: req.headers,
+          body: body
+        });
+        const result = await authenticatedHandler(newReq);
+        console.log('MCP: Request completed successfully');
+        return result;
+      } catch (bodyError) {
+        console.log('MCP: Could not read request body:', bodyError);
+      }
+    }
+    
     const result = await authenticatedHandler(req);
     console.log('MCP: Request completed successfully');
     return result;
@@ -316,4 +341,11 @@ const wrappedHandler = async (req: Request) => {
   }
 };
 
-export { wrappedHandler as GET, wrappedHandler as POST };
+export { 
+  wrappedHandler as GET, 
+  wrappedHandler as POST,
+  wrappedHandler as PUT,
+  wrappedHandler as PATCH,
+  wrappedHandler as DELETE,
+  wrappedHandler as OPTIONS
+};
