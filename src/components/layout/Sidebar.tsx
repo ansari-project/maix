@@ -1,0 +1,223 @@
+"use client"
+
+import { useState } from "react"
+import { useSession } from "next-auth/react"
+import { usePathname } from "next/navigation"
+import Link from "next/link"
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Separator } from "@/components/ui/separator"
+import { 
+  Home, 
+  User, 
+  FolderOpen, 
+  Plus, 
+  FileText, 
+  MessageCircle, 
+  Users, 
+  Settings,
+  Menu,
+  Key
+} from "lucide-react"
+
+interface NavigationItem {
+  name: string
+  href: string
+  icon: React.ElementType
+  isActive?: boolean
+  badge?: number
+}
+
+interface SidebarProps {
+  isCollapsed?: boolean
+  onToggle?: () => void
+  currentPath?: string
+}
+
+export function Sidebar({ isCollapsed = false, onToggle, currentPath }: SidebarProps) {
+  const { data: session } = useSession()
+  const pathname = usePathname()
+  const [isMobileOpen, setIsMobileOpen] = useState(false)
+
+  const navigationItems: NavigationItem[] = [
+    {
+      name: "Dashboard",
+      href: "/dashboard/home",
+      icon: Home,
+      isActive: pathname === "/dashboard/home" || pathname === "/dashboard"
+    },
+    {
+      name: "My Profile",
+      href: "/profile", 
+      icon: User,
+      isActive: pathname === "/profile"
+    },
+    {
+      name: "Browse Projects",
+      href: "/projects",
+      icon: FolderOpen,
+      isActive: pathname === "/projects"
+    },
+    {
+      name: "Post Project",
+      href: "/projects/new",
+      icon: Plus,
+      isActive: pathname === "/projects/new"
+    },
+    {
+      name: "My Applications",
+      href: "/applications",
+      icon: FileText,
+      isActive: pathname === "/applications"
+    },
+    {
+      name: "Messages",
+      href: "/messages",
+      icon: MessageCircle,
+      isActive: pathname === "/messages"
+    },
+    {
+      name: "Community",
+      href: "/community",
+      icon: Users,
+      isActive: pathname === "/community"
+    }
+  ]
+
+  const settingsItems: NavigationItem[] = [
+    {
+      name: "Settings",
+      href: "/settings",
+      icon: Settings,
+      isActive: pathname === "/settings"
+    }
+  ]
+
+  const SidebarContent = () => (
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="p-6 border-b">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
+            <span className="text-primary-foreground font-bold text-sm">M</span>
+          </div>
+          {!isCollapsed && (
+            <div>
+              <h2 className="font-semibold text-primary">MAIX</h2>
+              <p className="text-xs text-muted-foreground">Meaningful AI Exchange</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 p-4 space-y-1">
+        <div className="space-y-1">
+          {navigationItems.map((item) => (
+            <SidebarItem
+              key={item.name}
+              item={item}
+              isCollapsed={isCollapsed}
+              onClick={() => setIsMobileOpen(false)}
+            />
+          ))}
+        </div>
+
+        <Separator className="my-4" />
+
+        {/* Settings Section */}
+        <div className="space-y-1">
+          {settingsItems.map((item) => (
+            <SidebarItem
+              key={item.name}
+              item={item}
+              isCollapsed={isCollapsed}
+              onClick={() => setIsMobileOpen(false)}
+            />
+          ))}
+        </div>
+      </nav>
+
+      {/* User Profile Section */}
+      {session && (
+        <div className="p-4 border-t">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
+              <span className="text-accent-foreground font-semibold text-sm">
+                {session.user?.name?.[0] || session.user?.email?.[0] || "U"}
+              </span>
+            </div>
+            {!isCollapsed && (
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">
+                  {session.user?.name || session.user?.email}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {session.user?.email}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+
+  return (
+    <>
+      {/* Mobile Sidebar */}
+      <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
+        <SheetTrigger asChild>
+          <Button variant="ghost" size="icon" className="md:hidden">
+            <Menu className="h-4 w-4" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="p-0 w-64">
+          <SidebarContent />
+        </SheetContent>
+      </Sheet>
+
+      {/* Desktop Sidebar */}
+      <div className={cn(
+        "hidden md:flex flex-col bg-background border-r transition-all duration-300",
+        isCollapsed ? "w-16" : "w-64"
+      )}>
+        <SidebarContent />
+      </div>
+    </>
+  )
+}
+
+interface SidebarItemProps {
+  item: NavigationItem
+  isCollapsed: boolean
+  onClick?: () => void
+}
+
+function SidebarItem({ item, isCollapsed, onClick }: SidebarItemProps) {
+  const Icon = item.icon
+
+  return (
+    <Link
+      href={item.href}
+      onClick={onClick}
+      className={cn(
+        "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
+        item.isActive
+          ? "bg-primary text-primary-foreground"
+          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+      )}
+    >
+      <Icon className="h-4 w-4 flex-shrink-0" />
+      {!isCollapsed && (
+        <span className="flex-1">{item.name}</span>
+      )}
+      {!isCollapsed && item.badge && (
+        <span className="ml-auto bg-primary text-primary-foreground rounded-full px-2 py-1 text-xs">
+          {item.badge}
+        </span>
+      )}
+    </Link>
+  )
+}
