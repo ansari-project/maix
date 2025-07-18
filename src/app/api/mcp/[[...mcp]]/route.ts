@@ -17,27 +17,39 @@ const verifyToken = async (
   req: Request,
   bearerToken?: string
 ): Promise<MaixAuthInfo | undefined> => {
-  if (!bearerToken) {
+  try {
+    console.log('MCP: Verifying token', { hasToken: !!bearerToken });
+    
+    if (!bearerToken) {
+      console.log('MCP: No bearer token provided');
+      return undefined;
+    }
+
+    const user = await validatePersonalAccessToken(bearerToken);
+    console.log('MCP: Token validation result', { userId: user?.id, hasUser: !!user });
+
+    if (!user) {
+      console.log('MCP: Token validation failed');
+      return undefined;
+    }
+
+    console.log('MCP: Token verified successfully for user', user.id);
+    return {
+      token: bearerToken,
+      scopes: ["api:access"],
+      clientId: user.id,
+      extra: { user },
+    };
+  } catch (error) {
+    console.error('MCP: Token verification error:', error);
     return undefined;
   }
-
-  const user = await validatePersonalAccessToken(bearerToken);
-
-  if (!user) {
-    return undefined;
-  }
-
-  return {
-    token: bearerToken,
-    scopes: ["api:access"],
-    clientId: user.id,
-    extra: { user },
-  };
 };
 
 // Core MCP handler with tools
 const mcpHandler = createMcpHandler(
   (server) => {
+    console.log('MCP: Setting up MCP handler with tools');
     // Tool: Update user profile
     server.tool(
       "maix_update_profile",
@@ -278,4 +290,29 @@ const authenticatedHandler = withMcpAuth(mcpHandler, verifyToken, {
   required: true, // Enforce authentication for all tools
 });
 
-export { authenticatedHandler as GET, authenticatedHandler as POST };
+// Add error handling wrapper
+const wrappedHandler = async (req: Request, ...args: any[]) => {
+  try {
+    console.log('MCP: Incoming request', { method: req.method, url: req.url });
+    const result = await authenticatedHandler(req, ...args);
+    console.log('MCP: Request completed successfully');
+    return result;
+  } catch (error) {
+    console.error('MCP: Request failed:', error);
+    
+    // Return proper error response
+    return new Response(
+      JSON.stringify({ 
+        error: 'MCP server error', 
+        message: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+  }
+};
+
+export { wrappedHandler as GET, wrappedHandler as POST };
