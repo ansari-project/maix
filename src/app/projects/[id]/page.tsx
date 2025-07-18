@@ -117,7 +117,7 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
   const canApply = !isOwner && !hasApplied && project.applications.length < project.maxVolunteers
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary to-accent py-8">
+    <div className="min-h-screen bg-gradient-to-br from-primary to-accent p-6">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
           <Button variant="outline" className="mb-6" asChild>

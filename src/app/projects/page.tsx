@@ -81,7 +81,7 @@ export default function ProjectsPage() {
   if (!session) return null
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary to-accent py-8">
+    <div className="min-h-screen bg-gradient-to-br from-primary to-accent p-6">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center mb-8">
           <div>

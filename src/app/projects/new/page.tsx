@@ -76,7 +76,7 @@ export default function NewProjectPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary to-accent py-8">
+    <div className="min-h-screen bg-gradient-to-br from-primary to-accent p-6">
       <div className="container mx-auto px-4">
         <Card className="max-w-2xl mx-auto">
           <CardHeader>

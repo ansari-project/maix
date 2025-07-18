@@ -12,7 +12,7 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("account")
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 p-6">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">

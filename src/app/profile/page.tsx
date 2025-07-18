@@ -105,8 +105,8 @@ export default function ProfilePage() {
   if (!session) return null
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary to-accent py-8">
-      <div className="container mx-auto px-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary to-accent p-6">
+      <div className="container mx-auto">
         <Card className="max-w-2xl mx-auto">
           <CardHeader>
             <CardTitle className="text-2xl">Complete Your Profile</CardTitle>
