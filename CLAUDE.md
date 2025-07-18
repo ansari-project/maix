@@ -82,11 +82,23 @@ maix/
 - Group related changes into a single commit
 - Use `git add [specific files]` rather than `git add --all` or `git add .`
 
-### Pre-Commit Requirements
-- **ALWAYS run `npm run build` before committing to ensure no TypeScript or build errors**
-- **ALWAYS run `npm run test` before committing to ensure all tests pass**
-- Fix any errors found during build or test before committing
-- Do not push code that fails to build or has failing tests
+### Pre-Commit Checklist
+
+To ensure code quality and prevent deployment failures, always perform the following steps before committing changes:
+
+1. **Local Validation:**
+   - Run `npm run build` to ensure no TypeScript or build errors
+   - Run `npm run test` to ensure all tests pass
+   - Fix any errors found during build or test
+
+2. **Gemini Code Review:**
+   - After successful local validation, use the `mcp__zen__chat` tool to request a code review from Gemini
+   - This provides an additional layer of scrutiny for logic, design, and best practices
+   - **Note**: Gemini tends to suggest overcomplication and optimizations that aren't important at our MVP stage
+   - Focus on addressing critical issues (bugs, security, major design flaws) rather than all suggestions
+   - Remember our principle: bias towards simple solutions for current problems
+
+3. **Never push code that fails to build or has failing tests**
 
 ### Simplicity and Pragmatism
 - **Bias towards simple solutions**: Address problems we currently have, not hypothetical future scaling issues
