@@ -1,12 +1,14 @@
 import { createMcpHandler, withMcpAuth } from "mcp-handler";
-import type { AuthInfo } from "@modelcontextprotocol/sdk";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { validatePersonalAccessToken } from "@/lib/mcp/services/pat.service";
 import type { User } from "@prisma/client";
 
 // Type definitions for type safety
-type MaixAuthInfo = AuthInfo & {
+type MaixAuthInfo = {
+  token: string;
+  scopes: string[];
+  clientId: string;
   extra: {
     user: User;
   };
