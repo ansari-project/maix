@@ -343,51 +343,65 @@ export function PATManagement() {
               </p>
             </div>
             <div className="space-y-2">
-              <h4 className="font-semibold">Step 2: Install the MCP Server</h4>
-              <div className="bg-muted p-3 rounded-lg">
-                <code className="text-sm">
-                  git clone https://github.com/ansari-project/maix.git<br />
-                  cd maix/mcp<br />
-                  npm install
-                </code>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-semibold">Step 3: Configure Environment</h4>
-              <div className="bg-muted p-3 rounded-lg">
-                <code className="text-sm">
-                  cp .env.example .env<br />
-                  # Edit .env and add your token:<br />
-                  MAIX_API_TOKEN=your_token_here
-                </code>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-semibold">Step 4: Add to Claude Code Configuration</h4>
+              <h4 className="font-semibold">Step 2: Open Claude Code Settings</h4>
               <p className="text-sm text-muted-foreground">
-                Add the MCP server to your Claude Code configuration file:
+                Open Claude Code and go to Settings (Cmd+, on macOS or Ctrl+, on Windows/Linux)
               </p>
-              <div className="bg-muted p-3 rounded-lg">
-                <code className="text-sm">
+            </div>
+            <div className="space-y-2">
+              <h4 className="font-semibold">Step 3: Add MCP Server</h4>
+              <p className="text-sm text-muted-foreground">
+                Go to &quot;Model Context Protocol&quot; section and click &quot;Add Server&quot;. Choose &quot;HTTP Server&quot; (not local/stdio server).
+              </p>
+            </div>
+            <div className="space-y-2">
+              <h4 className="font-semibold">Step 4: Configure Server Details</h4>
+              <div className="bg-muted p-3 rounded-lg space-y-2">
+                <div>
+                  <strong className="text-sm">Name:</strong>
+                  <code className="text-sm ml-2">MAIX Platform</code>
+                </div>
+                <div>
+                  <strong className="text-sm">Server URL:</strong>
+                  <code className="text-sm ml-2">https://api.maix.app/mcp</code>
+                </div>
+                <div>
+                  <strong className="text-sm">Authentication Type:</strong>
+                  <code className="text-sm ml-2">Bearer Token</code>
+                </div>
+                <div>
+                  <strong className="text-sm">Token:</strong>
+                  <code className="text-sm ml-2">[Your API token from Step 1]</code>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <h4 className="font-semibold">Step 5: Save and Test</h4>
+              <p className="text-sm text-muted-foreground">
+                Click &quot;Save&quot; and restart Claude Code if prompted. Test by asking: &quot;Can you list my MAIX projects?&quot;
+              </p>
+            </div>
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <h5 className="font-semibold text-sm mb-1">Alternative: Manual Configuration</h5>
+              <p className="text-xs text-muted-foreground mb-2">
+                If you prefer editing config files directly, add this to your mcp-servers.json:
+              </p>
+              <div className="bg-muted p-2 rounded text-xs">
+                <code>
                   {`{
-  "mcpServers": {
+  "servers": {
     "maix": {
-      "command": "node",
-      "args": ["path/to/maix/mcp/server.js"],
-      "env": {
-        "MAIX_API_TOKEN": "your_token_here"
-      }
+      "type": "http",
+      "url": "https://api.maix.app/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_TOKEN_HERE"
+      },
+      "name": "MAIX Platform"
     }
   }
 }`}
                 </code>
               </div>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-semibold">Step 5: Test the Integration</h4>
-              <p className="text-sm text-muted-foreground">
-                Restart Claude Code and try asking it to help you manage your MAIX projects, profile, or find volunteer opportunities.
-              </p>
             </div>
           </div>
         </DialogContent>
