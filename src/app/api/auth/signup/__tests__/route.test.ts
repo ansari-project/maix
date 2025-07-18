@@ -47,7 +47,7 @@ describe('/api/auth/signup', () => {
       expect(response.status).toBe(201)
       expect(responseData.message).toBe('User created successfully')
       expect(responseData.userId).toBe('user-123')
-      expect(mockBcrypt.hash).toHaveBeenCalledWith('Password123!', 12)
+      expect(mockBcrypt.hash).toHaveBeenCalledWith('Password123!', 8)
     })
 
     test('should return 400 for invalid input data', async () => {

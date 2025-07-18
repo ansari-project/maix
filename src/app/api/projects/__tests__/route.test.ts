@@ -65,6 +65,13 @@ describe('/api/projects', () => {
               email: true,
             },
           },
+          product: {
+            select: {
+              id: true,
+              name: true,
+              url: true,
+            },
+          },
           _count: {
             select: {
               applications: true,
@@ -74,6 +81,7 @@ describe('/api/projects', () => {
         orderBy: {
           createdAt: 'desc',
         },
+        take: 50,
       })
     })
 
@@ -125,6 +133,8 @@ describe('/api/projects', () => {
         data: {
           ...validProjectData,
           organizationUrl: validProjectData.organizationUrl,
+          timeline: validProjectData.timeline || {},
+          requiredSkills: validProjectData.requiredSkills || [],
           ownerId: mockUser.id,
         },
         include: {
@@ -132,6 +142,13 @@ describe('/api/projects', () => {
             select: {
               name: true,
               email: true,
+            },
+          },
+          product: {
+            select: {
+              id: true,
+              name: true,
+              url: true,
             },
           },
         },
@@ -321,6 +338,8 @@ describe('/api/projects', () => {
         data: {
           ...dataWithEmptyUrl,
           organizationUrl: null,
+          timeline: dataWithEmptyUrl.timeline || {},
+          requiredSkills: dataWithEmptyUrl.requiredSkills || [],
           ownerId: mockUser.id,
         },
         include: {
@@ -328,6 +347,13 @@ describe('/api/projects', () => {
             select: {
               name: true,
               email: true,
+            },
+          },
+          product: {
+            select: {
+              id: true,
+              name: true,
+              url: true,
             },
           },
         },
