@@ -283,6 +283,8 @@ const mcpHandler = createMcpHandler(
   {
     // Keep it simple - no Redis for now
     maxDuration: 60,
+    basePath: "/api",
+    verboseLogs: true,
   }
 );
 
