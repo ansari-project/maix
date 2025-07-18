@@ -36,8 +36,7 @@ export function PATManagement() {
   const [copied, setCopied] = useState(false)
 
   const [createForm, setCreateForm] = useState({
-    name: "",
-    expiresIn: "30" // days
+    name: ""
   })
 
   useEffect(() => {
@@ -64,10 +63,6 @@ export function PATManagement() {
 
     setCreating(true)
     try {
-      const expiresAt = createForm.expiresIn === "never" 
-        ? null 
-        : new Date(Date.now() + parseInt(createForm.expiresIn) * 24 * 60 * 60 * 1000)
-
       const response = await fetch("/api/auth/tokens", {
         method: "POST",
         headers: {
@@ -75,14 +70,14 @@ export function PATManagement() {
         },
         body: JSON.stringify({
           name: createForm.name,
-          expiresAt
+          expiresAt: null // Never expires
         }),
       })
 
       if (response.ok) {
         const data = await response.json()
         setNewToken({ ...data.tokenRecord, token: data.token })
-        setCreateForm({ name: "", expiresIn: "30" })
+        setCreateForm({ name: "" })
         setShowCreateDialog(false)
         fetchTokens()
       }
@@ -180,20 +175,8 @@ export function PATManagement() {
                     onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="expiry">Expiration</Label>
-                  <Select value={createForm.expiresIn} onValueChange={(value) => setCreateForm({ ...createForm, expiresIn: value })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="7">7 days</SelectItem>
-                      <SelectItem value="30">30 days</SelectItem>
-                      <SelectItem value="90">90 days</SelectItem>
-                      <SelectItem value="365">1 year</SelectItem>
-                      <SelectItem value="never">Never</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="text-sm text-muted-foreground">
+                  Personal access tokens do not expire and remain valid until deleted.
                 </div>
                 <div className="flex justify-end gap-2">
                   <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
