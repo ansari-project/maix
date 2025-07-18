@@ -48,14 +48,14 @@ Claude Code will automatically read your project files and understand the MAIX c
 ## Option 2: Remote MCP Access (For MAIX Users)
 
 ### Prerequisites
-- MAIX account at https://maix.app
+- MAIX account at https://maix.io
 - Claude Code CLI installed
 - Personal Access Token from MAIX
 
 ### Setup Steps
 
 #### 1. Generate Personal Access Token
-1. Log into MAIX at https://maix.app
+1. Log into MAIX at https://maix.io
 2. Go to Settings → API Tokens
 3. Click "Generate New Token"
 4. Give it a name like "Claude Code on MacBook"
@@ -65,7 +65,7 @@ Claude Code will automatically read your project files and understand the MAIX c
 Add the MAIX MCP server to Claude Code using the CLI:
 
 ```bash
-claude mcp add --transport http --scope user maix-platform https://maix.app/api/mcp --header "Authorization: Bearer YOUR_PAT_TOKEN_HERE"
+claude mcp add --transport http --scope user maix-platform https://maix.io/api/mcp --header "Authorization: Bearer YOUR_PAT_TOKEN_HERE"
 ```
 
 Replace `YOUR_PAT_TOKEN_HERE` with your actual Personal Access Token from step 1.
@@ -118,7 +118,7 @@ Once connected, you can ask Claude Code to:
 
 1. **"Failed to connect to MCP server"**
    - Check your internet connection
-   - Verify the server URL is exactly: `https://maix.app/api/mcp`
+   - Verify the server URL is exactly: `https://maix.io/api/mcp`
    - Ensure your Personal Access Token is valid
 
 2. **"Authentication failed"**
@@ -126,7 +126,7 @@ Once connected, you can ask Claude Code to:
    - Make sure token is copied completely without extra spaces
 
 3. **"Server not responding"**
-   - Check if MAIX platform is online: https://maix.app
+   - Check if MAIX platform is online: https://maix.io
    - Try disconnecting and reconnecting the MCP server
 
 ## Security Best Practices
