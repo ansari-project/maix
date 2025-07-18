@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, Suspense } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -15,7 +15,7 @@ interface Product {
   name: string
 }
 
-export default function NewProjectPage() {
+function NewProjectForm() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -294,5 +294,22 @@ export default function NewProjectPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+// Main page component with Suspense wrapper
+export default function NewProjectPage() {
+  return (
+    <Suspense fallback={
+      <div className="container max-w-2xl py-8">
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center">Loading...</div>
+          </CardContent>
+        </Card>
+      </div>
+    }>
+      <NewProjectForm />
+    </Suspense>
   )
 }
