@@ -95,6 +95,7 @@ export const projectCreateSchema = z.object({
   requiredSkills: z.array(z.string().min(1).max(50))
     .max(20, 'Maximum 20 required skills allowed')
     .optional(),
+  productId: z.string().cuid('Invalid product ID format').optional(),
 })
 
 export const projectUpdateSchema = projectCreateSchema.partial()

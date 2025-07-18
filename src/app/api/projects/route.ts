@@ -19,6 +19,13 @@ export async function GET() {
             email: true
           }
         },
+        product: {
+          select: {
+            id: true,
+            name: true,
+            url: true
+          }
+        },
         _count: {
           select: {
             applications: true
@@ -74,6 +81,27 @@ export async function POST(request: Request) {
 
     const validatedData = validation.data
 
+    // If productId is provided, validate user owns the product
+    if (validatedData.productId) {
+      const product = await prisma.product.findUnique({
+        where: { id: validatedData.productId }
+      })
+
+      if (!product) {
+        return NextResponse.json(
+          { error: "Product not found" },
+          { status: 404 }
+        )
+      }
+
+      if (product.ownerId !== user.id) {
+        return NextResponse.json(
+          { error: "You can only associate projects with your own products" },
+          { status: 403 }
+        )
+      }
+    }
+
     const project = await prisma.project.create({
       data: {
         ...validatedData,
@@ -90,6 +118,13 @@ export async function POST(request: Request) {
           select: {
             name: true,
             email: true
+          }
+        },
+        product: {
+          select: {
+            id: true,
+            name: true,
+            url: true
           }
         }
       }
