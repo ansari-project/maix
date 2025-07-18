@@ -18,7 +18,8 @@ import {
   Users, 
   Settings,
   Menu,
-  Key
+  Key,
+  Package
 } from "lucide-react"
 
 interface NavigationItem {
@@ -66,10 +67,16 @@ export function Sidebar({ isCollapsed = false, onToggle, currentPath }: SidebarP
       isActive: pathname === "/projects/new"
     },
     {
-      name: "My Applications",
-      href: "/applications",
+      name: "Products",
+      href: "/products",
+      icon: Package,
+      isActive: pathname === "/products" || pathname.startsWith("/products/")
+    },
+    {
+      name: "My Volunteering",
+      href: "/volunteering",
       icon: FileText,
-      isActive: pathname === "/applications"
+      isActive: pathname === "/volunteering"
     },
     {
       name: "Messages",

@@ -308,9 +308,9 @@ describe('Validation Schemas', () => {
   })
 
   describe('applicationCreateSchema', () => {
-    test('should accept valid application data', () => {
+    test('should accept valid volunteer application data', () => {
       const validData = {
-        message: 'I am interested in contributing to this project with my React and Node.js skills.',
+        message: 'I am interested in volunteering for this project with my React and Node.js skills.',
       }
 
       const result = applicationCreateSchema.safeParse(validData)
@@ -339,7 +339,7 @@ describe('Validation Schemas', () => {
   })
 
   describe('applicationUpdateSchema', () => {
-    test('should accept valid application update data', () => {
+    test('should accept valid volunteer application update data', () => {
       const validData = {
         status: 'ACCEPTED' as const,
         message: 'Welcome to the team!',

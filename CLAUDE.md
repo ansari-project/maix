@@ -75,6 +75,13 @@ maix/
 - Prefer functional components with hooks
 - Use proper TypeScript types (avoid `any`)
 
+### Git Commit Guidelines
+- **NEVER include "Generated with Claude Code" or "Co-Authored-By: Claude" in commit messages**
+- Use descriptive commit messages that explain the purpose of changes
+- Keep commit messages concise and focused on the changes made
+- Group related changes into a single commit
+- Use `git add [specific files]` rather than `git add --all` or `git add .`
+
 ### Simplicity and Pragmatism
 - **Bias towards simple solutions**: Address problems we currently have, not hypothetical future scaling issues
 - **Avoid premature optimization**: Don't implement complex patterns for problems that don't exist yet

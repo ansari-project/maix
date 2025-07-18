@@ -9,7 +9,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
   FolderOpen, 
   FileText, 
-  Key, 
   User, 
   Calendar,
   ExternalLink
@@ -19,7 +18,7 @@ import Link from "next/link"
 
 interface FeedItem {
   id: string
-  type: 'project_created' | 'application_submitted' | 'pat_created' | 'profile_updated'
+  type: 'project_created' | 'volunteer_applied' | 'profile_updated'
   title: string
   timestamp: Date
   user: {
@@ -67,10 +66,8 @@ export function FeedContainer({ initialItems = [] }: FeedContainerProps) {
     switch (type) {
       case 'project_created':
         return FolderOpen
-      case 'application_submitted':
+      case 'volunteer_applied':
         return FileText
-      case 'pat_created':
-        return Key
       case 'profile_updated':
         return User
       default:
@@ -82,10 +79,8 @@ export function FeedContainer({ initialItems = [] }: FeedContainerProps) {
     switch (type) {
       case 'project_created':
         return 'bg-blue-100 text-blue-800'
-      case 'application_submitted':
+      case 'volunteer_applied':
         return 'bg-green-100 text-green-800'
-      case 'pat_created':
-        return 'bg-purple-100 text-purple-800'
       case 'profile_updated':
         return 'bg-orange-100 text-orange-800'
       default:
@@ -118,11 +113,10 @@ export function FeedContainer({ initialItems = [] }: FeedContainerProps) {
       </div>
 
       <Tabs value={activeFilter} onValueChange={setActiveFilter} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="all">All Activity</TabsTrigger>
           <TabsTrigger value="project">Projects</TabsTrigger>
-          <TabsTrigger value="application">Applications</TabsTrigger>
-          <TabsTrigger value="pat">API Tokens</TabsTrigger>
+          <TabsTrigger value="volunteer">Volunteering</TabsTrigger>
         </TabsList>
 
         <TabsContent value={activeFilter} className="space-y-4">
@@ -196,10 +190,10 @@ function FeedItem({ item }: FeedItemProps) {
               </div>
             )}
 
-            {item.type === 'application_submitted' && item.data && (
+            {item.type === 'volunteer_applied' && item.data && (
               <div className="mt-2">
                 <p className="text-sm text-muted-foreground">
-                  Applied to: {item.data.project?.title}
+                  Volunteered for: {item.data.project?.title}
                 </p>
                 <Badge variant="secondary" className="text-xs mt-1">
                   {item.data.status}
@@ -207,16 +201,6 @@ function FeedItem({ item }: FeedItemProps) {
               </div>
             )}
 
-            {item.type === 'pat_created' && item.data && (
-              <div className="mt-2">
-                <p className="text-sm text-muted-foreground">
-                  Created API token: {item.data.name}
-                </p>
-                <Badge variant="secondary" className="text-xs mt-1">
-                  {item.data.expiresAt ? 'Expires' : 'Never expires'}
-                </Badge>
-              </div>
-            )}
           </div>
         </div>
       </CardContent>
@@ -231,8 +215,6 @@ function getFeedItemIcon(type: FeedItem['type']) {
       return FolderOpen
     case 'application_submitted':
       return FileText
-    case 'pat_created':
-      return Key
     case 'profile_updated':
       return User
     default:
@@ -246,8 +228,6 @@ function getFeedItemColor(type: FeedItem['type']) {
       return 'bg-blue-100 text-blue-800'
     case 'application_submitted':
       return 'bg-green-100 text-green-800'
-    case 'pat_created':
-      return 'bg-purple-100 text-purple-800'
     case 'profile_updated':
       return 'bg-orange-100 text-orange-800'
     default:

@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,10 +10,18 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
+interface Product {
+  id: string
+  name: string
+}
+
 export default function NewProjectPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [loading, setLoading] = useState(false)
+  const [products, setProducts] = useState<Product[]>([])
+  const [productsLoading, setProductsLoading] = useState(false)
   const [project, setProject] = useState({
     title: "",
     description: "",
@@ -24,8 +32,36 @@ export default function NewProjectPage() {
     contactEmail: "",
     organizationUrl: "",
     timeline: "",
-    requiredSkills: ""
+    requiredSkills: "",
+    productId: ""
   })
+
+  useEffect(() => {
+    if (session) {
+      fetchUserProducts()
+      // Set productId from query params if present
+      const productId = searchParams.get('productId')
+      if (productId) {
+        setProject(prev => ({ ...prev, productId }))
+      }
+    }
+  }, [session, searchParams])
+
+  const fetchUserProducts = async () => {
+    setProductsLoading(true)
+    try {
+      const response = await fetch('/api/products')
+      if (response.ok) {
+        const data = await response.json()
+        // Only show products owned by the current user
+        const userProducts = data.filter((product: any) => product.owner.email === session?.user?.email)
+        setProducts(userProducts)
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error)
+    }
+    setProductsLoading(false)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,17 +73,20 @@ export default function NewProjectPage() {
         ? project.requiredSkills.split(",").map(skill => skill.trim()).filter(skill => skill)
         : []
 
+      const requestData = {
+        ...project,
+        maxVolunteers: parseInt(project.maxVolunteers),
+        timeline: timelineData,
+        requiredSkills: skillsData,
+        productId: project.productId || undefined
+      }
+
       const response = await fetch("/api/projects", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          ...project,
-          maxVolunteers: parseInt(project.maxVolunteers),
-          timeline: timelineData,
-          requiredSkills: skillsData
-        }),
+        body: JSON.stringify(requestData),
       })
 
       if (response.ok) {
@@ -141,6 +180,26 @@ export default function NewProjectPage() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="productId">Associated Product (optional)</Label>
+                <Select value={project.productId} onValueChange={(value) => setProject({...project, productId: value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={productsLoading ? "Loading products..." : "Select a product (optional)"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">No product association</SelectItem>
+                    {products.map((product) => (
+                      <SelectItem key={product.id} value={product.id}>
+                        {product.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-muted-foreground">
+                  Associate this project with one of your products to organize related work
+                </p>
               </div>
 
               <div className="space-y-2">

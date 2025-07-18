@@ -65,7 +65,7 @@ describe('/api/applications/[id]', () => {
       message: 'Welcome to the team!',
     }
 
-    test('should update application with valid data', async () => {
+    test('should update volunteer application with valid data', async () => {
       mockGetServerSession.mockResolvedValue(mockSession as any)
       mockPrisma.application.findUnique.mockResolvedValue(mockApplication as any)
       mockPrisma.application.update.mockResolvedValue(mockUpdatedApplication as any)

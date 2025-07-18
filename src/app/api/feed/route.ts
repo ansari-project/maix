@@ -23,7 +23,7 @@ export async function GET() {
     }
 
     // Query existing models directly as per the simplified approach
-    const [projects, applications, pats] = await Promise.all([
+    const [projects, applications] = await Promise.all([
       prisma.project.findMany({
         take: 10,
         orderBy: { createdAt: 'desc' },
@@ -38,11 +38,6 @@ export async function GET() {
           user: { select: { id: true, name: true } },
           project: { select: { id: true, title: true } }
         }
-      }),
-      prisma.personalAccessToken.findMany({
-        take: 10,
-        orderBy: { createdAt: 'desc' },
-        include: { user: { select: { id: true, name: true } } }
       })
     ])
 
@@ -58,19 +53,11 @@ export async function GET() {
       })),
       ...applications.map(a => ({
         id: a.id,
-        type: 'application_submitted' as const,
-        title: `${a.user.name} applied to ${a.project.title}`,
+        type: 'volunteer_applied' as const,
+        title: `${a.user.name} volunteered for ${a.project.title}`,
         timestamp: a.appliedAt,
         user: a.user,
         data: a
-      })),
-      ...pats.map(p => ({
-        id: p.id,
-        type: 'pat_created' as const,
-        title: `${p.user.name} created API token "${p.name}"`,
-        timestamp: p.createdAt,
-        user: p.user,
-        data: p
       }))
     ]
 
