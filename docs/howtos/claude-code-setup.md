@@ -49,7 +49,7 @@ Claude Code will automatically read your project files and understand the MAIX c
 
 ### Prerequisites
 - MAIX account at https://maix.app
-- Claude Desktop or Claude Code installed
+- Claude Code CLI installed
 - Personal Access Token from MAIX
 
 ### Setup Steps
@@ -61,27 +61,31 @@ Claude Code will automatically read your project files and understand the MAIX c
 4. Give it a name like "Claude Code on MacBook"
 5. Copy the token (you won't see it again)
 
-#### 2. Configure Claude Desktop
-1. Open Claude Desktop
-2. Go to Settings (⚙️)
-3. Click "MCP Servers" or "Connectors"
-4. Add a new server with these details:
-   - **Name**: MAIX Platform
-   - **Server URL**: `https://maix.app/api/mcp`
-   - **Authentication**: Bearer Token
-   - **Token**: [Paste your Personal Access Token]
+#### 2. Configure Claude Code CLI
+Add the MAIX MCP server to Claude Code using the CLI:
+
+```bash
+claude mcp add --transport http --scope user maix-platform https://maix.app/api/mcp --header "Authorization: Bearer YOUR_PAT_TOKEN_HERE"
+```
+
+Replace `YOUR_PAT_TOKEN_HERE` with your actual Personal Access Token from step 1.
 
 #### 3. Test Connection
-Ask Claude: "Can you list my MAIX projects?"
+Start Claude Code and ask: "Can you list my MAIX projects?"
+
+You can also check your MCP server status with:
+```bash
+/mcp
+```
 
 If successful, you can now:
-- Update your MAIX profile through Claude
-- Create and manage projects
+- Update your MAIX profile through Claude Code
+- Create and manage projects from the CLI
 - List your projects and applications
 
 ### Available MCP Tools
 
-Once connected, you can ask Claude to:
+Once connected, you can ask Claude Code to:
 
 #### Profile Management
 - "Update my MAIX profile bio to include my React expertise"
@@ -142,6 +146,7 @@ Once connected, you can ask Claude to:
 - Run `claude-code --help` for command options
 - Visit [Claude Code Documentation](https://docs.anthropic.com/en/docs/claude-code)
 - MAIX Support: Contact support through the platform
+- Claude Code MCP Status: Use `/mcp` command to check server status
 
 ## Next Steps
 
@@ -152,9 +157,9 @@ Once connected, you can ask Claude to:
 - Debug issues with AI assistance
 
 ### For Users (Remote MCP)
-- Keep your profile updated through Claude
+- Keep your profile updated through Claude Code
 - Create and manage projects efficiently
 - Get AI assistance with project descriptions
-- Streamline your MAIX workflow
+- Streamline your MAIX workflow from the terminal
 
-The MCP integration brings the full power of the MAIX platform directly into your Claude Code workflow!
+The MCP integration brings the full power of the MAIX platform directly into your Claude Code CLI workflow!
