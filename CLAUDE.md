@@ -82,6 +82,12 @@ maix/
 - Group related changes into a single commit
 - Use `git add [specific files]` rather than `git add --all` or `git add .`
 
+### Pre-Commit Requirements
+- **ALWAYS run `npm run build` before committing to ensure no TypeScript or build errors**
+- **ALWAYS run `npm run test` before committing to ensure all tests pass**
+- Fix any errors found during build or test before committing
+- Do not push code that fails to build or has failing tests
+
 ### Simplicity and Pragmatism
 - **Bias towards simple solutions**: Address problems we currently have, not hypothetical future scaling issues
 - **Avoid premature optimization**: Don't implement complex patterns for problems that don't exist yet

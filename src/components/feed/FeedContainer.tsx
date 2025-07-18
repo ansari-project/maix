@@ -213,7 +213,7 @@ function getFeedItemIcon(type: FeedItem['type']) {
   switch (type) {
     case 'project_created':
       return FolderOpen
-    case 'application_submitted':
+    case 'volunteer_applied':
       return FileText
     case 'profile_updated':
       return User
@@ -226,7 +226,7 @@ function getFeedItemColor(type: FeedItem['type']) {
   switch (type) {
     case 'project_created':
       return 'bg-blue-100 text-blue-800'
-    case 'application_submitted':
+    case 'volunteer_applied':
       return 'bg-green-100 text-green-800'
     case 'profile_updated':
       return 'bg-orange-100 text-orange-800'

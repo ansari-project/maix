@@ -56,7 +56,7 @@ const mcpHandler = createMcpHandler(
     server.tool(
       "maix_update_profile",
       "Updates the authenticated user's profile information",
-      z.object({
+      {
         name: z.string().min(1).optional().describe("The user's display name"),
         bio: z.string().optional().describe("A short user biography"),
         linkedinUrl: z.string().url().optional().describe("LinkedIn profile URL"),
@@ -64,7 +64,7 @@ const mcpHandler = createMcpHandler(
         portfolioUrl: z.string().url().optional().describe("Portfolio website URL"),
         availability: z.string().optional().describe("Availability in hours per week"),
         skills: z.array(z.string()).optional().describe("List of skills"),
-      }),
+      },
       async (params, extra) => {
         try {
           const user = (extra.authInfo as MaixAuthInfo).extra.user;
@@ -78,8 +78,8 @@ const mcpHandler = createMcpHandler(
               githubUrl: params.githubUrl,
               portfolioUrl: params.portfolioUrl,
               availability: params.availability,
-              // Skills are stored as JSON array in the database
-              skills: params.skills ? JSON.stringify(params.skills) : undefined,
+              // Skills are stored as string array in the database
+              skills: params.skills || undefined,
             },
           });
 
@@ -99,7 +99,7 @@ const mcpHandler = createMcpHandler(
     server.tool(
       "maix_manage_project",
       "Create, read, update, or delete projects",
-      z.object({
+      {
         action: z.enum(["create", "update", "get", "list", "delete"]).describe("The action to perform"),
         projectId: z.string().optional().describe("Project ID (required for update, get, delete)"),
         title: z.string().optional().describe("Project title"),
@@ -110,7 +110,7 @@ const mcpHandler = createMcpHandler(
         contactEmail: z.string().email().optional().describe("Contact email for the project"),
         requiredSkills: z.array(z.string()).optional().describe("Required skills for volunteers"),
         budgetRange: z.string().optional().describe("Budget range for the project"),
-      }),
+      },
       async (params, extra) => {
         try {
           const user = (extra.authInfo as MaixAuthInfo).extra.user;
@@ -192,7 +192,7 @@ const mcpHandler = createMcpHandler(
                 };
               }
 
-              const skills = JSON.parse(project.requiredSkills || "[]");
+              const skills = JSON.parse((project.requiredSkills as string) || "[]");
               
               return {
                 content: [{ 
@@ -278,8 +278,7 @@ const mcpHandler = createMcpHandler(
     );
   },
   {
-    name: "MAIX MCP Server",
-    description: "Provides tools to interact with the MAIX platform",
+    // Optional server options
   },
   {
     // Keep it simple - no Redis for now
@@ -293,10 +292,10 @@ const authenticatedHandler = withMcpAuth(mcpHandler, verifyToken, {
 });
 
 // Add error handling wrapper
-const wrappedHandler = async (req: Request, ...args: any[]) => {
+const wrappedHandler = async (req: Request) => {
   try {
     console.log('MCP: Incoming request', { method: req.method, url: req.url });
-    const result = await authenticatedHandler(req, ...args);
+    const result = await authenticatedHandler(req);
     console.log('MCP: Request completed successfully');
     return result;
   } catch (error) {
