@@ -187,7 +187,7 @@ export function Sidebar({ isCollapsed = false, onToggle, currentPath }: SidebarP
 
       {/* Desktop Sidebar */}
       <div className={cn(
-        "hidden md:flex flex-col bg-background border-r transition-all duration-300",
+        "hidden md:flex flex-col bg-background border-r transition-all duration-300 fixed left-0 top-0 h-full z-40",
         isCollapsed ? "w-16" : "w-64"
       )}>
         <SidebarContent />
