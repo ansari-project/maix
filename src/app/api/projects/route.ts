@@ -102,33 +102,56 @@ export async function POST(request: Request) {
       }
     }
 
-    const project = await prisma.project.create({
-      data: {
-        ...validatedData,
-        // Convert empty string to null for optional URL field
-        organizationUrl: validatedData.organizationUrl === '' ? null : validatedData.organizationUrl,
-        // Convert undefined timeline to empty object for JSON field
-        timeline: validatedData.timeline || {},
-        // Convert undefined requiredSkills to empty array for JSON field
-        requiredSkills: validatedData.requiredSkills || [],
-        ownerId: user.id
-      },
-      include: {
-        owner: {
-          select: {
-            name: true,
-            email: true
-          }
-        },
-        product: {
-          select: {
-            id: true,
-            name: true,
-            url: true
+    // Create project with associated discussion post
+    const project = await prisma.$transaction(async (tx) => {
+      // 1. Create the project first
+      const newProject = await tx.project.create({
+        data: {
+          ...validatedData,
+          // Convert empty string to null for optional URL field
+          organizationUrl: validatedData.organizationUrl === '' ? null : validatedData.organizationUrl,
+          // Convert undefined timeline to empty object for JSON field
+          timeline: validatedData.timeline || {},
+          // Convert undefined requiredSkills to empty array for JSON field
+          requiredSkills: validatedData.requiredSkills || [],
+          ownerId: user.id
+        }
+      })
+
+      // 2. Create the discussion post and link it to the project
+      await tx.post.create({
+        data: {
+          type: 'PROJECT_DISCUSSION',
+          authorId: user.id,
+          content: `Discussion thread for ${newProject.title}`,
+          projectDiscussionThreadId: newProject.id, // Post holds FK to Project
+        }
+      })
+
+      // 3. Return the project with includes
+      return tx.project.findUnique({
+        where: { id: newProject.id },
+        include: {
+          owner: {
+            select: {
+              name: true,
+              email: true
+            }
+          },
+          product: {
+            select: {
+              id: true,
+              name: true,
+              url: true
+            }
           }
         }
-      }
+      })
     })
+
+    if (!project) {
+      throw new Error('Failed to create project')
+    }
 
     return NextResponse.json(project, { status: 201 })
   } catch (error) {

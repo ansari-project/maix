@@ -36,7 +36,10 @@ model User {
   products      Product[]
   messages      Message[]
   personalAccessTokens PersonalAccessToken[]
+  posts         Post[]
+  comments      Comment[]
 
+  @@index([skills], type: Gin)
   @@map("users")
 }
 
@@ -63,6 +66,12 @@ model Project {
   product       Product?      @relation(fields: [productId], references: [id])
   productId     String?
   applications  Application[]
+  
+  // Relation for all PROJECT_UPDATE posts (one-to-many)
+  updates Post[] @relation("ProjectUpdates")
+
+  // Back-relation to the single discussion post for this project (one-to-one)
+  discussionPost Post? @relation("ProjectDiscussionThread")
 
   @@index([isActive, createdAt])
   @@map("projects")
@@ -81,6 +90,12 @@ model Product {
   owner       User      @relation(fields: [ownerId], references: [id], onDelete: Restrict)
   ownerId     String
   projects    Project[]
+  
+  // Relation for all PRODUCT_UPDATE posts (one-to-many)
+  updates Post[] @relation("ProductUpdates")
+
+  // Back-relation to the single discussion post for this product (one-to-one)
+  discussionPost Post? @relation("ProductDiscussionThread")
 
   @@map("products")
 }
@@ -94,7 +109,7 @@ model Application {
   respondedAt DateTime?
 
   // Relations
-  user      User    @relation(fields: [userId], references: [id])
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String
   project   Project @relation(fields: [projectId], references: [id])
   projectId String
@@ -156,6 +171,16 @@ enum ApplicationStatus {
   WITHDRAWN
 }
 
+// Post types for structured content
+enum PostType {
+  QUESTION
+  ANSWER
+  PROJECT_UPDATE
+  PRODUCT_UPDATE
+  PROJECT_DISCUSSION
+  PRODUCT_DISCUSSION
+}
+
 // Personal Access Token model for MCP API authentication
 model PersonalAccessToken {
   id         String   @id @default(cuid())
@@ -169,4 +194,88 @@ model PersonalAccessToken {
   
   @@index([userId])
   @@map("personal_access_tokens")
+}
+
+/// Structured content posts for questions, answers, and updates.
+/// Implements the "Discussion Anchor Pattern" where PROJECT_DISCUSSION and PRODUCT_DISCUSSION
+/// posts serve as anchors for comments on projects/products.
+model Post {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  type    PostType
+  content String   @db.Text
+
+  // Author relationship (optional to handle deleted users)
+  authorId String?
+  author   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  // Optional relationships for specific post types
+  // A post can be an update FOR a project
+  projectId String?
+  project   Project? @relation("ProjectUpdates", fields: [projectId], references: [id], onDelete: Cascade)
+
+  // A post can be the discussion thread FOR a project (holds FK to project)
+  projectDiscussionThreadId String? @unique
+  projectDiscussionThread   Project? @relation("ProjectDiscussionThread", fields: [projectDiscussionThreadId], references: [id], onDelete: Cascade)
+
+  // A post can be an update FOR a product
+  productId String?
+  product   Product? @relation("ProductUpdates", fields: [productId], references: [id], onDelete: Cascade)
+
+  // A post can be the discussion thread FOR a product (holds FK to product)
+  productDiscussionThreadId String? @unique
+  productDiscussionThread   Product? @relation("ProductDiscussionThread", fields: [productDiscussionThreadId], references: [id], onDelete: Cascade)
+
+  // Self-referencing for Questions/Answers
+  parentId String?
+  parent   Post?   @relation("PostReplies", fields: [parentId], references: [id], onDelete: Restrict)
+  replies  Post[]  @relation("PostReplies")
+
+  // Q&A Resolution fields
+  isResolved   Boolean @default(false) // For questions - marks if question has been resolved
+  bestAnswerId String? @unique         // Reference to the best answer for this question
+  bestAnswer   Post?   @relation("BestAnswer", fields: [bestAnswerId], references: [id], onDelete: NoAction)
+  
+  // Back-relation: this answer is marked as best for which question
+  questionForBestAnswer Post? @relation("BestAnswer")
+
+  // Comments relationship
+  comments Comment[]
+
+  @@index([authorId])
+  @@index([projectId])
+  @@index([productId])
+  @@index([parentId])
+  @@index([projectDiscussionThreadId])
+  @@index([productDiscussionThreadId])
+  @@index([bestAnswerId])
+  @@index([type, createdAt])
+  @@map("posts")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Author relationship (optional to handle deleted users)
+  authorId  String?
+  author    User?     @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  // Post relationship (comments attach to posts only)
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  // Self-referencing for future threading (MVP: flat comments only)
+  parentId  String?
+  parent    Comment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: NoAction)
+  replies   Comment[] @relation("CommentReplies")
+
+  @@index([postId])
+  @@index([authorId])
+  @@index([parentId])
+  @@map("comments")
 }

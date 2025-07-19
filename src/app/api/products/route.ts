@@ -71,24 +71,46 @@ export async function POST(request: Request) {
     const body = await request.json()
     const validatedData = createProductSchema.parse(body)
 
-    // Create product
-    const product = await prisma.product.create({
-      data: {
-        name: validatedData.name,
-        description: validatedData.description,
-        url: validatedData.url || null,
-        ownerId: user.id
-      },
-      include: {
-        owner: {
-          select: {
-            id: true,
-            name: true,
-            email: true
+    // Create product with associated discussion post
+    const product = await prisma.$transaction(async (tx) => {
+      // 1. Create the product first
+      const newProduct = await tx.product.create({
+        data: {
+          name: validatedData.name,
+          description: validatedData.description,
+          url: validatedData.url || null,
+          ownerId: user.id
+        }
+      })
+
+      // 2. Create the discussion post and link it to the product
+      await tx.post.create({
+        data: {
+          type: 'PRODUCT_DISCUSSION',
+          authorId: user.id,
+          content: `Discussion thread for ${newProduct.name}`,
+          productDiscussionThreadId: newProduct.id, // Post holds FK to Product
+        }
+      })
+
+      // 3. Return the product with includes
+      return tx.product.findUnique({
+        where: { id: newProduct.id },
+        include: {
+          owner: {
+            select: {
+              id: true,
+              name: true,
+              email: true
+            }
           }
         }
-      }
+      })
     })
+
+    if (!product) {
+      throw new Error('Failed to create product')
+    }
 
     return NextResponse.json(product, { status: 201 })
   } catch (error) {
