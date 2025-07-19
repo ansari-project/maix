@@ -135,5 +135,12 @@ node_modules
 .env.production
 .next
 
+# TypeScript build info
+tsconfig.tsbuildinfo
+
+# Presentation files
+docs/outward/*.pdf
+docs/outward/*.pptx
+
 # Allow src/lib but ignore Python lib directories
 !src/lib/

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter, useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -42,13 +42,7 @@ export default function EditProductPage() {
     }
   }, [status, router])
 
-  useEffect(() => {
-    if (session && params.id) {
-      fetchProduct()
-    }
-  }, [session, params.id])
-
-  const fetchProduct = async () => {
+  const fetchProduct = useCallback(async () => {
     try {
       const response = await fetch(`/api/products/${params.id}`)
       if (response.ok) {
@@ -66,7 +60,13 @@ export default function EditProductPage() {
       console.error("Error fetching product:", error)
     }
     setLoading(false)
-  }
+  }, [params.id, router])
+
+  useEffect(() => {
+    if (session && params.id) {
+      fetchProduct()
+    }
+  }, [session, params.id, fetchProduct])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

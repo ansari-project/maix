@@ -158,6 +158,8 @@ style: |
 
 **Connecting AI Talent with Meaningful Impact**
 
+*maix.io*
+
 *What if every community organization had access to Silicon Valley AI talent?*
 
 ---
@@ -175,24 +177,24 @@ style: |
 ## The Cost of Inaction
 
 ### What We're Missing
-- Community organizations missing AI opportunities for impact
-- Educational nonprofits unable to leverage AI for learning
-- Social impact organizations falling behind in the AI revolution
-- Valuable AI expertise going unused while real problems persist
+- Benefit Organizations fall behind due to slow adoption of AI
+- Communities waste their resources on inefficient orgs
+- Orgs and communities beholden to large organizations for building AI
+- Valuable AI expertise squandered
 
 ---
 
 ## The Untapped Opportunity
 
-### The Potential
+### The Challenge
 
-AI professionals consistently express desire to contribute skills for meaningful causes, but struggle to find trusted, well-organized AI projects.
+AI professionals want to contribute to meaningful causes, but struggle to find well-organized projects where they can make real impact.
 
 ### What's Possible
-- Community organizations with AI-powered solutions
-- Educational nonprofits leveraging AI for personalized learning
-- Charitable causes with intelligent automation and insights
-- AI knowledge sharing that multiplies impact across sectors
+- Community orgs achieve greater impact through AI-driven efficiency
+- Nonprofits reduce overhead costs, directing more funds to their mission
+- Past solutions accelerate future projects through reusable knowledge
+- Virtuous cycle: each project makes the next one faster and better
 
 ---
 
@@ -202,32 +204,25 @@ AI professionals consistently express desire to contribute skills for meaningful
 
 **Maix** connects skilled AI professionals with meaningful AI projects, creating opportunities for mutual learning and community development.
 
-> "Where AI expertise meets purpose, and everyone learns"
-
 ### Our Core Focus
-- **Sharing AI knowledge** through hands-on collaboration
-- **Building AI solutions together** on meaningful projects
-- **Learning from each other** while creating real impact
+- **Learn**: AI techniques for social impact
+- **Teach**: Share expertise with community members
+- **Help**: Find meaningful ways to contribute expertise
+- **Get Help**: Access expert guidance for your cause
 
 ---
 
 ## How Maix Works
 
-**Building the world's knowledge repository for AI for good**
+### Core Components
 
-### The Vision: From Community to MaixMind
-
-Every question, answer, project, and solution feeds into **MaixMind** - an AI system that learns from our collective experience using AI for meaningful causes.
-
-### Five Core Functions
-
-1. **AI Questions & Answers**: Experts share knowledge (captured by MaixMind)
+1. **Q + A about AI for Good**: Experts share knowledge
 2. **Projects**: Organizations post AI projects for volunteers
 3. **Products**: Comprehensive index of AI-for-Good projects
-4. **MaixMind**: Eventually answers questions instantly using accumulated wisdom
+4. **MaixMind**: AI system learning from all community interactions
 
-### The Evolution
-Human Q&A → Project collaboration → Solution patterns → MaixMind learns → Instant AI guidance for any cause
+### The Virtuous Cycle
+Community knowledge → Project collaboration → Solution patterns → MaixMind learns → Automated AI benefits
 
 ---
 
@@ -236,7 +231,7 @@ Human Q&A → Project collaboration → Solution patterns → MaixMind learns �
 <div class="success-box">
 
 ### What Success Looks Like
-*A community organization learns to leverage AI effectively while a skilled professional learns about real-world impact - creating lasting change for both.*
+*Rather than lagging behind other sectors, community organizations are at the forefront of AI adoption and its application to helping humanity.*
 
 </div>
 
@@ -252,10 +247,10 @@ Human Q&A → Project collaboration → Solution patterns → MaixMind learns �
 ## Our Mission & Vision
 
 ### Mission
-**To build the world's most comprehensive repository of knowledge and action for using AI to advance humanity - starting with human experts and evolving into MaixMind.**
+To build the world's most comprehensive repository of knowledge and action for using AI to advance humanity - starting with human experts and evolving into MaixMind.
 
 ### Vision
-**A world where anyone with a meaningful cause can instantly access the collective wisdom of how to apply AI effectively - no expertise required.**
+A world where anyone with a meaningful cause can instantly access the collective wisdom of how to apply AI effectively - no expertise required.
 
 ---
 
@@ -268,9 +263,6 @@ Human Q&A → Project collaboration → Solution patterns → MaixMind learns �
 3. **Create Knowledge Base**: Structure learnings into searchable repository
 4. **Train MaixMind**: Feed all knowledge into AI system for instant guidance
 5. **Democratize AI**: Anyone can get expert-level AI advice instantly
-
-### The Evolution Cycle
-Human expertise → Community knowledge → Structured learning → MaixMind intelligence → Universal AI access
 
 ---
 
@@ -285,16 +277,6 @@ Human expertise → Community knowledge → Structured learning → MaixMind int
 
 ---
 
-## The Impact We Envision
-
-### A World Where...
-
-- **Every worthy cause** has instant access to expert AI guidance through MaixMind
-- **No technical expertise** is needed to apply AI for good
-- **Collective human wisdom** about AI is preserved and accessible to all
-- **AI advancement** is democratized and serves humanity's highest aspirations
-
----
 
 ## The Ask
 

@@ -139,6 +139,8 @@ To ensure code quality and prevent deployment failures, always perform the follo
 
 **Logging Middleware**: Rather than building comprehensive request logging middleware with performance monitoring and complex event types, we implemented basic structured logging for only essential events (auth, moderation, errors). This provides the debugging capability we need without premature infrastructure complexity.
 
+**Performance Optimization**: Rather than implementing complex Prisma query optimization, database indexing strategies, N+1 query prevention, and caching layers upfront, we use straightforward Prisma queries and will only optimize if we observe actual performance problems. This avoids spending time on hypothetical scaling issues when we should focus on user value and core functionality.
+
 ### Performance and Security Priorities
 - Rate limiting is NOT a priority for this project
 - Focus on input validation and data security over traffic management

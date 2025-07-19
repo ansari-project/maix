@@ -5,7 +5,15 @@ import { prisma } from '@/lib/prisma'
 
 // Mock the dependencies
 jest.mock('next-auth/next')
-jest.mock('@/lib/prisma')
+jest.mock('@/lib/prisma', () => ({
+  prisma: {
+    post: {
+      findUnique: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    },
+  },
+}))
 
 const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>
 const mockPrisma = prisma as jest.Mocked<typeof prisma>
