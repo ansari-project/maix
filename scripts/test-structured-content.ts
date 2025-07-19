@@ -40,6 +40,7 @@ async function runTests() {
     testUser = await prisma.user.create({
       data: {
         email: testEmail,
+        username: 'testuser',
         name: 'Test User',
         specialty: 'AI',
         experienceLevel: 'SENIOR'

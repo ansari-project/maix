@@ -17,6 +17,7 @@ describe('/api/auth/signup', () => {
 
   const validSignupData = {
     name: 'John Doe',
+    username: 'johndoe',
     email: 'john@example.com',
     password: 'Password123!',
   }
@@ -32,11 +33,14 @@ describe('/api/auth/signup', () => {
       const mockUser = {
         id: 'user-123',
         name: validSignupData.name,
+        username: validSignupData.username,
         email: validSignupData.email,
         password: 'hashed-password',
       }
 
-      mockPrisma.user.findUnique.mockResolvedValue(null)
+      mockPrisma.user.findUnique
+        .mockResolvedValueOnce(null) // First call for email check
+        .mockResolvedValueOnce(null) // Second call for username check
       mockPrisma.user.create.mockResolvedValue(mockUser)
       mockBcrypt.hash.mockResolvedValue('hashed-password')
 
@@ -53,6 +57,7 @@ describe('/api/auth/signup', () => {
     test('should return 400 for invalid input data', async () => {
       const invalidData = {
         name: 'A', // Too short
+        username: 'ab', // Too short
         email: 'invalid-email',
         password: 'weak',
       }
@@ -75,7 +80,9 @@ describe('/api/auth/signup', () => {
         email: validSignupData.email,
       }
 
-      mockPrisma.user.findUnique.mockResolvedValue(existingUser as any)
+      mockPrisma.user.findUnique
+        .mockResolvedValueOnce(existingUser as any) // First call for email check
+        .mockResolvedValueOnce(null) // Second call for username check
 
       const request = createMockRequest(validSignupData)
       const response = await POST(request)
@@ -133,7 +140,9 @@ describe('/api/auth/signup', () => {
     })
 
     test('should handle database errors', async () => {
-      mockPrisma.user.findUnique.mockRejectedValue(new Error('Database error'))
+      mockPrisma.user.findUnique
+        .mockRejectedValueOnce(new Error('Database error'))
+        .mockResolvedValueOnce(null)
 
       const request = createMockRequest(validSignupData)
       const response = await POST(request)
@@ -144,7 +153,9 @@ describe('/api/auth/signup', () => {
     })
 
     test('should handle bcrypt errors', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null)
+      mockPrisma.user.findUnique
+        .mockResolvedValueOnce(null) // First call for email check
+        .mockResolvedValueOnce(null) // Second call for username check
       mockBcrypt.hash.mockRejectedValue(new Error('Bcrypt error'))
 
       const request = createMockRequest(validSignupData)

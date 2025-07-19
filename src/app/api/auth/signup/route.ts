@@ -32,16 +32,24 @@ export async function POST(request: Request) {
       )
     }
 
-    const { name, email, password } = validation.data
+    const { name, username, email, password } = validation.data
 
     // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email }
-    })
+    const [existingUserByEmail, existingUserByUsername] = await Promise.all([
+      prisma.user.findUnique({ where: { email } }),
+      prisma.user.findUnique({ where: { username } })
+    ])
 
-    if (existingUser) {
+    if (existingUserByEmail) {
       return NextResponse.json(
         { message: "User with this email already exists" },
+        { status: 400 }
+      )
+    }
+
+    if (existingUserByUsername) {
+      return NextResponse.json(
+        { message: "Username is already taken" },
         { status: 400 }
       )
     }
@@ -53,6 +61,7 @@ export async function POST(request: Request) {
     const user = await prisma.user.create({
       data: {
         name,
+        username,
         email,
         password: hashedPassword,
       }

@@ -10,6 +10,7 @@ import Link from "next/link"
 
 export default function SignUpPage() {
   const [name, setName] = useState("")
+  const [username, setUsername] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -36,7 +37,7 @@ export default function SignUpPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, username, email, password }),
       })
 
       if (response.ok) {
@@ -77,6 +78,18 @@ export default function SignUpPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 autoComplete="name"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                type="text"
+                placeholder="Choose a username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                autoComplete="username"
                 required
               />
             </div>

@@ -80,6 +80,7 @@ describe('Validation Schemas', () => {
   describe('signupSchema', () => {
     const validSignupData = {
       name: 'John Doe',
+      username: 'johndoe',
       email: 'john@example.com',
       password: 'Password123!',
     }
