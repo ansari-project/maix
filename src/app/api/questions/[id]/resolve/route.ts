@@ -1,12 +1,9 @@
 import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { z } from 'zod'
-
-const resolveQuestionSchema = z.object({
-  bestAnswerId: z.string().cuid(),
-})
+import { resolveQuestionSchema } from '@/lib/validations'
+import { requireAuth } from '@/lib/auth-utils'
+import { handleApiError, parseRequestBody, successResponse } from '@/lib/api-utils'
+import { AuthorizationError } from '@/lib/errors'
 
 // Mark question as resolved with a best answer
 export async function POST(
@@ -14,32 +11,9 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user?.email) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Get user ID from email
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
-    })
-
-    if (!user) {
-      return NextResponse.json({ message: 'User not found' }, { status: 404 })
-    }
-
-    const body = await request.json()
-    const validation = resolveQuestionSchema.safeParse(body)
-
-    if (!validation.success) {
-      return NextResponse.json(validation.error.errors, { status: 400 })
-    }
-
-    const { bestAnswerId } = validation.data
-    const questionId = id
-    const userId = user.id
+    const user = await requireAuth()
+    const { id: questionId } = await params
+    const { bestAnswerId } = await parseRequestBody(request, resolveQuestionSchema)
 
     // Verify question exists and user is the author
     const question = await prisma.post.findUnique({
@@ -52,20 +26,20 @@ export async function POST(
     })
 
     if (!question) {
-      return NextResponse.json({ message: 'Question not found' }, { status: 404 })
+      throw new Error('Question not found')
     }
 
     if (question.type !== 'QUESTION') {
-      return NextResponse.json({ message: 'Post is not a question' }, { status: 400 })
+      throw new Error('Post is not a question')
     }
 
-    if (question.authorId !== userId) {
-      return NextResponse.json({ message: 'Only question author can mark best answer' }, { status: 403 })
+    if (question.authorId !== user.id) {
+      throw new AuthorizationError('Only question author can mark best answer')
     }
 
     // Verify the best answer is actually an answer to this question
     if (question.replies.length === 0) {
-      return NextResponse.json({ message: 'Answer not found or not an answer to this question' }, { status: 400 })
+      throw new Error('Answer not found or not an answer to this question')
     }
 
     // Update question with best answer
@@ -86,10 +60,9 @@ export async function POST(
       }
     })
 
-    return NextResponse.json(updatedQuestion)
+    return successResponse(updatedQuestion)
   } catch (error) {
-    console.error("Error resolving question:", error)
-    return NextResponse.json({ message: 'Error resolving question' }, { status: 500 })
+    return handleApiError(error, 'POST /api/questions/[id]/resolve')
   }
 }
 
@@ -99,24 +72,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user?.email) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Get user ID from email
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
-    })
-
-    if (!user) {
-      return NextResponse.json({ message: 'User not found' }, { status: 404 })
-    }
-
-    const questionId = id
-    const userId = user.id
+    const user = await requireAuth()
+    const { id: questionId } = await params
 
     // Verify question exists and user is the author
     const question = await prisma.post.findUnique({
@@ -124,15 +81,15 @@ export async function DELETE(
     })
 
     if (!question) {
-      return NextResponse.json({ message: 'Question not found' }, { status: 404 })
+      throw new Error('Question not found')
     }
 
     if (question.type !== 'QUESTION') {
-      return NextResponse.json({ message: 'Post is not a question' }, { status: 400 })
+      throw new Error('Post is not a question')
     }
 
-    if (question.authorId !== userId) {
-      return NextResponse.json({ message: 'Only question author can unmark best answer' }, { status: 403 })
+    if (question.authorId !== user.id) {
+      throw new AuthorizationError('Only question author can unmark best answer')
     }
 
     // Remove best answer marking
@@ -144,9 +101,8 @@ export async function DELETE(
       }
     })
 
-    return NextResponse.json(updatedQuestion)
+    return successResponse(updatedQuestion)
   } catch (error) {
-    console.error("Error unresolving question:", error)
-    return NextResponse.json({ message: 'Error unresolving question' }, { status: 500 })
+    return handleApiError(error, 'DELETE /api/questions/[id]/resolve')
   }
 }

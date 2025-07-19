@@ -1,26 +1,13 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { requireAuth } from "@/lib/auth-utils"
+import { handleApiError, successResponse } from "@/lib/api-utils"
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    // Get user ID from email
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
-    })
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 })
-    }
+    const user = await requireAuth()
 
     // Query existing models directly as per the simplified approach
     const [projects, applications] = await Promise.all([
@@ -66,11 +53,10 @@ export async function GET() {
       b.timestamp.getTime() - a.timestamp.getTime()
     )
 
-    return NextResponse.json({
+    return successResponse({
       items: sortedItems.slice(0, 20) // Return top 20 items
     })
   } catch (error) {
-    console.error("Feed fetch error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return handleApiError(error, "GET /api/feed")
   }
 }

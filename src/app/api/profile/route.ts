@@ -1,21 +1,17 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { profileUpdateSchema } from "@/lib/validations"
+import { requireAuth } from "@/lib/auth-utils"
+import { handleApiError, parseRequestBody, successResponse } from "@/lib/api-utils"
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const user = await requireAuth()
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+    const userProfile = await prisma.user.findUnique({
+      where: { id: user.id },
       select: {
         id: true,
         name: true,
@@ -32,47 +28,19 @@ export async function GET() {
       }
     })
 
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 })
-    }
-
-    return NextResponse.json(user)
+    return successResponse(userProfile)
   } catch (error) {
-    console.error("Profile fetch error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return handleApiError(error, "GET /api/profile")
   }
 }
 
 export async function PUT(request: Request) {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    const body = await request.json()
-    
-    // Validate input with Zod
-    const validation = profileUpdateSchema.safeParse(body)
-    
-    if (!validation.success) {
-      return NextResponse.json(
-        { 
-          error: "Invalid input", 
-          errors: validation.error.errors.map(err => ({
-            field: err.path.join('.'),
-            message: err.message
-          }))
-        },
-        { status: 400 }
-      )
-    }
-
-    const validatedData = validation.data
+    const user = await requireAuth()
+    const validatedData = await parseRequestBody(request, profileUpdateSchema)
 
     const updatedUser = await prisma.user.update({
-      where: { email: session.user.email },
+      where: { id: user.id },
       data: {
         ...validatedData,
         // Convert empty strings to null for optional URL fields
@@ -96,9 +64,8 @@ export async function PUT(request: Request) {
       }
     })
 
-    return NextResponse.json(updatedUser)
+    return successResponse(updatedUser)
   } catch (error) {
-    console.error("Profile update error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return handleApiError(error, "PUT /api/profile")
   }
 }

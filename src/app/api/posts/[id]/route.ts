@@ -1,12 +1,9 @@
 import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { z } from 'zod'
-
-const postUpdateSchema = z.object({
-  content: z.string().min(1),
-})
+import { postUpdateSchema } from '@/lib/validations'
+import { requireAuth } from '@/lib/auth-utils'
+import { handleApiError, parseRequestBody, successResponse } from '@/lib/api-utils'
+import { AuthorizationError } from '@/lib/errors'
 
 export async function GET(
   request: Request,
@@ -71,13 +68,12 @@ export async function GET(
     })
 
     if (!post) {
-      return NextResponse.json({ message: 'Post not found' }, { status: 404 })
+      throw new Error('Post not found')
     }
 
-    return NextResponse.json(post)
+    return successResponse(post)
   } catch (error) {
-    console.error("Error fetching post:", error)
-    return NextResponse.json({ message: 'Error fetching post' }, { status: 500 })
+    return handleApiError(error, 'GET /api/posts/[id]')
   }
 }
 
@@ -86,31 +82,9 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user?.email) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Get user ID from email
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
-    })
-
-    if (!user) {
-      return NextResponse.json({ message: 'User not found' }, { status: 404 })
-    }
-
-    const userId = user.id
-    const body = await request.json()
-    const validation = postUpdateSchema.safeParse(body)
-
-    if (!validation.success) {
-      return NextResponse.json(validation.error.errors, { status: 400 })
-    }
-
-    const { content } = validation.data
+    const user = await requireAuth()
+    const { id } = await params
+    const { content } = await parseRequestBody(request, postUpdateSchema)
 
     // Check if post exists and user is the author
     const post = await prisma.post.findUnique({
@@ -118,11 +92,11 @@ export async function PATCH(
     })
 
     if (!post) {
-      return NextResponse.json({ message: 'Post not found' }, { status: 404 })
+      throw new Error('Post not found')
     }
 
-    if (post.authorId !== userId) {
-      return NextResponse.json({ message: 'Insufficient permissions' }, { status: 403 })
+    if (post.authorId !== user.id) {
+      throw new AuthorizationError('Only post authors can edit their posts')
     }
 
     // Only allow updating content, not structural fields
@@ -136,10 +110,9 @@ export async function PATCH(
       }
     })
 
-    return NextResponse.json(updatedPost)
+    return successResponse(updatedPost)
   } catch (error) {
-    console.error("Error updating post:", error)
-    return NextResponse.json({ message: 'Error updating post' }, { status: 500 })
+    return handleApiError(error, 'PATCH /api/posts/[id]')
   }
 }
 
@@ -148,23 +121,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user?.email) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Get user ID from email
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
-    })
-
-    if (!user) {
-      return NextResponse.json({ message: 'User not found' }, { status: 404 })
-    }
-
-    const userId = user.id
+    const user = await requireAuth()
+    const { id } = await params
 
     const post = await prisma.post.findUnique({
       where: { id },
@@ -174,35 +132,30 @@ export async function DELETE(
     })
 
     if (!post) {
-      return NextResponse.json({ message: 'Post not found' }, { status: 404 })
+      throw new Error('Post not found')
     }
 
     // Authorization: only author can delete their posts
-    if (post.authorId !== userId) {
-      return NextResponse.json({ message: 'Insufficient permissions' }, { status: 403 })
+    if (post.authorId !== user.id) {
+      throw new AuthorizationError('Only post authors can delete their posts')
     }
 
     // Business rule: Questions can only be deleted if no answers exist
     if (post.type === 'QUESTION' && post._count.replies > 0) {
-      return NextResponse.json({ 
-        message: 'Cannot delete question with existing answers' 
-      }, { status: 400 })
+      throw new Error('Cannot delete question with existing answers')
     }
 
     // Prevent deletion of discussion posts
     if (post.type === 'PROJECT_DISCUSSION' || post.type === 'PRODUCT_DISCUSSION') {
-      return NextResponse.json({ 
-        message: 'Discussion posts cannot be deleted' 
-      }, { status: 400 })
+      throw new Error('Discussion posts cannot be deleted')
     }
 
     await prisma.post.delete({
       where: { id }
     })
 
-    return NextResponse.json({ message: 'Post deleted successfully' })
+    return successResponse({ message: 'Post deleted successfully' })
   } catch (error) {
-    console.error("Error deleting post:", error)
-    return NextResponse.json({ message: 'Error deleting post' }, { status: 500 })
+    return handleApiError(error, 'DELETE /api/posts/[id]')
   }
 }

@@ -1,13 +1,9 @@
 import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { logger } from '@/lib/logger'
-import { z } from 'zod'
-
-const commentCreateSchema = z.object({
-  content: z.string().min(1),
-})
+import { commentCreateSchema } from '@/lib/validations'
+import { requireAuth } from '@/lib/auth-utils'
+import { handleApiError, parseRequestBody, successResponse } from '@/lib/api-utils'
 
 // Create comment on post
 export async function POST(
@@ -16,30 +12,8 @@ export async function POST(
 ) {
   const { id } = await params; // Move outside try block for scope
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user?.email) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Get user ID from email
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
-    })
-
-    if (!user) {
-      return NextResponse.json({ message: 'User not found' }, { status: 404 })
-    }
-
-    const body = await request.json()
-    const validation = commentCreateSchema.safeParse(body)
-
-    if (!validation.success) {
-      return NextResponse.json(validation.error.errors, { status: 400 })
-    }
-
-    const { content } = validation.data
-    const userId = user.id
+    const user = await requireAuth()
+    const { content } = await parseRequestBody(request, commentCreateSchema)
 
     // Verify post exists
     const post = await prisma.post.findUnique({
@@ -47,13 +21,13 @@ export async function POST(
     })
 
     if (!post) {
-      return NextResponse.json({ message: 'Post not found' }, { status: 404 })
+      throw new Error('Post not found')
     }
 
     const comment = await prisma.comment.create({
       data: {
         content,
-        authorId: userId,
+        authorId: user.id,
         postId: id,
       },
       include: {
@@ -63,11 +37,11 @@ export async function POST(
       }
     })
 
-    return NextResponse.json(comment, { status: 201 })
+    return successResponse(comment, 201)
   } catch (error) {
     // Log the error with structured logging
     logger.dbError('comment creation', error as Error, { postId: id })
-    return NextResponse.json({ message: 'Error creating comment' }, { status: 500 })
+    return handleApiError(error, 'POST /api/posts/[id]/comments')
   }
 }
 
@@ -106,7 +80,7 @@ export async function GET(
       }
     })
 
-    return NextResponse.json({
+    return successResponse({
       comments,
       pagination: {
         total,
@@ -115,7 +89,6 @@ export async function GET(
       }
     })
   } catch (error) {
-    console.error("Error fetching comments:", error)
-    return NextResponse.json({ message: 'Error fetching comments' }, { status: 500 })
+    return handleApiError(error, 'GET /api/posts/[id]/comments')
   }
 }

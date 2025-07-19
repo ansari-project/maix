@@ -1,29 +1,10 @@
 import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { logger } from '@/lib/logger'
-import { z } from 'zod'
-
-const postCreateSchema = z.object({
-  type: z.enum(['QUESTION', 'ANSWER', 'PROJECT_UPDATE', 'PRODUCT_UPDATE']),
-  content: z.string().min(1),
-  projectId: z.string().cuid().optional(),
-  productId: z.string().cuid().optional(),
-  parentId: z.string().cuid().optional(),
-})
-.refine(data => !(data.type === 'PROJECT_UPDATE' && !data.projectId), {
-  message: "projectId is required for PROJECT_UPDATE",
-  path: ["projectId"],
-})
-.refine(data => !(data.type === 'PRODUCT_UPDATE' && !data.productId), {
-  message: "productId is required for PRODUCT_UPDATE", 
-  path: ["productId"],
-})
-.refine(data => !(data.type === 'ANSWER' && !data.parentId), {
-  message: "parentId is required for ANSWER",
-  path: ["parentId"],
-})
+import { postCreateSchema } from '@/lib/validations'
+import { requireAuth } from '@/lib/auth-utils'
+import { handleApiError, parseRequestBody, successResponse } from '@/lib/api-utils'
+import { AuthorizationError } from '@/lib/errors'
 
 // Note: PROJECT_DISCUSSION and PRODUCT_DISCUSSION posts are created automatically
 // when projects/products are created, not through this endpoint
@@ -66,29 +47,9 @@ export async function POST(request: Request) {
   let type: any, projectId: string | undefined, productId: string | undefined, parentId: string | undefined;
   
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user?.email) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
-    }
+    const user = await requireAuth()
+    const validationData = await parseRequestBody(request, postCreateSchema)
 
-    // Get user ID from email
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
-    })
-
-    if (!user) {
-      return NextResponse.json({ message: 'User not found' }, { status: 404 })
-    }
-
-    const body = await request.json()
-    const validation = postCreateSchema.safeParse(body)
-
-    if (!validation.success) {
-      return NextResponse.json(validation.error.errors, { status: 400 })
-    }
-
-    const validationData = validation.data;
     type = validationData.type;
     projectId = validationData.projectId;
     productId = validationData.productId;
@@ -99,7 +60,7 @@ export async function POST(request: Request) {
     // Check authorization
     const hasPermission = await checkPostCreatePermission(type, userId, projectId, productId)
     if (!hasPermission) {
-      return NextResponse.json({ message: 'Insufficient permissions' }, { status: 403 })
+      throw new AuthorizationError('Insufficient permissions')
     }
 
     // Additional validation for ANSWER type
@@ -109,9 +70,7 @@ export async function POST(request: Request) {
       })
       
       if (!parentPost || parentPost.type !== 'QUESTION') {
-        return NextResponse.json({ 
-          message: 'Parent post must be a question' 
-        }, { status: 400 })
+        throw new Error('Parent post must be a question')
       }
     }
 
@@ -143,11 +102,11 @@ export async function POST(request: Request) {
       }
     })
 
-    return NextResponse.json(post, { status: 201 })
+    return successResponse(post, 201)
   } catch (error) {
     // Log the error with structured logging
     logger.dbError('post creation', error as Error, { type, projectId, productId, parentId })
-    return NextResponse.json({ message: 'Error creating post' }, { status: 500 })
+    return handleApiError(error, 'POST /api/posts')
   }
 }
 
@@ -217,9 +176,8 @@ export async function GET(request: Request) {
       },
     })
 
-    return NextResponse.json(posts)
+    return successResponse(posts)
   } catch (error) {
-    console.error("Error fetching posts:", error)
-    return NextResponse.json({ message: 'Error fetching posts' }, { status: 500 })
+    return handleApiError(error, 'GET /api/posts')
   }
 }

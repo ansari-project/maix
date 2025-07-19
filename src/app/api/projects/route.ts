@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { projectCreateSchema } from "@/lib/validations"
+import { requireAuth } from "@/lib/auth-utils"
+import { handleApiError, parseRequestBody, successResponse } from "@/lib/api-utils"
 
 export const dynamic = 'force-dynamic'
 
@@ -38,48 +38,16 @@ export async function GET() {
       take: 50 // Add pagination limit
     })
 
-    return NextResponse.json(projects)
+    return successResponse(projects)
   } catch (error) {
-    console.error("Projects fetch error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return handleApiError(error, "GET /api/projects")
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
-    })
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 })
-    }
-
-    const body = await request.json()
-    
-    // Validate input with Zod
-    const validation = projectCreateSchema.safeParse(body)
-    
-    if (!validation.success) {
-      return NextResponse.json(
-        { 
-          message: "Invalid input", 
-          errors: validation.error.errors.map(err => ({
-            field: err.path.join('.'),
-            message: err.message
-          }))
-        },
-        { status: 400 }
-      )
-    }
-
-    const validatedData = validation.data
+    const user = await requireAuth()
+    const validatedData = await parseRequestBody(request, projectCreateSchema)
 
     // If productId is provided, validate user owns the product
     if (validatedData.productId) {
@@ -88,17 +56,11 @@ export async function POST(request: Request) {
       })
 
       if (!product) {
-        return NextResponse.json(
-          { error: "Product not found" },
-          { status: 404 }
-        )
+        throw new Error("Product not found")
       }
 
       if (product.ownerId !== user.id) {
-        return NextResponse.json(
-          { error: "You can only associate projects with your own products" },
-          { status: 403 }
-        )
+        throw new Error("You can only associate projects with your own products")
       }
     }
 
@@ -153,9 +115,8 @@ export async function POST(request: Request) {
       throw new Error('Failed to create project')
     }
 
-    return NextResponse.json(project, { status: 201 })
+    return successResponse(project, 201)
   } catch (error) {
-    console.error("Project creation error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return handleApiError(error, "POST /api/projects")
   }
 }

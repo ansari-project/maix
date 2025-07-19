@@ -100,6 +100,36 @@ export const projectCreateSchema = z.object({
 
 export const projectUpdateSchema = projectCreateSchema.partial()
 
+// Product validation schemas
+export const productCreateSchema = z.object({
+  name: z.string().min(1, "Product name is required"),
+  description: z.string().min(1, "Product description is required"),
+  url: z.string().url("Invalid URL").optional().or(z.literal("")),
+})
+
+export const productUpdateSchema = productCreateSchema.partial()
+
+// Post validation schemas
+export const postCreateSchema = z.object({
+  type: z.enum(['QUESTION', 'ANSWER', 'PROJECT_UPDATE', 'PRODUCT_UPDATE']),
+  content: z.string().min(1),
+  projectId: z.string().cuid().optional(),
+  productId: z.string().cuid().optional(),
+  parentId: z.string().cuid().optional(),
+})
+.refine(data => !(data.type === 'PROJECT_UPDATE' && !data.projectId), {
+  message: "projectId is required for PROJECT_UPDATE",
+  path: ["projectId"],
+})
+.refine(data => !(data.type === 'PRODUCT_UPDATE' && !data.productId), {
+  message: "productId is required for PRODUCT_UPDATE", 
+  path: ["productId"],
+})
+.refine(data => !(data.type === 'ANSWER' && !data.parentId), {
+  message: "parentId is required for ANSWER",
+  path: ["parentId"],
+})
+
 // Application validation schemas
 export const applicationCreateSchema = z.object({
   message: z.string()
@@ -112,6 +142,24 @@ export const applicationUpdateSchema = z.object({
   message: z.string()
     .max(1000, 'Response message must be less than 1000 characters long')
     .optional(),
+})
+
+// Comment validation schemas
+export const commentCreateSchema = z.object({
+  content: z.string().min(1, 'Comment content is required'),
+  postId: z.string().cuid('Invalid post ID format'),
+})
+
+export const commentUpdateSchema = z.object({
+  content: z.string().min(1, 'Comment content is required'),
+})
+
+export const postUpdateSchema = z.object({
+  content: z.string().min(1, 'Post content is required'),
+})
+
+export const resolveQuestionSchema = z.object({
+  bestAnswerId: z.string().cuid('Invalid answer ID format'),
 })
 
 // Common validation helpers

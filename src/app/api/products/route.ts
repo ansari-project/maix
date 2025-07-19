@@ -1,17 +1,10 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { z } from "zod"
+import { productCreateSchema } from "@/lib/validations"
+import { requireAuth } from "@/lib/auth-utils"
+import { handleApiError, parseRequestBody, successResponse } from "@/lib/api-utils"
 
 export const dynamic = 'force-dynamic'
-
-// Validation schema for product creation
-const createProductSchema = z.object({
-  name: z.string().min(1, "Product name is required"),
-  description: z.string().min(1, "Product description is required"),
-  url: z.string().url("Invalid URL").optional().or(z.literal("")),
-})
 
 // GET /api/products - List all products
 export async function GET() {
@@ -34,42 +27,17 @@ export async function GET() {
       }
     })
 
-    return NextResponse.json(products)
+    return successResponse(products)
   } catch (error) {
-    console.error("Error fetching products:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch products" },
-      { status: 500 }
-    )
+    return handleApiError(error, "GET /api/products")
   }
 }
 
 // POST /api/products - Create new product
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      )
-    }
-
-    // Get user ID from session
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
-    })
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      )
-    }
-
-    const body = await request.json()
-    const validatedData = createProductSchema.parse(body)
+    const user = await requireAuth()
+    const validatedData = await parseRequestBody(request, productCreateSchema)
 
     // Create product with associated discussion post
     const product = await prisma.$transaction(async (tx) => {
@@ -112,19 +80,8 @@ export async function POST(request: Request) {
       throw new Error('Failed to create product')
     }
 
-    return NextResponse.json(product, { status: 201 })
+    return successResponse(product, 201)
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Invalid input", details: error.errors },
-        { status: 400 }
-      )
-    }
-
-    console.error("Error creating product:", error)
-    return NextResponse.json(
-      { error: "Failed to create product" },
-      { status: 500 }
-    )
+    return handleApiError(error, "POST /api/products")
   }
 }

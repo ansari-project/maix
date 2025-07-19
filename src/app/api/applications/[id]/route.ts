@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { applicationUpdateSchema } from "@/lib/validations"
+import { requireAuth } from "@/lib/auth-utils"
+import { handleApiError, parseRequestBody, successResponse } from "@/lib/api-utils"
+import { AuthorizationError } from "@/lib/errors"
 
 export const dynamic = 'force-dynamic'
 
@@ -11,13 +12,9 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
+    const user = await requireAuth()
     const { id } = await params
+    const { status, message } = await parseRequestBody(request, applicationUpdateSchema)
 
     const application = await prisma.application.findUnique({
       where: { id },
@@ -31,33 +28,13 @@ export async function PATCH(
     })
 
     if (!application) {
-      return NextResponse.json({ error: "Application not found" }, { status: 404 })
+      throw new Error("Application not found")
     }
 
     // Check if user is the project owner
-    if (application.project.owner.email !== session.user.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
+    if (application.project.owner.id !== user.id) {
+      throw new AuthorizationError("Only project owners can update applications")
     }
-
-    const body = await request.json()
-    
-    // Validate input with Zod
-    const validation = applicationUpdateSchema.safeParse(body)
-    
-    if (!validation.success) {
-      return NextResponse.json(
-        { 
-          message: "Invalid input", 
-          errors: validation.error.errors.map(err => ({
-            field: err.path.join('.'),
-            message: err.message
-          }))
-        },
-        { status: 400 }
-      )
-    }
-
-    const { status, message } = validation.data
 
     const updatedApplication = await prisma.application.update({
       where: { id },
@@ -76,9 +53,8 @@ export async function PATCH(
       }
     })
 
-    return NextResponse.json(updatedApplication)
+    return successResponse(updatedApplication)
   } catch (error) {
-    console.error("Application update error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return handleApiError(error, "PATCH /api/applications/[id]")
   }
 }

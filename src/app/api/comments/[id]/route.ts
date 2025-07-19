@@ -1,43 +1,18 @@
 import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { z } from 'zod'
-
-const commentUpdateSchema = z.object({
-  content: z.string().min(1),
-})
+import { commentUpdateSchema } from '@/lib/validations'
+import { requireAuth } from '@/lib/auth-utils'
+import { handleApiError, parseRequestBody, successResponse } from '@/lib/api-utils'
+import { AuthorizationError } from '@/lib/errors'
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user?.email) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Get user ID from email
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
-    })
-
-    if (!user) {
-      return NextResponse.json({ message: 'User not found' }, { status: 404 })
-    }
-
-    const userId = user.id
-    const body = await request.json()
-    const validation = commentUpdateSchema.safeParse(body)
-
-    if (!validation.success) {
-      return NextResponse.json(validation.error.errors, { status: 400 })
-    }
-
-    const { content } = validation.data
+    const user = await requireAuth()
+    const { id } = await params
+    const { content } = await parseRequestBody(request, commentUpdateSchema)
 
     // Check if comment exists and user is the author
     const comment = await prisma.comment.findUnique({
@@ -45,11 +20,11 @@ export async function PATCH(
     })
 
     if (!comment) {
-      return NextResponse.json({ message: 'Comment not found' }, { status: 404 })
+      throw new Error('Comment not found')
     }
 
-    if (comment.authorId !== userId) {
-      return NextResponse.json({ message: 'Insufficient permissions' }, { status: 403 })
+    if (comment.authorId !== user.id) {
+      throw new AuthorizationError('Only comment authors can edit their comments')
     }
 
     // Update comment
@@ -63,10 +38,9 @@ export async function PATCH(
       }
     })
 
-    return NextResponse.json(updatedComment)
+    return successResponse(updatedComment)
   } catch (error) {
-    console.error("Error updating comment:", error)
-    return NextResponse.json({ message: 'Error updating comment' }, { status: 500 })
+    return handleApiError(error, 'PATCH /api/comments/[id]')
   }
 }
 
@@ -75,23 +49,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user?.email) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Get user ID from email
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
-    })
-
-    if (!user) {
-      return NextResponse.json({ message: 'User not found' }, { status: 404 })
-    }
-
-    const userId = user.id
+    const user = await requireAuth()
+    const { id } = await params
 
     const comment = await prisma.comment.findUnique({
       where: { id },
@@ -101,36 +60,25 @@ export async function DELETE(
     })
 
     if (!comment) {
-      return NextResponse.json({ message: 'Comment not found' }, { status: 404 })
+      throw new Error('Comment not found')
     }
 
     // Authorization: only author can delete their comments
-    if (comment.authorId !== userId) {
-      return NextResponse.json({ message: 'Insufficient permissions' }, { status: 403 })
+    if (comment.authorId !== user.id) {
+      throw new AuthorizationError('Only comment authors can delete their comments')
     }
 
     // Cannot delete comment if it has replies
     if (comment._count.replies > 0) {
-      return NextResponse.json({ 
-        message: 'Cannot delete comment with replies' 
-      }, { status: 400 })
+      throw new Error('Cannot delete comment with replies')
     }
 
     await prisma.comment.delete({
       where: { id }
     })
 
-    return NextResponse.json({ message: 'Comment deleted successfully' })
+    return successResponse({ message: 'Comment deleted successfully' })
   } catch (error) {
-    console.error("Error deleting comment:", error)
-    
-    // Handle foreign key constraint error for comments with replies
-    if (error instanceof Error && error.message.includes('P2003')) {
-      return NextResponse.json({ 
-        message: 'Cannot delete comment with replies' 
-      }, { status: 400 })
-    }
-    
-    return NextResponse.json({ message: 'Error deleting comment' }, { status: 500 })
+    return handleApiError(error, 'DELETE /api/comments/[id]')
   }
 }

@@ -1,17 +1,11 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { z } from "zod"
+import { productUpdateSchema } from "@/lib/validations"
+import { requireAuth } from "@/lib/auth-utils"
+import { handleApiError, parseRequestBody, successResponse } from "@/lib/api-utils"
+import { AuthorizationError } from "@/lib/errors"
 
 export const dynamic = 'force-dynamic'
-
-// Validation schema for product updates
-const updateProductSchema = z.object({
-  name: z.string().min(1, "Product name is required").optional(),
-  description: z.string().min(1, "Product description is required").optional(),
-  url: z.string().url("Invalid URL").optional().or(z.literal("")),
-})
 
 // GET /api/products/[id] - Get product details with related projects
 export async function GET(
@@ -51,19 +45,12 @@ export async function GET(
     })
 
     if (!product) {
-      return NextResponse.json(
-        { error: "Product not found" },
-        { status: 404 }
-      )
+      throw new Error("Product not found")
     }
 
-    return NextResponse.json(product)
+    return successResponse(product)
   } catch (error) {
-    console.error("Error fetching product:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch product" },
-      { status: 500 }
-    )
+    return handleApiError(error, "GET /api/products/[id]")
   }
 }
 
@@ -73,27 +60,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await requireAuth()
     const { id } = await params
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      )
-    }
-
-    // Get user ID from session
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
-    })
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      )
-    }
+    const validatedData = await parseRequestBody(request, productUpdateSchema)
 
     // Check if product exists and user owns it
     const existingProduct = await prisma.product.findUnique({
@@ -101,21 +70,12 @@ export async function PUT(
     })
 
     if (!existingProduct) {
-      return NextResponse.json(
-        { error: "Product not found" },
-        { status: 404 }
-      )
+      throw new Error("Product not found")
     }
 
     if (existingProduct.ownerId !== user.id) {
-      return NextResponse.json(
-        { error: "Unauthorized - you can only update your own products" },
-        { status: 403 }
-      )
+      throw new AuthorizationError("You can only update your own products")
     }
-
-    const body = await request.json()
-    const validatedData = updateProductSchema.parse(body)
 
     // Update product
     const product = await prisma.product.update({
@@ -136,20 +96,9 @@ export async function PUT(
       }
     })
 
-    return NextResponse.json(product)
+    return successResponse(product)
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Invalid input", details: error.errors },
-        { status: 400 }
-      )
-    }
-
-    console.error("Error updating product:", error)
-    return NextResponse.json(
-      { error: "Failed to update product" },
-      { status: 500 }
-    )
+    return handleApiError(error, "PUT /api/products/[id]")
   }
 }
 
@@ -159,27 +108,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await requireAuth()
     const { id } = await params
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      )
-    }
-
-    // Get user ID from session
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
-    })
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      )
-    }
 
     // Check if product exists and user owns it
     const existingProduct = await prisma.product.findUnique({
@@ -194,25 +124,16 @@ export async function DELETE(
     })
 
     if (!existingProduct) {
-      return NextResponse.json(
-        { error: "Product not found" },
-        { status: 404 }
-      )
+      throw new Error("Product not found")
     }
 
     if (existingProduct.ownerId !== user.id) {
-      return NextResponse.json(
-        { error: "Unauthorized - you can only delete your own products" },
-        { status: 403 }
-      )
+      throw new AuthorizationError("You can only delete your own products")
     }
 
     // Check if product has associated projects
     if (existingProduct._count.projects > 0) {
-      return NextResponse.json(
-        { error: "Cannot delete product with associated projects" },
-        { status: 400 }
-      )
+      throw new Error("Cannot delete product with associated projects")
     }
 
     // Delete product
@@ -220,12 +141,8 @@ export async function DELETE(
       where: { id: id }
     })
 
-    return NextResponse.json({ message: "Product deleted successfully" })
+    return successResponse({ message: "Product deleted successfully" })
   } catch (error) {
-    console.error("Error deleting product:", error)
-    return NextResponse.json(
-      { error: "Failed to delete product" },
-      { status: 500 }
-    )
+    return handleApiError(error, "DELETE /api/products/[id]")
   }
 }

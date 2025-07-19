@@ -11,3 +11,10 @@ export class UserNotFoundError extends Error {
     this.name = "UserNotFoundError";  
   }
 }
+
+export class AuthorizationError extends Error {
+  constructor(message = "Insufficient permissions") {
+    super(message);
+    this.name = "AuthorizationError";
+  }
+}

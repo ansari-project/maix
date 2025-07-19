@@ -64,7 +64,7 @@ export default async function Home() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-base text-muted-foreground">
-                      Mentor others and share what you've learned from your AI journey
+                      Mentor others and share what you&apos;ve learned from your AI journey
                     </p>
                   </CardContent>
                 </Card>

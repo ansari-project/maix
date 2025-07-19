@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { applicationCreateSchema } from "@/lib/validations"
+import { requireAuth } from "@/lib/auth-utils"
+import { handleApiError, parseRequestBody, successResponse } from "@/lib/api-utils"
 
 export const dynamic = 'force-dynamic'
 
@@ -11,20 +11,9 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await requireAuth()
     const { id } = await params
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
-    })
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 })
-    }
+    const { message } = await parseRequestBody(request, applicationCreateSchema)
 
     const project = await prisma.project.findUnique({
       where: { id: id },
@@ -34,7 +23,7 @@ export async function POST(
     })
 
     if (!project) {
-      return NextResponse.json({ error: "Project not found" }, { status: 404 })
+      throw new Error("Project not found")
     }
 
     // Check if user already applied
@@ -48,33 +37,13 @@ export async function POST(
     })
 
     if (existingApplication) {
-      return NextResponse.json({ error: "You have already applied to this project" }, { status: 400 })
+      throw new Error("You have already applied to this project")
     }
 
     // Check if project is full
     if (project.applications.length >= project.maxVolunteers) {
-      return NextResponse.json({ error: "This project has reached its volunteer limit" }, { status: 400 })
+      throw new Error("This project has reached its volunteer limit")
     }
-
-    const body = await request.json()
-    
-    // Validate input with Zod
-    const validation = applicationCreateSchema.safeParse(body)
-    
-    if (!validation.success) {
-      return NextResponse.json(
-        { 
-          message: "Invalid input", 
-          errors: validation.error.errors.map(err => ({
-            field: err.path.join('.'),
-            message: err.message
-          }))
-        },
-        { status: 400 }
-      )
-    }
-
-    const { message } = validation.data
 
     const application = await prisma.application.create({
       data: {
@@ -97,9 +66,8 @@ export async function POST(
       }
     })
 
-    return NextResponse.json(application, { status: 201 })
+    return successResponse(application, 201)
   } catch (error) {
-    console.error("Application creation error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return handleApiError(error, "POST /api/projects/[id]/apply")
   }
 }
