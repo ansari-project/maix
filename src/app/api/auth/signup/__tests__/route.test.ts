@@ -62,7 +62,7 @@ describe('/api/auth/signup', () => {
       const responseData = await response.json()
 
       expect(response.status).toBe(400)
-      expect(responseData.message).toBe('Invalid input')
+      expect(responseData.message).toBe('Password requirements not met')
       expect(responseData.errors.length).toBeGreaterThanOrEqual(3)
       expect(responseData.errors.some((err: any) => err.field === 'name')).toBe(true)
       expect(responseData.errors.some((err: any) => err.field === 'email')).toBe(true)
@@ -96,7 +96,7 @@ describe('/api/auth/signup', () => {
       const responseData = await response.json()
 
       expect(response.status).toBe(400)
-      expect(responseData.message).toBe('Invalid input')
+      expect(responseData.message).toBe('Password requirements not met')
       expect(responseData.errors.some((err: any) => 
         err.message.includes('uppercase')
       )).toBe(true)

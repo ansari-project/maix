@@ -14,12 +14,14 @@ export default function SignUpPage() {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [error, setError] = useState("")
+  const [fieldErrors, setFieldErrors] = useState<Array<{field: string, message: string}>>([])
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
+    setFieldErrors([])
     setLoading(true)
 
     if (password !== confirmPassword) {
@@ -42,6 +44,11 @@ export default function SignUpPage() {
       } else {
         const data = await response.json()
         setError(data.message || "An error occurred")
+        
+        // Display specific field errors if available
+        if (data.errors && Array.isArray(data.errors)) {
+          setFieldErrors(data.errors)
+        }
       }
     } catch (error) {
       setError("An error occurred. Please try again.")
@@ -111,6 +118,15 @@ export default function SignUpPage() {
             </div>
             {error && (
               <div className="text-sm text-red-600 text-center">{error}</div>
+            )}
+            {fieldErrors.length > 0 && (
+              <div className="space-y-1">
+                {fieldErrors.map((fieldError, index) => (
+                  <div key={index} className="text-sm text-red-600">
+                    {fieldError.message}
+                  </div>
+                ))}
+              </div>
             )}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Creating account..." : "Sign Up"}

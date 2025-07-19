@@ -11,9 +11,18 @@ export async function POST(request: Request) {
     const validation = signupSchema.safeParse(body)
     
     if (!validation.success) {
+      // Extract password-specific errors for clearer messaging
+      const passwordErrors = validation.error.errors
+        .filter(err => err.path.includes('password'))
+        .map(err => err.message)
+      
+      const mainMessage = passwordErrors.length > 0 
+        ? 'Password requirements not met'
+        : 'Invalid input'
+      
       return NextResponse.json(
         { 
-          message: "Invalid input", 
+          message: mainMessage,
           errors: validation.error.errors.map(err => ({
             field: err.path.join('.'),
             message: err.message
