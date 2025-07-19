@@ -79,18 +79,6 @@ export function Sidebar({ isCollapsed = false, onToggle, currentPath }: SidebarP
       href: "/volunteering",
       icon: FileText,
       isActive: pathname === "/volunteering"
-    },
-    {
-      name: "Messages",
-      href: "/messages",
-      icon: MessageCircle,
-      isActive: pathname === "/messages"
-    },
-    {
-      name: "Community",
-      href: "/community",
-      icon: Users,
-      isActive: pathname === "/community"
     }
   ]
 
