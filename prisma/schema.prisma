@@ -236,7 +236,7 @@ model Post {
   // Q&A Resolution fields
   isResolved   Boolean @default(false) // For questions - marks if question has been resolved
   bestAnswerId String? @unique         // Reference to the best answer for this question
-  bestAnswer   Post?   @relation("BestAnswer", fields: [bestAnswerId], references: [id], onDelete: NoAction)
+  bestAnswer   Post?   @relation("BestAnswer", fields: [bestAnswerId], references: [id], onDelete: Restrict)
   
   // Back-relation: this answer is marked as best for which question
   questionForBestAnswer Post? @relation("BestAnswer")
