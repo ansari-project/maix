@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
 const commentCreateSchema = z.object({
@@ -72,7 +72,8 @@ export async function GET(
     const comments = await prisma.comment.findMany({
       where: {
         postId: params.id,
-        parentId: null // Only top-level comments for MVP
+        parentId: null, // Only top-level comments for MVP
+        status: 'VISIBLE' // Only show visible comments
       },
       take,
       skip,
@@ -89,7 +90,8 @@ export async function GET(
     const total = await prisma.comment.count({
       where: {
         postId: params.id,
-        parentId: null
+        parentId: null,
+        status: 'VISIBLE'
       }
     })
 

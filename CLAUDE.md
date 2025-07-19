@@ -80,7 +80,29 @@ maix/
 - Use descriptive commit messages that explain the purpose of changes
 - Keep commit messages concise and focused on the changes made
 - Group related changes into a single commit
-- Use `git add [specific files]` rather than `git add --all` or `git add .`
+- **NEVER use `git add .` or `git add --all`** - Always specify individual files
+
+#### Why `git add .` is Dangerous
+**NEVER use `git add .` or `git add --all`** as it can accidentally commit:
+- **Sensitive files**: `.env` files containing API keys, database credentials, secrets
+- **System files**: `.DS_Store`, `Thumbs.db`, temporary files
+- **Build artifacts**: `node_modules/`, `dist/`, `.next/` that should be in `.gitignore`
+- **Personal files**: Local configuration, debug logs, test data
+- **Large files**: Images, videos, datasets that bloat the repository
+
+**Always use specific file paths:**
+```bash
+# CORRECT: Specify exact files
+git add src/app/api/posts/route.ts
+git add prisma/schema.prisma
+git add docs/plans/new-feature.md
+
+# DANGEROUS: Never do this
+git add .
+git add --all
+```
+
+**Best Practice**: Review what you're adding with `git status` and `git diff --cached` before committing.
 
 ### Pre-Commit Checklist
 

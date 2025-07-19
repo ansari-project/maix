@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
 const postUpdateSchema = z.object({
@@ -14,7 +14,10 @@ export async function GET(
 ) {
   try {
     const post = await prisma.post.findUnique({
-      where: { id: params.id },
+      where: { 
+        id: params.id,
+        status: 'VISIBLE' // Only show visible posts
+      },
       include: {
         author: {
           select: { id: true, name: true, image: true }
@@ -33,6 +36,9 @@ export async function GET(
           }
         },
         replies: {
+          where: {
+            status: 'VISIBLE' // Only show visible replies
+          },
           include: {
             author: {
               select: { id: true, name: true, image: true }
@@ -47,7 +53,8 @@ export async function GET(
         },
         comments: {
           where: {
-            parentId: null // Only top-level comments for MVP
+            parentId: null, // Only top-level comments for MVP
+            status: 'VISIBLE' // Only show visible comments
           },
           include: {
             author: {

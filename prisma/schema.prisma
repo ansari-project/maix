@@ -181,6 +181,18 @@ enum PostType {
   PRODUCT_DISCUSSION
 }
 
+enum PostStatus {
+  VISIBLE      // Normal state - visible to all users
+  HIDDEN       // Hidden by admin - not visible to public but preserved
+  PENDING_REVIEW // Flagged for review - may be hidden during review
+}
+
+enum CommentStatus {
+  VISIBLE      // Normal state - visible to all users
+  HIDDEN       // Hidden by admin - not visible to public but preserved
+  PENDING_REVIEW // Flagged for review - may be hidden during review
+}
+
 // Personal Access Token model for MCP API authentication
 model PersonalAccessToken {
   id         String   @id @default(cuid())
@@ -206,6 +218,7 @@ model Post {
 
   type    PostType
   content String   @db.Text
+  status  PostStatus @default(VISIBLE)
 
   // Author relationship (optional to handle deleted users)
   authorId String?
@@ -251,13 +264,16 @@ model Post {
   @@index([projectDiscussionThreadId])
   @@index([productDiscussionThreadId])
   @@index([bestAnswerId])
+  @@index([status])
   @@index([type, createdAt])
+  @@index([status, type, createdAt])
   @@map("posts")
 }
 
 model Comment {
   id        String   @id @default(cuid())
   content   String   @db.Text
+  status    CommentStatus @default(VISIBLE)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -271,11 +287,13 @@ model Comment {
 
   // Self-referencing for future threading (MVP: flat comments only)
   parentId  String?
-  parent    Comment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: NoAction)
+  parent    Comment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Restrict)
   replies   Comment[] @relation("CommentReplies")
 
   @@index([postId])
   @@index([authorId])
   @@index([parentId])
+  @@index([status])
+  @@index([postId, status])
   @@map("comments")
 }

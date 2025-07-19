@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
 const postCreateSchema = z.object({
@@ -147,6 +147,8 @@ export async function GET(request: Request) {
       type: {
         in: ['QUESTION', 'PROJECT_UPDATE', 'PRODUCT_UPDATE'],
       },
+      // Only show visible posts (content moderation)
+      status: 'VISIBLE',
     }
 
     // Filter by specific type if provided
