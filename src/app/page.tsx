@@ -3,40 +3,14 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
-import { PostsFeed } from '@/components/posts/PostsFeed'
+import { redirect } from 'next/navigation'
 
 export default async function Home() {
   const session = await getServerSession(authOptions)
   
-  // Show community feed for authenticated users, landing page for others
+  // Redirect authenticated users to dashboard
   if (session) {
-    return (
-      <main className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8">
-          <div className="mb-8">
-            <div className="flex justify-between items-start">
-              <div>
-                <h1 className="text-3xl font-bold text-foreground mb-2">
-                  Welcome back, {session.user?.name || 'User'}
-                </h1>
-                <p className="text-muted-foreground">
-                  Stay updated with the latest questions, project updates, and community discussions
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Button asChild variant="outline">
-                  <Link href="/projects/new">New Project</Link>
-                </Button>
-                <Button asChild>
-                  <Link href="/posts/new">Ask Question</Link>
-                </Button>
-              </div>
-            </div>
-          </div>
-          <PostsFeed />
-        </div>
-      </main>
-    )
+    redirect('/dashboard/home')
   }
   return (
     <main className="min-h-screen bg-gradient-to-br from-primary to-accent">
@@ -58,7 +32,7 @@ export default async function Home() {
           <p className="text-2xl text-primary-foreground/90 mb-12">
             Connecting volunteers with AI projects to advance humanity
           </p>
-          <Card className="max-w-4xl mx-auto">
+          <Card className="w-full mx-auto">
             <CardHeader>
               <CardTitle className="text-3xl mb-4">Welcome to MAIX</CardTitle>
               <CardDescription className="text-lg">
@@ -67,7 +41,7 @@ export default async function Home() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid md:grid-cols-3 gap-8">
+              <div className="grid md:grid-cols-4 gap-8">
                 <Card className="text-center">
                   <CardHeader>
                     <CardTitle className="text-2xl text-primary mb-3">Learn</CardTitle>
@@ -78,6 +52,19 @@ export default async function Home() {
                   <CardContent>
                     <p className="text-base text-muted-foreground">
                       Explore projects, methodologies, and best practices from the community
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="text-center">
+                  <CardHeader>
+                    <CardTitle className="text-2xl text-secondary mb-3">Teach</CardTitle>
+                    <CardDescription className="text-lg">
+                      Share your knowledge with the community
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-base text-muted-foreground">
+                      Mentor others and share what you've learned from your AI journey
                     </p>
                   </CardContent>
                 </Card>
