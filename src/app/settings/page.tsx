@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
 import { User, Key, Bell, HelpCircle, Shield } from "lucide-react"
 import { PATManagement } from "@/components/settings/PATManagement"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("account")
@@ -54,10 +55,25 @@ export default function SettingsPage() {
                     Manage your profile information and preferences
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">
-                    Account settings will be implemented in a future update.
-                  </p>
+                <CardContent className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Appearance</h3>
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <label className="text-sm font-medium">Theme</label>
+                        <p className="text-sm text-muted-foreground">
+                          Select your preferred theme for the interface
+                        </p>
+                      </div>
+                      <ThemeToggle />
+                    </div>
+                  </div>
+                  <Separator />
+                  <div>
+                    <p className="text-muted-foreground">
+                      More account settings will be available in a future update.
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
