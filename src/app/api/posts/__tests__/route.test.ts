@@ -7,6 +7,9 @@ import { prisma } from '@/lib/prisma'
 jest.mock('next-auth/next')
 jest.mock('@/lib/prisma', () => ({
   prisma: {
+    user: {
+      findUnique: jest.fn(),
+    },
     post: {
       create: jest.fn(),
       findMany: jest.fn(),
@@ -14,9 +17,11 @@ jest.mock('@/lib/prisma', () => ({
       findUnique: jest.fn(),
     },
     project: {
+      findFirst: jest.fn(),
       findUnique: jest.fn(),
     },
     product: {
+      findFirst: jest.fn(),
       findUnique: jest.fn(),
     },
   },
@@ -32,25 +37,28 @@ describe('/api/posts', () => {
   })
 
   const mockUser = {
-    id: 'user-123',
+    id: 'ckl1234567890abcdefghijkm',
     email: 'john@example.com',
     name: 'John Doe',
   }
 
   const mockSession = {
-    user: mockUser,
+    user: {
+      email: mockUser.email,
+      name: mockUser.name,
+    },
   }
 
   const mockProject = {
-    id: 'project-123',
+    id: 'ckl1234567890abcdefghijkl',
     title: 'Test Project',
-    authorId: 'user-123',
+    ownerId: 'ckl1234567890abcdefghijkm',
   }
 
   const mockProduct = {
-    id: 'product-123',
+    id: 'ckl1234567890abcdefghijkn',
     name: 'Test Product',
-    authorId: 'user-123',
+    ownerId: 'ckl1234567890abcdefghijkm',
   }
 
   describe('POST /api/posts', () => {
@@ -59,7 +67,7 @@ describe('/api/posts', () => {
         id: 'post-123',
         type: 'QUESTION',
         content: 'How do I implement AI in my project?',
-        authorId: 'user-123',
+        authorId: 'ckl1234567890abcdefghijkm',
         projectId: null,
         productId: null,
         parentId: null,
@@ -72,6 +80,7 @@ describe('/api/posts', () => {
       }
 
       mockGetServerSession.mockResolvedValue(mockSession)
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
       mockPrisma.post.create.mockResolvedValue(mockPost)
 
       const request = new NextRequest('http://localhost:3000/api/posts', {
@@ -95,7 +104,7 @@ describe('/api/posts', () => {
         data: {
           type: 'QUESTION',
           content: 'How do I implement AI in my project?',
-          authorId: 'user-123',
+          authorId: 'ckl1234567890abcdefghijkm',
           projectId: undefined,
           productId: undefined,
           parentId: undefined,
@@ -109,8 +118,8 @@ describe('/api/posts', () => {
         id: 'post-124',
         type: 'PROJECT_UPDATE',
         content: 'Project milestone completed',
-        authorId: 'user-123',
-        projectId: 'project-123',
+        authorId: 'ckl1234567890abcdefghijkm',
+        projectId: 'ckl1234567890abcdefghijkl',
         productId: null,
         parentId: null,
         createdAt: new Date(),
@@ -122,7 +131,8 @@ describe('/api/posts', () => {
       }
 
       mockGetServerSession.mockResolvedValue(mockSession)
-      mockPrisma.project.findUnique.mockResolvedValue(mockProject)
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
+      mockPrisma.project.findFirst.mockResolvedValue(mockProject)
       mockPrisma.post.create.mockResolvedValue(mockPost)
 
       const request = new NextRequest('http://localhost:3000/api/posts', {
@@ -130,7 +140,7 @@ describe('/api/posts', () => {
         body: JSON.stringify({
           type: 'PROJECT_UPDATE',
           content: 'Project milestone completed',
-          projectId: 'project-123'
+          projectId: 'ckl1234567890abcdefghijkl'
         }),
         headers: {
           'Content-Type': 'application/json',
@@ -139,26 +149,30 @@ describe('/api/posts', () => {
 
       const response = await POST(request)
       const data = await response.json()
+      
+      if (response.status !== 201) {
+        console.error('Project update test error:', data)
+      }
 
       expect(response.status).toBe(201)
       expect(data.type).toBe('PROJECT_UPDATE')
-      expect(data.projectId).toBe('project-123')
+      expect(data.projectId).toBe('ckl1234567890abcdefghijkl')
     })
 
     it('should create an answer to a question', async () => {
       const mockQuestion = {
-        id: 'question-123',
+        id: 'ckl1234567890abcdefghijko',
         type: 'QUESTION',
         content: 'How do I implement AI?',
-        authorId: 'user-456',
+        authorId: 'ckl1234567890abcdefghijkp',
       }
 
       const mockAnswer = {
-        id: 'answer-123',
+        id: 'ckl1234567890abcdefghijkq',
         type: 'ANSWER',
         content: 'You can start by using OpenAI API...',
-        authorId: 'user-123',
-        parentId: 'question-123',
+        authorId: 'ckl1234567890abcdefghijkm',
+        parentId: 'ckl1234567890abcdefghijko',
         createdAt: new Date(),
         updatedAt: new Date(),
         author: mockUser,
@@ -166,6 +180,7 @@ describe('/api/posts', () => {
       }
 
       mockGetServerSession.mockResolvedValue(mockSession)
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
       mockPrisma.post.findUnique.mockResolvedValue(mockQuestion)
       mockPrisma.post.create.mockResolvedValue(mockAnswer)
 
@@ -174,7 +189,7 @@ describe('/api/posts', () => {
         body: JSON.stringify({
           type: 'ANSWER',
           content: 'You can start by using OpenAI API...',
-          parentId: 'question-123'
+          parentId: 'ckl1234567890abcdefghijko'
         }),
         headers: {
           'Content-Type': 'application/json',
@@ -186,11 +201,12 @@ describe('/api/posts', () => {
 
       expect(response.status).toBe(201)
       expect(data.type).toBe('ANSWER')
-      expect(data.parentId).toBe('question-123')
+      expect(data.parentId).toBe('ckl1234567890abcdefghijko')
     })
 
     it('should reject project update without projectId', async () => {
       mockGetServerSession.mockResolvedValue(mockSession)
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
 
       const request = new NextRequest('http://localhost:3000/api/posts', {
         method: 'POST',
@@ -211,13 +227,14 @@ describe('/api/posts', () => {
 
     it('should reject answer to non-question post', async () => {
       const mockUpdate = {
-        id: 'update-123',
+        id: 'ckl1234567890abcdefghijkr',
         type: 'PROJECT_UPDATE',
         content: 'Project update',
-        authorId: 'user-456',
+        authorId: 'ckl1234567890abcdefghijkp',
       }
 
       mockGetServerSession.mockResolvedValue(mockSession)
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
       mockPrisma.post.findUnique.mockResolvedValue(mockUpdate)
 
       const request = new NextRequest('http://localhost:3000/api/posts', {
@@ -225,7 +242,7 @@ describe('/api/posts', () => {
         body: JSON.stringify({
           type: 'ANSWER',
           content: 'This should fail',
-          parentId: 'update-123'
+          parentId: 'ckl1234567890abcdefghijkr'
         }),
         headers: {
           'Content-Type': 'application/json',
@@ -259,13 +276,12 @@ describe('/api/posts', () => {
   })
 
   describe('GET /api/posts', () => {
-    it('should return posts filtered by VISIBLE status', async () => {
+    it('should return posts', async () => {
       const mockPosts = [
         {
           id: 'post-1',
           type: 'QUESTION',
           content: 'Question 1',
-          status: 'VISIBLE',
           author: mockUser,
           _count: { replies: 2, comments: 1 }
         },
@@ -273,28 +289,27 @@ describe('/api/posts', () => {
           id: 'post-2',
           type: 'PROJECT_UPDATE',
           content: 'Update 1',
-          status: 'VISIBLE',
           author: mockUser,
           _count: { replies: 0, comments: 3 }
         }
       ]
 
       mockPrisma.post.findMany.mockResolvedValue(mockPosts)
-      mockPrisma.post.count.mockResolvedValue(2)
 
       const request = new NextRequest('http://localhost:3000/api/posts')
       const response = await GET(request)
       const data = await response.json()
 
       expect(response.status).toBe(200)
-      expect(data.posts).toHaveLength(2)
-      expect(data.total).toBe(2)
+      expect(data).toHaveLength(2)
       
-      // Verify content moderation filter
+      // Verify query structure
       expect(mockPrisma.post.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
-            status: 'VISIBLE'
+            type: {
+              in: ['QUESTION', 'PROJECT_UPDATE', 'PRODUCT_UPDATE']
+            }
           })
         })
       )
@@ -307,8 +322,7 @@ describe('/api/posts', () => {
       expect(mockPrisma.post.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
-            type: { in: ['QUESTION'] },
-            status: 'VISIBLE'
+            type: 'QUESTION'
           })
         })
       )

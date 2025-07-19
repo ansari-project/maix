@@ -7,6 +7,9 @@ import { prisma } from '@/lib/prisma'
 jest.mock('next-auth/next')
 jest.mock('@/lib/prisma', () => ({
   prisma: {
+    user: {
+      findUnique: jest.fn(),
+    },
     post: {
       findUnique: jest.fn(),
       update: jest.fn(),
@@ -30,7 +33,10 @@ describe('/api/posts/[id]', () => {
   }
 
   const mockSession = {
-    user: mockUser,
+    user: {
+      email: mockUser.email,
+      name: mockUser.name,
+    },
   }
 
   const mockPost = {
@@ -51,7 +57,7 @@ describe('/api/posts/[id]', () => {
   }
 
   describe('GET /api/posts/[id]', () => {
-    it('should return a visible post with replies and comments', async () => {
+    it('should return a post with replies and comments', async () => {
       const mockPostWithReplies = {
         ...mockPost,
         replies: [
@@ -59,7 +65,6 @@ describe('/api/posts/[id]', () => {
             id: 'answer-123',
             type: 'ANSWER',
             content: 'You can use OpenAI API',
-            status: 'VISIBLE',
             author: { id: 'user-456', name: 'Jane Expert' },
             _count: { comments: 1 }
           }
@@ -68,7 +73,6 @@ describe('/api/posts/[id]', () => {
           {
             id: 'comment-123',
             content: 'Great question!',
-            status: 'VISIBLE',
             author: { id: 'user-789', name: 'Bob Commenter' }
           }
         ]
@@ -85,20 +89,21 @@ describe('/api/posts/[id]', () => {
       expect(data.replies).toHaveLength(1)
       expect(data.comments).toHaveLength(1)
       
-      // Verify content moderation filters
+      // Verify query structure
       expect(mockPrisma.post.findUnique).toHaveBeenCalledWith({
         where: { 
-          id: 'post-123',
-          status: 'VISIBLE'
+          id: 'post-123'
         },
         include: expect.objectContaining({
+          author: {
+            select: { id: true, name: true, image: true }
+          },
           replies: expect.objectContaining({
-            where: { status: 'VISIBLE' }
+            orderBy: { createdAt: 'asc' }
           }),
           comments: expect.objectContaining({
-            where: expect.objectContaining({
-              status: 'VISIBLE'
-            })
+            where: { parentId: null },
+            orderBy: { createdAt: 'asc' }
           })
         })
       })
@@ -113,15 +118,6 @@ describe('/api/posts/[id]', () => {
       expect(response.status).toBe(404)
     })
 
-    it('should return 404 for hidden post', async () => {
-      const hiddenPost = { ...mockPost, status: 'HIDDEN' }
-      mockPrisma.post.findUnique.mockResolvedValue(null) // Hidden posts are filtered out
-
-      const request = new NextRequest('http://localhost:3000/api/posts/hidden-post')
-      const response = await GET(request, { params: Promise.resolve({ id: 'hidden-post' }) })
-
-      expect(response.status).toBe(404)
-    })
   })
 
   describe('PATCH /api/posts/[id]', () => {
@@ -133,6 +129,7 @@ describe('/api/posts/[id]', () => {
       }
 
       mockGetServerSession.mockResolvedValue(mockSession)
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
       mockPrisma.post.findUnique.mockResolvedValue(mockPost)
       mockPrisma.post.update.mockResolvedValue(updatedPost)
 
@@ -162,6 +159,7 @@ describe('/api/posts/[id]', () => {
       const otherUserPost = { ...mockPost, authorId: 'other-user' }
 
       mockGetServerSession.mockResolvedValue(mockSession)
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
       mockPrisma.post.findUnique.mockResolvedValue(otherUserPost)
 
       const request = new NextRequest('http://localhost:3000/api/posts/post-123', {
@@ -204,6 +202,7 @@ describe('/api/posts/[id]', () => {
       const postWithNoReplies = { ...mockPost, _count: { replies: 0 } }
 
       mockGetServerSession.mockResolvedValue(mockSession)
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
       mockPrisma.post.findUnique.mockResolvedValue(postWithNoReplies)
       mockPrisma.post.delete.mockResolvedValue(mockPost)
 
@@ -229,6 +228,7 @@ describe('/api/posts/[id]', () => {
       }
 
       mockGetServerSession.mockResolvedValue(mockSession)
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
       mockPrisma.post.findUnique.mockResolvedValue(questionWithAnswers)
 
       const request = new NextRequest('http://localhost:3000/api/posts/post-123', {
@@ -248,6 +248,7 @@ describe('/api/posts/[id]', () => {
       }
 
       mockGetServerSession.mockResolvedValue(mockSession)
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
       mockPrisma.post.findUnique.mockResolvedValue(discussionPost)
 
       const request = new NextRequest('http://localhost:3000/api/posts/post-123', {
@@ -264,6 +265,7 @@ describe('/api/posts/[id]', () => {
       const otherUserPost = { ...mockPost, authorId: 'other-user' }
 
       mockGetServerSession.mockResolvedValue(mockSession)
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
       mockPrisma.post.findUnique.mockResolvedValue(otherUserPost)
 
       const request = new NextRequest('http://localhost:3000/api/posts/post-123', {

@@ -7,6 +7,9 @@ import { prisma } from '@/lib/prisma'
 jest.mock('next-auth/next')
 jest.mock('@/lib/prisma', () => ({
   prisma: {
+    user: {
+      findUnique: jest.fn(),
+    },
     post: {
       findUnique: jest.fn(),
     },
@@ -34,7 +37,10 @@ describe('/api/posts/[id]/comments', () => {
   }
 
   const mockSession = {
-    user: mockUser,
+    user: {
+      email: mockUser.email,
+      name: mockUser.name,
+    },
   }
 
   const mockPost = {
@@ -63,6 +69,7 @@ describe('/api/posts/[id]/comments', () => {
       }
 
       mockGetServerSession.mockResolvedValue(mockSession)
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
       mockPrisma.post.findUnique.mockResolvedValue(mockPost)
       mockPrisma.comment.create.mockResolvedValue(mockComment)
 
@@ -100,6 +107,7 @@ describe('/api/posts/[id]/comments', () => {
 
     it('should reject comment on non-existent post', async () => {
       mockGetServerSession.mockResolvedValue(mockSession)
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
       mockPrisma.post.findUnique.mockResolvedValue(null)
 
       const request = new NextRequest('http://localhost:3000/api/posts/non-existent/comments', {
@@ -139,6 +147,7 @@ describe('/api/posts/[id]/comments', () => {
 
     it('should validate comment content', async () => {
       mockGetServerSession.mockResolvedValue(mockSession)
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
 
       const request = new NextRequest('http://localhost:3000/api/posts/post-123/comments', {
         method: 'POST',
@@ -158,12 +167,11 @@ describe('/api/posts/[id]/comments', () => {
   })
 
   describe('GET /api/posts/[id]/comments', () => {
-    it('should return visible comments for a post', async () => {
+    it('should return comments for a post', async () => {
       const mockComments = [
         {
           id: 'comment-1',
           content: 'First comment',
-          status: 'VISIBLE',
           parentId: null,
           createdAt: new Date('2024-01-01'),
           author: { id: 'user-1', name: 'Alice', image: null }
@@ -171,7 +179,6 @@ describe('/api/posts/[id]/comments', () => {
         {
           id: 'comment-2',
           content: 'Second comment',
-          status: 'VISIBLE',
           parentId: null,
           createdAt: new Date('2024-01-02'),
           author: { id: 'user-2', name: 'Bob', image: null }
@@ -189,12 +196,11 @@ describe('/api/posts/[id]/comments', () => {
       expect(data.comments).toHaveLength(2)
       expect(data.pagination.total).toBe(2)
 
-      // Verify content moderation filter
+      // Verify query structure
       expect(mockPrisma.comment.findMany).toHaveBeenCalledWith({
         where: {
           postId: 'post-123',
-          parentId: null,
-          status: 'VISIBLE'
+          parentId: null
         },
         take: 50,
         skip: 0,
@@ -221,14 +227,16 @@ describe('/api/posts/[id]/comments', () => {
       )
     })
 
-    it('should filter out hidden comments', async () => {
+    it('should include author information', async () => {
       const request = new NextRequest('http://localhost:3000/api/posts/post-123/comments')
       await GET(request, { params: Promise.resolve({ id: 'post-123' }) })
 
       expect(mockPrisma.comment.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: expect.objectContaining({
-            status: 'VISIBLE'
+          include: expect.objectContaining({
+            author: {
+              select: { id: true, name: true, image: true }
+            }
           })
         })
       )

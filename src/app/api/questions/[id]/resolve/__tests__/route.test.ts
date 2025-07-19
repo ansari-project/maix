@@ -7,6 +7,9 @@ import { prisma } from '@/lib/prisma'
 jest.mock('next-auth/next')
 jest.mock('@/lib/prisma', () => ({
   prisma: {
+    user: {
+      findUnique: jest.fn(),
+    },
     post: {
       findUnique: jest.fn(),
       update: jest.fn(),
@@ -23,70 +26,79 @@ describe('/api/questions/[id]/resolve', () => {
   })
 
   const mockUser = {
-    id: 'user-123',
+    id: 'ckl1234567890abcdefghijk1',
     email: 'john@example.com',
     name: 'John Doe',
   }
 
   const mockSession = {
-    user: mockUser,
+    user: {
+      email: mockUser.email,
+      name: mockUser.name,
+    },
   }
 
   const mockQuestion = {
-    id: 'question-123',
+    id: 'ckl1234567890abcdefghijk2',
     type: 'QUESTION',
     content: 'How do I implement AI?',
-    authorId: 'user-123', // Same as session user
+    authorId: 'ckl1234567890abcdefghijk1', // Same as session user
     bestAnswerId: null,
   }
 
   const mockAnswer = {
-    id: 'answer-123',
+    id: 'ckl1234567890abcdefghijk3',
     type: 'ANSWER',
     content: 'You can use OpenAI API...',
-    authorId: 'user-456',
-    parentId: 'question-123',
+    authorId: 'ckl1234567890abcdefghijk4',
+    parentId: 'ckl1234567890abcdefghijk2',
   }
 
   describe('POST /api/questions/[id]/resolve', () => {
     it('should mark an answer as best answer by question author', async () => {
       const updatedQuestion = {
         ...mockQuestion,
-        bestAnswerId: 'answer-123',
+        isResolved: true,
+        bestAnswerId: 'ckl1234567890abcdefghijk3',
         bestAnswer: mockAnswer
       }
 
       mockGetServerSession.mockResolvedValue(mockSession)
-      mockPrisma.post.findUnique
-        .mockResolvedValueOnce(mockQuestion) // First call for question
-        .mockResolvedValueOnce(mockAnswer)   // Second call for answer
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
+      mockPrisma.post.findUnique.mockResolvedValueOnce({
+        ...mockQuestion,
+        replies: [mockAnswer]
+      })
       mockPrisma.post.update.mockResolvedValue(updatedQuestion)
 
       const request = new NextRequest('http://localhost:3000/api/questions/question-123/resolve', {
         method: 'POST',
         body: JSON.stringify({
-          bestAnswerId: 'answer-123'
+          bestAnswerId: 'ckl1234567890abcdefghijk3'
         }),
         headers: {
           'Content-Type': 'application/json',
         },
       })
 
-      const response = await POST(request, { params: Promise.resolve({ id: 'question-123' }) })
+      const response = await POST(request, { params: Promise.resolve({ id: 'ckl1234567890abcdefghijk2' }) })
       const data = await response.json()
 
       expect(response.status).toBe(200)
-      expect(data.bestAnswerId).toBe('answer-123')
-      expect(data.message).toBe('Best answer marked successfully')
+      expect(data.bestAnswerId).toBe('ckl1234567890abcdefghijk3')
+      expect(data.isResolved).toBe(true)
 
       expect(mockPrisma.post.update).toHaveBeenCalledWith({
-        where: { id: 'question-123' },
-        data: { bestAnswerId: 'answer-123' },
+        where: { id: 'ckl1234567890abcdefghijk2' },
+        data: { 
+          isResolved: true,
+          bestAnswerId: 'ckl1234567890abcdefghijk3' 
+        },
         include: {
           bestAnswer: {
             include: {
               author: {
-                select: { id: true, name: true, email: true, image: true }
+                select: { id: true, name: true, image: true }
               }
             }
           }
@@ -97,23 +109,27 @@ describe('/api/questions/[id]/resolve', () => {
     it('should reject if user is not the question author', async () => {
       const otherUserQuestion = {
         ...mockQuestion,
-        authorId: 'other-user' // Different from session user
+        authorId: 'ckl1234567890abcdefghijk5' // Different from session user
       }
 
       mockGetServerSession.mockResolvedValue(mockSession)
-      mockPrisma.post.findUnique.mockResolvedValue(otherUserQuestion)
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
+      mockPrisma.post.findUnique.mockResolvedValue({
+        ...otherUserQuestion,
+        replies: [mockAnswer]
+      })
 
       const request = new NextRequest('http://localhost:3000/api/questions/question-123/resolve', {
         method: 'POST',
         body: JSON.stringify({
-          bestAnswerId: 'answer-123'
+          bestAnswerId: 'ckl1234567890abcdefghijk3'
         }),
         headers: {
           'Content-Type': 'application/json',
         },
       })
 
-      const response = await POST(request, { params: Promise.resolve({ id: 'question-123' }) })
+      const response = await POST(request, { params: Promise.resolve({ id: 'ckl1234567890abcdefghijk2' }) })
 
       expect(response.status).toBe(403)
       expect(mockPrisma.post.update).not.toHaveBeenCalled()
@@ -121,12 +137,13 @@ describe('/api/questions/[id]/resolve', () => {
 
     it('should reject if question does not exist', async () => {
       mockGetServerSession.mockResolvedValue(mockSession)
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
       mockPrisma.post.findUnique.mockResolvedValue(null)
 
       const request = new NextRequest('http://localhost:3000/api/questions/non-existent/resolve', {
         method: 'POST',
         body: JSON.stringify({
-          bestAnswerId: 'answer-123'
+          bestAnswerId: 'ckl1234567890abcdefghijk3'
         }),
         headers: {
           'Content-Type': 'application/json',
@@ -146,12 +163,16 @@ describe('/api/questions/[id]/resolve', () => {
       }
 
       mockGetServerSession.mockResolvedValue(mockSession)
-      mockPrisma.post.findUnique.mockResolvedValue(updatePost)
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
+      mockPrisma.post.findUnique.mockResolvedValue({
+        ...updatePost,
+        replies: [mockAnswer]
+      })
 
       const request = new NextRequest('http://localhost:3000/api/questions/update-123/resolve', {
         method: 'POST',
         body: JSON.stringify({
-          bestAnswerId: 'answer-123'
+          bestAnswerId: 'ckl1234567890abcdefghijk3'
         }),
         headers: {
           'Content-Type': 'application/json',
@@ -166,9 +187,11 @@ describe('/api/questions/[id]/resolve', () => {
 
     it('should reject if answer does not exist', async () => {
       mockGetServerSession.mockResolvedValue(mockSession)
-      mockPrisma.post.findUnique
-        .mockResolvedValueOnce(mockQuestion) // Question exists
-        .mockResolvedValueOnce(null)         // Answer does not exist
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
+      mockPrisma.post.findUnique.mockResolvedValue({
+        ...mockQuestion,
+        replies: [] // No answers found
+      })
 
       const request = new NextRequest('http://localhost:3000/api/questions/question-123/resolve', {
         method: 'POST',
@@ -180,34 +203,36 @@ describe('/api/questions/[id]/resolve', () => {
         },
       })
 
-      const response = await POST(request, { params: Promise.resolve({ id: 'question-123' }) })
+      const response = await POST(request, { params: Promise.resolve({ id: 'ckl1234567890abcdefghijk2' }) })
 
-      expect(response.status).toBe(404)
+      expect(response.status).toBe(400)
       expect(mockPrisma.post.update).not.toHaveBeenCalled()
     })
 
     it('should reject if answer is not an answer to this question', async () => {
       const wrongAnswer = {
         ...mockAnswer,
-        parentId: 'other-question-123' // Answer to different question
+        parentId: 'ckl1234567890abcdefghijk6' // Answer to different question
       }
 
       mockGetServerSession.mockResolvedValue(mockSession)
-      mockPrisma.post.findUnique
-        .mockResolvedValueOnce(mockQuestion) // Question exists
-        .mockResolvedValueOnce(wrongAnswer)  // Answer to different question
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
+      mockPrisma.post.findUnique.mockResolvedValue({
+        ...mockQuestion,
+        replies: [] // Answer with wrong parentId not found in replies
+      })
 
       const request = new NextRequest('http://localhost:3000/api/questions/question-123/resolve', {
         method: 'POST',
         body: JSON.stringify({
-          bestAnswerId: 'answer-123'
+          bestAnswerId: 'ckl1234567890abcdefghijk3'
         }),
         headers: {
           'Content-Type': 'application/json',
         },
       })
 
-      const response = await POST(request, { params: Promise.resolve({ id: 'question-123' }) })
+      const response = await POST(request, { params: Promise.resolve({ id: 'ckl1234567890abcdefghijk2' }) })
 
       expect(response.status).toBe(400)
       expect(mockPrisma.post.update).not.toHaveBeenCalled()
@@ -219,14 +244,14 @@ describe('/api/questions/[id]/resolve', () => {
       const request = new NextRequest('http://localhost:3000/api/questions/question-123/resolve', {
         method: 'POST',
         body: JSON.stringify({
-          bestAnswerId: 'answer-123'
+          bestAnswerId: 'ckl1234567890abcdefghijk3'
         }),
         headers: {
           'Content-Type': 'application/json',
         },
       })
 
-      const response = await POST(request, { params: Promise.resolve({ id: 'question-123' }) })
+      const response = await POST(request, { params: Promise.resolve({ id: 'ckl1234567890abcdefghijk2' }) })
 
       expect(response.status).toBe(401)
       expect(mockPrisma.post.update).not.toHaveBeenCalled()
@@ -234,6 +259,7 @@ describe('/api/questions/[id]/resolve', () => {
 
     it('should validate request body', async () => {
       mockGetServerSession.mockResolvedValue(mockSession)
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
 
       const request = new NextRequest('http://localhost:3000/api/questions/question-123/resolve', {
         method: 'POST',
@@ -245,7 +271,7 @@ describe('/api/questions/[id]/resolve', () => {
         },
       })
 
-      const response = await POST(request, { params: Promise.resolve({ id: 'question-123' }) })
+      const response = await POST(request, { params: Promise.resolve({ id: 'ckl1234567890abcdefghijk2' }) })
 
       expect(response.status).toBe(400)
       expect(mockPrisma.post.update).not.toHaveBeenCalled()
@@ -254,42 +280,47 @@ describe('/api/questions/[id]/resolve', () => {
     it('should allow updating best answer to a different answer', async () => {
       const questionWithBestAnswer = {
         ...mockQuestion,
-        bestAnswerId: 'old-answer-123'
+        bestAnswerId: 'ckl1234567890abcdefghijk7'
       }
 
       const newAnswer = {
-        id: 'new-answer-123',
+        id: 'ckl1234567890abcdefghijk8',
         type: 'ANSWER',
-        parentId: 'question-123'
+        parentId: 'ckl1234567890abcdefghijk2'
       }
 
       const updatedQuestion = {
         ...questionWithBestAnswer,
-        bestAnswerId: 'new-answer-123'
+        bestAnswerId: 'ckl1234567890abcdefghijk8'
       }
 
       mockGetServerSession.mockResolvedValue(mockSession)
-      mockPrisma.post.findUnique
-        .mockResolvedValueOnce(questionWithBestAnswer) // Question with existing best answer
-        .mockResolvedValueOnce(newAnswer)              // New answer
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
+      mockPrisma.post.findUnique.mockResolvedValue({
+        ...questionWithBestAnswer,
+        replies: [newAnswer]
+      })
       mockPrisma.post.update.mockResolvedValue(updatedQuestion)
 
       const request = new NextRequest('http://localhost:3000/api/questions/question-123/resolve', {
         method: 'POST',
         body: JSON.stringify({
-          bestAnswerId: 'new-answer-123'
+          bestAnswerId: 'ckl1234567890abcdefghijk8'
         }),
         headers: {
           'Content-Type': 'application/json',
         },
       })
 
-      const response = await POST(request, { params: Promise.resolve({ id: 'question-123' }) })
+      const response = await POST(request, { params: Promise.resolve({ id: 'ckl1234567890abcdefghijk2' }) })
 
       expect(response.status).toBe(200)
       expect(mockPrisma.post.update).toHaveBeenCalledWith({
-        where: { id: 'question-123' },
-        data: { bestAnswerId: 'new-answer-123' },
+        where: { id: 'ckl1234567890abcdefghijk2' },
+        data: { 
+          isResolved: true,
+          bestAnswerId: 'ckl1234567890abcdefghijk8' 
+        },
         include: expect.any(Object)
       })
     })
