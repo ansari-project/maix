@@ -20,7 +20,8 @@ import {
   Menu,
   Key,
   Package,
-  LogOut
+  LogOut,
+  HelpCircle
 } from "lucide-react"
 
 interface NavigationItem {
@@ -56,16 +57,16 @@ export function Sidebar({ isCollapsed = false, onToggle, currentPath }: SidebarP
       isActive: pathname === "/profile"
     },
     {
-      name: "Browse Projects",
+      name: "Q + A",
+      href: "/community",
+      icon: HelpCircle,
+      isActive: pathname === "/community"
+    },
+    {
+      name: "Projects",
       href: "/projects",
       icon: FolderOpen,
       isActive: pathname === "/projects"
-    },
-    {
-      name: "Post Project",
-      href: "/projects/new",
-      icon: Plus,
-      isActive: pathname === "/projects/new"
     },
     {
       name: "Products",
