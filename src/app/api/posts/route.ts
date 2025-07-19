@@ -63,11 +63,22 @@ async function checkPostCreatePermission(type: string, userId: string, projectId
 }
 
 export async function POST(request: Request) {
+  let type: any, projectId: string | undefined, productId: string | undefined, parentId: string | undefined;
+  
   try {
     const session = await getServerSession(authOptions)
     
-    if (!session?.user?.id) {
+    if (!session?.user?.email) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Get user ID from email
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    })
+
+    if (!user) {
+      return NextResponse.json({ message: 'User not found' }, { status: 404 })
     }
 
     const body = await request.json()
@@ -77,8 +88,13 @@ export async function POST(request: Request) {
       return NextResponse.json(validation.error.errors, { status: 400 })
     }
 
-    const { type, content, projectId, productId, parentId } = validation.data
-    const userId = session.user.id
+    const validationData = validation.data;
+    type = validationData.type;
+    projectId = validationData.projectId;
+    productId = validationData.productId;
+    parentId = validationData.parentId;
+    const { content } = validationData;
+    const userId = user.id
 
     // Check authorization
     const hasPermission = await checkPostCreatePermission(type, userId, projectId, productId)
@@ -149,8 +165,6 @@ export async function GET(request: Request) {
       type: {
         in: ['QUESTION', 'PROJECT_UPDATE', 'PRODUCT_UPDATE'],
       },
-      // Only show visible posts (content moderation)
-      status: 'VISIBLE',
     }
 
     // Filter by specific type if provided

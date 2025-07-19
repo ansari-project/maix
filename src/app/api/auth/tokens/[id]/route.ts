@@ -9,7 +9,7 @@ import { revokePersonalAccessToken } from '@/lib/mcp/services/pat.service';
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -21,7 +21,7 @@ export async function DELETE(
       );
     }
     
-    const tokenId = params.id;
+    const { id: tokenId } = await params;
     
     if (!tokenId) {
       return new Response(

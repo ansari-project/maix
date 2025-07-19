@@ -14,8 +14,6 @@ export enum LogEvent {
   AUTH_LOGIN = 'auth.login',
   AUTH_FAILED = 'auth.failed',
   
-  // Content moderation events (business requirement)
-  CONTENT_MODERATION = 'content.moderation',
   
   // API events (essential for debugging)
   API_ERROR = 'api.error',
@@ -157,28 +155,6 @@ class Logger {
     })
   }
 
-  // Log content moderation (business requirement)
-  contentModeration(
-    contentType: 'post' | 'comment',
-    contentId: string,
-    newStatus: 'VISIBLE' | 'HIDDEN' | 'PENDING_REVIEW',
-    moderatorId: string,
-    reason?: string
-  ) {
-    this.info(
-      LogEvent.CONTENT_MODERATION,
-      `${contentType} ${contentId} status changed to ${newStatus}`,
-      {
-        userId: moderatorId,
-        metadata: {
-          contentType,
-          contentId,
-          newStatus,
-          reason
-        }
-      }
-    )
-  }
 
   // Log database errors (essential for debugging)
   dbError(operation: string, error: Error, metadata?: Record<string, any>) {

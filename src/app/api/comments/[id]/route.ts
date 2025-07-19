@@ -10,16 +10,26 @@ const commentUpdateSchema = z.object({
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions)
     
-    if (!session?.user?.id) {
+    if (!session?.user?.email) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
     }
 
-    const userId = session.user.id
+    // Get user ID from email
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    })
+
+    if (!user) {
+      return NextResponse.json({ message: 'User not found' }, { status: 404 })
+    }
+
+    const userId = user.id
     const body = await request.json()
     const validation = commentUpdateSchema.safeParse(body)
 
@@ -31,7 +41,7 @@ export async function PATCH(
 
     // Check if comment exists and user is the author
     const comment = await prisma.comment.findUnique({
-      where: { id: params.id }
+      where: { id }
     })
 
     if (!comment) {
@@ -44,7 +54,7 @@ export async function PATCH(
 
     // Update comment
     const updatedComment = await prisma.comment.update({
-      where: { id: params.id },
+      where: { id },
       data: { content },
       include: {
         author: {
@@ -62,19 +72,29 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions)
     
-    if (!session?.user?.id) {
+    if (!session?.user?.email) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
     }
 
-    const userId = session.user.id
+    // Get user ID from email
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    })
+
+    if (!user) {
+      return NextResponse.json({ message: 'User not found' }, { status: 404 })
+    }
+
+    const userId = user.id
 
     const comment = await prisma.comment.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         _count: { select: { replies: true } }
       }
@@ -97,7 +117,7 @@ export async function DELETE(
     }
 
     await prisma.comment.delete({
-      where: { id: params.id }
+      where: { id }
     })
 
     return NextResponse.json({ message: 'Comment deleted successfully' })

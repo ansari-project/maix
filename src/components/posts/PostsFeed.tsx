@@ -25,6 +25,7 @@ interface Post {
   content: string
   createdAt: string
   updatedAt: string
+  parentId?: string | null
   author: {
     id: string
     name: string | null
@@ -241,7 +242,7 @@ export function PostsFeed({
             <CreateReplyForm
               parentPost={replyingTo}
               currentUser={{
-                id: session.user?.id!,
+                id: (session.user as any)?.id || session.user?.email || 'unknown',
                 name: session.user?.name || null,
                 image: session.user?.image || null
               }}
@@ -277,7 +278,7 @@ export function PostsFeed({
                   showReplies={true}
                   onReply={handleReply}
                   onMarkBestAnswer={handleMarkBestAnswer}
-                  currentUserId={session.user?.id}
+                  currentUserId={(session.user as any)?.id || session.user?.email}
                 />
               ))}
             </div>

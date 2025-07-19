@@ -8,9 +8,10 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
     
     if (!session?.user?.email) {
@@ -26,7 +27,7 @@ export async function POST(
     }
 
     const project = await prisma.project.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         applications: true
       }
@@ -41,7 +42,7 @@ export async function POST(
       where: {
         userId_projectId: {
           userId: user.id,
-          projectId: params.id
+          projectId: id
         }
       }
     })
@@ -79,7 +80,7 @@ export async function POST(
       data: {
         message,
         userId: user.id,
-        projectId: params.id
+        projectId: id
       },
       include: {
         user: {

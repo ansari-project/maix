@@ -16,11 +16,12 @@ const updateProductSchema = z.object({
 // GET /api/products/[id] - Get product details with related projects
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const product = await prisma.product.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         owner: {
           select: {
@@ -69,9 +70,10 @@ export async function GET(
 // PUT /api/products/[id] - Update product (owner only)
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
     
     if (!session?.user?.email) {
@@ -95,7 +97,7 @@ export async function PUT(
 
     // Check if product exists and user owns it
     const existingProduct = await prisma.product.findUnique({
-      where: { id: params.id }
+      where: { id: id }
     })
 
     if (!existingProduct) {
@@ -117,7 +119,7 @@ export async function PUT(
 
     // Update product
     const product = await prisma.product.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         ...(validatedData.name && { name: validatedData.name }),
         ...(validatedData.description && { description: validatedData.description }),
@@ -154,9 +156,10 @@ export async function PUT(
 // DELETE /api/products/[id] - Delete product (owner only)
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
     
     if (!session?.user?.email) {
@@ -180,7 +183,7 @@ export async function DELETE(
 
     // Check if product exists and user owns it
     const existingProduct = await prisma.product.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         _count: {
           select: {
@@ -214,7 +217,7 @@ export async function DELETE(
 
     // Delete product
     await prisma.product.delete({
-      where: { id: params.id }
+      where: { id: id }
     })
 
     return NextResponse.json({ message: "Product deleted successfully" })

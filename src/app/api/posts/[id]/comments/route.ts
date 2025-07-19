@@ -12,13 +12,23 @@ const commentCreateSchema = z.object({
 // Create comment on post
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params; // Move outside try block for scope
   try {
     const session = await getServerSession(authOptions)
     
-    if (!session?.user?.id) {
+    if (!session?.user?.email) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Get user ID from email
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    })
+
+    if (!user) {
+      return NextResponse.json({ message: 'User not found' }, { status: 404 })
     }
 
     const body = await request.json()
@@ -29,11 +39,11 @@ export async function POST(
     }
 
     const { content } = validation.data
-    const userId = session.user.id
+    const userId = user.id
 
     // Verify post exists
     const post = await prisma.post.findUnique({
-      where: { id: params.id }
+      where: { id }
     })
 
     if (!post) {
@@ -44,7 +54,7 @@ export async function POST(
       data: {
         content,
         authorId: userId,
-        postId: params.id,
+        postId: id,
       },
       include: {
         author: {
@@ -56,7 +66,7 @@ export async function POST(
     return NextResponse.json(comment, { status: 201 })
   } catch (error) {
     // Log the error with structured logging
-    logger.dbError('comment creation', error as Error, { postId: params.id })
+    logger.dbError('comment creation', error as Error, { postId: id })
     return NextResponse.json({ message: 'Error creating comment' }, { status: 500 })
   }
 }
@@ -64,18 +74,18 @@ export async function POST(
 // Get comments for post
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const { searchParams } = new URL(request.url)
     const take = parseInt(searchParams.get('take') || '50')
     const skip = parseInt(searchParams.get('skip') || '0')
 
     const comments = await prisma.comment.findMany({
       where: {
-        postId: params.id,
+        postId: id,
         parentId: null, // Only top-level comments for MVP
-        status: 'VISIBLE' // Only show visible comments
       },
       take,
       skip,
@@ -91,9 +101,8 @@ export async function GET(
 
     const total = await prisma.comment.count({
       where: {
-        postId: params.id,
+        postId: id,
         parentId: null,
-        status: 'VISIBLE'
       }
     })
 

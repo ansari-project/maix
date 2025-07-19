@@ -37,14 +37,20 @@ interface Project {
   }>
 }
 
-export default function ProjectDetailPage({ params }: { params: { id: string } }) {
+export default function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const [projectId, setProjectId] = useState<string | null>(null)
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
   const [applying, setApplying] = useState(false)
   const [applicationMessage, setApplicationMessage] = useState("")
   const [userApplication, setUserApplication] = useState<any>(null)
+
+  // Resolve async params
+  useEffect(() => {
+    params.then(({ id }) => setProjectId(id))
+  }, [params])
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -53,8 +59,9 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
   }, [status, router])
 
   const fetchProject = useCallback(async () => {
+    if (!projectId) return
     try {
-      const response = await fetch(`/api/projects/${params.id}`)
+      const response = await fetch(`/api/projects/${projectId}`)
       if (response.ok) {
         const data = await response.json()
         setProject(data)
@@ -69,20 +76,20 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
       console.error("Error fetching project:", error)
     }
     setLoading(false)
-  }, [params.id, session])
+  }, [projectId, session])
 
   useEffect(() => {
-    if (session && params.id) {
+    if (session && projectId) {
       fetchProject()
     }
-  }, [session, params.id, fetchProject])
+  }, [session, projectId, fetchProject])
 
   const handleApply = async () => {
     if (!applicationMessage.trim()) return
     
     setApplying(true)
     try {
-      const response = await fetch(`/api/projects/${params.id}/apply`, {
+      const response = await fetch(`/api/projects/${projectId}/apply`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

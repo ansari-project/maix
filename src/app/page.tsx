@@ -1,8 +1,43 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { getServerSession } from 'next-auth/next'
+import { authOptions } from '@/lib/auth'
+import { PostsFeed } from '@/components/posts/PostsFeed'
 
-export default function Home() {
+export default async function Home() {
+  const session = await getServerSession(authOptions)
+  
+  // Show community feed for authenticated users, landing page for others
+  if (session) {
+    return (
+      <main className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8">
+          <div className="mb-8">
+            <div className="flex justify-between items-start">
+              <div>
+                <h1 className="text-3xl font-bold text-foreground mb-2">
+                  Welcome back, {session.user?.name || 'User'}
+                </h1>
+                <p className="text-muted-foreground">
+                  Stay updated with the latest questions, project updates, and community discussions
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button asChild variant="outline">
+                  <Link href="/projects/new">New Project</Link>
+                </Button>
+                <Button asChild>
+                  <Link href="/posts/new">Ask Question</Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+          <PostsFeed />
+        </div>
+      </main>
+    )
+  }
   return (
     <main className="min-h-screen bg-gradient-to-br from-primary to-accent">
       <div className="container mx-auto px-4 py-16">

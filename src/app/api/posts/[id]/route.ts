@@ -10,13 +10,13 @@ const postUpdateSchema = z.object({
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const post = await prisma.post.findUnique({
       where: { 
-        id: params.id,
-        status: 'VISIBLE' // Only show visible posts
+        id
       },
       include: {
         author: {
@@ -36,9 +36,6 @@ export async function GET(
           }
         },
         replies: {
-          where: {
-            status: 'VISIBLE' // Only show visible replies
-          },
           include: {
             author: {
               select: { id: true, name: true, image: true }
@@ -53,8 +50,7 @@ export async function GET(
         },
         comments: {
           where: {
-            parentId: null, // Only top-level comments for MVP
-            status: 'VISIBLE' // Only show visible comments
+            parentId: null // Only top-level comments for MVP
           },
           include: {
             author: {
@@ -87,16 +83,26 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions)
     
-    if (!session?.user?.id) {
+    if (!session?.user?.email) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
     }
 
-    const userId = session.user.id
+    // Get user ID from email
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    })
+
+    if (!user) {
+      return NextResponse.json({ message: 'User not found' }, { status: 404 })
+    }
+
+    const userId = user.id
     const body = await request.json()
     const validation = postUpdateSchema.safeParse(body)
 
@@ -108,7 +114,7 @@ export async function PATCH(
 
     // Check if post exists and user is the author
     const post = await prisma.post.findUnique({
-      where: { id: params.id }
+      where: { id }
     })
 
     if (!post) {
@@ -121,7 +127,7 @@ export async function PATCH(
 
     // Only allow updating content, not structural fields
     const updatedPost = await prisma.post.update({
-      where: { id: params.id },
+      where: { id },
       data: { content },
       include: {
         author: {
@@ -139,19 +145,29 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions)
     
-    if (!session?.user?.id) {
+    if (!session?.user?.email) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
     }
 
-    const userId = session.user.id
+    // Get user ID from email
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    })
+
+    if (!user) {
+      return NextResponse.json({ message: 'User not found' }, { status: 404 })
+    }
+
+    const userId = user.id
 
     const post = await prisma.post.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         _count: { select: { replies: true } }
       }
@@ -181,7 +197,7 @@ export async function DELETE(
     }
 
     await prisma.post.delete({
-      where: { id: params.id }
+      where: { id }
     })
 
     return NextResponse.json({ message: 'Post deleted successfully' })

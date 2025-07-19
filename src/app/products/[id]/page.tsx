@@ -43,12 +43,18 @@ interface Project {
   }
 }
 
-export default function ProductDetailPage({ params }: { params: { id: string } }) {
+export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const [productId, setProductId] = useState<string | null>(null)
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
+
+  // Resolve async params
+  useEffect(() => {
+    params.then(({ id }) => setProductId(id))
+  }, [params])
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -57,8 +63,9 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
   }, [status, router])
 
   const fetchProduct = useCallback(async () => {
+    if (!productId) return
     try {
-      const response = await fetch(`/api/products/${params.id}`)
+      const response = await fetch(`/api/products/${productId}`)
       if (response.ok) {
         const data = await response.json()
         setProduct(data)
@@ -69,7 +76,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
       console.error("Error fetching product:", error)
     }
     setLoading(false)
-  }, [params.id, router])
+  }, [productId, router])
 
   useEffect(() => {
     if (session) {
@@ -80,7 +87,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
   const handleDelete = async () => {
     setDeleting(true)
     try {
-      const response = await fetch(`/api/products/${params.id}`, {
+      const response = await fetch(`/api/products/${productId}`, {
         method: "DELETE"
       })
 

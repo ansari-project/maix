@@ -11,13 +11,23 @@ const resolveQuestionSchema = z.object({
 // Mark question as resolved with a best answer
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions)
     
-    if (!session?.user?.id) {
+    if (!session?.user?.email) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Get user ID from email
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    })
+
+    if (!user) {
+      return NextResponse.json({ message: 'User not found' }, { status: 404 })
     }
 
     const body = await request.json()
@@ -28,8 +38,8 @@ export async function POST(
     }
 
     const { bestAnswerId } = validation.data
-    const questionId = params.id
-    const userId = session.user.id
+    const questionId = id
+    const userId = user.id
 
     // Verify question exists and user is the author
     const question = await prisma.post.findUnique({
@@ -86,17 +96,27 @@ export async function POST(
 // Unmark question as resolved (remove best answer)
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions)
     
-    if (!session?.user?.id) {
+    if (!session?.user?.email) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
     }
 
-    const questionId = params.id
-    const userId = session.user.id
+    // Get user ID from email
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    })
+
+    if (!user) {
+      return NextResponse.json({ message: 'User not found' }, { status: 404 })
+    }
+
+    const questionId = id
+    const userId = user.id
 
     // Verify question exists and user is the author
     const question = await prisma.post.findUnique({

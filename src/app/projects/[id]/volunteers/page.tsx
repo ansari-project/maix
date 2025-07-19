@@ -32,12 +32,18 @@ interface Project {
   applications: Application[]
 }
 
-export default function ProjectApplicationsPage({ params }: { params: { id: string } }) {
+export default function ProjectApplicationsPage({ params }: { params: Promise<{ id: string }> }) {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const [projectId, setProjectId] = useState<string | null>(null)
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState<string | null>(null)
+
+  // Resolve async params
+  useEffect(() => {
+    params.then(({ id }) => setProjectId(id))
+  }, [params])
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -46,14 +52,15 @@ export default function ProjectApplicationsPage({ params }: { params: { id: stri
   }, [status, router])
 
   const fetchProject = useCallback(async () => {
+    if (!projectId) return
     try {
-      const response = await fetch(`/api/projects/${params.id}`)
+      const response = await fetch(`/api/projects/${projectId}`)
       if (response.ok) {
         const data = await response.json()
         
         // Check if user is the owner
         if (data.owner.email !== session?.user?.email) {
-          router.push(`/projects/${params.id}`)
+          router.push(`/projects/${projectId}`)
           return
         }
         
@@ -63,13 +70,13 @@ export default function ProjectApplicationsPage({ params }: { params: { id: stri
       console.error("Error fetching project:", error)
     }
     setLoading(false)
-  }, [params.id, session, router])
+  }, [projectId, session, router])
 
   useEffect(() => {
-    if (session && params.id) {
+    if (session && projectId) {
       fetchProject()
     }
-  }, [session, params.id, fetchProject])
+  }, [session, projectId, fetchProject])
 
   const updateApplicationStatus = async (applicationId: string, status: string) => {
     setUpdating(applicationId)
@@ -106,7 +113,7 @@ export default function ProjectApplicationsPage({ params }: { params: { id: stri
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
           <Button variant="outline" className="mb-6" asChild>
-            <Link href={`/projects/${params.id}`}>← Back to Project</Link>
+            <Link href={`/projects/${projectId}`}>← Back to Project</Link>
           </Button>
 
           <Card className="mb-6">
