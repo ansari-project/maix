@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { logger } from '@/lib/logger'
 import { z } from 'zod'
 
 const commentCreateSchema = z.object({
@@ -54,7 +55,8 @@ export async function POST(
 
     return NextResponse.json(comment, { status: 201 })
   } catch (error) {
-    console.error("Error creating comment:", error)
+    // Log the error with structured logging
+    logger.dbError('comment creation', error as Error, { postId: params.id })
     return NextResponse.json({ message: 'Error creating comment' }, { status: 500 })
   }
 }

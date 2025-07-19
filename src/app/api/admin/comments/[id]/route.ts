@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { logger } from '@/lib/logger'
 import { z } from 'zod'
 
 const commentModerationSchema = z.object({
@@ -75,8 +76,8 @@ export async function PATCH(
       }
     })
 
-    // TODO: Log moderation action
-    console.log(`Comment ${id} status changed to ${status} by ${session.user.email}${reason ? `. Reason: ${reason}` : ''}`)
+    // Log moderation action
+    logger.contentModeration('comment', id, status, session.user.email!, reason)
 
     // TODO: In production, send notification to comment author about status change
 

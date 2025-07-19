@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { logger } from '@/lib/logger'
 import { z } from 'zod'
 
 const postCreateSchema = z.object({
@@ -128,7 +129,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json(post, { status: 201 })
   } catch (error) {
-    console.error("Error creating post:", error)
+    // Log the error with structured logging
+    logger.dbError('post creation', error as Error, { type, projectId, productId, parentId })
     return NextResponse.json({ message: 'Error creating post' }, { status: 500 })
   }
 }
