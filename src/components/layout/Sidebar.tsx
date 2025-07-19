@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useSession } from "next-auth/react"
+import { useSession, signOut } from "next-auth/react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
@@ -19,7 +19,8 @@ import {
   Settings,
   Menu,
   Key,
-  Package
+  Package,
+  LogOut
 } from "lucide-react"
 
 interface NavigationItem {
@@ -165,6 +166,22 @@ export function Sidebar({ isCollapsed = false, onToggle, currentPath }: SidebarP
                 </p>
               </div>
             )}
+          </div>
+          {/* Sign Out Button */}
+          <div className="mt-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => signOut({ callbackUrl: '/' })}
+              aria-label="Sign Out"
+              className={cn(
+                "w-full justify-start gap-2 text-muted-foreground hover:text-foreground",
+                isCollapsed && "px-2"
+              )}
+            >
+              <LogOut className="h-4 w-4" />
+              {!isCollapsed && <span>Sign Out</span>}
+            </Button>
           </div>
         </div>
       )}
