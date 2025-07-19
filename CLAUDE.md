@@ -134,6 +134,11 @@ To ensure code quality and prevent deployment failures, always perform the follo
 - **Focus on current scale**: Design for the data and usage patterns we have today
 - **Iterative complexity**: Add architectural complexity only when simple solutions prove insufficient
 
+#### Real Examples of Keeping Things Simple
+**Avatar Photos**: Instead of implementing complex avatar components with image handling, fallbacks, and Radix UI primitives, we simply display user names. This eliminates image storage, upload handling, and UI complexity while providing the essential user identification we need.
+
+**Logging Middleware**: Rather than building comprehensive request logging middleware with performance monitoring and complex event types, we implemented basic structured logging for only essential events (auth, moderation, errors). This provides the debugging capability we need without premature infrastructure complexity.
+
 ### Performance and Security Priorities
 - Rate limiting is NOT a priority for this project
 - Focus on input validation and data security over traffic management
