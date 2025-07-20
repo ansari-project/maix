@@ -71,7 +71,7 @@ export default function ProductsPage() {
                 <div className="h-10 w-32 bg-gray-200 rounded animate-pulse"></div>
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="space-y-6">
               {[...Array(6)].map((_, i) => (
                 <div key={i} className="border rounded-lg p-6 space-y-4">
                   <div className="h-6 w-3/4 bg-gray-200 rounded animate-pulse"></div>
@@ -96,8 +96,7 @@ export default function ProductsPage() {
   if (!session) return null
 
   const userProducts = products.filter(product => product.owner.email === session.user?.email)
-  const otherProducts = products.filter(product => product.owner.email !== session.user?.email)
-  const displayProducts = showMyProducts ? userProducts : otherProducts
+  const displayProducts = showMyProducts ? userProducts : products
 
   return (
     <div className="bg-gradient-to-br from-primary/5 to-accent/5 px-4 py-2">
@@ -128,7 +127,7 @@ export default function ProductsPage() {
                 size="sm"
                 onClick={() => setShowMyProducts(false)}
               >
-                All Products ({otherProducts.length})
+                All Products ({products.length})
               </Button>
               <Button
                 variant={showMyProducts ? "default" : "outline"}
@@ -164,7 +163,7 @@ export default function ProductsPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="space-y-6">
               {displayProducts.map((product) => (
                 <Card key={product.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader>

@@ -10,7 +10,7 @@ export async function GET() {
     const user = await requireAuth()
 
     // Query existing models directly as per the simplified approach
-    const [projects, applications] = await Promise.all([
+    const [projects, applications, productUpdates] = await Promise.all([
       prisma.project.findMany({
         take: 10,
         orderBy: { createdAt: 'desc' },
@@ -24,6 +24,15 @@ export async function GET() {
         include: { 
           user: { select: { id: true, name: true } },
           project: { select: { id: true, name: true } }
+        }
+      }),
+      prisma.post.findMany({
+        where: { type: 'PRODUCT_UPDATE' },
+        take: 10,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          author: { select: { id: true, name: true } },
+          product: { select: { id: true, name: true } }
         }
       })
     ])
@@ -45,6 +54,17 @@ export async function GET() {
         timestamp: a.appliedAt,
         user: a.user,
         data: a
+      })),
+      ...productUpdates.map(p => ({
+        id: p.id,
+        type: 'product_update' as const,
+        title: `Product update: ${p.product?.name || 'Unknown Product'}`,
+        timestamp: p.createdAt,
+        user: p.author,
+        data: {
+          ...p,
+          content: p.content
+        }
       }))
     ]
 

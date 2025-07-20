@@ -11,14 +11,15 @@ import {
   FileText, 
   User, 
   Calendar,
-  ExternalLink
+  ExternalLink,
+  Package
 } from "lucide-react"
 import { format } from "date-fns"
 import Link from "next/link"
 
 interface FeedItem {
   id: string
-  type: 'project_created' | 'volunteer_applied' | 'profile_updated'
+  type: 'project_created' | 'volunteer_applied' | 'profile_updated' | 'product_update'
   title: string
   timestamp: Date
   user: {
@@ -70,6 +71,8 @@ export function FeedContainer({ initialItems = [] }: FeedContainerProps) {
         return FileText
       case 'profile_updated':
         return User
+      case 'product_update':
+        return Package
       default:
         return Calendar
     }
@@ -83,6 +86,8 @@ export function FeedContainer({ initialItems = [] }: FeedContainerProps) {
         return 'bg-green-100 text-green-800'
       case 'profile_updated':
         return 'bg-orange-100 text-orange-800'
+      case 'product_update':
+        return 'bg-purple-100 text-purple-800'
       default:
         return 'bg-gray-100 text-gray-800'
     }
@@ -201,6 +206,19 @@ function FeedItem({ item }: FeedItemProps) {
               </div>
             )}
 
+            {item.type === 'product_update' && item.data && (
+              <div className="mt-2">
+                <p className="text-sm text-muted-foreground line-clamp-2">
+                  {item.data.content?.substring(0, 150)}...
+                </p>
+                <Button variant="link" size="sm" className="px-0 mt-1" asChild>
+                  <Link href={`/products/${item.data.productId}`}>
+                    View Product <ExternalLink className="h-3 w-3 ml-1" />
+                  </Link>
+                </Button>
+              </div>
+            )}
+
           </div>
         </div>
       </CardContent>
@@ -217,6 +235,8 @@ function getFeedItemIcon(type: FeedItem['type']) {
       return FileText
     case 'profile_updated':
       return User
+    case 'product_update':
+      return Package
     default:
       return Calendar
   }
@@ -230,6 +250,8 @@ function getFeedItemColor(type: FeedItem['type']) {
       return 'bg-green-100 text-green-800'
     case 'profile_updated':
       return 'bg-orange-100 text-orange-800'
+    case 'product_update':
+      return 'bg-purple-100 text-purple-800'
     default:
       return 'bg-gray-100 text-gray-800'
   }
