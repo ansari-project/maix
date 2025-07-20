@@ -38,6 +38,7 @@ MAIX is built around three core principles:
 
 - **Intelligent Matching**: AI-powered algorithm matching volunteers with projects based on skills, experience, and interests
 - **Natural Language Search**: Advanced search capabilities to find relevant projects and volunteers
+- **User Profiles**: Comprehensive profiles with unique usernames, skills, and experience levels
 - **Clean Design**: Modern, accessible UI with thoughtful design patterns and color schemes
 - **Real-time Collaboration**: In-app messaging and project management tools
 - **Community Building**: Reviews, ratings, and reputation system to build trust
@@ -161,6 +162,16 @@ MAIX uses Neon as the PostgreSQL database with pgvector extension for semantic s
 5. **Add authorized redirect URIs**: `http://localhost:3000/api/auth/callback/google`
 6. **Copy Client ID and Secret** to your `.env.local` file
 
+### Authentication System
+
+MAIX uses a dual-key authentication system:
+
+- **Email**: Primary login credential (users sign in with email + password)
+- **Username**: Unique handle for public identification and display (e.g., @johndoe)
+- **ID**: Internal primary key (CUID) for database relationships
+
+Both email and username are unique across the platform. Users create a username during signup, which is displayed in the sidebar and used for profile identification.
+
 ## Development
 
 ### Available Scripts
@@ -176,7 +187,7 @@ npm run lint         # Run ESLint
 npm run type-check   # Run TypeScript checks
 
 # Testing
-npm run test         # Run unit tests (121 comprehensive tests)
+npm run test         # Run unit tests (240 comprehensive tests)
 npm run test:watch   # Run tests in watch mode
 npm run test:e2e     # Run end-to-end tests
 
@@ -307,7 +318,8 @@ MAIX is built with positive social impact in mind:
 ### Phase 1: Foundation (Weeks 1-4)
 - ✅ Project setup and basic authentication
 - ✅ Database schema and initial UI components
-- 🔄 User registration and profile management
+- ✅ User registration and profile management
+- ✅ Username system with unique handles and display
 
 ### Phase 2: Core Features (Weeks 5-8)
 - 🔄 Project creation and management
