@@ -97,7 +97,7 @@ function formatSearchResult(post: any): string {
     lines.push(`Reply to: ${post.parent.content.substring(0, 50)}...`);
   }
   if (post.project) {
-    lines.push(`Project: ${post.project.title}`);
+    lines.push(`Project: ${post.project.name}`);
   }
   if (post.product) {
     lines.push(`Product: ${post.product.name}`);
@@ -163,7 +163,7 @@ export async function handleSearchPosts(params: SearchPostsParams): Promise<stri
           include: {
             author: { select: { id: true, name: true } },
             parent: { select: { id: true, content: true } },
-            project: { select: { id: true, title: true } },
+            project: { select: { id: true, name: true } },
             product: { select: { id: true, name: true } },
             bestAnswer: { select: { id: true } },
             _count: { select: { replies: true, comments: true } }
@@ -189,7 +189,7 @@ export async function handleSearchPosts(params: SearchPostsParams): Promise<stri
       include: {
         author: { select: { id: true, name: true } },
         parent: { select: { id: true, content: true } },
-        project: { select: { id: true, title: true } },
+        project: { select: { id: true, name: true } },
         product: { select: { id: true, name: true } },
         bestAnswer: { select: { id: true } },
         _count: { select: { replies: true, comments: true } }

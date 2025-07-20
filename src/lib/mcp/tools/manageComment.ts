@@ -98,7 +98,7 @@ async function handleGetComment(params: ManageCommentParams) {
           id: true, 
           type: true,
           content: true,
-          project: { select: { title: true } },
+          project: { select: { name: true } },
           product: { select: { name: true } }
         } 
       },
@@ -116,7 +116,7 @@ async function handleGetComment(params: ManageCommentParams) {
   description += `Post: ${comment.post.type} - ${comment.post.content.substring(0, 100)}...\n`;
   
   if (comment.post.project) {
-    description += `Project: ${comment.post.project.title}\n`;
+    description += `Project: ${comment.post.project.name}\n`;
   }
   if (comment.post.product) {
     description += `Product: ${comment.post.product.name}\n`;

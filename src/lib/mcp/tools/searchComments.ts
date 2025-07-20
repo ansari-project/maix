@@ -67,7 +67,7 @@ function formatSearchResult(comment: any): string {
     lines.push(`On ${comment.post.type}: ${postPreview}`);
     
     if (comment.post.project) {
-      lines.push(`Project: ${comment.post.project.title}`);
+      lines.push(`Project: ${comment.post.project.name}`);
     }
     if (comment.post.product) {
       lines.push(`Product: ${comment.post.product.name}`);
@@ -108,7 +108,7 @@ export async function handleSearchComments(params: SearchCommentsParams): Promis
             id: true, 
             type: true,
             content: true,
-            project: { select: { id: true, title: true } },
+            project: { select: { id: true, name: true } },
             product: { select: { id: true, name: true } }
           } 
         },

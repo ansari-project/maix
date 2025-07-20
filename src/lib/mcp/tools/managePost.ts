@@ -173,7 +173,7 @@ async function handleGetPost(params: ManagePostParams) {
     include: {
       author: { select: { id: true, name: true, email: true } },
       parent: { select: { id: true, content: true, author: { select: { name: true } } } },
-      project: { select: { id: true, title: true } },
+      project: { select: { id: true, name: true } },
       product: { select: { id: true, name: true } },
       bestAnswer: { 
         select: { 
@@ -198,7 +198,7 @@ async function handleGetPost(params: ManagePostParams) {
     description += `Reply to: ${post.parent.content.substring(0, 100)}...\n`;
   }
   if (post.project) {
-    description += `Project: ${post.project.title}\n`;
+    description += `Project: ${post.project.name}\n`;
   }
   if (post.product) {
     description += `Product: ${post.product.name}\n`;
