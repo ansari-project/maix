@@ -7,6 +7,10 @@ import { handleManagePost, ManagePostSchema } from "@/lib/mcp/tools/managePost";
 import { handleSearchPosts, SearchPostsSchema } from "@/lib/mcp/tools/searchPosts";
 import { handleManageComment, ManageCommentSchema } from "@/lib/mcp/tools/manageComment";
 import { handleSearchComments, SearchCommentsSchema } from "@/lib/mcp/tools/searchComments";
+import { manageProjectTool } from "@/lib/mcp/tools/manageProject";
+import { handleSearchProjects, SearchProjectsSchema } from "@/lib/mcp/tools/searchProjects";
+import { handleManageProduct, manageProductParameters } from "@/lib/mcp/tools/manageProduct";
+import { handleSearchProducts, SearchProductsSchema } from "@/lib/mcp/tools/searchProducts";
 
 // Type definitions for type safety
 type MaixAuthInfo = {
@@ -354,6 +358,68 @@ const mcpHandler = createMcpHandler(
           console.error("Failed to search comments:", error);
           return {
             content: [{ type: "text", text: error instanceof Error ? error.message : "An error occurred while searching comments." }],
+          };
+        }
+      }
+    );
+
+    // Tool: Search projects
+    server.tool(
+      "maix_search_projects", 
+      "Search and list projects with filters",
+      SearchProjectsSchema.shape,
+      async (params, extra) => {
+        try {
+          const result = await handleSearchProjects(params);
+          return {
+            content: [{ type: "text", text: result }],
+          };
+        } catch (error) {
+          console.error("Failed to search projects:", error);
+          return {
+            content: [{ type: "text", text: error instanceof Error ? error.message : "An error occurred while searching projects." }],
+          };
+        }
+      }
+    );
+
+    // Tool: Manage products
+    server.tool(
+      "maix_manage_product",
+      "Create, read, update, or delete products", 
+      manageProductParameters.shape,
+      async (params, extra) => {
+        try {
+          const user = (extra.authInfo as MaixAuthInfo).extra.user;
+          const context = { user };
+          const result = await handleManageProduct(params, context);
+          return {
+            content: [{ type: "text", text: result }],
+          };
+        } catch (error) {
+          console.error("Failed to manage product:", error);
+          return {
+            content: [{ type: "text", text: error instanceof Error ? error.message : "An error occurred while managing the product." }],
+          };
+        }
+      }
+    );
+
+    // Tool: Search products
+    server.tool(
+      "maix_search_products",
+      "Search and list products with filters",
+      SearchProductsSchema.shape, 
+      async (params, extra) => {
+        try {
+          const result = await handleSearchProducts(params);
+          return {
+            content: [{ type: "text", text: result }],
+          };
+        } catch (error) {
+          console.error("Failed to search products:", error);
+          return {
+            content: [{ type: "text", text: error instanceof Error ? error.message : "An error occurred while searching products." }],
           };
         }
       }
