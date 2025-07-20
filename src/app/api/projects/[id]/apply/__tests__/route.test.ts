@@ -52,8 +52,8 @@ describe('/api/projects/[id]/apply', () => {
 
   const mockProject = {
     id: 'project-123',
-    title: 'AI-Powered Learning Platform',
-    maxVolunteers: 5,
+    name: 'AI-Powered Learning Platform',
+    isActive: true,
     applications: [],
   }
 
@@ -67,7 +67,7 @@ describe('/api/projects/[id]/apply', () => {
       email: 'john@example.com',
     },
     project: {
-      title: 'AI-Powered Learning Platform',
+      name: 'AI-Powered Learning Platform',
     },
   }
 
@@ -115,7 +115,7 @@ describe('/api/projects/[id]/apply', () => {
           },
           project: {
             select: {
-              title: true,
+              name: true,
             },
           },
         },
@@ -193,22 +193,18 @@ describe('/api/projects/[id]/apply', () => {
       expect(responseData.message).toBe('You have already applied to this project')
     })
 
-    test('should return 400 when project is at capacity', async () => {
-      const fullProject = {
+    test('should return 400 when project is inactive', async () => {
+      const inactiveProject = {
         ...mockProject,
-        maxVolunteers: 2,
-        applications: [
-          { id: 'app-1', userId: 'user-1' },
-          { id: 'app-2', userId: 'user-2' },
-        ],
+        isActive: false,
       }
 
       mockRequireAuth.mockResolvedValue(mockUser as any)
       mockParseRequestBody.mockResolvedValue(validApplicationData)
-      mockPrisma.project.findUnique.mockResolvedValue(fullProject as any)
+      mockPrisma.project.findUnique.mockResolvedValue(inactiveProject as any)
       mockPrisma.application.findUnique.mockResolvedValue(null)
       mockHandleApiError.mockReturnValue(
-        mockApiErrorResponse('This project has reached its volunteer limit', 400) as any
+        mockApiErrorResponse('This project is not accepting applications', 400) as any
       )
 
       const request = createMockRequest(validApplicationData)
@@ -216,7 +212,7 @@ describe('/api/projects/[id]/apply', () => {
       const responseData = await response.json()
 
       expect(response.status).toBe(400)
-      expect(responseData.message).toBe('This project has reached its volunteer limit')
+      expect(responseData.message).toBe('This project is not accepting applications')
     })
 
     test('should return 400 for invalid input data', async () => {

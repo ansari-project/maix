@@ -52,11 +52,9 @@ async function runTests() {
       const result = await prisma.$transaction(async (tx) => {
         const project = await tx.project.create({
           data: {
-            title: 'Test Project',
-            description: 'Testing project creation',
-            timeline: { phases: ['test'] },
-            requiredSkills: { testing: 'basic' },
-            projectType: 'OPEN_SOURCE',
+            name: 'Test Project',
+            goal: 'Testing project creation goal',
+            description: 'Testing project creation with a detailed description that meets the minimum character requirement for project descriptions',
             helpType: 'MVP',
             contactEmail: 'test@example.com',
             ownerId: testUser.id
@@ -67,7 +65,7 @@ async function runTests() {
           data: {
             type: 'PROJECT_DISCUSSION',
             authorId: testUser.id,
-            content: `Discussion thread for ${project.title}`,
+            content: `Discussion thread for ${project.name}`,
             projectDiscussionThreadId: project.id,
           }
         })
@@ -246,11 +244,9 @@ async function runTests() {
       const { project, discussionPost } = await prisma.$transaction(async (tx) => {
         const proj = await tx.project.create({
           data: {
-            title: 'Temp Project',
-            description: 'To be deleted',
-            timeline: {},
-            requiredSkills: {},
-            projectType: 'OPEN_SOURCE',
+            name: 'Temp Project',
+            goal: 'Temporary project goal',
+            description: 'To be deleted - this description is long enough to meet the minimum character requirements',
             helpType: 'MVP',
             contactEmail: 'temp@example.com',
             ownerId: testUser.id
@@ -261,7 +257,7 @@ async function runTests() {
           data: {
             type: 'PROJECT_DISCUSSION',
             authorId: testUser.id,
-            content: `Discussion for ${proj.title}`,
+            content: `Discussion for ${proj.name}`,
             projectDiscussionThreadId: proj.id,
           }
         })

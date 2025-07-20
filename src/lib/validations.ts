@@ -78,36 +78,33 @@ export const profileUpdateSchema = z.object({
 
 // Project validation schemas
 export const projectCreateSchema = z.object({
-  title: z.string()
-    .min(5, 'Title must be at least 5 characters long')
-    .max(255, 'Title must be less than 255 characters long'),
+  name: z.string()
+    .min(3, 'Project name must be at least 3 characters long')
+    .max(255, 'Project name must be less than 255 characters long'),
+  goal: z.string()
+    .min(10, 'Project goal must be at least 10 characters long')
+    .max(500, 'Project goal must be less than 500 characters long'),
   description: z.string()
     .min(50, 'Description must be at least 50 characters long')
     .max(5000, 'Description must be less than 5000 characters long'),
-  projectType: z.enum(['RESEARCH', 'STARTUP', 'NON_PROFIT', 'OPEN_SOURCE', 'CORPORATE']),
-  helpType: z.enum(['ADVICE', 'PROTOTYPE', 'MVP', 'FULL_PRODUCT']),
-  budgetRange: z.string()
-    .max(50, 'Budget range must be less than 50 characters long')
+  planOutline: z.string()
+    .max(3000, 'Plan outline must be less than 3000 characters long')
     .optional(),
-  maxVolunteers: z.number()
-    .int('Max volunteers must be a whole number')
-    .min(1, 'Must allow at least 1 volunteer')
-    .max(50, 'Cannot exceed 50 volunteers'),
+  history: z.string()
+    .max(3000, 'Project history must be less than 3000 characters long')
+    .optional(),
+  webpage: z.string()
+    .url('Invalid webpage URL')
+    .optional()
+    .or(z.literal('')),
   contactEmail: z.string()
     .email('Invalid contact email address')
     .max(255, 'Contact email must be less than 255 characters long'),
-  organizationUrl: z.string()
-    .url('Invalid organization URL')
+  helpType: z.enum(['ADVICE', 'PROTOTYPE', 'MVP', 'FULL_PRODUCT']),
+  targetCompletionDate: z.string()
+    .datetime('Invalid date format')
     .optional()
     .or(z.literal('')),
-  timeline: z.object({
-    description: z.string()
-      .max(1000, 'Timeline description must be less than 1000 characters long')
-      .optional(),
-  }).optional(),
-  requiredSkills: z.array(z.string().min(1).max(50))
-    .max(20, 'Maximum 20 required skills allowed')
-    .optional(),
   productId: z.string().cuid('Invalid product ID format').optional(),
 })
 
@@ -185,7 +182,6 @@ export const paginationSchema = z.object({
 
 export const searchSchema = z.object({
   query: z.string().max(255).optional(),
-  projectType: z.enum(['RESEARCH', 'STARTUP', 'NON_PROFIT', 'OPEN_SOURCE', 'CORPORATE']).optional(),
   helpType: z.enum(['ADVICE', 'PROTOTYPE', 'MVP', 'FULL_PRODUCT']).optional(),
   skills: z.array(z.string()).optional(),
 })

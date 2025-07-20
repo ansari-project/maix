@@ -8,18 +8,15 @@ import type { MaixMcpContext, MaixMcpResponse } from '../types';
 export const manageProjectParameters = z.object({
   action: z.enum(['create', 'update', 'delete', 'get', 'list']).describe("The operation to perform"),
   projectId: z.string().optional().describe("The ID of the project (required for update, delete, get actions)"),
-  title: z.string().min(5).max(255).optional().describe("The project title"),
+  name: z.string().min(3).max(255).optional().describe("The project name"),
+  goal: z.string().min(10).max(500).optional().describe("The project goal"),
   description: z.string().min(50).max(5000).optional().describe("The project description"),
-  projectType: z.enum(['RESEARCH', 'STARTUP', 'NON_PROFIT', 'OPEN_SOURCE', 'CORPORATE']).optional().describe("The type of project"),
+  planOutline: z.string().max(3000).optional().describe("Outline of plans for executing the project"),
+  history: z.string().max(3000).optional().describe("The project history"),
+  webpage: z.string().url().optional().or(z.literal('')).describe("The project web page URL"),
   helpType: z.enum(['ADVICE', 'PROTOTYPE', 'MVP', 'FULL_PRODUCT']).optional().describe("The type of help needed"),
-  budgetRange: z.string().max(50).optional().describe("The budget range for the project"),
   contactEmail: z.string().email().optional().describe("Contact email for the project"),
-  organizationUrl: z.string().url().optional().describe("Organization website URL"),
-  maxVolunteers: z.number().int().min(1).max(50).optional().describe("Maximum number of volunteers"),
-  requiredSkills: z.array(z.string().min(1).max(50)).max(20).optional().describe("Array of required skills"),
-  timeline: z.object({
-    description: z.string().max(1000).optional(),
-  }).optional().describe("Project timeline information"),
+  targetCompletionDate: z.string().datetime().optional().or(z.literal('')).describe("Target completion date"),
 });
 
 /**
@@ -81,14 +78,14 @@ async function createProject(
   context: MaixMcpContext
 ): Promise<MaixMcpResponse> {
   // Validate required fields for creation
-  if (!projectData.title) {
-    return { success: false, error: "Title is required to create a project" };
+  if (!projectData.name) {
+    return { success: false, error: "Name is required to create a project" };
+  }
+  if (!projectData.goal) {
+    return { success: false, error: "Goal is required to create a project" };
   }
   if (!projectData.description) {
     return { success: false, error: "Description is required to create a project" };
-  }
-  if (!projectData.projectType) {
-    return { success: false, error: "Project type is required to create a project" };
   }
   if (!projectData.helpType) {
     return { success: false, error: "Help type is required to create a project" };
@@ -99,16 +96,15 @@ async function createProject(
   
   const newProject = await prisma.project.create({
     data: {
-      title: projectData.title,
+      name: projectData.name,
+      goal: projectData.goal,
       description: projectData.description,
-      projectType: projectData.projectType,
+      planOutline: projectData.planOutline,
+      history: projectData.history,
+      webpage: projectData.webpage,
       helpType: projectData.helpType,
       contactEmail: projectData.contactEmail,
-      budgetRange: projectData.budgetRange,
-      organizationUrl: projectData.organizationUrl,
-      maxVolunteers: projectData.maxVolunteers || 1,
-      requiredSkills: projectData.requiredSkills || [],
-      timeline: projectData.timeline || {},
+      targetCompletionDate: projectData.targetCompletionDate ? new Date(projectData.targetCompletionDate) : null,
       ownerId: context.user.id,
     },
     include: {
@@ -121,7 +117,7 @@ async function createProject(
   return {
     success: true,
     data: newProject,
-    message: `Project "${newProject.title}" created successfully`,
+    message: `Project "${newProject.name}" created successfully`,
   };
 }
 
@@ -140,16 +136,17 @@ async function updateProject(
   // Prepare update data (only include fields that were provided)
   const updateData: any = {};
   
-  if (projectData.title !== undefined) updateData.title = projectData.title;
+  if (projectData.name !== undefined) updateData.name = projectData.name;
+  if (projectData.goal !== undefined) updateData.goal = projectData.goal;
   if (projectData.description !== undefined) updateData.description = projectData.description;
-  if (projectData.projectType !== undefined) updateData.projectType = projectData.projectType;
+  if (projectData.planOutline !== undefined) updateData.planOutline = projectData.planOutline;
+  if (projectData.history !== undefined) updateData.history = projectData.history;
+  if (projectData.webpage !== undefined) updateData.webpage = projectData.webpage;
   if (projectData.helpType !== undefined) updateData.helpType = projectData.helpType;
-  if (projectData.budgetRange !== undefined) updateData.budgetRange = projectData.budgetRange;
   if (projectData.contactEmail !== undefined) updateData.contactEmail = projectData.contactEmail;
-  if (projectData.organizationUrl !== undefined) updateData.organizationUrl = projectData.organizationUrl;
-  if (projectData.maxVolunteers !== undefined) updateData.maxVolunteers = projectData.maxVolunteers;
-  if (projectData.requiredSkills !== undefined) updateData.requiredSkills = projectData.requiredSkills;
-  if (projectData.timeline !== undefined) updateData.timeline = projectData.timeline;
+  if (projectData.targetCompletionDate !== undefined) {
+    updateData.targetCompletionDate = projectData.targetCompletionDate ? new Date(projectData.targetCompletionDate) : null;
+  }
   
   try {
     const updatedProject = await prisma.project.update({
@@ -168,7 +165,7 @@ async function updateProject(
     return {
       success: true,
       data: updatedProject,
-      message: `Project "${updatedProject.title}" updated successfully`,
+      message: `Project "${updatedProject.name}" updated successfully`,
     };
   } catch (error: any) {
     if (error.code === 'P2025') {

@@ -206,18 +206,15 @@ describe('Validation Schemas', () => {
 
   describe('projectCreateSchema', () => {
     const validProjectData = {
-      title: 'AI-Powered Learning Platform',
+      name: 'AI-Powered Learning Platform',
+      goal: 'Create personalized AI-driven educational experiences',
       description: 'A comprehensive learning platform that uses AI to personalize education for students worldwide.',
-      projectType: 'STARTUP' as const,
       helpType: 'MVP' as const,
-      budgetRange: '$10,000 - $50,000',
-      maxVolunteers: 5,
       contactEmail: 'contact@example.com',
-      organizationUrl: 'https://example.com',
-      timeline: {
-        description: '6-month development cycle',
-      },
-      requiredSkills: ['React', 'Node.js', 'AI/ML'],
+      webpage: 'https://example.com',
+      planOutline: 'Phase 1: Design, Phase 2: Development, Phase 3: Testing',
+      history: 'Started as a research project at university',
+      targetCompletionDate: '2024-12-31T23:59:59.000Z',
     }
 
     test('should accept valid project data', () => {
@@ -225,14 +222,14 @@ describe('Validation Schemas', () => {
       expect(result.success).toBe(true)
     })
 
-    test('should reject title that is too short', () => {
+    test('should reject name that is too short', () => {
       const result = projectCreateSchema.safeParse({
         ...validProjectData,
-        title: 'AI',
+        name: 'AI',
       })
       expect(result.success).toBe(false)
       if (!result.success) {
-        expect(result.error.errors[0].message).toBe('Title must be at least 5 characters long')
+        expect(result.error.errors[0].message).toBe('Project name must be at least 3 characters long')
       }
     })
 
@@ -247,12 +244,15 @@ describe('Validation Schemas', () => {
       }
     })
 
-    test('should reject invalid project type', () => {
+    test('should reject goal that is too short', () => {
       const result = projectCreateSchema.safeParse({
         ...validProjectData,
-        projectType: 'INVALID' as any,
+        goal: 'Short',
       })
       expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.error.errors[0].message).toBe('Project goal must be at least 10 characters long')
+      }
     })
 
     test('should reject invalid help type', () => {
@@ -263,28 +263,6 @@ describe('Validation Schemas', () => {
       expect(result.success).toBe(false)
     })
 
-    test('should reject invalid max volunteers', () => {
-      const result = projectCreateSchema.safeParse({
-        ...validProjectData,
-        maxVolunteers: 0,
-      })
-      expect(result.success).toBe(false)
-      if (!result.success) {
-        expect(result.error.errors[0].message).toBe('Must allow at least 1 volunteer')
-      }
-    })
-
-    test('should reject too many max volunteers', () => {
-      const result = projectCreateSchema.safeParse({
-        ...validProjectData,
-        maxVolunteers: 51,
-      })
-      expect(result.success).toBe(false)
-      if (!result.success) {
-        expect(result.error.errors[0].message).toBe('Cannot exceed 50 volunteers')
-      }
-    })
-
     test('should reject invalid contact email', () => {
       const result = projectCreateSchema.safeParse({
         ...validProjectData,
@@ -293,17 +271,6 @@ describe('Validation Schemas', () => {
       expect(result.success).toBe(false)
       if (!result.success) {
         expect(result.error.errors[0].message).toBe('Invalid contact email address')
-      }
-    })
-
-    test('should reject too many required skills', () => {
-      const result = projectCreateSchema.safeParse({
-        ...validProjectData,
-        requiredSkills: Array(21).fill('skill'),
-      })
-      expect(result.success).toBe(false)
-      if (!result.success) {
-        expect(result.error.errors[0].message).toBe('Maximum 20 required skills allowed')
       }
     })
   })

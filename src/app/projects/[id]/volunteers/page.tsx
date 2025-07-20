@@ -25,7 +25,7 @@ interface Application {
 
 interface Project {
   id: string
-  title: string
+  name: string
   owner: {
     email: string
   }
@@ -120,7 +120,7 @@ export default function ProjectApplicationsPage({ params }: { params: Promise<{ 
             <CardHeader>
               <CardTitle className="text-2xl">Manage Applications</CardTitle>
               <CardDescription>
-                {project.title} • {project.applications.length} applications
+                {project.name} • {project.applications.length} applications
               </CardDescription>
             </CardHeader>
           </Card>

@@ -35,16 +35,16 @@ describe('manageProject tool', () => {
 
   const mockProject = {
     id: 'project-123',
-    title: 'Test Project',
+    name: 'Test Project',
+    goal: 'Create an innovative AI solution for education',
     description: 'This is a comprehensive test project description that meets the minimum 50 character requirement for validation.',
-    projectType: 'STARTUP',
     helpType: 'MVP',
     contactEmail: 'contact@example.com',
-    budgetRange: 'volunteer',
-    organizationUrl: 'https://example.com',
-    maxVolunteers: 5,
-    requiredSkills: ['JavaScript', 'React'],
-    timeline: { description: 'Q1 2024' },
+    planOutline: 'Phase 1: Research, Phase 2: Development, Phase 3: Testing',
+    history: 'Started as a research project',
+    webpage: 'https://example.com',
+    targetCompletionDate: '2024-12-31T23:59:59.000Z',
+    isActive: true,
     ownerId: 'user-123',
     owner: {
       id: 'user-123',
@@ -59,16 +59,15 @@ describe('manageProject tool', () => {
 
       const params = {
         action: 'create' as const,
-        title: 'Test Project',
+        name: 'Test Project',
+        goal: 'Create an innovative AI solution for education',
         description: 'This is a comprehensive test project description that meets the minimum 50 character requirement for validation.',
-        projectType: 'STARTUP' as const,
         helpType: 'MVP' as const,
         contactEmail: 'contact@example.com',
-        budgetRange: 'volunteer',
-        organizationUrl: 'https://example.com',
-        maxVolunteers: 5,
-        requiredSkills: ['JavaScript', 'React'],
-        timeline: { description: 'Q1 2024' },
+        planOutline: 'Phase 1: Research, Phase 2: Development, Phase 3: Testing',
+        history: 'Started as a research project',
+        webpage: 'https://example.com',
+        targetCompletionDate: '2024-12-31T23:59:59.000Z',
       };
 
       const result = await manageProjectTool.handler(params, mockContext);
@@ -79,16 +78,15 @@ describe('manageProject tool', () => {
       
       expect(mockPrisma.project.create).toHaveBeenCalledWith({
         data: {
-          title: 'Test Project',
+          name: 'Test Project',
+          goal: 'Create an innovative AI solution for education',
           description: 'This is a comprehensive test project description that meets the minimum 50 character requirement for validation.',
-          projectType: 'STARTUP',
           helpType: 'MVP',
           contactEmail: 'contact@example.com',
-          budgetRange: 'volunteer',
-          organizationUrl: 'https://example.com',
-          maxVolunteers: 5,
-          requiredSkills: ['JavaScript', 'React'],
-          timeline: { description: 'Q1 2024' },
+          planOutline: 'Phase 1: Research, Phase 2: Development, Phase 3: Testing',
+          history: 'Started as a research project',
+          webpage: 'https://example.com',
+          targetCompletionDate: new Date('2024-12-31T23:59:59.000Z'),
           ownerId: 'user-123',
         },
         include: {
@@ -99,11 +97,11 @@ describe('manageProject tool', () => {
       });
     });
 
-    it('should require title for creation', async () => {
+    it('should require name for creation', async () => {
       const params = {
         action: 'create' as const,
+        goal: 'Create an innovative AI solution for education',
         description: 'This is a comprehensive test project description that meets the minimum 50 character requirement for validation.',
-        projectType: 'STARTUP' as const,
         helpType: 'MVP' as const,
         contactEmail: 'contact@example.com',
       };
@@ -111,16 +109,16 @@ describe('manageProject tool', () => {
       const result = await manageProjectTool.handler(params, mockContext);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Title is required to create a project');
+      expect(result.error).toBe('Name is required to create a project');
       expect(mockPrisma.project.create).not.toHaveBeenCalled();
     });
 
     it('should require all mandatory fields', async () => {
       const params = {
         action: 'create' as const,
-        title: 'Test Project',
-        description: 'Short', // Too short - need at least 50 chars
-        projectType: 'STARTUP' as const,
+        name: 'Test Project',
+        goal: 'Short', // Too short - need at least 10 chars
+        description: 'This is a comprehensive test project description that meets the minimum 50 character requirement for validation.', // Valid length
         helpType: 'MVP' as const,
         contactEmail: 'contact@example.com',
       };
@@ -139,8 +137,8 @@ describe('manageProject tool', () => {
       const params = {
         action: 'update' as const,
         projectId: 'project-123',
-        title: 'Updated Project Title',
-        maxVolunteers: 10,
+        name: 'Updated Project Name',
+        goal: 'Updated goal for the project',
       };
 
       const result = await manageProjectTool.handler(params, mockContext);
@@ -155,8 +153,8 @@ describe('manageProject tool', () => {
           ownerId: 'user-123',
         },
         data: {
-          title: 'Updated Project Title',
-          maxVolunteers: 10,
+          name: 'Updated Project Name',
+          goal: 'Updated goal for the project',
         },
         include: {
           owner: {
@@ -169,7 +167,7 @@ describe('manageProject tool', () => {
     it('should require projectId for update', async () => {
       const params = {
         action: 'update' as const,
-        title: 'Updated Title',
+        name: 'Updated Name',
       };
 
       const result = await manageProjectTool.handler(params, mockContext);
@@ -186,7 +184,7 @@ describe('manageProject tool', () => {
       const params = {
         action: 'update' as const,
         projectId: 'non-existent',
-        title: 'Updated Title',
+        name: 'Updated Name',
       };
 
       const result = await manageProjectTool.handler(params, mockContext);
@@ -299,7 +297,7 @@ describe('manageProject tool', () => {
 
   describe('list action', () => {
     it('should list user projects successfully', async () => {
-      const projects = [mockProject, { ...mockProject, id: 'project-456', title: 'Another Project' }];
+      const projects = [mockProject, { ...mockProject, id: 'project-456', name: 'Another Project' }];
       mockPrisma.project.findMany.mockResolvedValue(projects);
 
       const params = {
@@ -335,10 +333,10 @@ describe('manageProject tool', () => {
     it('should handle validation errors', async () => {
       const params = {
         action: 'create' as const,
-        title: 'A', // Too short
-        description: 'Short', // Too short
-        projectType: 'INVALID' as any,
-        helpType: 'MVP' as const,
+        name: 'A', // Too short
+        goal: 'Short', // Too short
+        description: 'This is a comprehensive test project description that meets the minimum 50 character requirement for validation.', // Valid length
+        helpType: 'INVALID' as any,
         contactEmail: 'invalid-email',
       };
 

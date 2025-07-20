@@ -88,7 +88,7 @@ export async function POST(request: Request) {
           select: { id: true, name: true, image: true }
         },
         project: {
-          select: { id: true, title: true }
+          select: { id: true, name: true }
         },
         product: {
           select: { id: true, name: true }
@@ -153,7 +153,7 @@ export async function GET(request: Request) {
           select: { id: true, name: true, image: true },
         },
         project: {
-          select: { id: true, title: true }
+          select: { id: true, name: true }
         },
         product: {
           select: { id: true, name: true }

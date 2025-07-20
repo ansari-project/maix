@@ -129,21 +129,17 @@ const mcpHandler = createMcpHandler(
 
               const project = await prisma.project.create({
                 data: {
-                  title: params.title,
+                  name: params.title,
+                  goal: "Project goal to be updated",
                   description: params.description,
-                  projectType: params.projectType || "OPEN_SOURCE",
                   helpType: params.helpType || "ADVICE",
-                  maxVolunteers: params.maxVolunteers || 5,
                   contactEmail: params.contactEmail || user.email,
-                  requiredSkills: params.requiredSkills ? JSON.stringify(params.requiredSkills) : "[]",
-                  budgetRange: params.budgetRange,
                   ownerId: user.id,
-                  timeline: {},
                 },
               });
 
               return {
-                content: [{ type: "text", text: `Project "${project.title}" created successfully! ID: ${project.id}` }],
+                content: [{ type: "text", text: `Project "${project.name}" created successfully! ID: ${project.id}` }],
               };
             }
 
@@ -152,18 +148,18 @@ const mcpHandler = createMcpHandler(
                 where: { ownerId: user.id },
                 select: {
                   id: true,
-                  title: true,
+                  name: true,
+                  goal: true,
                   description: true,
-                  projectType: true,
                   helpType: true,
-                  maxVolunteers: true,
+                  contactEmail: true,
                   createdAt: true,
                 },
                 orderBy: { createdAt: "desc" },
               });
 
               const projectList = projects.map(p => 
-                `• ${p.title} (${p.id}) - ${p.projectType} - ${p.helpType}`
+                `• ${p.name} (${p.id}) - ${p.helpType} - ${p.goal}`
               ).join("\n");
 
               return {
@@ -196,12 +192,10 @@ const mcpHandler = createMcpHandler(
                 };
               }
 
-              const skills = JSON.parse((project.requiredSkills as string) || "[]");
-              
               return {
                 content: [{ 
                   type: "text", 
-                  text: `Project: ${project.title}\nDescription: ${project.description}\nType: ${project.projectType}\nHelp Type: ${project.helpType}\nMax Volunteers: ${project.maxVolunteers}\nRequired Skills: ${skills.join(", ")}` 
+                  text: `Project: ${project.name}\nGoal: ${project.goal}\nDescription: ${project.description}\nHelp Type: ${project.helpType}\nContact: ${project.contactEmail}\nWebpage: ${project.webpage || 'None'}` 
                 }],
               };
             }

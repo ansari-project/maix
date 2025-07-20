@@ -26,6 +26,10 @@ export async function POST(
       throw new Error("Project not found")
     }
 
+    if (!project.isActive) {
+      throw new Error("This project is not accepting applications")
+    }
+
     // Check if user already applied
     const existingApplication = await prisma.application.findUnique({
       where: {
@@ -40,10 +44,6 @@ export async function POST(
       throw new Error("You have already applied to this project")
     }
 
-    // Check if project is full
-    if (project.applications.length >= project.maxVolunteers) {
-      throw new Error("This project has reached its volunteer limit")
-    }
 
     const application = await prisma.application.create({
       data: {
@@ -60,7 +60,7 @@ export async function POST(
         },
         project: {
           select: {
-            title: true
+            name: true
           }
         }
       }

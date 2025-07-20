@@ -20,7 +20,7 @@ export async function GET(
           select: { id: true, name: true, image: true }
         },
         project: {
-          select: { id: true, title: true }
+          select: { id: true, name: true }
         },
         product: {
           select: { id: true, name: true }

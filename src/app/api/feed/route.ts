@@ -23,7 +23,7 @@ export async function GET() {
         orderBy: { appliedAt: 'desc' },
         include: { 
           user: { select: { id: true, name: true } },
-          project: { select: { id: true, title: true } }
+          project: { select: { id: true, name: true } }
         }
       })
     ])
@@ -33,7 +33,7 @@ export async function GET() {
       ...projects.map(p => ({
         id: p.id,
         type: 'project_created' as const,
-        title: `New project: ${p.title}`,
+        title: `New project: ${p.name}`,
         timestamp: p.createdAt,
         user: p.owner,
         data: p
@@ -41,7 +41,7 @@ export async function GET() {
       ...applications.map(a => ({
         id: a.id,
         type: 'volunteer_applied' as const,
-        title: `${a.user.name} volunteered for ${a.project.title}`,
+        title: `${a.user.name} volunteered for ${a.project.name}`,
         timestamp: a.appliedAt,
         user: a.user,
         data: a

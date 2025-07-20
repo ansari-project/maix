@@ -11,16 +11,16 @@ import Link from "next/link"
 
 interface Project {
   id: string
-  title: string
+  name: string
+  goal: string
   description: string
-  projectType: string
+  planOutline?: string
+  history?: string
+  webpage?: string
   helpType: string
-  budgetRange?: string
-  maxVolunteers: number
   contactEmail: string
-  organizationUrl?: string
-  timeline: any
-  requiredSkills: any
+  targetCompletionDate?: string
+  isActive: boolean
   createdAt: string
   owner: {
     id: string
@@ -121,7 +121,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
   const isOwner = project.owner.email === session.user?.email
   const hasApplied = !!userApplication
-  const canApply = !isOwner && !hasApplied && project.applications.length < project.maxVolunteers
+  const canApply = !isOwner && !hasApplied && project.isActive
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary to-accent p-6">
@@ -138,44 +138,45 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div>
-                      <CardTitle className="text-2xl">{project.title}</CardTitle>
+                      <CardTitle className="text-2xl">{project.name}</CardTitle>
                       <CardDescription className="mt-2">
                         Posted by {project.owner.name || project.owner.email}
                       </CardDescription>
                     </div>
                     <div className="flex gap-2">
-                      <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-                        {project.projectType.replace('_', ' ')}
-                      </span>
                       <span className="text-xs bg-accent/10 text-accent px-2 py-1 rounded">
                         {project.helpType.replace('_', ' ')}
                       </span>
+                      {!project.isActive && (
+                        <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">
+                          Inactive
+                        </span>
+                      )}
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
+                    <h3 className="font-semibold mb-2">Goal</h3>
+                    <p className="text-muted-foreground whitespace-pre-wrap">{project.goal}</p>
+                  </div>
+                  
+                  <div>
                     <h3 className="font-semibold mb-2">Description</h3>
                     <p className="text-muted-foreground whitespace-pre-wrap">{project.description}</p>
                   </div>
 
-                  {project.timeline?.description && (
+                  {project.planOutline && (
                     <div>
-                      <h3 className="font-semibold mb-2">Timeline</h3>
-                      <p className="text-muted-foreground whitespace-pre-wrap">{project.timeline.description}</p>
+                      <h3 className="font-semibold mb-2">Plan Outline</h3>
+                      <p className="text-muted-foreground whitespace-pre-wrap">{project.planOutline}</p>
                     </div>
                   )}
 
-                  {project.requiredSkills && project.requiredSkills.length > 0 && (
+                  {project.history && (
                     <div>
-                      <h3 className="font-semibold mb-2">Required Skills</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {project.requiredSkills.map((skill: string, index: number) => (
-                          <span key={index} className="text-xs bg-muted px-2 py-1 rounded">
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
+                      <h3 className="font-semibold mb-2">Project History</h3>
+                      <p className="text-muted-foreground whitespace-pre-wrap">{project.history}</p>
                     </div>
                   )}
                 </CardContent>
@@ -240,21 +241,27 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Budget:</span>
-                    <span>{project.budgetRange || "Not specified"}</span>
+                    <span className="text-muted-foreground">Applications:</span>
+                    <span>{project.applications.length}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Volunteers:</span>
-                    <span>{project.applications.length}/{project.maxVolunteers}</span>
+                    <span className="text-muted-foreground">Status:</span>
+                    <span>{project.isActive ? "Active" : "Inactive"}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Posted:</span>
                     <span>{new Date(project.createdAt).toLocaleDateString()}</span>
                   </div>
-                  {project.organizationUrl && (
+                  {project.targetCompletionDate && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Target Date:</span>
+                      <span>{new Date(project.targetCompletionDate).toLocaleDateString()}</span>
+                    </div>
+                  )}
+                  {project.webpage && (
                     <div>
-                      <span className="text-muted-foreground">Organization:</span>
-                      <a href={project.organizationUrl} target="_blank" rel="noopener noreferrer" 
+                      <span className="text-muted-foreground">Website:</span>
+                      <a href={project.webpage} target="_blank" rel="noopener noreferrer" 
                          className="text-primary hover:underline block">
                         Visit Website
                       </a>

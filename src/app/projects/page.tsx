@@ -13,12 +13,13 @@ import { Package, ExternalLink } from "lucide-react"
 
 interface Project {
   id: string
-  title: string
+  name: string
+  goal: string
   description: string
-  projectType: string
   helpType: string
-  budgetRange?: string
-  maxVolunteers: number
+  webpage?: string
+  targetCompletionDate?: string
+  isActive: boolean
   createdAt: string
   owner: {
     name: string
@@ -40,7 +41,6 @@ export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
-  const [typeFilter, setTypeFilter] = useState("all")
   const [helpFilter, setHelpFilter] = useState("all")
 
   useEffect(() => {
@@ -69,12 +69,12 @@ export default function ProjectsPage() {
   }
 
   const filteredProjects = projects.filter(project => {
-    const matchesSearch = project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         project.goal.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          project.description.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesType = typeFilter === "all" || project.projectType === typeFilter
     const matchesHelp = helpFilter === "all" || project.helpType === helpFilter
     
-    return matchesSearch && matchesType && matchesHelp
+    return matchesSearch && matchesHelp
   })
 
   if (status === "loading" || loading) {
@@ -106,7 +106,7 @@ export default function ProjectsPage() {
             <CardTitle>Find Projects</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Search</label>
                 <Input
@@ -114,22 +114,6 @@ export default function ProjectsPage() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Project Type</label>
-                <Select value={typeFilter} onValueChange={setTypeFilter}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="RESEARCH">Research</SelectItem>
-                    <SelectItem value="STARTUP">Startup</SelectItem>
-                    <SelectItem value="NON_PROFIT">Non-Profit</SelectItem>
-                    <SelectItem value="OPEN_SOURCE">Open Source</SelectItem>
-                    <SelectItem value="CORPORATE">Corporate</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Help Type</label>
@@ -166,10 +150,17 @@ export default function ProjectsPage() {
               <Card key={project.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex justify-between items-start">
-                    <CardTitle className="line-clamp-2">{project.title}</CardTitle>
-                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-                      {project.helpType.replace('_', ' ')}
-                    </span>
+                    <CardTitle className="line-clamp-2">{project.name}</CardTitle>
+                    <div className="flex gap-1">
+                      <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                        {project.helpType.replace('_', ' ')}
+                      </span>
+                      {!project.isActive && (
+                        <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">
+                          Inactive
+                        </span>
+                      )}
+                    </div>
                   </div>
                   {project.product && (
                     <div className="flex items-center gap-2 mb-2">
@@ -188,24 +179,29 @@ export default function ProjectsPage() {
                       )}
                     </div>
                   )}
-                  <CardDescription className="line-clamp-3">
-                    {project.description}
-                  </CardDescription>
+                  <div className="space-y-1">
+                    <div className="text-sm font-medium text-muted-foreground">Goal:</div>
+                    <CardDescription className="line-clamp-2">
+                      {project.goal}
+                    </CardDescription>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2 text-sm text-muted-foreground">
                     <div className="flex justify-between">
-                      <span>Type:</span>
-                      <span>{project.projectType.replace('_', ' ')}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Budget:</span>
-                      <span>{project.budgetRange || "Not specified"}</span>
-                    </div>
-                    <div className="flex justify-between">
                       <span>Applications:</span>
-                      <span>{project._count.applications}/{project.maxVolunteers}</span>
+                      <span>{project._count.applications}</span>
                     </div>
+                    <div className="flex justify-between">
+                      <span>Status:</span>
+                      <span>{project.isActive ? "Active" : "Inactive"}</span>
+                    </div>
+                    {project.targetCompletionDate && (
+                      <div className="flex justify-between">
+                        <span>Target Date:</span>
+                        <span>{new Date(project.targetCompletionDate).toLocaleDateString()}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between">
                       <span>Posted by:</span>
                       <span>{project.owner.name || project.owner.email}</span>

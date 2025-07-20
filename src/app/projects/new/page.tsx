@@ -23,16 +23,15 @@ function NewProjectForm() {
   const [products, setProducts] = useState<Product[]>([])
   const [productsLoading, setProductsLoading] = useState(false)
   const [project, setProject] = useState({
-    title: "",
+    name: "",
+    goal: "",
     description: "",
-    projectType: "",
+    planOutline: "",
+    history: "",
+    webpage: "",
     helpType: "",
-    budgetRange: "",
-    maxVolunteers: "1",
     contactEmail: "",
-    organizationUrl: "",
-    timeline: "",
-    requiredSkills: "",
+    targetCompletionDate: "",
     productId: ""
   })
 
@@ -68,16 +67,8 @@ function NewProjectForm() {
     setLoading(true)
 
     try {
-      const timelineData = project.timeline ? { description: project.timeline } : {}
-      const skillsData = project.requiredSkills 
-        ? project.requiredSkills.split(",").map(skill => skill.trim()).filter(skill => skill)
-        : []
-
       const requestData = {
         ...project,
-        maxVolunteers: parseInt(project.maxVolunteers),
-        timeline: timelineData,
-        requiredSkills: skillsData,
         productId: project.productId || undefined
       }
 
@@ -127,12 +118,24 @@ function NewProjectForm() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="title">Project Title *</Label>
+                <Label htmlFor="name">Project Name *</Label>
                 <Input
-                  id="title"
-                  value={project.title}
-                  onChange={(e) => setProject({...project, title: e.target.value})}
-                  placeholder="Brief, descriptive title for your project"
+                  id="name"
+                  value={project.name}
+                  onChange={(e) => setProject({...project, name: e.target.value})}
+                  placeholder="Brief, descriptive name for your project"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="goal">Project Goal *</Label>
+                <Textarea
+                  id="goal"
+                  value={project.goal}
+                  onChange={(e) => setProject({...project, goal: e.target.value})}
+                  placeholder="What is the main goal or objective of this project?"
+                  rows={2}
                   required
                 />
               </div>
@@ -143,43 +146,25 @@ function NewProjectForm() {
                   id="description"
                   value={project.description}
                   onChange={(e) => setProject({...project, description: e.target.value})}
-                  placeholder="Detailed description of your project, goals, and what you're trying to achieve..."
+                  placeholder="Detailed description of your project and what you're trying to achieve..."
                   rows={4}
                   required
                 />
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="projectType">Project Type *</Label>
-                  <Select value={project.projectType} onValueChange={(value) => setProject({...project, projectType: value})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select project type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="RESEARCH">Research</SelectItem>
-                      <SelectItem value="STARTUP">Startup</SelectItem>
-                      <SelectItem value="NON_PROFIT">Non-Profit</SelectItem>
-                      <SelectItem value="OPEN_SOURCE">Open Source</SelectItem>
-                      <SelectItem value="CORPORATE">Corporate</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="helpType">Type of Help Needed *</Label>
-                  <Select value={project.helpType} onValueChange={(value) => setProject({...project, helpType: value})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select help type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ADVICE">Advice & Consultation</SelectItem>
-                      <SelectItem value="PROTOTYPE">Prototype Development</SelectItem>
-                      <SelectItem value="MVP">MVP Development</SelectItem>
-                      <SelectItem value="FULL_PRODUCT">Full Product Development</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="helpType">Type of Help Needed *</Label>
+                <Select value={project.helpType} onValueChange={(value) => setProject({...project, helpType: value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select help type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ADVICE">Advice & Consultation</SelectItem>
+                    <SelectItem value="PROTOTYPE">Prototype Development</SelectItem>
+                    <SelectItem value="MVP">MVP Development</SelectItem>
+                    <SelectItem value="FULL_PRODUCT">Full Product Development</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
@@ -203,59 +188,35 @@ function NewProjectForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="requiredSkills">Required Skills</Label>
-                <Input
-                  id="requiredSkills"
-                  value={project.requiredSkills}
-                  onChange={(e) => setProject({...project, requiredSkills: e.target.value})}
-                  placeholder="React, Python, Machine Learning, etc. (comma-separated)"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="timeline">Timeline</Label>
+                <Label htmlFor="planOutline">Plan Outline</Label>
                 <Textarea
-                  id="timeline"
-                  value={project.timeline}
-                  onChange={(e) => setProject({...project, timeline: e.target.value})}
-                  placeholder="Expected timeline, milestones, deadlines..."
+                  id="planOutline"
+                  value={project.planOutline}
+                  onChange={(e) => setProject({...project, planOutline: e.target.value})}
+                  placeholder="Outline of your plans for executing this project..."
                   rows={3}
                 />
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="budgetRange">Budget Range</Label>
-                  <Select value={project.budgetRange} onValueChange={(value) => setProject({...project, budgetRange: value})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select budget range" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="volunteer">Volunteer (No budget)</SelectItem>
-                      <SelectItem value="$1-500">$1 - $500</SelectItem>
-                      <SelectItem value="$500-2000">$500 - $2,000</SelectItem>
-                      <SelectItem value="$2000-5000">$2,000 - $5,000</SelectItem>
-                      <SelectItem value="$5000+">$5,000+</SelectItem>
-                      <SelectItem value="equity">Equity/Revenue Share</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="history">Project History</Label>
+                <Textarea
+                  id="history"
+                  value={project.history}
+                  onChange={(e) => setProject({...project, history: e.target.value})}
+                  placeholder="Background and history of this project..."
+                  rows={3}
+                />
+              </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="maxVolunteers">Max Volunteers</Label>
-                  <Select value={project.maxVolunteers} onValueChange={(value) => setProject({...project, maxVolunteers: value})}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">1 volunteer</SelectItem>
-                      <SelectItem value="2">2 volunteers</SelectItem>
-                      <SelectItem value="3">3 volunteers</SelectItem>
-                      <SelectItem value="5">5 volunteers</SelectItem>
-                      <SelectItem value="10">10 volunteers</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="targetCompletionDate">Target Completion Date</Label>
+                <Input
+                  id="targetCompletionDate"
+                  type="datetime-local"
+                  value={project.targetCompletionDate}
+                  onChange={(e) => setProject({...project, targetCompletionDate: e.target.value})}
+                />
               </div>
 
               <div className="space-y-2">
@@ -271,13 +232,13 @@ function NewProjectForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="organizationUrl">Organization URL</Label>
+                <Label htmlFor="webpage">Project Webpage</Label>
                 <Input
-                  id="organizationUrl"
+                  id="webpage"
                   type="url"
-                  value={project.organizationUrl}
-                  onChange={(e) => setProject({...project, organizationUrl: e.target.value})}
-                  placeholder="https://yourorganization.com"
+                  value={project.webpage}
+                  onChange={(e) => setProject({...project, webpage: e.target.value})}
+                  placeholder="https://yourproject.com"
                 />
               </div>
 

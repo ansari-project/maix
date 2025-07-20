@@ -71,11 +71,9 @@ export async function POST(request: Request) {
         data: {
           ...validatedData,
           // Convert empty string to null for optional URL field
-          organizationUrl: validatedData.organizationUrl === '' ? null : validatedData.organizationUrl,
-          // Convert undefined timeline to empty object for JSON field
-          timeline: validatedData.timeline || {},
-          // Convert undefined requiredSkills to empty array for JSON field
-          requiredSkills: validatedData.requiredSkills || [],
+          webpage: validatedData.webpage === '' ? null : validatedData.webpage,
+          // Convert targetCompletionDate string to Date if provided
+          targetCompletionDate: validatedData.targetCompletionDate ? new Date(validatedData.targetCompletionDate) : null,
           ownerId: user.id
         }
       })
@@ -85,7 +83,7 @@ export async function POST(request: Request) {
         data: {
           type: 'PROJECT_DISCUSSION',
           authorId: user.id,
-          content: `Discussion thread for ${newProject.title}`,
+          content: `Discussion thread for ${newProject.name}`,
           projectDiscussionThreadId: newProject.id, // Post holds FK to Project
         }
       })

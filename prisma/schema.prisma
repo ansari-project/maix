@@ -44,22 +44,21 @@ model User {
   @@map("users")
 }
 
-// Project model for AI/tech projects seeking help
+// Project model - simplified to essential fields only
 model Project {
-  id              String   @id @default(cuid())
-  title           String
-  description     String
-  timeline        Json     // JSONB field for flexible timeline data
-  requiredSkills  Json     // JSONB field for required skills with levels
-  projectType     ProjectType
-  helpType        HelpType
-  budgetRange     String?  // e.g., "volunteer", "$1000-5000", "equity"
-  contactEmail    String
-  organizationUrl String?
-  isActive        Boolean  @default(true)
-  maxVolunteers   Int      @default(1)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                    String    @id @default(cuid())
+  name                  String    // Project name
+  goal                  String    // Project goal
+  description           String    @db.Text // Project description (longer text)
+  planOutline           String?   @db.Text // Outline of plans for executing the project
+  history               String?   @db.Text // Project history (optional, longer text)
+  webpage               String?   // Project web page URL
+  contactEmail          String    // Contact email for the project
+  helpType              HelpType  // Type of help needed
+  targetCompletionDate  DateTime? // Target date for project completion
+  isActive              Boolean   @default(true) // Whether project is actively seeking help
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   // Relations
   owner         User          @relation(fields: [ownerId], references: [id])
@@ -148,14 +147,6 @@ enum ExperienceLevel {
   INTERN
   NEW_GRAD
   SENIOR
-}
-
-enum ProjectType {
-  RESEARCH
-  STARTUP
-  NON_PROFIT
-  OPEN_SOURCE
-  CORPORATE
 }
 
 enum HelpType {
