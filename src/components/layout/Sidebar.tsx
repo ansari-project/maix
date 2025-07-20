@@ -148,10 +148,10 @@ export function Sidebar({ isCollapsed = false, onToggle, currentPath }: SidebarP
             {!isCollapsed && (
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">
-                  {session.user?.name || session.user?.email}
+                  {session.user?.name || session.user?.username}
                 </p>
                 <p className="text-xs text-muted-foreground truncate">
-                  {session.user?.email}
+                  @{session.user?.username}
                 </p>
               </div>
             )}

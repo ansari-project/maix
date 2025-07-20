@@ -17,6 +17,7 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false)
   const [profile, setProfile] = useState({
     name: "",
+    username: "",
     bio: "",
     specialty: "",
     experienceLevel: "",
@@ -48,6 +49,7 @@ export default function ProfilePage() {
         const data = await response.json()
         setProfile({
           name: data.name || "",
+          username: data.username || "",
           bio: data.bio || "",
           specialty: data.specialty || "",
           experienceLevel: data.experienceLevel || "",
@@ -123,6 +125,17 @@ export default function ProfilePage() {
                   value={profile.name}
                   onChange={(e) => setProfile({...profile, name: e.target.value})}
                   placeholder="Your full name"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  id="username"
+                  value={profile.username}
+                  onChange={(e) => setProfile({...profile, username: e.target.value})}
+                  placeholder="Your unique username"
                   required
                 />
               </div>

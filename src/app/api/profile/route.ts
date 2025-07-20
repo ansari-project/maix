@@ -15,6 +15,7 @@ export async function GET() {
       select: {
         id: true,
         name: true,
+        username: true,
         email: true,
         bio: true,
         specialty: true,
@@ -39,6 +40,20 @@ export async function PUT(request: Request) {
     const user = await requireAuth()
     const validatedData = await parseRequestBody(request, profileUpdateSchema)
 
+    // Check username uniqueness if username is being updated
+    if (validatedData.username) {
+      const existingUser = await prisma.user.findUnique({
+        where: { username: validatedData.username }
+      })
+      
+      if (existingUser && existingUser.id !== user.id) {
+        return NextResponse.json(
+          { message: 'Username is already taken' },
+          { status: 409 }
+        )
+      }
+    }
+
     const updatedUser = await prisma.user.update({
       where: { id: user.id },
       data: {
@@ -51,6 +66,7 @@ export async function PUT(request: Request) {
       select: {
         id: true,
         name: true,
+        username: true,
         email: true,
         bio: true,
         specialty: true,

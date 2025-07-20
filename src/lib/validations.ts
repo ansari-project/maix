@@ -39,6 +39,13 @@ export const profileUpdateSchema = z.object({
     .max(50, 'Name must be less than 50 characters long')
     .regex(/^[a-zA-Z\s]+$/, 'Name can only contain letters and spaces')
     .optional(),
+  username: z.string()
+    .min(3, 'Username must be at least 3 characters long')
+    .max(30, 'Username must be less than 30 characters long')
+    .regex(/^[a-zA-Z0-9_-]+$/, 'Username can only contain letters, numbers, underscores, and hyphens')
+    .refine(val => !val.startsWith('_') && !val.startsWith('-'), 'Username cannot start with underscore or hyphen')
+    .refine(val => !val.endsWith('_') && !val.endsWith('-'), 'Username cannot end with underscore or hyphen')
+    .optional(),
   bio: z.string()
     .max(1000, 'Bio must be less than 1000 characters long')
     .optional(),

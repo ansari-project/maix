@@ -51,6 +51,7 @@ describe('/api/profile', () => {
   const mockProfileUser = {
     id: 'user-123',
     name: 'John Doe',
+    username: 'johndoe',
     email: 'john@example.com',
     bio: 'Software engineer',
     specialty: 'AI',
@@ -125,6 +126,7 @@ describe('/api/profile', () => {
   describe('PUT /api/profile', () => {
     const validUpdateData = {
       name: 'Jane Doe',
+      username: 'janedoe',
       bio: 'Senior Software Engineer',
       specialty: 'FULL_STACK',
       experienceLevel: 'SENIOR',
@@ -299,6 +301,53 @@ describe('/api/profile', () => {
     test('should validate timezone length', async () => {
       const invalidData = { timezone: 'A'.repeat(51) }
       await testValidationError(invalidData, 'Timezone must be less than 50 characters long')
+    })
+
+    test('should validate username uniqueness', async () => {
+      const conflictingUsername = 'existing_user'
+      const updateDataWithConflictingUsername = {
+        ...validUpdateData,
+        username: conflictingUsername
+      }
+
+      mockRequireAuth.mockResolvedValue(mockProfileUser as any)
+      mockParseRequestBody.mockResolvedValue(updateDataWithConflictingUsername)
+      
+      // Mock that another user already has this username
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'other-user-id',
+        username: conflictingUsername
+      } as any)
+
+      const request = createMockRequest(updateDataWithConflictingUsername)
+      const response = await PUT(request)
+      const responseData = await response.json()
+
+      expect(response.status).toBe(409)
+      expect(responseData.message).toBe('Username is already taken')
+    })
+
+    test('should allow keeping same username', async () => {
+      const sameUsernameData = {
+        ...validUpdateData,
+        username: mockProfileUser.username
+      }
+
+      mockRequireAuth.mockResolvedValue(mockProfileUser as any)
+      mockParseRequestBody.mockResolvedValue(sameUsernameData)
+      
+      // Mock that the current user has this username
+      mockPrisma.user.findUnique.mockResolvedValue(mockProfileUser as any)
+      mockPrisma.user.update.mockResolvedValue(mockProfileUser as any)
+      mockSuccessResponse.mockReturnValue(
+        mockApiSuccessResponse(mockProfileUser, 200) as any
+      )
+
+      const request = createMockRequest(sameUsernameData)
+      const response = await PUT(request)
+
+      expect(response.status).toBe(200)
+      expect(mockPrisma.user.update).toHaveBeenCalled()
     })
   })
 })
