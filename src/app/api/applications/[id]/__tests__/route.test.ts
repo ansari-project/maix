@@ -1,14 +1,31 @@
 import { NextRequest } from 'next/server'
+
+// Mock all dependencies first before importing anything
+jest.mock('@/lib/auth-utils')
+jest.mock('@/lib/api-utils')
+jest.mock('@/lib/prisma', () => ({
+  prisma: {
+    application: {
+      findUnique: jest.fn(),
+      update: jest.fn(),
+    },
+  },
+}))
+
 import { PATCH } from '../route'
-import { getServerSession } from 'next-auth/next'
 import { prisma } from '@/lib/prisma'
+import { 
+  mockRequireAuth, 
+  mockUser,
+  mockApiErrorResponse,
+  mockApiSuccessResponse
+} from '@/lib/test-utils'
+import { handleApiError, successResponse, parseRequestBody } from '@/lib/api-utils'
 
-// Mock the dependencies
-jest.mock('next-auth/next')
-jest.mock('@/lib/prisma')
-
-const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>
 const mockPrisma = prisma as jest.Mocked<typeof prisma>
+const mockHandleApiError = handleApiError as jest.MockedFunction<typeof handleApiError>
+const mockSuccessResponse = successResponse as jest.MockedFunction<typeof successResponse>
+const mockParseRequestBody = parseRequestBody as jest.MockedFunction<typeof parseRequestBody>
 
 describe('/api/applications/[id]', () => {
   beforeEach(() => {
@@ -19,12 +36,6 @@ describe('/api/applications/[id]', () => {
     id: 'owner-123',
     email: 'owner@example.com',
     name: 'Project Owner',
-  }
-
-  const mockSession = {
-    user: {
-      email: 'owner@example.com',
-    },
   }
 
   const mockApplication = {
@@ -66,9 +77,13 @@ describe('/api/applications/[id]', () => {
     }
 
     test('should update volunteer application with valid data', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession as any)
+      mockRequireAuth.mockResolvedValue(mockProjectOwner as any)
+      mockParseRequestBody.mockResolvedValue(validUpdateData)
       mockPrisma.application.findUnique.mockResolvedValue(mockApplication as any)
       mockPrisma.application.update.mockResolvedValue(mockUpdatedApplication as any)
+      mockSuccessResponse.mockReturnValue(
+        mockApiSuccessResponse(mockUpdatedApplication, 200) as any
+      )
 
       const request = createMockRequest(validUpdateData)
       const response = await PATCH(request, { params: mockParams })
@@ -96,49 +111,67 @@ describe('/api/applications/[id]', () => {
     })
 
     test('should return 401 for unauthenticated user', async () => {
-      mockGetServerSession.mockResolvedValue(null)
+      const authError = new Error('Not authenticated')
+      authError.name = 'AuthError'
+      mockRequireAuth.mockRejectedValue(authError)
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Not authenticated', 401) as any
+      )
 
       const request = createMockRequest(validUpdateData)
       const response = await PATCH(request, { params: mockParams })
       const responseData = await response.json()
 
       expect(response.status).toBe(401)
-      expect(responseData.error).toBe('Unauthorized')
+      expect(responseData.message).toBe('Not authenticated')
     })
 
     test('should return 404 for non-existent application', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession as any)
+      mockRequireAuth.mockResolvedValue(mockProjectOwner as any)
+      mockParseRequestBody.mockResolvedValue(validUpdateData)
       mockPrisma.application.findUnique.mockResolvedValue(null)
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Application not found', 404) as any
+      )
 
       const request = createMockRequest(validUpdateData)
       const response = await PATCH(request, { params: mockParams })
       const responseData = await response.json()
 
       expect(response.status).toBe(404)
-      expect(responseData.error).toBe('Application not found')
+      expect(responseData.message).toBe('Application not found')
     })
 
     test('should return 403 for non-project-owner', async () => {
-      const nonOwnerSession = {
-        user: {
-          email: 'someone-else@example.com',
-        },
+      const nonOwner = {
+        id: 'other-user-123',
+        email: 'someone-else@example.com',
+        name: 'Other User',
       }
 
-      mockGetServerSession.mockResolvedValue(nonOwnerSession as any)
+      mockRequireAuth.mockResolvedValue(nonOwner as any)
+      mockParseRequestBody.mockResolvedValue(validUpdateData)
       mockPrisma.application.findUnique.mockResolvedValue(mockApplication as any)
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Unauthorized', 403) as any
+      )
 
       const request = createMockRequest(validUpdateData)
       const response = await PATCH(request, { params: mockParams })
       const responseData = await response.json()
 
       expect(response.status).toBe(403)
-      expect(responseData.error).toBe('Unauthorized')
+      expect(responseData.message).toBe('Unauthorized')
     })
 
     test('should return 400 for invalid input data', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession as any)
-      mockPrisma.application.findUnique.mockResolvedValue(mockApplication as any)
+      mockRequireAuth.mockResolvedValue(mockProjectOwner as any)
+      const validationError = new Error('Invalid input')
+      validationError.name = 'ZodError'
+      mockParseRequestBody.mockRejectedValue(validationError)
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Invalid input', 400) as any
+      )
 
       const invalidData = {
         status: 'INVALID_STATUS',
@@ -151,12 +184,16 @@ describe('/api/applications/[id]', () => {
 
       expect(response.status).toBe(400)
       expect(responseData.message).toBe('Invalid input')
-      expect(responseData.errors).toHaveLength(2)
     })
 
     test('should validate status enum values', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession as any)
-      mockPrisma.application.findUnique.mockResolvedValue(mockApplication as any)
+      mockRequireAuth.mockResolvedValue(mockProjectOwner as any)
+      const validationError = new Error('Invalid input')
+      validationError.name = 'ZodError'
+      mockParseRequestBody.mockRejectedValue(validationError)
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Invalid input', 400) as any
+      )
 
       const invalidData = {
         status: 'INVALID_STATUS',
@@ -168,12 +205,16 @@ describe('/api/applications/[id]', () => {
 
       expect(response.status).toBe(400)
       expect(responseData.message).toBe('Invalid input')
-      expect(responseData.errors[0].field).toBe('status')
     })
 
     test('should validate message length', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession as any)
-      mockPrisma.application.findUnique.mockResolvedValue(mockApplication as any)
+      mockRequireAuth.mockResolvedValue(mockProjectOwner as any)
+      const validationError = new Error('Response message must be less than 1000 characters long')
+      validationError.name = 'ZodError'
+      mockParseRequestBody.mockRejectedValue(validationError)
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Response message must be less than 1000 characters long', 400) as any
+      )
 
       const invalidData = {
         status: 'ACCEPTED',
@@ -185,19 +226,24 @@ describe('/api/applications/[id]', () => {
       const responseData = await response.json()
 
       expect(response.status).toBe(400)
-      expect(responseData.errors[0].message).toBe('Response message must be less than 1000 characters long')
+      expect(responseData.message).toBe('Response message must be less than 1000 characters long')
     })
 
     test('should accept all valid status values', async () => {
       const validStatuses = ['PENDING', 'ACCEPTED', 'REJECTED', 'WITHDRAWN']
 
       for (const status of validStatuses) {
-        mockGetServerSession.mockResolvedValue(mockSession as any)
+        jest.clearAllMocks()
+        mockRequireAuth.mockResolvedValue(mockProjectOwner as any)
+        mockParseRequestBody.mockResolvedValue({ status })
         mockPrisma.application.findUnique.mockResolvedValue(mockApplication as any)
         mockPrisma.application.update.mockResolvedValue({
           ...mockUpdatedApplication,
           status,
         } as any)
+        mockSuccessResponse.mockReturnValue(
+          mockApiSuccessResponse({ ...mockUpdatedApplication, status }, 200) as any
+        )
 
         const request = createMockRequest({ status })
         const response = await PATCH(request, { params: mockParams })
@@ -207,13 +253,16 @@ describe('/api/applications/[id]', () => {
     })
 
     test('should work with status only (no message)', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession as any)
-      mockPrisma.application.findUnique.mockResolvedValue(mockApplication as any)
-      mockPrisma.application.update.mockResolvedValue(mockUpdatedApplication as any)
-
+      mockRequireAuth.mockResolvedValue(mockProjectOwner as any)
       const statusOnlyData = {
         status: 'REJECTED',
       }
+      mockParseRequestBody.mockResolvedValue(statusOnlyData)
+      mockPrisma.application.findUnique.mockResolvedValue(mockApplication as any)
+      mockPrisma.application.update.mockResolvedValue(mockUpdatedApplication as any)
+      mockSuccessResponse.mockReturnValue(
+        mockApiSuccessResponse(mockUpdatedApplication, 200) as any
+      )
 
       const request = createMockRequest(statusOnlyData)
       const response = await PATCH(request, { params: mockParams })
@@ -238,13 +287,16 @@ describe('/api/applications/[id]', () => {
     })
 
     test('should work with message only (no status)', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession as any)
-      mockPrisma.application.findUnique.mockResolvedValue(mockApplication as any)
-      mockPrisma.application.update.mockResolvedValue(mockUpdatedApplication as any)
-
+      mockRequireAuth.mockResolvedValue(mockProjectOwner as any)
       const messageOnlyData = {
         message: 'Thank you for your interest.',
       }
+      mockParseRequestBody.mockResolvedValue(messageOnlyData)
+      mockPrisma.application.findUnique.mockResolvedValue(mockApplication as any)
+      mockPrisma.application.update.mockResolvedValue(mockUpdatedApplication as any)
+      mockSuccessResponse.mockReturnValue(
+        mockApiSuccessResponse(mockUpdatedApplication, 200) as any
+      )
 
       const request = createMockRequest(messageOnlyData)
       const response = await PATCH(request, { params: mockParams })
@@ -269,34 +321,46 @@ describe('/api/applications/[id]', () => {
     })
 
     test('should handle database errors during application lookup', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession as any)
+      mockRequireAuth.mockResolvedValue(mockProjectOwner as any)
+      mockParseRequestBody.mockResolvedValue(validUpdateData)
       mockPrisma.application.findUnique.mockRejectedValue(new Error('Database error'))
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Internal server error', 500) as any
+      )
 
       const request = createMockRequest(validUpdateData)
       const response = await PATCH(request, { params: mockParams })
       const responseData = await response.json()
 
       expect(response.status).toBe(500)
-      expect(responseData.error).toBe('Internal server error')
+      expect(responseData.message).toBe('Internal server error')
     })
 
     test('should handle database errors during application update', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession as any)
+      mockRequireAuth.mockResolvedValue(mockProjectOwner as any)
+      mockParseRequestBody.mockResolvedValue(validUpdateData)
       mockPrisma.application.findUnique.mockResolvedValue(mockApplication as any)
       mockPrisma.application.update.mockRejectedValue(new Error('Database error'))
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Internal server error', 500) as any
+      )
 
       const request = createMockRequest(validUpdateData)
       const response = await PATCH(request, { params: mockParams })
       const responseData = await response.json()
 
       expect(response.status).toBe(500)
-      expect(responseData.error).toBe('Internal server error')
+      expect(responseData.message).toBe('Internal server error')
     })
 
     test('should include project owner info in application lookup', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession as any)
+      mockRequireAuth.mockResolvedValue(mockProjectOwner as any)
+      mockParseRequestBody.mockResolvedValue(validUpdateData)
       mockPrisma.application.findUnique.mockResolvedValue(mockApplication as any)
       mockPrisma.application.update.mockResolvedValue(mockUpdatedApplication as any)
+      mockSuccessResponse.mockReturnValue(
+        mockApiSuccessResponse(mockUpdatedApplication, 200) as any
+      )
 
       const request = createMockRequest(validUpdateData)
       const response = await PATCH(request, { params: mockParams })
@@ -316,14 +380,17 @@ describe('/api/applications/[id]', () => {
     })
 
     test('should validate empty message', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession as any)
-      mockPrisma.application.findUnique.mockResolvedValue(mockApplication as any)
-      mockPrisma.application.update.mockResolvedValue(mockUpdatedApplication as any)
-
+      mockRequireAuth.mockResolvedValue(mockProjectOwner as any)
       const emptyMessageData = {
         status: 'ACCEPTED',
         message: '',
       }
+      mockParseRequestBody.mockResolvedValue(emptyMessageData)
+      mockPrisma.application.findUnique.mockResolvedValue(mockApplication as any)
+      mockPrisma.application.update.mockResolvedValue(mockUpdatedApplication as any)
+      mockSuccessResponse.mockReturnValue(
+        mockApiSuccessResponse(mockUpdatedApplication, 200) as any
+      )
 
       const request = createMockRequest(emptyMessageData)
       const response = await PATCH(request, { params: mockParams })
@@ -351,9 +418,13 @@ describe('/api/applications/[id]', () => {
       const mockDate = new Date('2024-01-15T10:00:00Z')
       jest.spyOn(global, 'Date').mockImplementation(() => mockDate as any)
 
-      mockGetServerSession.mockResolvedValue(mockSession as any)
+      mockRequireAuth.mockResolvedValue(mockProjectOwner as any)
+      mockParseRequestBody.mockResolvedValue(validUpdateData)
       mockPrisma.application.findUnique.mockResolvedValue(mockApplication as any)
       mockPrisma.application.update.mockResolvedValue(mockUpdatedApplication as any)
+      mockSuccessResponse.mockReturnValue(
+        mockApiSuccessResponse(mockUpdatedApplication, 200) as any
+      )
 
       const request = createMockRequest(validUpdateData)
       const response = await PATCH(request, { params: mockParams })

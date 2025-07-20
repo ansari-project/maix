@@ -1,10 +1,8 @@
 import { NextRequest } from 'next/server'
-import { GET, PATCH, DELETE } from '../route'
-import { getServerSession } from 'next-auth/next'
-import { prisma } from '@/lib/prisma'
 
-// Mock the dependencies
-jest.mock('next-auth/next')
+// Mock all dependencies first before importing anything
+jest.mock('@/lib/auth-utils')
+jest.mock('@/lib/api-utils')
 jest.mock('@/lib/prisma', () => ({
   prisma: {
     user: {
@@ -18,8 +16,21 @@ jest.mock('@/lib/prisma', () => ({
   },
 }))
 
-const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>
+import { GET, PATCH, DELETE } from '../route'
+import { prisma } from '@/lib/prisma'
+import { 
+  mockRequireAuth, 
+  mockUser,
+  mockApiErrorResponse,
+  mockApiSuccessResponse
+} from '@/lib/test-utils'
+import { handleApiError, successResponse, parseRequestBody } from '@/lib/api-utils'
+
 const mockPrisma = prisma as jest.Mocked<typeof prisma>
+const mockHandleApiError = handleApiError as jest.MockedFunction<typeof handleApiError>
+const mockSuccessResponse = successResponse as jest.MockedFunction<typeof successResponse>
+const mockParseRequestBody = parseRequestBody as jest.MockedFunction<typeof parseRequestBody>
+
 
 describe('/api/posts/[id]', () => {
   beforeEach(() => {
@@ -79,6 +90,9 @@ describe('/api/posts/[id]', () => {
       }
 
       mockPrisma.post.findUnique.mockResolvedValue(mockPostWithReplies)
+      mockSuccessResponse.mockReturnValue(
+        mockApiSuccessResponse(mockPostWithReplies, 200) as any
+      )
 
       const request = new NextRequest('http://localhost:3000/api/posts/post-123')
       const response = await GET(request, { params: Promise.resolve({ id: 'post-123' }) })
@@ -111,6 +125,9 @@ describe('/api/posts/[id]', () => {
 
     it('should return 404 for non-existent post', async () => {
       mockPrisma.post.findUnique.mockResolvedValue(null)
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Post not found', 404) as any
+      )
 
       const request = new NextRequest('http://localhost:3000/api/posts/non-existent')
       const response = await GET(request, { params: Promise.resolve({ id: 'non-existent' }) })
@@ -128,10 +145,15 @@ describe('/api/posts/[id]', () => {
         updatedAt: new Date()
       }
 
-      mockGetServerSession.mockResolvedValue(mockSession)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      mockParseRequestBody.mockResolvedValue({
+        content: 'Updated: How do I implement AI?'
+      })
       mockPrisma.post.findUnique.mockResolvedValue(mockPost)
       mockPrisma.post.update.mockResolvedValue(updatedPost)
+      mockSuccessResponse.mockReturnValue(
+        mockApiSuccessResponse(updatedPost, 200) as any
+      )
 
       const request = new NextRequest('http://localhost:3000/api/posts/post-123', {
         method: 'PATCH',
@@ -158,9 +180,14 @@ describe('/api/posts/[id]', () => {
     it('should reject update by non-author', async () => {
       const otherUserPost = { ...mockPost, authorId: 'other-user' }
 
-      mockGetServerSession.mockResolvedValue(mockSession)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      mockParseRequestBody.mockResolvedValue({
+        content: 'Unauthorized update'
+      })
       mockPrisma.post.findUnique.mockResolvedValue(otherUserPost)
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Forbidden', 403) as any
+      )
 
       const request = new NextRequest('http://localhost:3000/api/posts/post-123', {
         method: 'PATCH',
@@ -179,7 +206,12 @@ describe('/api/posts/[id]', () => {
     })
 
     it('should require authentication', async () => {
-      mockGetServerSession.mockResolvedValue(null)
+      const authError = new Error('Not authenticated')
+      authError.name = 'AuthError'
+      mockRequireAuth.mockRejectedValue(authError)
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Not authenticated', 401) as any
+      )
 
       const request = new NextRequest('http://localhost:3000/api/posts/post-123', {
         method: 'PATCH',
@@ -201,10 +233,12 @@ describe('/api/posts/[id]', () => {
     it('should delete post by author when no replies exist', async () => {
       const postWithNoReplies = { ...mockPost, _count: { replies: 0 } }
 
-      mockGetServerSession.mockResolvedValue(mockSession)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
       mockPrisma.post.findUnique.mockResolvedValue(postWithNoReplies)
       mockPrisma.post.delete.mockResolvedValue(mockPost)
+      mockSuccessResponse.mockReturnValue(
+        mockApiSuccessResponse({ message: 'Post deleted successfully' }, 200) as any
+      )
 
       const request = new NextRequest('http://localhost:3000/api/posts/post-123', {
         method: 'DELETE'
@@ -227,9 +261,11 @@ describe('/api/posts/[id]', () => {
         _count: { replies: 2 } 
       }
 
-      mockGetServerSession.mockResolvedValue(mockSession)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
       mockPrisma.post.findUnique.mockResolvedValue(questionWithAnswers)
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Cannot delete question with answers', 400) as any
+      )
 
       const request = new NextRequest('http://localhost:3000/api/posts/post-123', {
         method: 'DELETE'
@@ -247,9 +283,11 @@ describe('/api/posts/[id]', () => {
         type: 'PROJECT_DISCUSSION'
       }
 
-      mockGetServerSession.mockResolvedValue(mockSession)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
       mockPrisma.post.findUnique.mockResolvedValue(discussionPost)
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Cannot delete discussion posts', 400) as any
+      )
 
       const request = new NextRequest('http://localhost:3000/api/posts/post-123', {
         method: 'DELETE'
@@ -264,9 +302,11 @@ describe('/api/posts/[id]', () => {
     it('should reject deletion by non-author', async () => {
       const otherUserPost = { ...mockPost, authorId: 'other-user' }
 
-      mockGetServerSession.mockResolvedValue(mockSession)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
       mockPrisma.post.findUnique.mockResolvedValue(otherUserPost)
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Forbidden', 403) as any
+      )
 
       const request = new NextRequest('http://localhost:3000/api/posts/post-123', {
         method: 'DELETE'

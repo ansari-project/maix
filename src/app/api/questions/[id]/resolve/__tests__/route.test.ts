@@ -1,10 +1,8 @@
 import { NextRequest } from 'next/server'
-import { POST } from '../route'
-import { getServerSession } from 'next-auth/next'
-import { prisma } from '@/lib/prisma'
 
-// Mock the dependencies
-jest.mock('next-auth/next')
+// Mock all dependencies first before importing anything
+jest.mock('@/lib/auth-utils')
+jest.mock('@/lib/api-utils')
 jest.mock('@/lib/prisma', () => ({
   prisma: {
     user: {
@@ -17,8 +15,20 @@ jest.mock('@/lib/prisma', () => ({
   },
 }))
 
-const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>
+import { POST } from '../route'
+import { prisma } from '@/lib/prisma'
+import { 
+  mockRequireAuth, 
+  mockUser,
+  mockApiErrorResponse,
+  mockApiSuccessResponse
+} from '@/lib/test-utils'
+import { handleApiError, successResponse, parseRequestBody } from '@/lib/api-utils'
+
 const mockPrisma = prisma as jest.Mocked<typeof prisma>
+const mockHandleApiError = handleApiError as jest.MockedFunction<typeof handleApiError>
+const mockSuccessResponse = successResponse as jest.MockedFunction<typeof successResponse>
+const mockParseRequestBody = parseRequestBody as jest.MockedFunction<typeof parseRequestBody>
 
 describe('/api/questions/[id]/resolve', () => {
   beforeEach(() => {
@@ -63,13 +73,16 @@ describe('/api/questions/[id]/resolve', () => {
         bestAnswer: mockAnswer
       }
 
-      mockGetServerSession.mockResolvedValue(mockSession)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      mockParseRequestBody.mockResolvedValue({ bestAnswerId: 'ckl1234567890abcdefghijk3' })
       mockPrisma.post.findUnique.mockResolvedValueOnce({
         ...mockQuestion,
         replies: [mockAnswer]
       })
       mockPrisma.post.update.mockResolvedValue(updatedQuestion)
+      mockSuccessResponse.mockReturnValue(
+        mockApiSuccessResponse(updatedQuestion, 200) as any
+      )
 
       const request = new NextRequest('http://localhost:3000/api/questions/question-123/resolve', {
         method: 'POST',
@@ -112,12 +125,15 @@ describe('/api/questions/[id]/resolve', () => {
         authorId: 'ckl1234567890abcdefghijk5' // Different from session user
       }
 
-      mockGetServerSession.mockResolvedValue(mockSession)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      mockParseRequestBody.mockResolvedValue({ bestAnswerId: 'ckl1234567890abcdefghijk3' })
       mockPrisma.post.findUnique.mockResolvedValue({
         ...otherUserQuestion,
         replies: [mockAnswer]
       })
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Only question author can mark best answer', 403) as any
+      )
 
       const request = new NextRequest('http://localhost:3000/api/questions/question-123/resolve', {
         method: 'POST',
@@ -136,9 +152,12 @@ describe('/api/questions/[id]/resolve', () => {
     })
 
     it('should reject if question does not exist', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      mockParseRequestBody.mockResolvedValue({ bestAnswerId: 'ckl1234567890abcdefghijk3' })
       mockPrisma.post.findUnique.mockResolvedValue(null)
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Question not found', 404) as any
+      )
 
       const request = new NextRequest('http://localhost:3000/api/questions/non-existent/resolve', {
         method: 'POST',
@@ -162,12 +181,15 @@ describe('/api/questions/[id]/resolve', () => {
         type: 'PROJECT_UPDATE'
       }
 
-      mockGetServerSession.mockResolvedValue(mockSession)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      mockParseRequestBody.mockResolvedValue({ bestAnswerId: 'ckl1234567890abcdefghijk3' })
       mockPrisma.post.findUnique.mockResolvedValue({
         ...updatePost,
         replies: [mockAnswer]
       })
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Can only resolve questions', 400) as any
+      )
 
       const request = new NextRequest('http://localhost:3000/api/questions/update-123/resolve', {
         method: 'POST',
@@ -186,12 +208,15 @@ describe('/api/questions/[id]/resolve', () => {
     })
 
     it('should reject if answer does not exist', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      mockParseRequestBody.mockResolvedValue({ bestAnswerId: 'ckl1234567890abcdefghijk3' })
       mockPrisma.post.findUnique.mockResolvedValue({
         ...mockQuestion,
         replies: [] // No answers found
       })
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Answer not found', 400) as any
+      )
 
       const request = new NextRequest('http://localhost:3000/api/questions/question-123/resolve', {
         method: 'POST',
@@ -215,12 +240,15 @@ describe('/api/questions/[id]/resolve', () => {
         parentId: 'ckl1234567890abcdefghijk6' // Answer to different question
       }
 
-      mockGetServerSession.mockResolvedValue(mockSession)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      mockParseRequestBody.mockResolvedValue({ bestAnswerId: 'ckl1234567890abcdefghijk3' })
       mockPrisma.post.findUnique.mockResolvedValue({
         ...mockQuestion,
         replies: [] // Answer with wrong parentId not found in replies
       })
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Answer is not for this question', 400) as any
+      )
 
       const request = new NextRequest('http://localhost:3000/api/questions/question-123/resolve', {
         method: 'POST',
@@ -239,7 +267,12 @@ describe('/api/questions/[id]/resolve', () => {
     })
 
     it('should require authentication', async () => {
-      mockGetServerSession.mockResolvedValue(null)
+      const authError = new Error('Not authenticated')
+      authError.name = 'AuthError'
+      mockRequireAuth.mockRejectedValue(authError)
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Not authenticated', 401) as any
+      )
 
       const request = new NextRequest('http://localhost:3000/api/questions/question-123/resolve', {
         method: 'POST',
@@ -258,8 +291,13 @@ describe('/api/questions/[id]/resolve', () => {
     })
 
     it('should validate request body', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      const validationError = new Error('Best Answer ID is required')
+      validationError.name = 'ZodError'
+      mockParseRequestBody.mockRejectedValue(validationError)
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Best Answer ID is required', 400) as any
+      )
 
       const request = new NextRequest('http://localhost:3000/api/questions/question-123/resolve', {
         method: 'POST',
@@ -294,13 +332,16 @@ describe('/api/questions/[id]/resolve', () => {
         bestAnswerId: 'ckl1234567890abcdefghijk8'
       }
 
-      mockGetServerSession.mockResolvedValue(mockSession)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      mockParseRequestBody.mockResolvedValue({ bestAnswerId: 'ckl1234567890abcdefghijk8' })
       mockPrisma.post.findUnique.mockResolvedValue({
         ...questionWithBestAnswer,
         replies: [newAnswer]
       })
       mockPrisma.post.update.mockResolvedValue(updatedQuestion)
+      mockSuccessResponse.mockReturnValue(
+        mockApiSuccessResponse(updatedQuestion, 200) as any
+      )
 
       const request = new NextRequest('http://localhost:3000/api/questions/question-123/resolve', {
         method: 'POST',

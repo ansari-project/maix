@@ -1,15 +1,10 @@
 import { NextRequest } from 'next/server'
-import { GET, POST } from '../route'
-import { getServerSession } from 'next-auth/next'
-import { prisma } from '@/lib/prisma'
 
-// Mock the dependencies
-jest.mock('next-auth/next')
+// Mock all dependencies first before importing anything
+jest.mock('@/lib/auth-utils')
+jest.mock('@/lib/api-utils')
 jest.mock('@/lib/prisma', () => ({
   prisma: {
-    user: {
-      findUnique: jest.fn(),
-    },
     post: {
       create: jest.fn(),
       findMany: jest.fn(),
@@ -28,8 +23,20 @@ jest.mock('@/lib/prisma', () => ({
 }))
 jest.mock('@/lib/logger')
 
-const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>
+import { GET, POST } from '../route'
+import { prisma } from '@/lib/prisma'
+import { 
+  mockRequireAuth, 
+  mockUser,
+  mockApiErrorResponse,
+  mockApiSuccessResponse
+} from '@/lib/test-utils'
+import { handleApiError, successResponse, parseRequestBody } from '@/lib/api-utils'
+
 const mockPrisma = prisma as jest.Mocked<typeof prisma>
+const mockHandleApiError = handleApiError as jest.MockedFunction<typeof handleApiError>
+const mockSuccessResponse = successResponse as jest.MockedFunction<typeof successResponse>
+const mockParseRequestBody = parseRequestBody as jest.MockedFunction<typeof parseRequestBody>
 
 describe('/api/posts', () => {
   beforeEach(() => {
@@ -79,9 +86,15 @@ describe('/api/posts', () => {
         _count: { replies: 0, comments: 0 }
       }
 
-      mockGetServerSession.mockResolvedValue(mockSession)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
-      mockPrisma.post.create.mockResolvedValue(mockPost)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      mockParseRequestBody.mockResolvedValue({
+        type: 'QUESTION',
+        content: 'How do I implement AI in my project?'
+      })
+      mockPrisma.post.create.mockResolvedValue(mockPost as any)
+      mockSuccessResponse.mockReturnValue(
+        mockApiSuccessResponse(mockPost, 201) as any
+      )
 
       const request = new NextRequest('http://localhost:3000/api/posts', {
         method: 'POST',
@@ -130,10 +143,17 @@ describe('/api/posts', () => {
         _count: { replies: 0, comments: 0 }
       }
 
-      mockGetServerSession.mockResolvedValue(mockSession)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      mockParseRequestBody.mockResolvedValue({
+        type: 'PROJECT_UPDATE',
+        content: 'Project milestone completed',
+        projectId: 'ckl1234567890abcdefghijkl'
+      })
       mockPrisma.project.findFirst.mockResolvedValue(mockProject)
       mockPrisma.post.create.mockResolvedValue(mockPost)
+      mockSuccessResponse.mockReturnValue(
+        mockApiSuccessResponse(mockPost, 201) as any
+      )
 
       const request = new NextRequest('http://localhost:3000/api/posts', {
         method: 'POST',
@@ -179,10 +199,17 @@ describe('/api/posts', () => {
         _count: { replies: 0, comments: 0 }
       }
 
-      mockGetServerSession.mockResolvedValue(mockSession)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      mockParseRequestBody.mockResolvedValue({
+        type: 'ANSWER',
+        content: 'You can start by using OpenAI API...',
+        parentId: 'ckl1234567890abcdefghijko'
+      })
       mockPrisma.post.findUnique.mockResolvedValue(mockQuestion)
       mockPrisma.post.create.mockResolvedValue(mockAnswer)
+      mockSuccessResponse.mockReturnValue(
+        mockApiSuccessResponse(mockAnswer, 201) as any
+      )
 
       const request = new NextRequest('http://localhost:3000/api/posts', {
         method: 'POST',
@@ -205,8 +232,13 @@ describe('/api/posts', () => {
     })
 
     it('should reject project update without projectId', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      const validationError = new Error('Project ID is required for project updates')
+      validationError.name = 'ZodError'
+      mockParseRequestBody.mockRejectedValue(validationError)
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Project ID is required for project updates', 400) as any
+      )
 
       const request = new NextRequest('http://localhost:3000/api/posts', {
         method: 'POST',
@@ -233,9 +265,16 @@ describe('/api/posts', () => {
         authorId: 'ckl1234567890abcdefghijkp',
       }
 
-      mockGetServerSession.mockResolvedValue(mockSession)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      mockParseRequestBody.mockResolvedValue({
+        type: 'ANSWER',
+        content: 'This should fail',
+        parentId: 'ckl1234567890abcdefghijkr'
+      })
       mockPrisma.post.findUnique.mockResolvedValue(mockUpdate)
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Can only answer questions', 400) as any
+      )
 
       const request = new NextRequest('http://localhost:3000/api/posts', {
         method: 'POST',
@@ -255,7 +294,12 @@ describe('/api/posts', () => {
     })
 
     it('should require authentication', async () => {
-      mockGetServerSession.mockResolvedValue(null)
+      const authError = new Error('Not authenticated')
+      authError.name = 'AuthError'
+      mockRequireAuth.mockRejectedValue(authError)
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Not authenticated', 401) as any
+      )
 
       const request = new NextRequest('http://localhost:3000/api/posts', {
         method: 'POST',
@@ -295,6 +339,9 @@ describe('/api/posts', () => {
       ]
 
       mockPrisma.post.findMany.mockResolvedValue(mockPosts)
+      mockSuccessResponse.mockReturnValue(
+        mockApiSuccessResponse(mockPosts, 200) as any
+      )
 
       const request = new NextRequest('http://localhost:3000/api/posts')
       const response = await GET(request)

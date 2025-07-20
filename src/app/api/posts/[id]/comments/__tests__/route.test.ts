@@ -1,15 +1,10 @@
 import { NextRequest } from 'next/server'
-import { GET, POST } from '../route'
-import { getServerSession } from 'next-auth/next'
-import { prisma } from '@/lib/prisma'
 
-// Mock the dependencies
-jest.mock('next-auth/next')
+// Mock all dependencies first before importing anything
+jest.mock('@/lib/auth-utils')
+jest.mock('@/lib/api-utils')
 jest.mock('@/lib/prisma', () => ({
   prisma: {
-    user: {
-      findUnique: jest.fn(),
-    },
     post: {
       findUnique: jest.fn(),
     },
@@ -20,10 +15,24 @@ jest.mock('@/lib/prisma', () => ({
     },
   },
 }))
-jest.mock('@/lib/logger')
 
-const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>
+import { GET, POST } from '../route'
+import { prisma } from '@/lib/prisma'
+import { 
+  mockRequireAuth, 
+  mockUser,
+  mockApiErrorResponse,
+  mockApiSuccessResponse
+} from '@/lib/test-utils'
+import { handleApiError, successResponse, parseRequestBody } from '@/lib/api-utils'
+
 const mockPrisma = prisma as jest.Mocked<typeof prisma>
+const mockHandleApiError = handleApiError as jest.MockedFunction<typeof handleApiError>
+const mockSuccessResponse = successResponse as jest.MockedFunction<typeof successResponse>
+const mockParseRequestBody = parseRequestBody as jest.MockedFunction<typeof parseRequestBody>
+jest.mock('@/lib/logger')
+jest.mock('next-auth')
+
 
 describe('/api/posts/[id]/comments', () => {
   beforeEach(() => {
@@ -68,10 +77,15 @@ describe('/api/posts/[id]/comments', () => {
         }
       }
 
-      mockGetServerSession.mockResolvedValue(mockSession)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      mockParseRequestBody.mockResolvedValue({
+        content: 'Great question! I had the same issue.'
+      })
       mockPrisma.post.findUnique.mockResolvedValue(mockPost)
       mockPrisma.comment.create.mockResolvedValue(mockComment)
+      mockSuccessResponse.mockReturnValue(
+        mockApiSuccessResponse(mockComment, 201) as any
+      )
 
       const request = new NextRequest('http://localhost:3000/api/posts/post-123/comments', {
         method: 'POST',
@@ -106,9 +120,14 @@ describe('/api/posts/[id]/comments', () => {
     })
 
     it('should reject comment on non-existent post', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      mockParseRequestBody.mockResolvedValue({
+        content: 'This should fail'
+      })
       mockPrisma.post.findUnique.mockResolvedValue(null)
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Post not found', 404) as any
+      )
 
       const request = new NextRequest('http://localhost:3000/api/posts/non-existent/comments', {
         method: 'POST',
@@ -127,7 +146,12 @@ describe('/api/posts/[id]/comments', () => {
     })
 
     it('should require authentication', async () => {
-      mockGetServerSession.mockResolvedValue(null)
+      const authError = new Error('Not authenticated')
+      authError.name = 'AuthError'
+      mockRequireAuth.mockRejectedValue(authError)
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Not authenticated', 401) as any
+      )
 
       const request = new NextRequest('http://localhost:3000/api/posts/post-123/comments', {
         method: 'POST',
@@ -146,8 +170,13 @@ describe('/api/posts/[id]/comments', () => {
     })
 
     it('should validate comment content', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      const validationError = new Error('Comment content is required')
+      validationError.name = 'ZodError'
+      mockParseRequestBody.mockRejectedValue(validationError)
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Comment content is required', 400) as any
+      )
 
       const request = new NextRequest('http://localhost:3000/api/posts/post-123/comments', {
         method: 'POST',
@@ -187,6 +216,12 @@ describe('/api/posts/[id]/comments', () => {
 
       mockPrisma.comment.findMany.mockResolvedValue(mockComments)
       mockPrisma.comment.count.mockResolvedValue(2)
+      mockSuccessResponse.mockReturnValue(
+        mockApiSuccessResponse({
+          comments: mockComments,
+          pagination: { total: 2, take: 50, skip: 0 }
+        }, 200) as any
+      )
 
       const request = new NextRequest('http://localhost:3000/api/posts/post-123/comments')
       const response = await GET(request, { params: Promise.resolve({ id: 'post-123' }) })
@@ -216,6 +251,15 @@ describe('/api/posts/[id]/comments', () => {
     })
 
     it('should handle pagination parameters', async () => {
+      mockPrisma.comment.findMany.mockResolvedValue([])
+      mockPrisma.comment.count.mockResolvedValue(0)
+      mockSuccessResponse.mockReturnValue(
+        mockApiSuccessResponse({
+          comments: [],
+          pagination: { total: 0, take: 10, skip: 20 }
+        }, 200) as any
+      )
+
       const request = new NextRequest('http://localhost:3000/api/posts/post-123/comments?take=10&skip=20')
       await GET(request, { params: Promise.resolve({ id: 'post-123' }) })
 
@@ -228,6 +272,15 @@ describe('/api/posts/[id]/comments', () => {
     })
 
     it('should include author information', async () => {
+      mockPrisma.comment.findMany.mockResolvedValue([])
+      mockPrisma.comment.count.mockResolvedValue(0)
+      mockSuccessResponse.mockReturnValue(
+        mockApiSuccessResponse({
+          comments: [],
+          pagination: { total: 0, take: 50, skip: 0 }
+        }, 200) as any
+      )
+
       const request = new NextRequest('http://localhost:3000/api/posts/post-123/comments')
       await GET(request, { params: Promise.resolve({ id: 'post-123' }) })
 
@@ -243,6 +296,15 @@ describe('/api/posts/[id]/comments', () => {
     })
 
     it('should only return top-level comments (no nested replies)', async () => {
+      mockPrisma.comment.findMany.mockResolvedValue([])
+      mockPrisma.comment.count.mockResolvedValue(0)
+      mockSuccessResponse.mockReturnValue(
+        mockApiSuccessResponse({
+          comments: [],
+          pagination: { total: 0, take: 50, skip: 0 }
+        }, 200) as any
+      )
+
       const request = new NextRequest('http://localhost:3000/api/posts/post-123/comments')
       await GET(request, { params: Promise.resolve({ id: 'post-123' }) })
 

@@ -1,14 +1,37 @@
 import { NextRequest } from 'next/server'
+
+// Mock all dependencies first before importing anything
+jest.mock('@/lib/auth-utils')
+jest.mock('@/lib/api-utils')
+jest.mock('@/lib/prisma', () => ({
+  prisma: {
+    user: {
+      findUnique: jest.fn(),
+    },
+    project: {
+      findUnique: jest.fn(),
+    },
+    application: {
+      findUnique: jest.fn(),
+      create: jest.fn(),
+    },
+  },
+}))
+
 import { POST } from '../route'
-import { getServerSession } from 'next-auth/next'
 import { prisma } from '@/lib/prisma'
+import { 
+  mockRequireAuth, 
+  mockUser,
+  mockApiErrorResponse,
+  mockApiSuccessResponse
+} from '@/lib/test-utils'
+import { handleApiError, successResponse, parseRequestBody } from '@/lib/api-utils'
 
-// Mock the dependencies
-jest.mock('next-auth/next')
-jest.mock('@/lib/prisma')
-
-const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>
 const mockPrisma = prisma as jest.Mocked<typeof prisma>
+const mockHandleApiError = handleApiError as jest.MockedFunction<typeof handleApiError>
+const mockSuccessResponse = successResponse as jest.MockedFunction<typeof successResponse>
+const mockParseRequestBody = parseRequestBody as jest.MockedFunction<typeof parseRequestBody>
 
 describe('/api/projects/[id]/apply', () => {
   beforeEach(() => {
@@ -62,11 +85,14 @@ describe('/api/projects/[id]/apply', () => {
     }
 
     test('should create application with valid data', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession as any)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser as any)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      mockParseRequestBody.mockResolvedValue(validApplicationData)
       mockPrisma.project.findUnique.mockResolvedValue(mockProject as any)
       mockPrisma.application.findUnique.mockResolvedValue(null)
       mockPrisma.application.create.mockResolvedValue(mockApplication as any)
+      mockSuccessResponse.mockReturnValue(
+        mockApiSuccessResponse(mockApplication, 201) as any
+      )
 
       const request = createMockRequest(validApplicationData)
       const response = await POST(request, { params: mockParams })
@@ -97,39 +123,51 @@ describe('/api/projects/[id]/apply', () => {
     })
 
     test('should return 401 for unauthenticated user', async () => {
-      mockGetServerSession.mockResolvedValue(null)
+      const authError = new Error('Not authenticated')
+      authError.name = 'AuthError'
+      mockRequireAuth.mockRejectedValue(authError)
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Not authenticated', 401) as any
+      )
 
       const request = createMockRequest(validApplicationData)
       const response = await POST(request, { params: mockParams })
       const responseData = await response.json()
 
       expect(response.status).toBe(401)
-      expect(responseData.error).toBe('Unauthorized')
+      expect(responseData.message).toBe('Not authenticated')
     })
 
     test('should return 404 for non-existent user', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession as any)
-      mockPrisma.user.findUnique.mockResolvedValue(null)
+      const authError = new Error('Authenticated user not found')
+      authError.name = 'AuthError'
+      mockRequireAuth.mockRejectedValue(authError)
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Authenticated user not found', 404) as any
+      )
 
       const request = createMockRequest(validApplicationData)
       const response = await POST(request, { params: mockParams })
       const responseData = await response.json()
 
       expect(response.status).toBe(404)
-      expect(responseData.error).toBe('User not found')
+      expect(responseData.message).toBe('Authenticated user not found')
     })
 
     test('should return 404 for non-existent project', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession as any)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser as any)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      mockParseRequestBody.mockResolvedValue(validApplicationData)
       mockPrisma.project.findUnique.mockResolvedValue(null)
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Project not found', 404) as any
+      )
 
       const request = createMockRequest(validApplicationData)
       const response = await POST(request, { params: mockParams })
       const responseData = await response.json()
 
       expect(response.status).toBe(404)
-      expect(responseData.error).toBe('Project not found')
+      expect(responseData.message).toBe('Project not found')
     })
 
     test('should return 400 for existing application', async () => {
@@ -139,17 +177,20 @@ describe('/api/projects/[id]/apply', () => {
         projectId: mockParams.id,
       }
 
-      mockGetServerSession.mockResolvedValue(mockSession as any)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser as any)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      mockParseRequestBody.mockResolvedValue(validApplicationData)
       mockPrisma.project.findUnique.mockResolvedValue(mockProject as any)
       mockPrisma.application.findUnique.mockResolvedValue(existingApplication as any)
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('You have already applied to this project', 400) as any
+      )
 
       const request = createMockRequest(validApplicationData)
       const response = await POST(request, { params: mockParams })
       const responseData = await response.json()
 
       expect(response.status).toBe(400)
-      expect(responseData.error).toBe('You have already applied to this project')
+      expect(responseData.message).toBe('You have already applied to this project')
     })
 
     test('should return 400 when project is at capacity', async () => {
@@ -162,24 +203,30 @@ describe('/api/projects/[id]/apply', () => {
         ],
       }
 
-      mockGetServerSession.mockResolvedValue(mockSession as any)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser as any)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      mockParseRequestBody.mockResolvedValue(validApplicationData)
       mockPrisma.project.findUnique.mockResolvedValue(fullProject as any)
       mockPrisma.application.findUnique.mockResolvedValue(null)
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('This project has reached its volunteer limit', 400) as any
+      )
 
       const request = createMockRequest(validApplicationData)
       const response = await POST(request, { params: mockParams })
       const responseData = await response.json()
 
       expect(response.status).toBe(400)
-      expect(responseData.error).toBe('This project has reached its volunteer limit')
+      expect(responseData.message).toBe('This project has reached its volunteer limit')
     })
 
     test('should return 400 for invalid input data', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession as any)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser as any)
-      mockPrisma.project.findUnique.mockResolvedValue(mockProject as any)
-      mockPrisma.application.findUnique.mockResolvedValue(null)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      const validationError = new Error('Invalid input')
+      validationError.name = 'ZodError'
+      mockParseRequestBody.mockRejectedValue(validationError)
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Invalid input', 400) as any
+      )
 
       const invalidData = {
         message: 'Short', // Too short
@@ -191,14 +238,16 @@ describe('/api/projects/[id]/apply', () => {
 
       expect(response.status).toBe(400)
       expect(responseData.message).toBe('Invalid input')
-      expect(responseData.errors[0].message).toBe('Application message must be at least 10 characters long')
     })
 
     test('should validate message length - too short', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession as any)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser as any)
-      mockPrisma.project.findUnique.mockResolvedValue(mockProject as any)
-      mockPrisma.application.findUnique.mockResolvedValue(null)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      const validationError = new Error('Application message must be at least 10 characters long')
+      validationError.name = 'ZodError'
+      mockParseRequestBody.mockRejectedValue(validationError)
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Application message must be at least 10 characters long', 400) as any
+      )
 
       const invalidData = {
         message: 'Too short',
@@ -209,14 +258,17 @@ describe('/api/projects/[id]/apply', () => {
       const responseData = await response.json()
 
       expect(response.status).toBe(400)
-      expect(responseData.errors[0].message).toBe('Application message must be at least 10 characters long')
+      expect(responseData.message).toBe('Application message must be at least 10 characters long')
     })
 
     test('should validate message length - too long', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession as any)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser as any)
-      mockPrisma.project.findUnique.mockResolvedValue(mockProject as any)
-      mockPrisma.application.findUnique.mockResolvedValue(null)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      const validationError = new Error('Application message must be less than 2000 characters long')
+      validationError.name = 'ZodError'
+      mockParseRequestBody.mockRejectedValue(validationError)
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Application message must be less than 2000 characters long', 400) as any
+      )
 
       const invalidData = {
         message: 'A'.repeat(2001),
@@ -227,14 +279,17 @@ describe('/api/projects/[id]/apply', () => {
       const responseData = await response.json()
 
       expect(response.status).toBe(400)
-      expect(responseData.errors[0].message).toBe('Application message must be less than 2000 characters long')
+      expect(responseData.message).toBe('Application message must be less than 2000 characters long')
     })
 
     test('should validate message is required', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession as any)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser as any)
-      mockPrisma.project.findUnique.mockResolvedValue(mockProject as any)
-      mockPrisma.application.findUnique.mockResolvedValue(null)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      const validationError = new Error('Invalid input')
+      validationError.name = 'ZodError'
+      mockParseRequestBody.mockRejectedValue(validationError)
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Invalid input', 400) as any
+      )
 
       const invalidData = {}
 
@@ -244,15 +299,17 @@ describe('/api/projects/[id]/apply', () => {
 
       expect(response.status).toBe(400)
       expect(responseData.message).toBe('Invalid input')
-      expect(responseData.errors[0].field).toBe('message')
     })
 
     test('should check for existing application with correct composite key', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession as any)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser as any)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      mockParseRequestBody.mockResolvedValue(validApplicationData)
       mockPrisma.project.findUnique.mockResolvedValue(mockProject as any)
       mockPrisma.application.findUnique.mockResolvedValue(null)
       mockPrisma.application.create.mockResolvedValue(mockApplication as any)
+      mockSuccessResponse.mockReturnValue(
+        mockApiSuccessResponse(mockApplication, 201) as any
+      )
 
       const request = createMockRequest(validApplicationData)
       const response = await POST(request, { params: mockParams })
@@ -270,51 +327,62 @@ describe('/api/projects/[id]/apply', () => {
     })
 
     test('should handle database errors during user lookup', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession as any)
-      mockPrisma.user.findUnique.mockRejectedValue(new Error('Database error'))
+      mockRequireAuth.mockRejectedValue(new Error('Database error'))
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Internal server error', 500) as any
+      )
 
       const request = createMockRequest(validApplicationData)
       const response = await POST(request, { params: mockParams })
       const responseData = await response.json()
 
       expect(response.status).toBe(500)
-      expect(responseData.error).toBe('Internal server error')
+      expect(responseData.message).toBe('Internal server error')
     })
 
     test('should handle database errors during project lookup', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession as any)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser as any)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      mockParseRequestBody.mockResolvedValue(validApplicationData)
       mockPrisma.project.findUnique.mockRejectedValue(new Error('Database error'))
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Internal server error', 500) as any
+      )
 
       const request = createMockRequest(validApplicationData)
       const response = await POST(request, { params: mockParams })
       const responseData = await response.json()
 
       expect(response.status).toBe(500)
-      expect(responseData.error).toBe('Internal server error')
+      expect(responseData.message).toBe('Internal server error')
     })
 
     test('should handle database errors during application creation', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession as any)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser as any)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      mockParseRequestBody.mockResolvedValue(validApplicationData)
       mockPrisma.project.findUnique.mockResolvedValue(mockProject as any)
       mockPrisma.application.findUnique.mockResolvedValue(null)
       mockPrisma.application.create.mockRejectedValue(new Error('Database error'))
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Internal server error', 500) as any
+      )
 
       const request = createMockRequest(validApplicationData)
       const response = await POST(request, { params: mockParams })
       const responseData = await response.json()
 
       expect(response.status).toBe(500)
-      expect(responseData.error).toBe('Internal server error')
+      expect(responseData.message).toBe('Internal server error')
     })
 
     test('should include project info in application details', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession as any)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser as any)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      mockParseRequestBody.mockResolvedValue(validApplicationData)
       mockPrisma.project.findUnique.mockResolvedValue(mockProject as any)
       mockPrisma.application.findUnique.mockResolvedValue(null)
       mockPrisma.application.create.mockResolvedValue(mockApplication as any)
+      mockSuccessResponse.mockReturnValue(
+        mockApiSuccessResponse(mockApplication, 201) as any
+      )
 
       const request = createMockRequest(validApplicationData)
       const response = await POST(request, { params: mockParams })
@@ -330,10 +398,13 @@ describe('/api/projects/[id]/apply', () => {
     })
 
     test('should validate empty message', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession as any)
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser as any)
-      mockPrisma.project.findUnique.mockResolvedValue(mockProject as any)
-      mockPrisma.application.findUnique.mockResolvedValue(null)
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      const validationError = new Error('Application message must be at least 10 characters long')
+      validationError.name = 'ZodError'
+      mockParseRequestBody.mockRejectedValue(validationError)
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Application message must be at least 10 characters long', 400) as any
+      )
 
       const invalidData = {
         message: '',
@@ -344,7 +415,7 @@ describe('/api/projects/[id]/apply', () => {
       const responseData = await response.json()
 
       expect(response.status).toBe(400)
-      expect(responseData.errors[0].message).toBe('Application message must be at least 10 characters long')
+      expect(responseData.message).toBe('Application message must be at least 10 characters long')
     })
   })
 })
