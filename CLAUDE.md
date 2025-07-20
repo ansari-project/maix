@@ -159,7 +159,9 @@ To ensure code quality and prevent deployment failures, always perform the follo
 
 3. **Never push code that fails to build or has failing tests**
    - **NEVER use `git commit --no-verify` or `git push --no-verify`** to bypass pre-commit hooks
-   - If tests are failing, fix the tests or remove them rather than bypassing checks
+   - **NEVER delete test files to make failing tests pass** - this defeats the purpose of testing
+   - If tests are failing, fix the test implementation to work correctly
+   - Only remove tests if the functionality being tested is being removed entirely
    - Pre-commit hooks exist to maintain code quality and prevent regressions
 
 **Enforcement**: 
