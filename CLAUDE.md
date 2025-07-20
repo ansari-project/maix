@@ -119,6 +119,14 @@ maix/
 - Group related changes into a single commit
 - **NEVER use `git add .` or `git add --all`** - Always specify individual files
 
+#### Pre-Commit Mental Checklist
+Before every commit, Claude Code MUST verify:
+1. ✅ **Check CLAUDE.md**: Review commit guidelines (especially line 116 about Claude suffixes)
+2. ✅ **Descriptive message**: Commit message explains the purpose and impact of changes
+3. ✅ **No Claude suffixes**: Absolutely no "Generated with Claude Code" or "Co-Authored-By: Claude"
+4. ✅ **Specific staging**: Used `git add [specific-files]` not `git add .`
+5. ✅ **Build/test passed**: Pre-commit hooks validated the changes successfully
+
 #### Why `git add .` is Dangerous
 **NEVER use `git add .` or `git add --all`** as it can accidentally commit:
 - **Sensitive files**: `.env` files containing API keys, database credentials, secrets
