@@ -10,28 +10,28 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
-// Common timezone options
+// Common timezone options with GMT offsets
 const TIMEZONE_OPTIONS = [
-  { value: "America/New_York", label: "Eastern Time (New York)" },
-  { value: "America/Chicago", label: "Central Time (Chicago)" },
-  { value: "America/Denver", label: "Mountain Time (Denver)" },
-  { value: "America/Los_Angeles", label: "Pacific Time (Los Angeles)" },
-  { value: "America/Toronto", label: "Eastern Time (Toronto)" },
-  { value: "Europe/London", label: "Greenwich Mean Time (London)" },
-  { value: "Europe/Paris", label: "Central European Time (Paris)" },
-  { value: "Europe/Berlin", label: "Central European Time (Berlin)" },
-  { value: "Europe/Istanbul", label: "Turkey Time (Istanbul)" },
-  { value: "Asia/Dubai", label: "Gulf Standard Time (Dubai)" },
-  { value: "Asia/Riyadh", label: "Arabia Standard Time (Riyadh)" },
-  { value: "Asia/Karachi", label: "Pakistan Standard Time (Karachi)" },
-  { value: "Asia/Kolkata", label: "India Standard Time (Mumbai)" },
-  { value: "Asia/Dhaka", label: "Bangladesh Standard Time (Dhaka)" },
-  { value: "Asia/Jakarta", label: "Western Indonesian Time (Jakarta)" },
-  { value: "Asia/Kuala_Lumpur", label: "Malaysia Time (Kuala Lumpur)" },
-  { value: "Asia/Singapore", label: "Singapore Standard Time" },
-  { value: "Asia/Tokyo", label: "Japan Standard Time (Tokyo)" },
-  { value: "Australia/Sydney", label: "Australian Eastern Time (Sydney)" },
-  { value: "Pacific/Auckland", label: "New Zealand Standard Time (Auckland)" },
+  { value: "Pacific/Auckland", label: "Auckland (GMT+13)" },
+  { value: "Australia/Sydney", label: "Australian Eastern Time - Sydney (GMT+11)" },
+  { value: "Asia/Dhaka", label: "Bangladesh - Dhaka (GMT+6)" },
+  { value: "Europe/Berlin", label: "Central European Time - Berlin (GMT+1)" },
+  { value: "America/Chicago", label: "Central Time - Chicago (GMT-6)" },
+  { value: "Asia/Dubai", label: "Dubai (GMT+4)" },
+  { value: "America/Denver", label: "Denver (GMT-7)" },
+  { value: "America/New_York", label: "Eastern Time - New York (GMT-5)" },
+  { value: "America/Toronto", label: "Eastern Time - Toronto (GMT-5)" },
+  { value: "Europe/London", label: "Greenwich Mean Time - London (GMT+0)" },
+  { value: "Asia/Kolkata", label: "India Standard Time - Mumbai (GMT+5:30)" },
+  { value: "Asia/Jakarta", label: "Indonesia - Jakarta (GMT+7)" },
+  { value: "Asia/Tokyo", label: "Japan - Tokyo (GMT+9)" },
+  { value: "Asia/Kuala_Lumpur", label: "Malaysia - Kuala Lumpur (GMT+8)" },
+  { value: "America/Los_Angeles", label: "Pacific Time - Los Angeles (GMT-8)" },
+  { value: "Asia/Karachi", label: "Pakistan - Karachi (GMT+5)" },
+  { value: "Europe/Paris", label: "Paris (GMT+1)" },
+  { value: "Asia/Riyadh", label: "Saudi Arabia - Riyadh (GMT+3)" },
+  { value: "Asia/Singapore", label: "Singapore (GMT+8)" },
+  { value: "Europe/Istanbul", label: "Turkey - Istanbul (GMT+3)" },
 ]
 
 // Availability options
