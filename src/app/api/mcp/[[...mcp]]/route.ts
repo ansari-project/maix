@@ -3,6 +3,10 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { validatePersonalAccessToken } from "@/lib/mcp/services/pat.service";
 import type { User } from "@prisma/client";
+import { handleManagePost, ManagePostSchema } from "@/lib/mcp/tools/managePost";
+import { handleSearchPosts, SearchPostsSchema } from "@/lib/mcp/tools/searchPosts";
+import { handleManageComment, ManageCommentSchema } from "@/lib/mcp/tools/manageComment";
+import { handleSearchComments, SearchCommentsSchema } from "@/lib/mcp/tools/searchComments";
 
 // Type definitions for type safety
 type MaixAuthInfo = {
@@ -272,6 +276,90 @@ const mcpHandler = createMcpHandler(
           console.error("Failed to manage project:", error);
           return {
             content: [{ type: "text", text: "An error occurred while managing the project." }],
+          };
+        }
+      }
+    );
+
+    // Tool: Manage posts (CRUD operations for all post types)
+    server.tool(
+      "maix_manage_post",
+      "Create, read, update, or delete posts (questions, answers, updates, discussions)",
+      ManagePostSchema.shape,
+      async (params, extra) => {
+        try {
+          const user = (extra.authInfo as MaixAuthInfo).extra.user;
+          const context = { user };
+          const result = await handleManagePost(params, context);
+          return {
+            content: [{ type: "text", text: result }],
+          };
+        } catch (error) {
+          console.error("Failed to manage post:", error);
+          return {
+            content: [{ type: "text", text: error instanceof Error ? error.message : "An error occurred while managing the post." }],
+          };
+        }
+      }
+    );
+
+    // Tool: Search posts
+    server.tool(
+      "maix_search_posts",
+      "Search and list posts with filters (questions, answers, updates, discussions)",
+      SearchPostsSchema.shape,
+      async (params, extra) => {
+        try {
+          const result = await handleSearchPosts(params);
+          return {
+            content: [{ type: "text", text: result }],
+          };
+        } catch (error) {
+          console.error("Failed to search posts:", error);
+          return {
+            content: [{ type: "text", text: error instanceof Error ? error.message : "An error occurred while searching posts." }],
+          };
+        }
+      }
+    );
+
+    // Tool: Manage comments
+    server.tool(
+      "maix_manage_comment",
+      "Create, read, update, or delete comments on posts",
+      ManageCommentSchema.shape,
+      async (params, extra) => {
+        try {
+          const user = (extra.authInfo as MaixAuthInfo).extra.user;
+          const context = { user };
+          const result = await handleManageComment(params, context);
+          return {
+            content: [{ type: "text", text: result }],
+          };
+        } catch (error) {
+          console.error("Failed to manage comment:", error);
+          return {
+            content: [{ type: "text", text: error instanceof Error ? error.message : "An error occurred while managing the comment." }],
+          };
+        }
+      }
+    );
+
+    // Tool: Search comments
+    server.tool(
+      "maix_search_comments",
+      "Search and list comments with filters",
+      SearchCommentsSchema.shape,
+      async (params, extra) => {
+        try {
+          const result = await handleSearchComments(params);
+          return {
+            content: [{ type: "text", text: result }],
+          };
+        } catch (error) {
+          console.error("Failed to search comments:", error);
+          return {
+            content: [{ type: "text", text: error instanceof Error ? error.message : "An error occurred while searching comments." }],
           };
         }
       }

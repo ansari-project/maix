@@ -62,48 +62,42 @@ maix/
 
 ## Development Guidelines
 
-### Feature Development Workflow
+### Feature Development Workflow (DRSITR)
 
-**Our Standard Development Procedure:**
+**DRSITR** - Our standard development workflow: Design, Review, Simplify, Implement, Test, Review
 
-1. **Design Phase**
-   - Work out the overall design and architecture
+**To follow DRSITR:**
+
+1. **Design** - Work out the overall design and architecture
    - Consider all components, data flow, and user interactions
    - Document the approach clearly
 
-2. **Design Review**
-   - Use `mcp__zen__thinkdeep` tool for comprehensive design analysis
+2. **Review** - Use `mcp__zen__thinkdeep` for comprehensive design analysis
    - Ask specifically about potential issues, improvements, or alternative approaches
    - Consider the systematic investigation and expert validation
 
-3. **Simplicity Check**
-   - Review the design to ensure it's as simple as possible
+3. **Simplify** - Review the design to ensure it's as simple as possible
    - Apply our principle: "bias towards simple solutions for current problems"
    - Remove unnecessary complexity or premature optimizations
    - Ensure we're solving actual problems, not hypothetical ones
 
-4. **Implementation**
-   - Implement the feature following the agreed design
+4. **Implement** - Build the feature following the agreed design
    - Follow our coding standards and conventions
    - Use the TodoWrite tool to track implementation progress
 
-5. **Testing**
-   - Write comprehensive tests for the new functionality
-   - Include unit tests, integration tests as appropriate
+5. **Test** - Write comprehensive tests and run quality checks
+   - Write unit tests, integration tests as appropriate
    - Test edge cases and error conditions
    - Run existing test suite to ensure no regressions
-
-6. **Implementation Review**
-   - Use `mcp__zen__codereview` tool for comprehensive code review
-   - Review code quality, security concerns, performance, and test coverage
-   - Address any significant issues identified in the expert analysis
-
-7. **Commit and Push**
    - Run pre-commit hooks (build + tests) to ensure quality
-   - Create descriptive commit messages
-   - Push to GitHub repository
 
-**Enforcement**: This workflow should be followed for all non-trivial features. For simple changes (like text updates), steps 2 and 6 may be skipped.
+6. **Review** - Final code review with `mcp__zen__codereview` tool
+   - Use for comprehensive code quality, security, and design analysis
+   - Address critical issues (bugs, security, major design flaws)
+   - Focus on essential improvements, avoid overcomplication suggestions
+   - Create descriptive commit messages and push to GitHub
+
+**Enforcement**: Follow DRSITR for all non-trivial features. For simple changes (like text updates), Review steps may be simplified.
 
 ### Project Management
 - **Phase-Based Development**: We organize work into phases, not time-based estimates
