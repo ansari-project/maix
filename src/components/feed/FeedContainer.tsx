@@ -19,7 +19,7 @@ import Link from "next/link"
 
 interface FeedItem {
   id: string
-  type: 'project_created' | 'volunteer_applied' | 'profile_updated' | 'product_update'
+  type: 'project_created' | 'volunteer_applied' | 'profile_updated' | 'product_update' | 'product_created'
   title: string
   timestamp: Date
   user: {
@@ -72,6 +72,7 @@ export function FeedContainer({ initialItems = [] }: FeedContainerProps) {
       case 'profile_updated':
         return User
       case 'product_update':
+      case 'product_created':
         return Package
       default:
         return Calendar
@@ -88,6 +89,8 @@ export function FeedContainer({ initialItems = [] }: FeedContainerProps) {
         return 'bg-orange-100 text-orange-800'
       case 'product_update':
         return 'bg-purple-100 text-purple-800'
+      case 'product_created':
+        return 'bg-indigo-100 text-indigo-800'
       default:
         return 'bg-gray-100 text-gray-800'
     }
@@ -219,6 +222,24 @@ function FeedItem({ item }: FeedItemProps) {
               </div>
             )}
 
+            {item.type === 'product_created' && item.data && (
+              <div className="mt-2">
+                <p className="text-sm text-muted-foreground line-clamp-2">
+                  {item.data.description?.substring(0, 100)}...
+                </p>
+                <div className="flex gap-2 mt-2">
+                  <Badge variant="secondary" className="text-xs">
+                    {item.data._count?.projects || 0} projects
+                  </Badge>
+                </div>
+                <Button variant="link" size="sm" className="px-0 mt-1" asChild>
+                  <Link href={`/products/${item.data.id}`}>
+                    View Product <ExternalLink className="h-3 w-3 ml-1" />
+                  </Link>
+                </Button>
+              </div>
+            )}
+
           </div>
         </div>
       </CardContent>
@@ -236,6 +257,7 @@ function getFeedItemIcon(type: FeedItem['type']) {
     case 'profile_updated':
       return User
     case 'product_update':
+    case 'product_created':
       return Package
     default:
       return Calendar
@@ -252,6 +274,8 @@ function getFeedItemColor(type: FeedItem['type']) {
       return 'bg-orange-100 text-orange-800'
     case 'product_update':
       return 'bg-purple-100 text-purple-800'
+    case 'product_created':
+      return 'bg-indigo-100 text-indigo-800'
     default:
       return 'bg-gray-100 text-gray-800'
   }
