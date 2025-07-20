@@ -10,6 +10,42 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
+// Common timezone options
+const TIMEZONE_OPTIONS = [
+  { value: "America/New_York", label: "Eastern Time (New York)" },
+  { value: "America/Chicago", label: "Central Time (Chicago)" },
+  { value: "America/Denver", label: "Mountain Time (Denver)" },
+  { value: "America/Los_Angeles", label: "Pacific Time (Los Angeles)" },
+  { value: "America/Toronto", label: "Eastern Time (Toronto)" },
+  { value: "Europe/London", label: "Greenwich Mean Time (London)" },
+  { value: "Europe/Paris", label: "Central European Time (Paris)" },
+  { value: "Europe/Berlin", label: "Central European Time (Berlin)" },
+  { value: "Europe/Istanbul", label: "Turkey Time (Istanbul)" },
+  { value: "Asia/Dubai", label: "Gulf Standard Time (Dubai)" },
+  { value: "Asia/Riyadh", label: "Arabia Standard Time (Riyadh)" },
+  { value: "Asia/Karachi", label: "Pakistan Standard Time (Karachi)" },
+  { value: "Asia/Kolkata", label: "India Standard Time (Mumbai)" },
+  { value: "Asia/Dhaka", label: "Bangladesh Standard Time (Dhaka)" },
+  { value: "Asia/Jakarta", label: "Western Indonesian Time (Jakarta)" },
+  { value: "Asia/Kuala_Lumpur", label: "Malaysia Time (Kuala Lumpur)" },
+  { value: "Asia/Singapore", label: "Singapore Standard Time" },
+  { value: "Asia/Tokyo", label: "Japan Standard Time (Tokyo)" },
+  { value: "Australia/Sydney", label: "Australian Eastern Time (Sydney)" },
+  { value: "Pacific/Auckland", label: "New Zealand Standard Time (Auckland)" },
+]
+
+// Availability options
+const AVAILABILITY_OPTIONS = [
+  "<1 hour/wk",
+  "1 hr/wk", 
+  "2 hrs/wk",
+  "5 hrs/wk",
+  "10 hrs/wk",
+  "20 hrs/wk",
+  "40 hrs/wk",
+  "Other"
+]
+
 export default function ProfilePage() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -28,6 +64,7 @@ export default function ProfilePage() {
     availability: "",
     timezone: ""
   })
+  const [customAvailability, setCustomAvailability] = useState("")
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -47,6 +84,9 @@ export default function ProfilePage() {
       const response = await fetch("/api/profile")
       if (response.ok) {
         const data = await response.json()
+        const availability = data.availability || ""
+        const isCustomAvailability = availability && !AVAILABILITY_OPTIONS.includes(availability)
+        
         setProfile({
           name: data.name || "",
           username: data.username || "",
@@ -57,9 +97,13 @@ export default function ProfilePage() {
           linkedinUrl: data.linkedinUrl || "",
           githubUrl: data.githubUrl || "",
           portfolioUrl: data.portfolioUrl || "",
-          availability: data.availability || "",
+          availability: isCustomAvailability ? "Other" : availability,
           timezone: data.timezone || ""
         })
+        
+        if (isCustomAvailability) {
+          setCustomAvailability(availability)
+        }
       }
     } catch (error) {
       console.error("Error fetching profile:", error)
@@ -73,6 +117,7 @@ export default function ProfilePage() {
 
     try {
       const skillsArray = profile.skills.split(",").map(s => s.trim()).filter(s => s)
+      const finalAvailability = profile.availability === "Other" ? customAvailability : profile.availability
       
       const response = await fetch("/api/profile", {
         method: "PUT",
@@ -81,6 +126,7 @@ export default function ProfilePage() {
         },
         body: JSON.stringify({
           ...profile,
+          availability: finalAvailability,
           skills: skillsArray
         }),
       })
@@ -195,22 +241,38 @@ export default function ProfilePage() {
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="availability">Availability</Label>
-                  <Input
-                    id="availability"
-                    value={profile.availability}
-                    onChange={(e) => setProfile({...profile, availability: e.target.value})}
-                    placeholder="e.g., 10 hours/week, weekends only"
-                  />
+                  <Select value={profile.availability} onValueChange={(value) => setProfile({...profile, availability: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select your availability" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {AVAILABILITY_OPTIONS.map((option) => (
+                        <SelectItem key={option} value={option}>{option}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {profile.availability === "Other" && (
+                    <Input
+                      value={customAvailability}
+                      onChange={(e) => setCustomAvailability(e.target.value)}
+                      placeholder="e.g., weekends only, evenings after 6pm"
+                      className="mt-2"
+                    />
+                  )}
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="timezone">Timezone</Label>
-                  <Input
-                    id="timezone"
-                    value={profile.timezone}
-                    onChange={(e) => setProfile({...profile, timezone: e.target.value})}
-                    placeholder="e.g., UTC+3, EST"
-                  />
+                  <Select value={profile.timezone} onValueChange={(value) => setProfile({...profile, timezone: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select your timezone" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TIMEZONE_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
