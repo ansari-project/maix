@@ -158,6 +158,9 @@ To ensure code quality and prevent deployment failures, always perform the follo
    - Remember our principle: bias towards simple solutions for current problems
 
 3. **Never push code that fails to build or has failing tests**
+   - **NEVER use `git commit --no-verify` or `git push --no-verify`** to bypass pre-commit hooks
+   - If tests are failing, fix the tests or remove them rather than bypassing checks
+   - Pre-commit hooks exist to maintain code quality and prevent regressions
 
 **Enforcement**: 
 - A git pre-commit hook (`.husky/pre-commit`) automatically runs build and test checks
