@@ -11,7 +11,8 @@ import {
   User, 
   Calendar,
   ExternalLink,
-  Package
+  Package,
+  MessageCircle
 } from "lucide-react"
 import { format } from "date-fns"
 import Link from "next/link"
@@ -19,7 +20,7 @@ import { Markdown } from "@/components/ui/markdown"
 
 interface FeedItem {
   id: string
-  type: 'project_created' | 'volunteer_applied' | 'profile_updated' | 'product_update' | 'product_created'
+  type: 'project_created' | 'volunteer_applied' | 'profile_updated' | 'product_update' | 'product_created' | 'question_asked' | 'answer_posted'
   title: string
   timestamp: Date
   user: {
@@ -194,6 +195,32 @@ function FeedItem({ item }: FeedItemProps) {
               </div>
             )}
 
+            {item.type === 'question_asked' && item.data && (
+              <div className="mt-2">
+                <div className="text-sm">
+                  <Markdown content={item.data.content || ''} className="prose-sm line-clamp-3" />
+                </div>
+                <Button variant="link" size="sm" className="px-0 mt-1" asChild>
+                  <Link href={`/q-and-a/${item.data.id}`}>
+                    View Question <ExternalLink className="h-3 w-3 ml-1" />
+                  </Link>
+                </Button>
+              </div>
+            )}
+
+            {item.type === 'answer_posted' && item.data && (
+              <div className="mt-2">
+                <div className="text-sm">
+                  <Markdown content={item.data.content || ''} className="prose-sm line-clamp-2" />
+                </div>
+                <Button variant="link" size="sm" className="px-0 mt-1" asChild>
+                  <Link href={`/q-and-a/${item.data.parent?.id || item.data.questionId || item.data.parentId}`}>
+                    View Discussion <ExternalLink className="h-3 w-3 ml-1" />
+                  </Link>
+                </Button>
+              </div>
+            )}
+
           </div>
         </div>
       </CardContent>
@@ -213,6 +240,9 @@ function getFeedItemIcon(type: FeedItem['type']) {
     case 'product_update':
     case 'product_created':
       return Package
+    case 'question_asked':
+    case 'answer_posted':
+      return MessageCircle
     default:
       return Calendar
   }
@@ -230,6 +260,10 @@ function getFeedItemColor(type: FeedItem['type']) {
       return 'bg-purple-100 text-purple-800'
     case 'product_created':
       return 'bg-indigo-100 text-indigo-800'
+    case 'question_asked':
+      return 'bg-amber-100 text-amber-800'
+    case 'answer_posted':
+      return 'bg-teal-100 text-teal-800'
     default:
       return 'bg-gray-100 text-gray-800'
   }
