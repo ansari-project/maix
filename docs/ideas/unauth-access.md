@@ -2,27 +2,28 @@
 
 ## Overview
 
-This proposal outlines a strategy for providing limited read-only access to MAIX content without requiring user authentication. This would make the platform more discoverable, increase visibility of projects and opportunities, and help potential volunteers understand the value before signing up.
+This proposal outlines a strategy for providing read-only access to MAIX content without requiring user authentication. This would make the platform fully searchable and discoverable, allowing potential volunteers to explore projects, products, and Q&A before signing up.
 
 ## Objectives
 
-1. **Increase discoverability** - Allow search engines to index public content
-2. **Lower barriers to entry** - Let potential volunteers browse before committing
-3. **Showcase community impact** - Display the meaningful work being done
-4. **Maintain privacy** - Protect sensitive user and project information
+1. **Full searchability** - Make projects, products, and Q&A searchable via public interfaces
+2. **Lower barriers to entry** - Let potential volunteers browse and search before committing
+3. **Showcase community knowledge** - Display the valuable Q&A and project information
+4. **Maintain privacy** - Protect sensitive user information while sharing content
 
 ## Proposed Public Access Areas
 
 ### 1. Public Landing Page (Enhanced)
 - Platform overview and mission
-- Featured success stories
-- Statistics (total projects, volunteers matched, etc.)
+- Search bar for projects, products, and Q&A
+- Featured projects and recent questions
 - Call-to-action to join
 
-### 2. Projects Directory (Limited View)
+### 2. Projects Directory (Full Content)
 - **Public fields:**
   - Project name
-  - Brief description (truncated to 200 chars)
+  - Full description
+  - Full goal
   - Project type (advice, prototype, MVP, complete product)
   - Help type needed
   - Required skills
@@ -30,42 +31,48 @@ This proposal outlines a strategy for providing limited read-only access to MAIX
   - Creation date
 - **Hidden fields:**
   - Contact information
-  - Full project details/goal
   - Budget information
-  - Owner details (show "Verified Organization" instead)
+  - Owner email (show name only or "Anonymous")
   - Volunteer applications
 
-### 3. Products Showcase
+### 3. Products Showcase (Full Content)
 - **Public fields:**
   - Product name
-  - Description
+  - Full description
   - Number of associated projects
-  - Product website (if marked as public)
+  - Product website
+  - Associated public projects
 - **Hidden fields:**
-  - Owner information
-  - Internal discussions
-  - Edit/management features
+  - Owner email (show name only or "Anonymous")
+  - Internal management features
 
-### 4. Community Statistics Page
-- Total number of projects (by type)
-- Total volunteers registered
-- Skills in demand
-- Success metrics
-- Geographic distribution (general regions only)
+### 4. Questions & Answers (Full Content)
+- **Public fields:**
+  - Question title and full content
+  - All answers with full content
+  - Vote counts
+  - Best answer indicator
+  - Creation dates
+  - Author names (or "Anonymous" if preferred)
+- **Hidden fields:**
+  - Author emails
+  - Edit/delete capabilities
+  - Voting ability (requires login)
 
-### 5. Public Blog/Updates (Future)
-- Platform announcements
-- Success stories
-- Community highlights
-- Educational content about AI/tech for good
+### 5. Public Search
+- Unified search across projects, products, and Q&A
+- Filter by type (project, product, question, answer)
+- Filter by project type, skills, etc.
+- Sort by relevance, date, popularity
 
 ## Implementation Approach
 
 ### Phase 1: Basic Public Routes
 1. Create public layout wrapper without auth requirements
-2. Implement `/public/projects` route with limited data
+2. Implement `/public/projects` route with full data
 3. Add `/public/products` showcase
-4. Create `/public/about` and `/public/stats` pages
+4. Add `/public/questions` for Q&A browsing
+5. Create `/public/search` with filters
 
 ### Phase 2: SEO and Discovery
 1. Add proper meta tags for all public pages
@@ -74,16 +81,16 @@ This proposal outlines a strategy for providing limited read-only access to MAIX
 4. Create robots.txt with appropriate rules
 
 ### Phase 3: Privacy Controls
-1. Add "public visibility" toggle to projects/products
-2. Implement data filtering middleware
+1. Add "public visibility" toggle to projects/products/questions
+2. Add "show as anonymous" option for Q&A
 3. Create separate API endpoints for public data
-4. Add rate limiting for public endpoints
+4. Implement opt-out mechanisms
 
-### Phase 4: Enhanced Features
-1. Public search with filters
-2. RSS feeds for new projects
-3. Email subscription for updates (no account needed)
-4. Share buttons for social media
+### Phase 4: Enhanced Search
+1. Full-text search across all content types
+2. Advanced filters and sorting
+3. Search suggestions and autocomplete
+4. Related content recommendations
 
 ## Technical Implementation
 
@@ -91,156 +98,140 @@ This proposal outlines a strategy for providing limited read-only access to MAIX
 ```
 /public
   /projects          - Browse all public projects
-  /projects/[id]     - View single project (limited info)
+  /projects/[id]     - View single project (full info)
   /products          - Browse all public products
-  /products/[id]     - View single product (limited info)
+  /products/[id]     - View single product (full info)
+  /questions         - Browse all Q&A
+  /questions/[id]    - View question with answers
+  /search            - Unified search interface
   /about             - Platform information
-  /stats             - Community statistics
-  /search            - Public search interface
 ```
 
 ### Data Access Pattern
 ```typescript
-// Middleware to filter sensitive data
-export function publicDataFilter(data: any, type: 'project' | 'product') {
+// Public data access - no truncation
+export function publicDataFilter(data: any, type: 'project' | 'product' | 'question') {
   if (type === 'project') {
     return {
       id: data.id,
       name: data.name,
-      description: data.description.substring(0, 200) + '...',
+      description: data.description, // Full content
+      goal: data.goal, // Full content
       helpType: data.helpType,
       projectType: data.projectType,
       requiredSkills: data.requiredSkills,
       volunteersNeeded: data.volunteersNeeded,
       createdAt: data.createdAt,
-      isActive: data.isActive
+      isActive: data.isActive,
+      owner: {
+        name: data.showOwnerName ? data.owner.name : 'Anonymous',
+        // Never expose email
+      }
     }
   }
-  // Similar for products
+  // Similar for products and questions
 }
 ```
 
-### Security Considerations
-1. **Rate limiting**: Implement strict rate limits on public endpoints
-2. **Data sanitization**: Ensure no PII leaks through public APIs
-3. **CORS policy**: Configure appropriate CORS for public endpoints
-4. **Caching**: Implement aggressive caching for public data
-5. **Monitoring**: Track public endpoint usage for abuse
+### Search Implementation
+```typescript
+// Unified search across all content types
+export async function publicSearch(query: string, filters: SearchFilters) {
+  const [projects, products, questions] = await Promise.all([
+    searchProjects(query, filters),
+    searchProducts(query, filters),
+    searchQuestions(query, filters)
+  ])
+  
+  return {
+    projects,
+    products,
+    questions,
+    total: projects.length + products.length + questions.length
+  }
+}
+```
 
 ## Privacy and Ethical Considerations
 
 ### User Consent
-- Add checkbox during project/product creation: "Make this publicly visible"
-- Default to private for existing content
-- Allow users to opt-out their content from public view
-- Clear privacy policy about what data is public
+- Add visibility options during content creation:
+  - "Make publicly visible" (default: true for new content)
+  - "Show my name publicly" (default: true, can choose anonymous)
+- Allow users to change visibility settings anytime
+- Bulk visibility management in user settings
 
 ### Data Protection
 - Never expose email addresses
-- Use generic avatars for public view
-- Hide real names unless explicitly permitted
+- Optional anonymous posting for Q&A
 - No personal contact information
 - No financial/budget information
 
 ### Cultural Sensitivity
-- Respect privacy preferences in Muslim communities
-- Allow pseudonymous project posting
-- Option to hide organization names
-- Careful with location data (region only, not specific)
+- Respect privacy preferences
+- Allow anonymous contributions
+- Clear indication when content is public
 
 ## Benefits
 
 1. **For the Platform**
-   - Increased visibility and SEO
-   - More volunteer sign-ups
-   - Showcase platform value
-   - Build trust through transparency
+   - Full searchability and SEO benefits
+   - Showcase community knowledge
+   - Attract more volunteers and contributors
 
-2. **For Project Owners**
-   - Wider reach for volunteer recruitment
-   - Optional increased visibility
-   - Showcase their initiatives
+2. **For Content Creators**
+   - Wider reach for projects
+   - Build reputation through Q&A
+   - Optional anonymity
 
-3. **For Potential Volunteers**
-   - Browse opportunities without commitment
-   - Better understand platform before joining
-   - Share interesting projects with others
+3. **For Visitors**
+   - Search and explore without barriers
+   - Learn from Q&A
+   - Find relevant opportunities
 
-## Risks and Mitigation
+## Implementation Phases
 
-### Risk 1: Data Scraping
-- **Mitigation**: Rate limiting, bot detection, CAPTCHAs if needed
+### Phase 1: Foundation
+- Public routes setup
+- Basic project/product pages
+- Privacy controls
 
-### Risk 2: Privacy Concerns
-- **Mitigation**: Opt-in only, clear controls, regular audits
+### Phase 2: Q&A Integration
+- Public questions page
+- Answer visibility
+- Anonymous options
 
-### Risk 3: Spam/Abuse
-- **Mitigation**: No public posting, moderation of public content
+### Phase 3: Search & Discovery
+- Unified search
+- SEO optimization
+- Sitemap generation
 
-### Risk 4: Reduced Sign-ups
-- **Mitigation**: Clear value proposition for creating account (apply, post, full details)
+### Phase 4: Polish
+- Performance optimization
+- Enhanced UI/UX
+- Analytics integration
 
 ## Success Metrics
 
-1. **Engagement Metrics**
-   - Public page views
-   - Conversion rate (visitor to sign-up)
-   - Time spent on public pages
-   - Search engine traffic
+1. **Search & Discovery**
+   - Search queries per day
+   - Click-through rates
+   - Time to first engagement
 
-2. **Platform Growth**
-   - New user registrations from public pages
-   - Projects opting for public visibility
-   - Volunteer applications increase
+2. **Content Engagement**
+   - Page views on public content
+   - Conversion to registration
+   - Content sharing rates
 
-3. **Community Impact**
-   - Social media shares
-   - External links to projects
-   - Press mentions
-
-## Implementation Timeline
-
-### Month 1
-- Design public layouts and components
-- Implement basic public routes
-- Add privacy controls to existing forms
-
-### Month 2
-- Build public API endpoints
-- Implement data filtering
-- Add caching layer
-
-### Month 3
-- SEO optimization
-- Launch beta with select projects
-- Gather feedback and iterate
-
-### Month 4
-- Full launch
-- Marketing push
-- Monitor and optimize
-
-## Alternative Approaches Considered
-
-1. **Login wall with preview**: Show teaser then require login
-   - Rejected: Poor user experience, hurts SEO
-
-2. **Time-limited access**: Allow X views before requiring login
-   - Rejected: Complex to implement, frustrating for users
-
-3. **Full public access**: Make everything public by default
-   - Rejected: Privacy concerns, not culturally appropriate
-
-## Conclusion
-
-Implementing read-only public access would significantly increase MAIX's visibility and impact while respecting user privacy and cultural values. The phased approach allows for careful testing and adjustment based on community feedback.
-
-The key is balancing openness with privacy, ensuring that the Muslim tech community feels comfortable sharing their work while also reaching the widest possible audience of potential volunteers and supporters.
+3. **Platform Growth**
+   - New registrations from public pages
+   - Questions asked after browsing
+   - Projects created by new users
 
 ## Next Steps
 
-1. Review proposal with key stakeholders
-2. Conduct user survey about privacy preferences
-3. Create detailed technical specifications
-4. Build MVP with limited project set
-5. Test and iterate based on feedback
+1. Technical specification for public routes
+2. Update privacy settings UI mockups
+3. Implement Phase 1 MVP
+4. User testing with select group
+5. Iterate based on feedback

@@ -17,7 +17,8 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   // Don't show sidebar on public pages
   const publicPages = ["/", "/auth/signin", "/auth/signup"]
-  const showSidebar = session && !publicPages.includes(pathname)
+  const isPublicPage = publicPages.includes(pathname) || pathname.startsWith("/public")
+  const showSidebar = session && !isPublicPage
 
   if (!showSidebar) {
     return <>{children}</>
