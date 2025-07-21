@@ -1,8 +1,8 @@
-# CLAUDE.md - MAIX Project Instructions
+# CLAUDE.md - Maix Project Instructions
 
 ## Project Overview
 
-MAIX (Muslim AI Exchange) is a Next.js 14 application that connects Muslim volunteers with AI/tech projects. The platform uses modern web technologies with Islamic design principles to serve the Muslim tech community.
+Maix (Muslim AI Exchange) is a Next.js 14 application that connects Muslim volunteers with AI/tech projects. The platform uses modern web technologies with Islamic design principles to serve the Muslim tech community.
 
 ## Technology Stack
 
@@ -268,7 +268,7 @@ const islamicColors = {
 
 ## Project Lifecycle Management
 
-MAIX projects follow a structured lifecycle with clear states and transitions to help coordinate volunteer efforts effectively.
+Maix projects follow a structured lifecycle with clear states and transitions to help coordinate volunteer efforts effectively.
 
 ### Project Status States
 
@@ -568,4 +568,4 @@ npm run test:e2e        # End-to-end tests
 4. **Scalability**: Design for growth and increased usage
 5. **Community**: Build features that foster collaboration and trust
 
-This file serves as a comprehensive guide for developing and maintaining the MAIX platform while adhering to Islamic values and modern web development best practices.
+This file serves as a comprehensive guide for developing and maintaining the Maix platform while adhering to Islamic values and modern web development best practices.

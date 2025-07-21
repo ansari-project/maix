@@ -12,6 +12,25 @@ import { ArrowLeft, ExternalLink, Edit3, Trash2, Plus, Package, Calendar, User, 
 import { format } from "date-fns"
 import { Markdown } from "@/components/ui/markdown"
 
+function formatProjectStatus(status: string): { label: string; color: string } {
+  switch (status) {
+    case 'AWAITING_VOLUNTEERS':
+      return { label: 'Awaiting Volunteers', color: 'bg-blue-100 text-blue-800' }
+    case 'PLANNING':
+      return { label: 'Planning', color: 'bg-purple-100 text-purple-800' }
+    case 'IN_PROGRESS':
+      return { label: 'In Progress', color: 'bg-green-100 text-green-800' }
+    case 'ON_HOLD':
+      return { label: 'On Hold', color: 'bg-yellow-100 text-yellow-800' }
+    case 'COMPLETED':
+      return { label: 'Completed', color: 'bg-gray-100 text-gray-800' }
+    case 'CANCELLED':
+      return { label: 'Cancelled', color: 'bg-red-100 text-red-800' }
+    default:
+      return { label: status, color: 'bg-gray-100 text-gray-800' }
+  }
+}
+
 interface Product {
   id: string
   name: string
@@ -29,10 +48,11 @@ interface Product {
 
 interface Project {
   id: string
-  title: string
+  name: string
   description: string
-  projectType: string
   helpType: string
+  status: string
+  isActive: boolean
   createdAt: string
   owner: {
     id: string
@@ -320,19 +340,27 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <CardTitle className="text-lg line-clamp-1">
-                                {project.title}
+                                {project.name}
                               </CardTitle>
                               <CardDescription className="text-sm">
                                 by {project.owner.name || project.owner.email}
                               </CardDescription>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Badge variant="secondary" className="text-xs">
-                                {project.projectType.toLowerCase().replace('_', ' ')}
+                              <Badge 
+                                variant="secondary" 
+                                className={`text-xs ${formatProjectStatus(project.status).color}`}
+                              >
+                                {formatProjectStatus(project.status).label}
                               </Badge>
                               <Badge variant="outline" className="text-xs">
                                 {project.helpType.toLowerCase().replace('_', ' ')}
                               </Badge>
+                              {!project.isActive && (
+                                <Badge variant="destructive" className="text-xs">
+                                  Not Recruiting
+                                </Badge>
+                              )}
                             </div>
                           </div>
                         </CardHeader>
