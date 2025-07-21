@@ -26,9 +26,6 @@ function NewProjectForm() {
     name: "",
     goal: "",
     description: "",
-    planOutline: "",
-    history: "",
-    webpage: "",
     helpType: "",
     contactEmail: "",
     targetCompletionDate: "",
@@ -188,28 +185,6 @@ function NewProjectForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="planOutline">Plan Outline</Label>
-                <Textarea
-                  id="planOutline"
-                  value={project.planOutline}
-                  onChange={(e) => setProject({...project, planOutline: e.target.value})}
-                  placeholder="Outline of your plans for executing this project..."
-                  rows={3}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="history">Project History</Label>
-                <Textarea
-                  id="history"
-                  value={project.history}
-                  onChange={(e) => setProject({...project, history: e.target.value})}
-                  placeholder="Background and history of this project..."
-                  rows={3}
-                />
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="targetCompletionDate">Target Completion Date</Label>
                 <Input
                   id="targetCompletionDate"
@@ -228,17 +203,6 @@ function NewProjectForm() {
                   onChange={(e) => setProject({...project, contactEmail: e.target.value})}
                   placeholder="Email for volunteers to contact you"
                   required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="webpage">Project Webpage</Label>
-                <Input
-                  id="webpage"
-                  type="url"
-                  value={project.webpage}
-                  onChange={(e) => setProject({...project, webpage: e.target.value})}
-                  placeholder="https://yourproject.com"
                 />
               </div>
 

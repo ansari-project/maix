@@ -3,20 +3,75 @@ import { prisma } from '@/lib/prisma';
 import type { MaixMcpContext, MaixMcpResponse } from '../types';
 
 /**
- * Schema for manageProject tool parameters
+ * Base schema for project fields
  */
-export const manageProjectParameters = z.object({
+const projectFieldsSchema = {
+  name: z.string().min(3).max(255).describe("The project name"),
+  goal: z.string().min(10).max(500).regex(/^[^\n\r]+$/, "Goal must be a single line").describe("One-line project goal"),
+  description: z.string().min(50).max(5000).describe("The project description"),
+  helpType: z.enum(['ADVICE', 'PROTOTYPE', 'MVP', 'FULL_PRODUCT']).describe("The type of help needed"),
+  contactEmail: z.string().email().describe("Contact email for the project"),
+  targetCompletionDate: z.string().datetime().optional().or(z.literal('')).describe("Target completion date (ISO 8601)"),
+  isActive: z.boolean().optional().describe("Whether project is actively seeking help"),
+  productId: z.string().optional().describe("Associated product ID"),
+};
+
+/**
+ * Schema for create action (all required fields except optional ones)
+ */
+const createProjectSchema = z.object({
+  name: projectFieldsSchema.name,
+  goal: projectFieldsSchema.goal,
+  description: projectFieldsSchema.description,
+  helpType: projectFieldsSchema.helpType,
+  contactEmail: projectFieldsSchema.contactEmail,
+  targetCompletionDate: projectFieldsSchema.targetCompletionDate,
+  isActive: projectFieldsSchema.isActive,
+  productId: projectFieldsSchema.productId,
+});
+
+/**
+ * Schema for update action (all fields optional)
+ */
+const updateProjectSchema = z.object({
+  name: projectFieldsSchema.name.optional(),
+  goal: projectFieldsSchema.goal.optional(),
+  description: projectFieldsSchema.description.optional(),
+  helpType: projectFieldsSchema.helpType.optional(),
+  contactEmail: projectFieldsSchema.contactEmail.optional(),
+  targetCompletionDate: projectFieldsSchema.targetCompletionDate,
+  isActive: projectFieldsSchema.isActive,
+  productId: projectFieldsSchema.productId,
+});
+
+/**
+ * Base schema for manageProject tool parameters
+ */
+const manageProjectBaseSchema = z.object({
   action: z.enum(['create', 'update', 'delete', 'get', 'list']).describe("The operation to perform"),
   projectId: z.string().optional().describe("The ID of the project (required for update, delete, get actions)"),
   name: z.string().min(3).max(255).optional().describe("The project name"),
-  goal: z.string().min(10).max(500).optional().describe("The project goal"),
+  goal: z.string().min(10).max(500).optional().describe("One-line project goal"),
   description: z.string().min(50).max(5000).optional().describe("The project description"),
-  planOutline: z.string().max(3000).optional().describe("Outline of plans for executing the project"),
-  history: z.string().max(3000).optional().describe("The project history"),
-  webpage: z.string().url().optional().or(z.literal('')).describe("The project web page URL"),
   helpType: z.enum(['ADVICE', 'PROTOTYPE', 'MVP', 'FULL_PRODUCT']).optional().describe("The type of help needed"),
   contactEmail: z.string().email().optional().describe("Contact email for the project"),
-  targetCompletionDate: z.string().datetime().optional().or(z.literal('')).describe("Target completion date"),
+  targetCompletionDate: z.string().datetime().optional().or(z.literal('')).describe("Target completion date (ISO 8601)"),
+  isActive: z.boolean().optional().describe("Whether project is actively seeking help"),
+  productId: z.string().optional().describe("Associated product ID"),
+});
+
+/**
+ * Schema for manageProject tool parameters with conditional validation
+ */
+export const manageProjectParameters = manageProjectBaseSchema.refine((data) => {
+  // Validate projectId is required for certain actions
+  if (['update', 'delete', 'get'].includes(data.action) && !data.projectId) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Project ID is required for update, delete, and get actions",
+  path: ['projectId']
 });
 
 /**
@@ -26,6 +81,7 @@ export const manageProjectTool = {
   name: 'maix_manage_project',
   description: 'Manages user projects with CRUD operations: create, update, delete, get, and list projects',
   parameters: manageProjectParameters,
+  parametersShape: manageProjectBaseSchema.shape, // Export the base schema shape for MCP registration
   
   handler: async (
     params: z.infer<typeof manageProjectParameters>,
@@ -77,34 +133,28 @@ async function createProject(
   projectData: any,
   context: MaixMcpContext
 ): Promise<MaixMcpResponse> {
-  // Validate required fields for creation
-  if (!projectData.name) {
-    return { success: false, error: "Name is required to create a project" };
+  // Validate data against create schema
+  const validationResult = createProjectSchema.safeParse(projectData);
+  
+  if (!validationResult.success) {
+    return {
+      success: false,
+      error: `Validation error: ${validationResult.error.errors.map(e => e.message).join(', ')}`,
+    };
   }
-  if (!projectData.goal) {
-    return { success: false, error: "Goal is required to create a project" };
-  }
-  if (!projectData.description) {
-    return { success: false, error: "Description is required to create a project" };
-  }
-  if (!projectData.helpType) {
-    return { success: false, error: "Help type is required to create a project" };
-  }
-  if (!projectData.contactEmail) {
-    return { success: false, error: "Contact email is required to create a project" };
-  }
+  
+  const validatedData = validationResult.data;
   
   const newProject = await prisma.project.create({
     data: {
-      name: projectData.name,
-      goal: projectData.goal,
-      description: projectData.description,
-      planOutline: projectData.planOutline,
-      history: projectData.history,
-      webpage: projectData.webpage,
-      helpType: projectData.helpType,
-      contactEmail: projectData.contactEmail,
-      targetCompletionDate: projectData.targetCompletionDate ? new Date(projectData.targetCompletionDate) : null,
+      name: validatedData.name,
+      goal: validatedData.goal,
+      description: validatedData.description,
+      helpType: validatedData.helpType,
+      contactEmail: validatedData.contactEmail,
+      targetCompletionDate: validatedData.targetCompletionDate ? new Date(validatedData.targetCompletionDate) : null,
+      isActive: validatedData.isActive ?? true,
+      productId: validatedData.productId,
       ownerId: context.user.id,
     },
     include: {
@@ -133,20 +183,31 @@ async function updateProject(
     return { success: false, error: "Project ID is required for update action" };
   }
   
+  // Validate data against update schema
+  const validationResult = updateProjectSchema.safeParse(projectData);
+  
+  if (!validationResult.success) {
+    return {
+      success: false,
+      error: `Validation error: ${validationResult.error.errors.map(e => e.message).join(', ')}`,
+    };
+  }
+  
+  const validatedData = validationResult.data;
+  
   // Prepare update data (only include fields that were provided)
   const updateData: any = {};
   
-  if (projectData.name !== undefined) updateData.name = projectData.name;
-  if (projectData.goal !== undefined) updateData.goal = projectData.goal;
-  if (projectData.description !== undefined) updateData.description = projectData.description;
-  if (projectData.planOutline !== undefined) updateData.planOutline = projectData.planOutline;
-  if (projectData.history !== undefined) updateData.history = projectData.history;
-  if (projectData.webpage !== undefined) updateData.webpage = projectData.webpage;
-  if (projectData.helpType !== undefined) updateData.helpType = projectData.helpType;
-  if (projectData.contactEmail !== undefined) updateData.contactEmail = projectData.contactEmail;
-  if (projectData.targetCompletionDate !== undefined) {
-    updateData.targetCompletionDate = projectData.targetCompletionDate ? new Date(projectData.targetCompletionDate) : null;
+  if (validatedData.name !== undefined) updateData.name = validatedData.name;
+  if (validatedData.goal !== undefined) updateData.goal = validatedData.goal;
+  if (validatedData.description !== undefined) updateData.description = validatedData.description;
+  if (validatedData.helpType !== undefined) updateData.helpType = validatedData.helpType;
+  if (validatedData.contactEmail !== undefined) updateData.contactEmail = validatedData.contactEmail;
+  if (validatedData.targetCompletionDate !== undefined) {
+    updateData.targetCompletionDate = validatedData.targetCompletionDate ? new Date(validatedData.targetCompletionDate) : null;
   }
+  if (validatedData.isActive !== undefined) updateData.isActive = validatedData.isActive;
+  if (validatedData.productId !== undefined) updateData.productId = validatedData.productId;
   
   try {
     const updatedProject = await prisma.project.update({

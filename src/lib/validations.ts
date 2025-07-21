@@ -87,16 +87,6 @@ export const projectCreateSchema = z.object({
   description: z.string()
     .min(50, 'Description must be at least 50 characters long')
     .max(5000, 'Description must be less than 5000 characters long'),
-  planOutline: z.string()
-    .max(3000, 'Plan outline must be less than 3000 characters long')
-    .optional(),
-  history: z.string()
-    .max(3000, 'Project history must be less than 3000 characters long')
-    .optional(),
-  webpage: z.string()
-    .url('Invalid webpage URL')
-    .optional()
-    .or(z.literal('')),
   contactEmail: z.string()
     .email('Invalid contact email address')
     .max(255, 'Contact email must be less than 255 characters long'),

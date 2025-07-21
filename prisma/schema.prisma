@@ -48,11 +48,8 @@ model User {
 model Project {
   id                    String    @id @default(cuid())
   name                  String    // Project name
-  goal                  String    // Project goal
+  goal                  String    // One-line project goal
   description           String    @db.Text // Project description (longer text)
-  planOutline           String?   @db.Text // Outline of plans for executing the project
-  history               String?   @db.Text // Project history (optional, longer text)
-  webpage               String?   // Project web page URL
   contactEmail          String    // Contact email for the project
   helpType              HelpType  // Type of help needed
   targetCompletionDate  DateTime? // Target date for project completion

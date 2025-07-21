@@ -105,39 +105,31 @@ const mcpHandler = createMcpHandler(
 
     // Tool: Manage projects (CRUD operations)
     server.tool(
-      "maix_manage_project",
-      "Create, read, update, or delete projects",
-      {
-        action: z.enum(["create", "update", "get", "list", "delete"]).describe("The action to perform"),
-        projectId: z.string().optional().describe("Project ID (required for update, get, delete)"),
-        title: z.string().optional().describe("Project title"),
-        description: z.string().optional().describe("Project description"),
-        projectType: z.enum(["RESEARCH", "STARTUP", "NON_PROFIT", "OPEN_SOURCE", "CORPORATE"]).optional(),
-        helpType: z.enum(["ADVICE", "PROTOTYPE", "MVP", "FULL_PRODUCT"]).optional(),
-        maxVolunteers: z.number().int().min(1).optional().describe("Maximum number of volunteers"),
-        contactEmail: z.string().email().optional().describe("Contact email for the project"),
-        requiredSkills: z.array(z.string()).optional().describe("Required skills for volunteers"),
-        budgetRange: z.string().optional().describe("Budget range for the project"),
-      },
+      manageProjectTool.name,
+      manageProjectTool.description,
+      manageProjectTool.parametersShape,
       async (params, extra) => {
         try {
           const user = (extra.authInfo as MaixAuthInfo).extra.user;
 
           switch (params.action) {
             case "create": {
-              if (!params.title || !params.description) {
+              if (!params.name || !params.goal || !params.description) {
                 return {
-                  content: [{ type: "text", text: "Title and description are required for creating a project." }],
+                  content: [{ type: "text", text: "Name, goal, and description are required for creating a project." }],
                 };
               }
 
               const project = await prisma.project.create({
                 data: {
-                  name: params.title,
-                  goal: "Project goal to be updated",
+                  name: params.name,
+                  goal: params.goal,
                   description: params.description,
                   helpType: params.helpType || "ADVICE",
                   contactEmail: params.contactEmail || user.email,
+                  targetCompletionDate: params.targetCompletionDate ? new Date(params.targetCompletionDate) : undefined,
+                  isActive: params.isActive ?? true,
+                  productId: params.productId,
                   ownerId: user.id,
                 },
               });
@@ -199,7 +191,7 @@ const mcpHandler = createMcpHandler(
               return {
                 content: [{ 
                   type: "text", 
-                  text: `Project: ${project.name}\nGoal: ${project.goal}\nDescription: ${project.description}\nHelp Type: ${project.helpType}\nContact: ${project.contactEmail}\nWebpage: ${project.webpage || 'None'}` 
+                  text: `Project: ${project.name}\nGoal: ${project.goal}\nDescription: ${project.description}\nHelp Type: ${project.helpType}\nContact: ${project.contactEmail}\nActive: ${project.isActive ? 'Yes' : 'No'}\nTarget Completion: ${project.targetCompletionDate ? new Date(project.targetCompletionDate).toLocaleDateString() : 'Not set'}` 
                 }],
               };
             }
@@ -212,14 +204,14 @@ const mcpHandler = createMcpHandler(
               }
 
               const updateData: any = {};
-              if (params.title) updateData.title = params.title;
+              if (params.name) updateData.name = params.name;
+              if (params.goal) updateData.goal = params.goal;
               if (params.description) updateData.description = params.description;
-              if (params.projectType) updateData.projectType = params.projectType;
               if (params.helpType) updateData.helpType = params.helpType;
-              if (params.maxVolunteers) updateData.maxVolunteers = params.maxVolunteers;
               if (params.contactEmail) updateData.contactEmail = params.contactEmail;
-              if (params.requiredSkills) updateData.requiredSkills = JSON.stringify(params.requiredSkills);
-              if (params.budgetRange !== undefined) updateData.budgetRange = params.budgetRange;
+              if (params.targetCompletionDate !== undefined) updateData.targetCompletionDate = params.targetCompletionDate ? new Date(params.targetCompletionDate) : null;
+              if (params.isActive !== undefined) updateData.isActive = params.isActive;
+              if (params.productId !== undefined) updateData.productId = params.productId;
 
               const project = await prisma.project.updateMany({
                 where: { 

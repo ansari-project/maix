@@ -40,12 +40,12 @@ describe('manageProject tool', () => {
     description: 'This is a comprehensive test project description that meets the minimum 50 character requirement for validation.',
     helpType: 'MVP',
     contactEmail: 'contact@example.com',
-    planOutline: 'Phase 1: Research, Phase 2: Development, Phase 3: Testing',
-    history: 'Started as a research project',
-    webpage: 'https://example.com',
-    targetCompletionDate: '2024-12-31T23:59:59.000Z',
+    targetCompletionDate: new Date('2024-12-31T23:59:59.000Z'),
     isActive: true,
+    productId: null,
     ownerId: 'user-123',
+    createdAt: new Date(),
+    updatedAt: new Date(),
     owner: {
       id: 'user-123',
       name: 'Test User',
@@ -64,9 +64,6 @@ describe('manageProject tool', () => {
         description: 'This is a comprehensive test project description that meets the minimum 50 character requirement for validation.',
         helpType: 'MVP' as const,
         contactEmail: 'contact@example.com',
-        planOutline: 'Phase 1: Research, Phase 2: Development, Phase 3: Testing',
-        history: 'Started as a research project',
-        webpage: 'https://example.com',
         targetCompletionDate: '2024-12-31T23:59:59.000Z',
       };
 
@@ -83,10 +80,9 @@ describe('manageProject tool', () => {
           description: 'This is a comprehensive test project description that meets the minimum 50 character requirement for validation.',
           helpType: 'MVP',
           contactEmail: 'contact@example.com',
-          planOutline: 'Phase 1: Research, Phase 2: Development, Phase 3: Testing',
-          history: 'Started as a research project',
-          webpage: 'https://example.com',
           targetCompletionDate: new Date('2024-12-31T23:59:59.000Z'),
+          isActive: true,
+          productId: undefined,
           ownerId: 'user-123',
         },
         include: {
@@ -109,7 +105,7 @@ describe('manageProject tool', () => {
       const result = await manageProjectTool.handler(params, mockContext);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Name is required to create a project');
+      expect(result.error).toContain('Validation error');
       expect(mockPrisma.project.create).not.toHaveBeenCalled();
     });
 
@@ -173,7 +169,7 @@ describe('manageProject tool', () => {
       const result = await manageProjectTool.handler(params, mockContext);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Project ID is required for update action');
+      expect(result.error).toContain('Project ID is required for update, delete, and get actions');
     });
 
     it('should handle non-existent project', async () => {
@@ -224,7 +220,7 @@ describe('manageProject tool', () => {
       const result = await manageProjectTool.handler(params, mockContext);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Project ID is required for delete action');
+      expect(result.error).toContain('Project ID is required for update, delete, and get actions');
     });
   });
 

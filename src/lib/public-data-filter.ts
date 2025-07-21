@@ -13,13 +13,13 @@ interface PublicProject {
   description: string
   goal: string
   helpType: string
-  projectType: string
-  requiredSkills: string[]
-  maxVolunteers: number
+  contactEmail: string
+  targetCompletionDate: Date | null
   createdAt: Date
   updatedAt: Date
   isActive: boolean
   owner: PublicUser
+  productId?: string | null
   _count?: {
     applications: number
   }
@@ -74,13 +74,13 @@ export function filterPublicProject(project: any): PublicProject {
     description: project.description,
     goal: project.goal,
     helpType: project.helpType,
-    projectType: project.projectType,
-    requiredSkills: project.requiredSkills || [],
-    maxVolunteers: project.maxVolunteers,
+    contactEmail: project.contactEmail,
+    targetCompletionDate: project.targetCompletionDate,
     createdAt: project.createdAt,
     updatedAt: project.updatedAt,
     isActive: project.isActive,
     owner: filterPublicUser(project.owner),
+    productId: project.productId,
     _count: project._count
   }
 }

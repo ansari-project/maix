@@ -41,7 +41,11 @@ export function PublicFeedContainer() {
       const response = await fetch("/api/public/feed")
       if (response.ok) {
         const data = await response.json()
-        setFeedItems(data.items || [])
+        // Ensure we have valid items with required properties
+        const validItems = (data.items || []).filter((item: any) => 
+          item && item.id && item.type && item.title && item.timestamp && item.user
+        )
+        setFeedItems(validItems)
       }
     } catch (error) {
       console.error("Error fetching feed items:", error)

@@ -15,9 +15,6 @@ interface Project {
   name: string
   goal: string
   description: string
-  planOutline?: string
-  history?: string
-  webpage?: string
   helpType: string
   contactEmail: string
   targetCompletionDate?: string
@@ -166,20 +163,6 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                     <h3 className="font-semibold mb-2">Description</h3>
                     <Markdown content={project.description} className="text-muted-foreground" />
                   </div>
-
-                  {project.planOutline && (
-                    <div>
-                      <h3 className="font-semibold mb-2">Plan Outline</h3>
-                      <Markdown content={project.planOutline} className="text-muted-foreground" />
-                    </div>
-                  )}
-
-                  {project.history && (
-                    <div>
-                      <h3 className="font-semibold mb-2">Project History</h3>
-                      <Markdown content={project.history} className="text-muted-foreground" />
-                    </div>
-                  )}
                 </CardContent>
               </Card>
 
@@ -257,15 +240,6 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Target Date:</span>
                       <span>{new Date(project.targetCompletionDate).toLocaleDateString()}</span>
-                    </div>
-                  )}
-                  {project.webpage && (
-                    <div>
-                      <span className="text-muted-foreground">Website:</span>
-                      <a href={project.webpage} target="_blank" rel="noopener noreferrer" 
-                         className="text-primary hover:underline block">
-                        Visit Website
-                      </a>
                     </div>
                   )}
                 </CardContent>

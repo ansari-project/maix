@@ -16,7 +16,7 @@ interface Project {
   name: string
   description: string
   goal: string
-  projectType: string
+  projectType?: string
   helpType: string
   requiredSkills: string[]
   maxVolunteers: number
@@ -34,14 +34,12 @@ export default function PublicProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
-  const [projectTypeFilter, setProjectTypeFilter] = useState("all")
   const [helpTypeFilter, setHelpTypeFilter] = useState("all")
 
   const fetchProjects = useCallback(async () => {
     try {
       const params = new URLSearchParams()
       if (searchQuery) params.append('search', searchQuery)
-      if (projectTypeFilter !== 'all') params.append('projectType', projectTypeFilter)
       if (helpTypeFilter !== 'all') params.append('helpType', helpTypeFilter)
       
       const response = await fetch(`/api/public/projects?${params}`)
@@ -54,7 +52,7 @@ export default function PublicProjectsPage() {
     } finally {
       setLoading(false)
     }
-  }, [searchQuery, projectTypeFilter, helpTypeFilter])
+  }, [searchQuery, helpTypeFilter])
 
   useEffect(() => {
     fetchProjects()
@@ -114,21 +112,6 @@ export default function PublicProjectsPage() {
           </form>
           
           <div className="flex flex-wrap gap-2">
-            <Select value={projectTypeFilter} onValueChange={setProjectTypeFilter}>
-              <SelectTrigger className="w-[180px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Project Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="RESEARCH">Research</SelectItem>
-                <SelectItem value="STARTUP">Startup</SelectItem>
-                <SelectItem value="NON_PROFIT">Non-Profit</SelectItem>
-                <SelectItem value="OPEN_SOURCE">Open Source</SelectItem>
-                <SelectItem value="CORPORATE">Corporate</SelectItem>
-              </SelectContent>
-            </Select>
-            
             <Select value={helpTypeFilter} onValueChange={setHelpTypeFilter}>
               <SelectTrigger className="w-[180px]">
                 <Filter className="h-4 w-4 mr-2" />
@@ -165,12 +148,16 @@ export default function PublicProjectsPage() {
                       </CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="secondary">
-                        {project.projectType.toLowerCase().replace('_', ' ')}
-                      </Badge>
-                      <Badge variant="outline">
-                        {project.helpType.toLowerCase().replace('_', ' ')}
-                      </Badge>
+                      {project.projectType && (
+                        <Badge variant="secondary">
+                          {project.projectType.toLowerCase().replace('_', ' ')}
+                        </Badge>
+                      )}
+                      {project.helpType && (
+                        <Badge variant="outline">
+                          {project.helpType.toLowerCase().replace('_', ' ')}
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 </CardHeader>

@@ -70,8 +70,6 @@ export async function POST(request: Request) {
       const newProject = await tx.project.create({
         data: {
           ...validatedData,
-          // Convert empty string to null for optional URL field
-          webpage: validatedData.webpage === '' ? null : validatedData.webpage,
           // Convert targetCompletionDate string to Date if provided
           targetCompletionDate: validatedData.targetCompletionDate ? new Date(validatedData.targetCompletionDate) : null,
           ownerId: user.id
