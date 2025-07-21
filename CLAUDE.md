@@ -309,7 +309,7 @@ Any state → CANCELLED (projects can be cancelled at any time)
 - **Consider recruitment needs** when changing status
 - **Never transition from COMPLETED or CANCELLED** - create new projects instead
 
-For detailed guidance, see `docs/guides/project-lifecycle.md`
+For detailed guidance, see `docs/guides/maix-data-model.md`
 
 ## API Endpoints
 
