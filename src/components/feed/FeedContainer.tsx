@@ -5,7 +5,6 @@ import { useSession } from "next-auth/react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
   FolderOpen, 
   FileText, 
@@ -38,7 +37,6 @@ export function FeedContainer({ initialItems = [] }: FeedContainerProps) {
   const { data: session } = useSession()
   const [feedItems, setFeedItems] = useState<FeedItem[]>(initialItems)
   const [loading, setLoading] = useState(true)
-  const [activeFilter, setActiveFilter] = useState("all")
 
   useEffect(() => {
     if (session) {
@@ -59,10 +57,8 @@ export function FeedContainer({ initialItems = [] }: FeedContainerProps) {
     setLoading(false)
   }
 
-  const filteredItems = feedItems.filter(item => {
-    if (activeFilter === "all") return true
-    return item.type.startsWith(activeFilter)
-  })
+  // Show all items directly without filtering tabs
+  const filteredItems = feedItems
 
   if (loading) {
     return (
@@ -88,32 +84,22 @@ export function FeedContainer({ initialItems = [] }: FeedContainerProps) {
         </Button>
       </div>
 
-      <Tabs value={activeFilter} onValueChange={setActiveFilter} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="all">All Activity</TabsTrigger>
-          <TabsTrigger value="project">Projects</TabsTrigger>
-          <TabsTrigger value="volunteer">Volunteering</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value={activeFilter} className="space-y-4">
-          {filteredItems.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-8">
-                <p className="text-muted-foreground mb-4">No activities yet</p>
-                <p className="text-sm text-muted-foreground">
-                  Start by creating a project or updating your profile to see activity here.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {filteredItems.map((item) => (
-                <FeedItem key={item.id} item={item} />
-              ))}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+      <div className="space-y-4">
+        {filteredItems.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-8">
+              <p className="text-muted-foreground mb-4">No activities yet</p>
+              <p className="text-sm text-muted-foreground">
+                Start by creating a project or updating your profile to see activity here.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          filteredItems.map((item) => (
+            <FeedItem key={item.id} item={item} />
+          ))
+        )}
+      </div>
     </div>
   )
 }
