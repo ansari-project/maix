@@ -60,7 +60,7 @@ export default function QAndAPage() {
       const response = await fetch(`/api/posts?${params}`)
       if (response.ok) {
         const data = await response.json()
-        let filtered = data.data || []
+        let filtered = data || []
         
         // Apply client-side filtering
         if (filter === "my") {

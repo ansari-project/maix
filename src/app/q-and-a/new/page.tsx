@@ -39,7 +39,7 @@ export default function NewQuestionPage() {
 
       if (response.ok) {
         const data = await response.json()
-        router.push(`/q-and-a/${data.data.id}`)
+        router.push(`/q-and-a/${data.id}`)
       } else {
         const errorData = await response.json()
         setError(errorData.error || "Failed to post question")

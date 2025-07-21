@@ -65,7 +65,7 @@ export default function QuestionDetailPage({ params }: { params: Promise<{ id: s
       const questionResponse = await fetch(`/api/posts/${questionId}`)
       if (questionResponse.ok) {
         const questionData = await questionResponse.json()
-        setQuestion(questionData.data)
+        setQuestion(questionData)
       }
 
       // Fetch answers (replies to this question)
@@ -73,7 +73,7 @@ export default function QuestionDetailPage({ params }: { params: Promise<{ id: s
       if (answersResponse.ok) {
         const answersData = await answersResponse.json()
         // Filter to only show ANSWER type posts
-        const answerPosts = answersData.data.filter((post: Post) => post.type === "ANSWER")
+        const answerPosts = answersData.filter((post: Post) => post.type === "ANSWER")
         setAnswers(answerPosts)
       }
     } catch (error) {
