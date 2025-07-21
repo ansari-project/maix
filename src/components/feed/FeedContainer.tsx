@@ -146,9 +146,11 @@ function FeedItem({ item }: FeedItemProps) {
                 {format(new Date(item.timestamp), 'MMM dd, yyyy')}
               </span>
             </div>
-            <p className="text-sm text-muted-foreground mt-1">
-              by {item.user.name || 'Unknown User'}
-            </p>
+            {item.type !== 'product_created' && item.type !== 'product_update' && (
+              <p className="text-sm text-muted-foreground mt-1">
+                by {item.user.name || 'Unknown User'}
+              </p>
+            )}
             
             {/* Type-specific content */}
             {item.type === 'project_created' && item.data && (
@@ -209,7 +211,7 @@ function FeedItem({ item }: FeedItemProps) {
             {item.type === 'product_created' && item.data && (
               <div className="mt-2">
                 <div className="text-sm">
-                  <Markdown content={item.data.description || ''} className="prose-sm" />
+                  <Markdown content={item.data.description || ''} className="prose-sm line-clamp-4" />
                 </div>
                 <div className="flex gap-2 mt-2">
                   <Badge variant="secondary" className="text-xs">
