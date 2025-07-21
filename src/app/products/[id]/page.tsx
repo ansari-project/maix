@@ -10,6 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import Link from "next/link"
 import { ArrowLeft, ExternalLink, Edit3, Trash2, Plus, Package, Calendar, User, Users } from "lucide-react"
 import { format } from "date-fns"
+import { Markdown } from "@/components/ui/markdown"
 
 interface Product {
   id: string
@@ -237,7 +238,9 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                 <div className="space-y-4">
                   <div>
                     <h3 className="font-semibold mb-2">Description</h3>
-                    <p className="text-muted-foreground">{product.description}</p>
+                    <div className="text-muted-foreground">
+                      <Markdown content={product.description} />
+                    </div>
                   </div>
                   
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -325,9 +328,9 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                           </div>
                         </CardHeader>
                         <CardContent className="pt-0">
-                          <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                            {project.description}
-                          </p>
+                          <div className="text-sm mb-3 line-clamp-2">
+                            <Markdown content={project.description} className="prose-sm" />
+                          </div>
                           
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4 text-sm text-muted-foreground">

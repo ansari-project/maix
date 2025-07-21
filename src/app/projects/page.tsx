@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Package, ExternalLink } from "lucide-react"
+import { Markdown } from "@/components/ui/markdown"
 
 interface Project {
   id: string
@@ -181,9 +182,9 @@ export default function ProjectsPage() {
                   )}
                   <div className="space-y-1">
                     <div className="text-sm font-medium text-muted-foreground">Goal:</div>
-                    <CardDescription className="line-clamp-2">
-                      {project.goal}
-                    </CardDescription>
+                    <div className="line-clamp-2">
+                      <Markdown content={project.goal} className="prose-sm" />
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>

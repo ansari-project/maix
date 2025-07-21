@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 import { format } from "date-fns"
 import Link from "next/link"
+import { Markdown } from "@/components/ui/markdown"
 
 // Post type from our schema
 interface Post {
@@ -179,7 +180,9 @@ export function PostCard({
         <CardContent className="space-y-4">
           {/* Post Content */}
           <div className="prose prose-sm max-w-none">
-            <div className="whitespace-pre-wrap">{post.content}</div>
+            <div>
+              <Markdown content={post.content} />
+            </div>
           </div>
 
           {/* Best Answer Preview for Questions */}
@@ -192,9 +195,9 @@ export function PostCard({
                   by {post.bestAnswer.author.name}
                 </span>
               </div>
-              <p className="text-sm text-green-700 line-clamp-2">
-                {post.bestAnswer.content.substring(0, 150)}...
-              </p>
+              <div className="text-sm text-green-700 line-clamp-2">
+                <Markdown content={post.bestAnswer.content.substring(0, 150) + '...'} className="prose-sm" />
+              </div>
             </div>
           )}
 

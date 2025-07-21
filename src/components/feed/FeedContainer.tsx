@@ -16,6 +16,7 @@ import {
 } from "lucide-react"
 import { format } from "date-fns"
 import Link from "next/link"
+import { Markdown } from "@/components/ui/markdown"
 
 interface FeedItem {
   id: string
@@ -179,9 +180,9 @@ function FeedItem({ item }: FeedItemProps) {
             {/* Type-specific content */}
             {item.type === 'project_created' && item.data && (
               <div className="mt-2">
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  {item.data.description?.substring(0, 100)}...
-                </p>
+                <div className="text-sm line-clamp-2">
+                  <Markdown content={item.data.description?.substring(0, 100) + '...'} className="prose-sm" />
+                </div>
                 <div className="flex gap-2 mt-2">
                   <Badge variant="secondary" className="text-xs">
                     {item.data.projectType?.replace('_', ' ')}
@@ -211,9 +212,9 @@ function FeedItem({ item }: FeedItemProps) {
 
             {item.type === 'product_update' && item.data && (
               <div className="mt-2">
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  {item.data.content?.substring(0, 150)}...
-                </p>
+                <div className="text-sm line-clamp-2">
+                  <Markdown content={item.data.content?.substring(0, 150) + '...'} className="prose-sm" />
+                </div>
                 <Button variant="link" size="sm" className="px-0 mt-1" asChild>
                   <Link href={`/products/${item.data.productId}`}>
                     View Product <ExternalLink className="h-3 w-3 ml-1" />
@@ -224,9 +225,9 @@ function FeedItem({ item }: FeedItemProps) {
 
             {item.type === 'product_created' && item.data && (
               <div className="mt-2">
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  {item.data.description?.substring(0, 100)}...
-                </p>
+                <div className="text-sm line-clamp-2">
+                  <Markdown content={item.data.description?.substring(0, 100) + '...'} className="prose-sm" />
+                </div>
                 <div className="flex gap-2 mt-2">
                   <Badge variant="secondary" className="text-xs">
                     {item.data._count?.projects || 0} projects

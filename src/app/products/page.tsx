@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { Plus, ExternalLink, Package, Users } from "lucide-react"
+import { Markdown } from "@/components/ui/markdown"
 
 interface Product {
   id: string
@@ -183,9 +184,9 @@ export default function ProductsPage() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-                      {product.description}
-                    </p>
+                    <div className="text-sm mb-4 line-clamp-3">
+                      <Markdown content={product.description} className="prose-sm" />
+                    </div>
                     
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
