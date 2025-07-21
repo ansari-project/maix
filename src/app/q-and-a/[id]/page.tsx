@@ -68,13 +68,11 @@ export default function QuestionDetailPage({ params }: { params: Promise<{ id: s
         setQuestion(questionData)
       }
 
-      // Fetch answers (replies to this question)
-      const answersResponse = await fetch(`/api/posts/${questionId}/comments`)
+      // Fetch answers (posts with parentId = questionId and type = ANSWER)
+      const answersResponse = await fetch(`/api/posts?parentId=${questionId}&type=ANSWER`)
       if (answersResponse.ok) {
         const answersData = await answersResponse.json()
-        // Filter to only show ANSWER type posts
-        const answerPosts = answersData.filter((post: Post) => post.type === "ANSWER")
-        setAnswers(answerPosts)
+        setAnswers(answersData)
       }
     } catch (error) {
       console.error("Error fetching question:", error)

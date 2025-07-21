@@ -386,5 +386,82 @@ describe('/api/posts', () => {
         })
       )
     })
+
+    it('should fetch answers for a question with parentId and type=ANSWER', async () => {
+      const mockAnswers = [
+        {
+          id: 'answer-1',
+          type: 'ANSWER',
+          content: 'This is answer 1',
+          parentId: 'question-1',
+          author: mockUser,
+          _count: { replies: 0, comments: 2 }
+        },
+        {
+          id: 'answer-2',
+          type: 'ANSWER',
+          content: 'This is answer 2',
+          parentId: 'question-1',
+          author: mockUser,
+          _count: { replies: 0, comments: 1 }
+        }
+      ]
+
+      mockPrisma.post.findMany.mockResolvedValue(mockAnswers)
+      mockSuccessResponse.mockReturnValue(
+        mockApiSuccessResponse(mockAnswers, 200) as any
+      )
+
+      const request = new NextRequest('http://localhost:3000/api/posts?parentId=question-1&type=ANSWER')
+      const response = await GET(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(data).toHaveLength(2)
+      
+      // Verify query structure for answers
+      expect(mockPrisma.post.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            parentId: 'question-1',
+            type: 'ANSWER'
+          }
+        })
+      )
+    })
+
+    it('should fetch replies with just parentId (no type filter)', async () => {
+      const mockReplies = [
+        {
+          id: 'answer-1',
+          type: 'ANSWER',
+          content: 'This is an answer',
+          parentId: 'question-1',
+          author: mockUser,
+          _count: { replies: 0, comments: 0 }
+        }
+      ]
+
+      mockPrisma.post.findMany.mockResolvedValue(mockReplies)
+      mockSuccessResponse.mockReturnValue(
+        mockApiSuccessResponse(mockReplies, 200) as any
+      )
+
+      const request = new NextRequest('http://localhost:3000/api/posts?parentId=question-1')
+      const response = await GET(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(data).toHaveLength(1)
+      
+      // Verify query structure - should only have parentId, no type restriction
+      expect(mockPrisma.post.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            parentId: 'question-1'
+          }
+        })
+      )
+    })
   })
 })

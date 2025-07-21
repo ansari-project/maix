@@ -118,17 +118,30 @@ export async function GET(request: Request) {
     const type = searchParams.get('type')
     const projectId = searchParams.get('projectId')
     const productId = searchParams.get('productId')
+    const parentId = searchParams.get('parentId')
 
-    const where: any = {
+    const where: any = {}
+    
+    // If parentId is provided, we're fetching replies/answers
+    if (parentId) {
+      where.parentId = parentId
+    } else {
       // Only show top-level posts in main feed (not answers or discussion threads)
-      type: {
+      where.type = {
         in: ['QUESTION', 'PROJECT_UPDATE', 'PRODUCT_UPDATE'],
-      },
+      }
     }
 
     // Filter by specific type if provided
-    if (type && ['QUESTION', 'PROJECT_UPDATE', 'PRODUCT_UPDATE'].includes(type)) {
-      where.type = type
+    if (type) {
+      // When fetching replies (parentId is set), allow ANSWER type
+      const allowedTypes = parentId 
+        ? ['ANSWER', 'PROJECT_DISCUSSION', 'PRODUCT_DISCUSSION']
+        : ['QUESTION', 'PROJECT_UPDATE', 'PRODUCT_UPDATE']
+      
+      if (allowedTypes.includes(type)) {
+        where.type = type
+      }
     }
 
     // Filter by project if provided
