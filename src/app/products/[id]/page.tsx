@@ -162,11 +162,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
-                <h1 className="text-3xl font-bold text-primary mb-2">{product.name}</h1>
-                <p className="text-muted-foreground flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  by {product.owner.name || product.owner.email}
-                </p>
+                <h1 className="text-3xl font-bold text-primary">{product.name}</h1>
               </div>
               
               <div className="flex items-center gap-2">
@@ -238,10 +234,23 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                 <div className="space-y-4">
                   <div>
                     <h3 className="font-semibold mb-2">Description</h3>
-                    <div className="text-muted-foreground">
-                      <Markdown content={product.description} />
-                    </div>
+                    <Markdown content={product.description} />
                   </div>
+                  
+                  {product.url && (
+                    <div>
+                      <h3 className="font-semibold mb-2">Website</h3>
+                      <Link 
+                        href={product.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline flex items-center gap-1"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        {product.url}
+                      </Link>
+                    </div>
+                  )}
                   
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">

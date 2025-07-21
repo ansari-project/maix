@@ -7,6 +7,9 @@ interface MarkdownProps {
 }
 
 export function Markdown({ content, className }: MarkdownProps) {
+  // Trim the content to remove leading/trailing whitespace
+  const trimmedContent = content?.trim() || ''
+  
   return (
     <ReactMarkdown
       className={cn(
@@ -35,7 +38,7 @@ export function Markdown({ content, className }: MarkdownProps) {
         ),
       }}
     >
-      {content}
+      {trimmedContent}
     </ReactMarkdown>
   )
 }
