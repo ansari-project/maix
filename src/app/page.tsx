@@ -4,6 +4,7 @@ import Link from "next/link"
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { redirect } from 'next/navigation'
+import { PublicFeedContainer } from "@/components/feed/PublicFeedContainer"
 
 export default async function Home() {
   const session = await getServerSession(authOptions)
@@ -95,6 +96,19 @@ export default async function Home() {
                   </CardContent>
                 </Card>
               </div>
+            </CardContent>
+          </Card>
+          
+          {/* Activity Feed */}
+          <Card className="w-full mx-auto mt-8">
+            <CardHeader>
+              <CardTitle className="text-2xl mb-2">Recent Community Activity</CardTitle>
+              <CardDescription className="text-base">
+                See what&apos;s happening in the MAIX community
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <PublicFeedContainer />
             </CardContent>
           </Card>
         </div>
