@@ -10,7 +10,7 @@ export async function GET() {
     const user = await requireAuth()
 
     // Query existing models directly as per the simplified approach
-    const [projects, applications, productUpdates, products] = await Promise.all([
+    const [projects, applications, productUpdates, products, posts] = await Promise.all([
       prisma.project.findMany({
         take: 10,
         orderBy: { createdAt: 'desc' },
@@ -41,6 +41,23 @@ export async function GET() {
         include: { 
           owner: { select: { id: true, name: true } },
           _count: { select: { projects: true } }
+        }
+      }),
+      prisma.post.findMany({
+        take: 10,
+        where: {
+          type: { in: ['QUESTION', 'ANSWER'] }
+        },
+        orderBy: { createdAt: 'desc' },
+        include: {
+          author: { select: { id: true, name: true } },
+          parent: {
+            select: { 
+              id: true, 
+              content: true,
+              author: { select: { id: true, name: true } }
+            }
+          }
         }
       })
     ])
@@ -81,7 +98,19 @@ export async function GET() {
         timestamp: p.createdAt,
         user: p.owner,
         data: p
-      }))
+      })),
+      ...posts
+        .filter(p => p.author) // Filter out posts without authors
+        .map(p => ({
+          id: p.id,
+          type: p.type === 'QUESTION' ? 'question_asked' as const : 'answer_posted' as const,
+          title: p.type === 'QUESTION' 
+            ? `${p.author!.name} asked: ${p.content.substring(0, 100)}${p.content.length > 100 ? '...' : ''}`
+            : `${p.author!.name} answered a question`,
+          timestamp: p.createdAt,
+          user: p.author!,
+          data: p
+        }))
     ]
 
     // Sort by timestamp

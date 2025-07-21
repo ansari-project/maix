@@ -58,9 +58,9 @@ export function Sidebar({ isCollapsed = false, onToggle, currentPath }: SidebarP
     },
     {
       name: "Q + A",
-      href: "/community",
+      href: "/q-and-a",
       icon: HelpCircle,
-      isActive: pathname === "/community"
+      isActive: pathname === "/q-and-a" || pathname.startsWith("/q-and-a/")
     },
     {
       name: "Projects",
