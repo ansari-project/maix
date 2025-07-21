@@ -290,8 +290,8 @@ export default function QuestionDetailPage({ params }: { params: Promise<{ id: s
                                 <Textarea
                                   value={editContent}
                                   onChange={(e) => setEditContent(e.target.value)}
-                                  rows={4}
-                                  className="resize-none"
+                                  rows={20}
+                                  className="resize-vertical"
                                 />
                                 <div className="flex gap-2">
                                   <Button 
