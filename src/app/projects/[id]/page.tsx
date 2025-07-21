@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
+import { Markdown } from "@/components/ui/markdown"
 
 interface Project {
   id: string
@@ -158,25 +159,25 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                 <CardContent className="space-y-4">
                   <div>
                     <h3 className="font-semibold mb-2">Goal</h3>
-                    <p className="text-muted-foreground whitespace-pre-wrap">{project.goal}</p>
+                    <Markdown content={project.goal} className="text-muted-foreground" />
                   </div>
                   
                   <div>
                     <h3 className="font-semibold mb-2">Description</h3>
-                    <p className="text-muted-foreground whitespace-pre-wrap">{project.description}</p>
+                    <Markdown content={project.description} className="text-muted-foreground" />
                   </div>
 
                   {project.planOutline && (
                     <div>
                       <h3 className="font-semibold mb-2">Plan Outline</h3>
-                      <p className="text-muted-foreground whitespace-pre-wrap">{project.planOutline}</p>
+                      <Markdown content={project.planOutline} className="text-muted-foreground" />
                     </div>
                   )}
 
                   {project.history && (
                     <div>
                       <h3 className="font-semibold mb-2">Project History</h3>
-                      <p className="text-muted-foreground whitespace-pre-wrap">{project.history}</p>
+                      <Markdown content={project.history} className="text-muted-foreground" />
                     </div>
                   )}
                 </CardContent>

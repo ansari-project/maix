@@ -15,14 +15,15 @@ export function Markdown({ content, className }: MarkdownProps) {
       className={cn(
         "prose prose-sm max-w-none",
         "prose-headings:font-semibold prose-headings:text-foreground",
-        "prose-p:text-muted-foreground prose-p:leading-relaxed",
+        "prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-4",
         "prose-a:text-primary prose-a:no-underline hover:prose-a:underline",
         "prose-strong:text-foreground prose-strong:font-semibold",
         "prose-code:text-foreground prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded",
-        "prose-pre:bg-muted prose-pre:border prose-pre:border-border",
-        "prose-blockquote:text-muted-foreground prose-blockquote:border-l-primary",
-        "prose-ul:text-muted-foreground prose-li:text-muted-foreground",
-        "prose-ol:text-muted-foreground",
+        "prose-pre:bg-muted prose-pre:border prose-pre:border-border prose-pre:my-4",
+        "prose-blockquote:text-muted-foreground prose-blockquote:border-l-primary prose-blockquote:my-4",
+        "prose-ul:text-muted-foreground prose-li:text-muted-foreground prose-ul:my-4",
+        "prose-ol:text-muted-foreground prose-ol:my-4",
+        "[&>*:last-child]:mb-0",
         className
       )}
       components={{
