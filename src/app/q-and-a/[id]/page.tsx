@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { formatDistanceToNow } from "date-fns"
-import { ArrowLeft, CheckCircle2, MessageCircle, Star, User } from "lucide-react"
+import { ArrowLeft, CheckCircle2, MessageCircle, Star, User, Edit, Save, X } from "lucide-react"
 import { Markdown } from "@/components/ui/markdown"
 
 interface Post {
@@ -42,6 +42,9 @@ export default function QuestionDetailPage({ params }: { params: Promise<{ id: s
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
   const [questionId, setQuestionId] = useState<string | null>(null)
+  const [editingAnswerId, setEditingAnswerId] = useState<string | null>(null)
+  const [editContent, setEditContent] = useState("")
+  const [updating, setUpdating] = useState(false)
 
   useEffect(() => {
     params.then(p => setQuestionId(p.id))
@@ -148,6 +151,49 @@ export default function QuestionDetailPage({ params }: { params: Promise<{ id: s
     }
   }
 
+  const handleStartEdit = (answer: Post) => {
+    setEditingAnswerId(answer.id)
+    setEditContent(answer.content)
+  }
+
+  const handleCancelEdit = () => {
+    setEditingAnswerId(null)
+    setEditContent("")
+  }
+
+  const handleUpdateAnswer = async (answerId: string) => {
+    if (!editContent.trim()) {
+      setError("Answer content cannot be empty")
+      return
+    }
+
+    setUpdating(true)
+    setError("")
+
+    try {
+      const response = await fetch(`/api/posts/${answerId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: editContent.trim()
+        })
+      })
+
+      if (response.ok) {
+        setEditingAnswerId(null)
+        setEditContent("")
+        fetchQuestionAndAnswers()
+      } else {
+        const errorData = await response.json()
+        setError(errorData.error || "Failed to update answer")
+      }
+    } catch (error) {
+      console.error("Error updating answer:", error)
+      setError("An error occurred. Please try again.")
+    }
+    setUpdating(false)
+  }
+
   if (status === "loading" || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -217,6 +263,8 @@ export default function QuestionDetailPage({ params }: { params: Promise<{ id: s
               <div className="space-y-4">
                 {answers.map((answer) => {
                   const isBestAnswer = question.bestAnswer?.id === answer.id
+                  const isAnswerAuthor = answer.author.id === session.user?.id
+                  const isEditing = editingAnswerId === answer.id
                   return (
                     <Card key={answer.id} className={isBestAnswer ? "border-green-600" : ""}>
                       <CardHeader>
@@ -237,8 +285,48 @@ export default function QuestionDetailPage({ params }: { params: Promise<{ id: s
                                 </span>
                               )}
                             </CardDescription>
-                            <Markdown content={answer.content} />
+                            {isEditing ? (
+                              <div className="space-y-3">
+                                <Textarea
+                                  value={editContent}
+                                  onChange={(e) => setEditContent(e.target.value)}
+                                  rows={4}
+                                  className="resize-none"
+                                />
+                                <div className="flex gap-2">
+                                  <Button 
+                                    size="sm" 
+                                    onClick={() => handleUpdateAnswer(answer.id)}
+                                    disabled={updating}
+                                  >
+                                    <Save className="h-3 w-3 mr-1" />
+                                    {updating ? "Saving..." : "Save"}
+                                  </Button>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={handleCancelEdit}
+                                    disabled={updating}
+                                  >
+                                    <X className="h-3 w-3 mr-1" />
+                                    Cancel
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <Markdown content={answer.content} />
+                            )}
                           </div>
+                          {!isEditing && isAnswerAuthor && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleStartEdit(answer)}
+                              className="ml-2"
+                            >
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                          )}
                         </div>
                       </CardHeader>
                       {isQuestionAuthor && !question.bestAnswer && (
