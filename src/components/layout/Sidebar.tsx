@@ -63,16 +63,16 @@ export function Sidebar({ isCollapsed = false, onToggle, currentPath }: SidebarP
       isActive: pathname === "/q-and-a" || pathname.startsWith("/q-and-a/")
     },
     {
-      name: "Projects",
-      href: "/projects",
-      icon: FolderOpen,
-      isActive: pathname === "/projects"
-    },
-    {
       name: "Products",
       href: "/products",
       icon: Package,
       isActive: pathname === "/products" || pathname.startsWith("/products/")
+    },
+    {
+      name: "Projects",
+      href: "/projects",
+      icon: FolderOpen,
+      isActive: pathname === "/projects"
     },
     {
       name: "My Volunteering",
