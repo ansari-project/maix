@@ -194,12 +194,15 @@ describe('FeedContainer', () => {
     expect(screen.getByText('You can use NextAuth.js for authentication')).toBeInTheDocument()
     expect(screen.getByText('PENDING')).toBeInTheDocument()
 
-    // Check for correct links - get all product links and check the first one
-    const productLinks = screen.getAllByRole('link', { name: /View Product/i })
-    expect(productLinks[0]).toHaveAttribute('href', '/products/prod1')
+    // Check for correct links - titles are now clickable links
+    const productLink = screen.getByRole('link', { name: 'New product: Test Product' })
+    expect(productLink).toHaveAttribute('href', '/products/prod1')
     
-    const discussionLink = screen.getByRole('link', { name: /View Discussion/i })
-    expect(discussionLink).toHaveAttribute('href', '/q-and-a/q1')
+    const productUpdateLink = screen.getByRole('link', { name: 'Product update: Test Product' })
+    expect(productUpdateLink).toHaveAttribute('href', '/products/prod1')
+    
+    const answerLink = screen.getByRole('link', { name: 'Charlie answered a question' })
+    expect(answerLink).toHaveAttribute('href', '/q-and-a/q1')
   })
 
   it('should handle refresh button click', async () => {

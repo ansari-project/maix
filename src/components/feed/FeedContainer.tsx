@@ -10,7 +10,6 @@ import {
   FileText, 
   User, 
   Calendar,
-  ExternalLink,
   Package,
   MessageCircle
 } from "lucide-react"
@@ -141,7 +140,32 @@ function FeedItem({ item }: FeedItemProps) {
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-sm">{item.title}</h3>
+              <h3 className="font-semibold text-sm">
+                {/* Make title clickable for items with links */}
+                {(item.type === 'project_created' && item.data?.id) ? (
+                  <Link href={`/projects/${item.data.id}`} className="hover:text-primary">
+                    {item.title}
+                  </Link>
+                ) : (item.type === 'product_created' && item.data?.id) ? (
+                  <Link href={`/products/${item.data.id}`} className="hover:text-primary">
+                    {item.title}
+                  </Link>
+                ) : (item.type === 'product_update' && item.data?.productId) ? (
+                  <Link href={`/products/${item.data.productId}`} className="hover:text-primary">
+                    {item.title}
+                  </Link>
+                ) : (item.type === 'question_asked' && item.data?.id) ? (
+                  <Link href={`/q-and-a/${item.data.id}`} className="hover:text-primary">
+                    {item.title}
+                  </Link>
+                ) : (item.type === 'answer_posted' && (item.data?.parent?.id || item.data?.questionId || item.data?.parentId)) ? (
+                  <Link href={`/q-and-a/${item.data.parent?.id || item.data.questionId || item.data.parentId}`} className="hover:text-primary">
+                    {item.title}
+                  </Link>
+                ) : (
+                  item.title
+                )}
+              </h3>
               <span className="text-xs text-muted-foreground">
                 {format(new Date(item.timestamp), 'MMM dd, yyyy')}
               </span>
@@ -156,7 +180,7 @@ function FeedItem({ item }: FeedItemProps) {
             {item.type === 'project_created' && item.data && (
               <div className="mt-2">
                 <div className="text-sm">
-                  <Markdown content={item.data.description || ''} className="prose-sm" />
+                  <Markdown content={item.data.description || ''} className="prose-sm line-clamp-4" />
                 </div>
                 <div className="flex gap-2 mt-2">
                   {item.data.status && (
@@ -176,11 +200,6 @@ function FeedItem({ item }: FeedItemProps) {
                     </Badge>
                   )}
                 </div>
-                <Button variant="link" size="sm" className="px-0 mt-1" asChild>
-                  <Link href={`/projects/${item.data.id}`}>
-                    View Project <ExternalLink className="h-3 w-3 ml-1" />
-                  </Link>
-                </Button>
               </div>
             )}
 
@@ -198,13 +217,8 @@ function FeedItem({ item }: FeedItemProps) {
             {item.type === 'product_update' && item.data && (
               <div className="mt-2">
                 <div className="text-sm">
-                  <Markdown content={item.data.content || ''} className="prose-sm" />
+                  <Markdown content={item.data.content || ''} className="prose-sm line-clamp-4" />
                 </div>
-                <Button variant="link" size="sm" className="px-0 mt-1" asChild>
-                  <Link href={`/products/${item.data.productId}`}>
-                    View Product <ExternalLink className="h-3 w-3 ml-1" />
-                  </Link>
-                </Button>
               </div>
             )}
 
@@ -218,37 +232,22 @@ function FeedItem({ item }: FeedItemProps) {
                     {item.data._count?.projects || 0} projects
                   </Badge>
                 </div>
-                <Button variant="link" size="sm" className="px-0 mt-1" asChild>
-                  <Link href={`/products/${item.data.id}`}>
-                    View Product <ExternalLink className="h-3 w-3 ml-1" />
-                  </Link>
-                </Button>
               </div>
             )}
 
             {item.type === 'question_asked' && item.data && (
               <div className="mt-2">
                 <div className="text-sm">
-                  <Markdown content={item.data.content || ''} className="prose-sm line-clamp-3" />
+                  <Markdown content={item.data.content || ''} className="prose-sm line-clamp-4" />
                 </div>
-                <Button variant="link" size="sm" className="px-0 mt-1" asChild>
-                  <Link href={`/q-and-a/${item.data.id}`}>
-                    View Question <ExternalLink className="h-3 w-3 ml-1" />
-                  </Link>
-                </Button>
               </div>
             )}
 
             {item.type === 'answer_posted' && item.data && (
               <div className="mt-2">
                 <div className="text-sm">
-                  <Markdown content={item.data.content || ''} className="prose-sm line-clamp-2" />
+                  <Markdown content={item.data.content || ''} className="prose-sm line-clamp-4" />
                 </div>
-                <Button variant="link" size="sm" className="px-0 mt-1" asChild>
-                  <Link href={`/q-and-a/${item.data.parent?.id || item.data.questionId || item.data.parentId}`}>
-                    View Discussion <ExternalLink className="h-3 w-3 ml-1" />
-                  </Link>
-                </Button>
               </div>
             )}
 
