@@ -328,7 +328,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                           </div>
                         </CardHeader>
                         <CardContent className="pt-0">
-                          <div className="text-sm mb-3 line-clamp-2">
+                          <div className="text-sm mb-3">
                             <Markdown content={project.description} className="prose-sm" />
                           </div>
                           

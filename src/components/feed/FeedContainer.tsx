@@ -64,39 +64,6 @@ export function FeedContainer({ initialItems = [] }: FeedContainerProps) {
     return item.type.startsWith(activeFilter)
   })
 
-  const getFeedItemIcon = (type: FeedItem['type']) => {
-    switch (type) {
-      case 'project_created':
-        return FolderOpen
-      case 'volunteer_applied':
-        return FileText
-      case 'profile_updated':
-        return User
-      case 'product_update':
-      case 'product_created':
-        return Package
-      default:
-        return Calendar
-    }
-  }
-
-  const getFeedItemColor = (type: FeedItem['type']) => {
-    switch (type) {
-      case 'project_created':
-        return 'bg-blue-100 text-blue-800'
-      case 'volunteer_applied':
-        return 'bg-green-100 text-green-800'
-      case 'profile_updated':
-        return 'bg-orange-100 text-orange-800'
-      case 'product_update':
-        return 'bg-purple-100 text-purple-800'
-      case 'product_created':
-        return 'bg-indigo-100 text-indigo-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
-
   if (loading) {
     return (
       <div className="space-y-6">
@@ -180,8 +147,8 @@ function FeedItem({ item }: FeedItemProps) {
             {/* Type-specific content */}
             {item.type === 'project_created' && item.data && (
               <div className="mt-2">
-                <div className="text-sm line-clamp-2">
-                  <Markdown content={item.data.description?.substring(0, 100) + '...'} className="prose-sm" />
+                <div className="text-sm">
+                  <Markdown content={item.data.description || ''} className="prose-sm" />
                 </div>
                 <div className="flex gap-2 mt-2">
                   <Badge variant="secondary" className="text-xs">
@@ -212,8 +179,8 @@ function FeedItem({ item }: FeedItemProps) {
 
             {item.type === 'product_update' && item.data && (
               <div className="mt-2">
-                <div className="text-sm line-clamp-2">
-                  <Markdown content={item.data.content?.substring(0, 150) + '...'} className="prose-sm" />
+                <div className="text-sm">
+                  <Markdown content={item.data.content || ''} className="prose-sm" />
                 </div>
                 <Button variant="link" size="sm" className="px-0 mt-1" asChild>
                   <Link href={`/products/${item.data.productId}`}>
@@ -225,8 +192,8 @@ function FeedItem({ item }: FeedItemProps) {
 
             {item.type === 'product_created' && item.data && (
               <div className="mt-2">
-                <div className="text-sm line-clamp-2">
-                  <Markdown content={item.data.description?.substring(0, 100) + '...'} className="prose-sm" />
+                <div className="text-sm">
+                  <Markdown content={item.data.description || ''} className="prose-sm" />
                 </div>
                 <div className="flex gap-2 mt-2">
                   <Badge variant="secondary" className="text-xs">

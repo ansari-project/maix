@@ -182,7 +182,7 @@ export default function ProjectsPage() {
                   )}
                   <div className="space-y-1">
                     <div className="text-sm font-medium text-muted-foreground">Goal:</div>
-                    <div className="line-clamp-2">
+                    <div>
                       <Markdown content={project.goal} className="prose-sm" />
                     </div>
                   </div>

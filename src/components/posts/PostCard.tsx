@@ -195,8 +195,8 @@ export function PostCard({
                   by {post.bestAnswer.author.name}
                 </span>
               </div>
-              <div className="text-sm text-green-700 line-clamp-2">
-                <Markdown content={post.bestAnswer.content.substring(0, 150) + '...'} className="prose-sm" />
+              <div className="text-sm text-green-700">
+                <Markdown content={post.bestAnswer.content} className="prose-sm" />
               </div>
             </div>
           )}

@@ -184,7 +184,7 @@ export default function ProductsPage() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-sm mb-4 line-clamp-3">
+                    <div className="text-sm mb-4">
                       <Markdown content={product.description} className="prose-sm" />
                     </div>
                     
