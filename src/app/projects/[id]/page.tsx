@@ -154,26 +154,51 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             <div className="lg:col-span-2 space-y-6">
               <Card>
                 <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="text-2xl">{project.name}</CardTitle>
-                      <CardDescription className="mt-2">
-                        Posted by {project.owner.name || project.owner.email}
-                      </CardDescription>
-                    </div>
-                    <div className="flex gap-2">
-                      <span className="text-xs bg-accent/10 text-accent px-2 py-1 rounded">
-                        {project.helpType.replace('_', ' ')}
-                      </span>
-                      <span className={`text-xs px-2 py-1 rounded ${formatProjectStatus(project.status).color}`}>
-                        {formatProjectStatus(project.status).label}
-                      </span>
-                      {!project.isActive && (
-                        <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">
-                          Not Recruiting
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-2xl">{project.name}</CardTitle>
+                        <CardDescription className="mt-2">
+                          Posted by {project.owner.name || project.owner.email}
+                        </CardDescription>
+                      </div>
+                      <div className="flex gap-2">
+                        <span className="text-xs bg-accent/10 text-accent px-2 py-1 rounded">
+                          {project.helpType.replace('_', ' ')}
                         </span>
-                      )}
+                        <span className={`text-xs px-2 py-1 rounded ${formatProjectStatus(project.status).color}`}>
+                          {formatProjectStatus(project.status).label}
+                        </span>
+                        {!project.isActive && (
+                          <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">
+                            Not Recruiting
+                          </span>
+                        )}
+                      </div>
                     </div>
+                    
+                    {/* Quick Apply Button */}
+                    {!isOwner && !hasApplied && project.isActive && (
+                      <div className="flex justify-end">
+                        <Button 
+                          size="lg" 
+                          onClick={() => document.getElementById('application-form')?.scrollIntoView({ behavior: 'smooth' })}
+                        >
+                          Apply to Volunteer
+                        </Button>
+                      </div>
+                    )}
+                    {!isOwner && hasApplied && (
+                      <div className="flex justify-end">
+                        <span className={`text-sm px-3 py-1.5 rounded ${
+                          userApplication.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                          userApplication.status === 'ACCEPTED' ? 'bg-green-100 text-green-800' :
+                          'bg-red-100 text-red-800'
+                        }`}>
+                          Application {userApplication.status.toLowerCase()}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -190,29 +215,41 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               </Card>
 
               {/* Application Section */}
-              {canApply && (
-                <Card>
+              {!isOwner && !hasApplied && (
+                <Card id="application-form">
                   <CardHeader>
                     <CardTitle>Apply to this Project</CardTitle>
                     <CardDescription>
-                      Tell the project owner why you&apos;d be a great fit
+                      {project.isActive 
+                        ? "Tell the project owner why you'd be a great fit"
+                        : "This project is not currently accepting volunteers"
+                      }
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="message">Application Message</Label>
-                      <Textarea
-                        id="message"
-                        value={applicationMessage}
-                        onChange={(e) => setApplicationMessage(e.target.value)}
-                        placeholder="Explain your background, why you're interested, and how you can help..."
-                        rows={4}
-                      />
-                    </div>
-                    <Button onClick={handleApply} disabled={applying || !applicationMessage.trim()}>
-                      {applying ? "Applying..." : "Submit Application"}
-                    </Button>
-                  </CardContent>
+                  {project.isActive && (
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="message">Application Message</Label>
+                        <Textarea
+                          id="message"
+                          value={applicationMessage}
+                          onChange={(e) => setApplicationMessage(e.target.value)}
+                          placeholder="Explain your background, why you're interested, and how you can help..."
+                          rows={4}
+                        />
+                      </div>
+                      <Button onClick={handleApply} disabled={applying || !applicationMessage.trim()}>
+                        {applying ? "Applying..." : "Submit Application"}
+                      </Button>
+                    </CardContent>
+                  )}
+                  {!project.isActive && (
+                    <CardContent>
+                      <p className="text-muted-foreground">
+                        The project owner has paused volunteer recruitment. Check back later or contact them directly.
+                      </p>
+                    </CardContent>
+                  )}
                 </Card>
               )}
 
