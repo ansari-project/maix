@@ -91,6 +91,7 @@ export const projectCreateSchema = z.object({
     .email('Invalid contact email address')
     .max(255, 'Contact email must be less than 255 characters long'),
   helpType: z.enum(['ADVICE', 'PROTOTYPE', 'MVP', 'FULL_PRODUCT']),
+  status: z.enum(['AWAITING_VOLUNTEERS', 'PLANNING', 'IN_PROGRESS', 'ON_HOLD', 'COMPLETED', 'CANCELLED']).optional(),
   targetCompletionDate: z.string()
     .datetime('Invalid date format')
     .optional()

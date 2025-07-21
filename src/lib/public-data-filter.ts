@@ -13,6 +13,7 @@ interface PublicProject {
   description: string
   goal: string
   helpType: string
+  status: string
   contactEmail: string
   targetCompletionDate: Date | null
   createdAt: Date
@@ -74,6 +75,7 @@ export function filterPublicProject(project: any): PublicProject {
     description: project.description,
     goal: project.goal,
     helpType: project.helpType,
+    status: project.status,
     contactEmail: project.contactEmail,
     targetCompletionDate: project.targetCompletionDate,
     createdAt: project.createdAt,

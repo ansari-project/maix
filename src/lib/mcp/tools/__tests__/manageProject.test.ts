@@ -79,6 +79,7 @@ describe('manageProject tool', () => {
           goal: 'Create an innovative AI solution for education',
           description: 'This is a comprehensive test project description that meets the minimum 50 character requirement for validation.',
           helpType: 'MVP',
+          status: 'AWAITING_VOLUNTEERS',
           contactEmail: 'contact@example.com',
           targetCompletionDate: new Date('2024-12-31T23:59:59.000Z'),
           isActive: true,

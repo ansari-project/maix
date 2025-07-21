@@ -46,16 +46,17 @@ model User {
 
 // Project model - simplified to essential fields only
 model Project {
-  id                    String    @id @default(cuid())
-  name                  String    // Project name
-  goal                  String    // One-line project goal
-  description           String    @db.Text // Project description (longer text)
-  contactEmail          String    // Contact email for the project
-  helpType              HelpType  // Type of help needed
-  targetCompletionDate  DateTime? // Target date for project completion
-  isActive              Boolean   @default(true) // Whether project is actively seeking help
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  id                    String        @id @default(cuid())
+  name                  String        // Project name
+  goal                  String        // One-line project goal
+  description           String        @db.Text // Project description (longer text)
+  contactEmail          String        // Contact email for the project
+  helpType              HelpType      // Type of help needed
+  status                ProjectStatus @default(AWAITING_VOLUNTEERS) // Project lifecycle status
+  targetCompletionDate  DateTime?     // Target date for project completion
+  isActive              Boolean       @default(true) // Whether project is actively seeking help
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
 
   // Relations
   owner         User          @relation(fields: [ownerId], references: [id])
@@ -71,6 +72,7 @@ model Project {
   discussionPost Post? @relation("ProjectDiscussionThread")
 
   @@index([isActive, createdAt])
+  @@index([status])
   @@map("projects")
 }
 
@@ -151,6 +153,15 @@ enum HelpType {
   PROTOTYPE
   MVP
   FULL_PRODUCT
+}
+
+enum ProjectStatus {
+  AWAITING_VOLUNTEERS
+  PLANNING
+  IN_PROGRESS
+  ON_HOLD
+  COMPLETED
+  CANCELLED
 }
 
 enum ApplicationStatus {

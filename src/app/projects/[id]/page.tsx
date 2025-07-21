@@ -10,12 +10,32 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { Markdown } from "@/components/ui/markdown"
 
+function formatProjectStatus(status: string): { label: string; color: string } {
+  switch (status) {
+    case 'AWAITING_VOLUNTEERS':
+      return { label: 'Awaiting Volunteers', color: 'bg-blue-100 text-blue-800' }
+    case 'PLANNING':
+      return { label: 'Planning', color: 'bg-purple-100 text-purple-800' }
+    case 'IN_PROGRESS':
+      return { label: 'In Progress', color: 'bg-green-100 text-green-800' }
+    case 'ON_HOLD':
+      return { label: 'On Hold', color: 'bg-yellow-100 text-yellow-800' }
+    case 'COMPLETED':
+      return { label: 'Completed', color: 'bg-gray-100 text-gray-800' }
+    case 'CANCELLED':
+      return { label: 'Cancelled', color: 'bg-red-100 text-red-800' }
+    default:
+      return { label: status, color: 'bg-gray-100 text-gray-800' }
+  }
+}
+
 interface Project {
   id: string
   name: string
   goal: string
   description: string
   helpType: string
+  status: string
   contactEmail: string
   targetCompletionDate?: string
   isActive: boolean
@@ -145,9 +165,12 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                       <span className="text-xs bg-accent/10 text-accent px-2 py-1 rounded">
                         {project.helpType.replace('_', ' ')}
                       </span>
+                      <span className={`text-xs px-2 py-1 rounded ${formatProjectStatus(project.status).color}`}>
+                        {formatProjectStatus(project.status).label}
+                      </span>
                       {!project.isActive && (
                         <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">
-                          Inactive
+                          Not Recruiting
                         </span>
                       )}
                     </div>
@@ -230,7 +253,11 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Status:</span>
-                    <span>{project.isActive ? "Active" : "Inactive"}</span>
+                    <span>{formatProjectStatus(project.status).label}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Recruiting:</span>
+                    <span>{project.isActive ? "Yes" : "No"}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Posted:</span>

@@ -254,15 +254,62 @@ const islamicColors = {
 
 ### Key Tables
 - `users`: User profiles with expertise and availability
-- `projects`: Project details with embeddings for search
+- `projects`: Project details with lifecycle status tracking
 - `organizations`: Non-profit organizations
 - `applications`: Volunteer applications to projects
 - `reviews`: User ratings and feedback
 
 ### Important Fields
+- `projects.status`: ProjectStatus enum for lifecycle tracking
+- `projects.isActive`: Boolean for recruitment control
 - `projects.embedding`: Vector(1536) for semantic search
 - `users.expertise`: JSONB array of skills
-- `projects.type`: Enum (advice, prototype, mvp, complete_product)
+- `projects.helpType`: Enum (advice, prototype, mvp, full_product)
+
+## Project Lifecycle Management
+
+MAIX projects follow a structured lifecycle with clear states and transitions to help coordinate volunteer efforts effectively.
+
+### Project Status States
+
+1. **AWAITING_VOLUNTEERS**: Project is defined and ready, waiting for volunteers to join
+2. **PLANNING**: Team is assembled and working on detailed planning and architecture
+3. **IN_PROGRESS**: Active development work is happening
+4. **ON_HOLD**: Work has temporarily stopped due to external factors
+5. **COMPLETED**: Project has successfully delivered its goals (terminal state)
+6. **CANCELLED**: Project has been permanently discontinued (terminal state)
+
+### Dual Status System
+
+Projects use two complementary fields:
+- **`status`**: Tracks the project's lifecycle phase
+- **`isActive`**: Controls whether the project is actively seeking volunteers
+
+This allows for nuanced project management:
+- A project can be `IN_PROGRESS` but still `isActive: true` if additional skills are needed
+- A project can be `ON_HOLD` with `isActive: true` to find volunteers to restart work
+- `COMPLETED` and `CANCELLED` projects are always `isActive: false`
+
+### Status Transitions
+
+```
+AWAITING_VOLUNTEERS → PLANNING → IN_PROGRESS → COMPLETED
+                                     ↓
+                                  ON_HOLD ←→ IN_PROGRESS
+                                     ↓
+                                 CANCELLED
+
+Any state → CANCELLED (projects can be cancelled at any time)
+```
+
+### Implementation Guidelines
+
+- **Update status regularly** to keep the community informed
+- **Use meaningful transitions** - explain why status changed
+- **Consider recruitment needs** when changing status
+- **Never transition from COMPLETED or CANCELLED** - create new projects instead
+
+For detailed guidance, see `docs/guides/project-lifecycle.md`
 
 ## API Endpoints
 
