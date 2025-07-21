@@ -287,80 +287,61 @@ export function PATManagement() {
 
       {/* Claude Code Instructions Dialog */}
       <Dialog open={showInstructionsDialog} onOpenChange={setShowInstructionsDialog}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Claude Code Integration Setup</DialogTitle>
+            <DialogTitle>Claude Code Setup</DialogTitle>
             <DialogDescription>
-              Follow these steps to integrate your personal access token with Claude Code
+              Quick setup to connect Claude Code with MAIX
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <h4 className="font-semibold">Step 1: Create a Personal Access Token</h4>
-              <p className="text-sm text-muted-foreground">
-                If you haven&apos;t already, create a new personal access token using the &quot;New Token&quot; button above.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-semibold">Step 2: Open Claude Code Settings</h4>
-              <p className="text-sm text-muted-foreground">
-                Open Claude Code and go to Settings (Cmd+, on macOS or Ctrl+, on Windows/Linux)
-              </p>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-semibold">Step 3: Add MCP Server</h4>
-              <p className="text-sm text-muted-foreground">
-                Go to &quot;Model Context Protocol&quot; section and click &quot;Add Server&quot;. Choose &quot;HTTP Server&quot; (not local/stdio server).
-              </p>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-semibold">Step 4: Configure Server Details</h4>
-              <div className="bg-muted p-3 rounded-lg space-y-2">
-                <div>
-                  <strong className="text-sm">Name:</strong>
-                  <code className="text-sm ml-2">MAIX Platform</code>
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold">
+                  1
                 </div>
-                <div>
-                  <strong className="text-sm">Server URL:</strong>
-                  <code className="text-sm ml-2">https://maix.io/api/mcp</code>
+                <div className="space-y-2 flex-1">
+                  <h4 className="font-semibold">Generate a MAIX Personal Access Token (PAT)</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Click the &quot;New Token&quot; button above to create a token, then copy it.
+                  </p>
                 </div>
-                <div>
-                  <strong className="text-sm">Authentication Type:</strong>
-                  <code className="text-sm ml-2">Bearer Token</code>
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold">
+                  2
                 </div>
-                <div>
-                  <strong className="text-sm">Token:</strong>
-                  <code className="text-sm ml-2">[Your API token from Step 1]</code>
+                <div className="space-y-2 flex-1">
+                  <h4 className="font-semibold">Add to your environment</h4>
+                  <div className="bg-muted p-3 rounded-lg">
+                    <code className="text-sm block">
+                      echo &quot;export MAIX_PAT=&apos;your-token-here&apos;&quot; &gt;&gt; .env<br />
+                      source .env
+                    </code>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold">
+                  3
+                </div>
+                <div className="space-y-2 flex-1">
+                  <h4 className="font-semibold">Add MAIX to Claude Code</h4>
+                  <div className="bg-muted p-3 rounded-lg">
+                    <code className="text-sm block break-all">
+                      claude mcp add maix https://www.maix.io/api/mcp --transport http --header &quot;Authorization: Bearer ${"{MAIX_PAT}"}&quot;
+                    </code>
+                  </div>
                 </div>
               </div>
             </div>
-            <div className="space-y-2">
-              <h4 className="font-semibold">Step 5: Save and Test</h4>
-              <p className="text-sm text-muted-foreground">
-                Click &quot;Save&quot; and restart Claude Code if prompted. Test by asking: &quot;Can you list my MAIX projects?&quot;
+            
+            <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg">
+              <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                That&apos;s it! Claude Code can now interact with MAIX.
               </p>
-            </div>
-            <div className="bg-blue-50 p-3 rounded-lg">
-              <h5 className="font-semibold text-sm mb-1">Alternative: Manual Configuration</h5>
-              <p className="text-xs text-muted-foreground mb-2">
-                If you prefer editing config files directly, add this to your mcp-servers.json:
-              </p>
-              <div className="bg-muted p-2 rounded text-xs">
-                <code>
-                  {`{
-  "servers": {
-    "maix": {
-      "type": "http",
-      "url": "https://maix.io/api/mcp",
-      "headers": {
-        "Authorization": "Bearer YOUR_TOKEN_HERE"
-      },
-      "name": "MAIX Platform"
-    }
-  }
-}`}
-                </code>
-              </div>
             </div>
           </div>
         </DialogContent>
