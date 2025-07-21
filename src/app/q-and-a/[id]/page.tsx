@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { formatDistanceToNow } from "date-fns"
 import { ArrowLeft, CheckCircle2, MessageCircle, Star, User } from "lucide-react"
+import { Markdown } from "@/components/ui/markdown"
 
 interface Post {
   id: string
@@ -175,7 +176,9 @@ export default function QuestionDetailPage({ params }: { params: Promise<{ id: s
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <CardTitle className="text-xl mb-4">{question.content}</CardTitle>
+                  <CardTitle className="text-xl mb-4">
+                    <Markdown content={question.content} />
+                  </CardTitle>
                   <CardDescription className="flex items-center gap-4">
                     <span className="flex items-center gap-1">
                       <User className="h-3 w-3" />
@@ -234,7 +237,7 @@ export default function QuestionDetailPage({ params }: { params: Promise<{ id: s
                                 </span>
                               )}
                             </CardDescription>
-                            <div className="whitespace-pre-wrap">{answer.content}</div>
+                            <Markdown content={answer.content} />
                           </div>
                         </div>
                       </CardHeader>

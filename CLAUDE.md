@@ -222,6 +222,7 @@ To ensure code quality and prevent deployment failures, always perform the follo
 - Implement RTL support for Arabic content
 - Ensure accessibility (WCAG 2.1 AA)
 - Use semantic HTML elements
+- **All textarea fields must support Markdown**: Use the `<Markdown>` component from `@/components/ui/markdown` to render user-generated content. This ensures consistent formatting across Q&A answers, project descriptions, product descriptions, and all other long-form text content.
 
 ## Islamic Design System
 
