@@ -9,7 +9,6 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const search = searchParams.get('search')
-    const projectType = searchParams.get('projectType')
     const helpType = searchParams.get('helpType')
     
     // Build where clause for filtering
@@ -23,10 +22,6 @@ export async function GET(request: Request) {
         { description: { contains: search, mode: 'insensitive' } },
         { goal: { contains: search, mode: 'insensitive' } }
       ]
-    }
-    
-    if (projectType) {
-      where.projectType = projectType
     }
     
     if (helpType) {

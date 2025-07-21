@@ -49,7 +49,7 @@ type CreatePostForm = z.infer<typeof createPostSchema>
 
 interface Project {
   id: string
-  title: string
+  name: string
 }
 
 interface Product {
@@ -230,7 +230,7 @@ export function CreatePostForm({
                       <SelectContent>
                         {projects.map((project) => (
                           <SelectItem key={project.id} value={project.id}>
-                            {project.title}
+                            {project.name}
                           </SelectItem>
                         ))}
                       </SelectContent>

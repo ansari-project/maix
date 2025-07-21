@@ -11,15 +11,33 @@ import { Search, Users, Calendar, Filter } from "lucide-react"
 import { format } from "date-fns"
 import { Markdown } from "@/components/ui/markdown"
 
+function formatProjectStatus(status: string): { label: string; color: string } {
+  switch (status) {
+    case 'AWAITING_VOLUNTEERS':
+      return { label: 'Awaiting Volunteers', color: 'bg-blue-100 text-blue-800' }
+    case 'PLANNING':
+      return { label: 'Planning', color: 'bg-purple-100 text-purple-800' }
+    case 'IN_PROGRESS':
+      return { label: 'In Progress', color: 'bg-green-100 text-green-800' }
+    case 'ON_HOLD':
+      return { label: 'On Hold', color: 'bg-yellow-100 text-yellow-800' }
+    case 'COMPLETED':
+      return { label: 'Completed', color: 'bg-gray-100 text-gray-800' }
+    case 'CANCELLED':
+      return { label: 'Cancelled', color: 'bg-red-100 text-red-800' }
+    default:
+      return { label: status, color: 'bg-gray-100 text-gray-800' }
+  }
+}
+
 interface Project {
   id: string
   name: string
   description: string
   goal: string
-  projectType?: string
   helpType: string
-  requiredSkills: string[]
-  maxVolunteers: number
+  status: string
+  isActive: boolean
   createdAt: string
   owner: {
     id: string
@@ -148,14 +166,18 @@ export default function PublicProjectsPage() {
                       </CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
-                      {project.projectType && (
-                        <Badge variant="secondary">
-                          {project.projectType.toLowerCase().replace('_', ' ')}
-                        </Badge>
-                      )}
-                      {project.helpType && (
-                        <Badge variant="outline">
-                          {project.helpType.toLowerCase().replace('_', ' ')}
+                      <Badge 
+                        variant="secondary" 
+                        className={`text-xs ${formatProjectStatus(project.status).color}`}
+                      >
+                        {formatProjectStatus(project.status).label}
+                      </Badge>
+                      <Badge variant="outline">
+                        {project.helpType.toLowerCase().replace('_', ' ')}
+                      </Badge>
+                      {!project.isActive && (
+                        <Badge variant="destructive" className="text-xs">
+                          Not Recruiting
                         </Badge>
                       )}
                     </div>
@@ -172,19 +194,6 @@ export default function PublicProjectsPage() {
                     <Markdown content={project.goal} />
                   </div>
                   
-                  {project.requiredSkills.length > 0 && (
-                    <div>
-                      <h3 className="font-semibold mb-2">Required Skills</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {project.requiredSkills.map((skill, index) => (
-                          <Badge key={index} variant="secondary">
-                            {skill}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
                   <div className="flex items-center justify-between pt-4 border-t">
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
@@ -194,9 +203,6 @@ export default function PublicProjectsPage() {
                       <span className="flex items-center gap-1">
                         <Users className="h-4 w-4" />
                         {project._count.applications} volunteers
-                      </span>
-                      <span>
-                        Need {project.maxVolunteers} volunteers
                       </span>
                     </div>
                     

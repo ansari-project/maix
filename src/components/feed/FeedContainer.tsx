@@ -18,6 +18,25 @@ import { format } from "date-fns"
 import Link from "next/link"
 import { Markdown } from "@/components/ui/markdown"
 
+function formatProjectStatus(status: string): { label: string; color: string } {
+  switch (status) {
+    case 'AWAITING_VOLUNTEERS':
+      return { label: 'Awaiting Volunteers', color: 'bg-blue-100 text-blue-800' }
+    case 'PLANNING':
+      return { label: 'Planning', color: 'bg-purple-100 text-purple-800' }
+    case 'IN_PROGRESS':
+      return { label: 'In Progress', color: 'bg-green-100 text-green-800' }
+    case 'ON_HOLD':
+      return { label: 'On Hold', color: 'bg-yellow-100 text-yellow-800' }
+    case 'COMPLETED':
+      return { label: 'Completed', color: 'bg-gray-100 text-gray-800' }
+    case 'CANCELLED':
+      return { label: 'Cancelled', color: 'bg-red-100 text-red-800' }
+    default:
+      return { label: status, color: 'bg-gray-100 text-gray-800' }
+  }
+}
+
 interface FeedItem {
   id: string
   type: 'project_created' | 'volunteer_applied' | 'profile_updated' | 'product_update' | 'product_created' | 'question_asked' | 'answer_posted'
@@ -138,12 +157,22 @@ function FeedItem({ item }: FeedItemProps) {
                   <Markdown content={item.data.description || ''} className="prose-sm" />
                 </div>
                 <div className="flex gap-2 mt-2">
-                  <Badge variant="secondary" className="text-xs">
-                    {item.data.projectType?.replace('_', ' ')}
-                  </Badge>
+                  {item.data.status && (
+                    <Badge 
+                      variant="secondary" 
+                      className={`text-xs ${formatProjectStatus(item.data.status).color}`}
+                    >
+                      {formatProjectStatus(item.data.status).label}
+                    </Badge>
+                  )}
                   <Badge variant="outline" className="text-xs">
                     {item.data.helpType?.replace('_', ' ')}
                   </Badge>
+                  {item.data.isActive === false && (
+                    <Badge variant="destructive" className="text-xs">
+                      Not Recruiting
+                    </Badge>
+                  )}
                 </div>
                 <Button variant="link" size="sm" className="px-0 mt-1" asChild>
                   <Link href={`/projects/${item.data.id}`}>
@@ -156,7 +185,7 @@ function FeedItem({ item }: FeedItemProps) {
             {item.type === 'volunteer_applied' && item.data && (
               <div className="mt-2">
                 <p className="text-sm text-muted-foreground">
-                  Volunteered for: {item.data.project?.title}
+                  Volunteered for: {item.data.project?.name}
                 </p>
                 <Badge variant="secondary" className="text-xs mt-1">
                   {item.data.status}

@@ -66,8 +66,9 @@ describe('FeedContainer', () => {
             id: 'proj1',
             name: 'Test Project',
             description: 'A test project description',
-            projectType: 'OPEN_SOURCE',
-            helpType: 'MVP'
+            status: 'AWAITING_VOLUNTEERS',
+            helpType: 'MVP',
+            isActive: true
           }
         },
         {
@@ -99,7 +100,8 @@ describe('FeedContainer', () => {
 
     expect(screen.getByText('by John Doe')).toBeInTheDocument()
     expect(screen.getByText('by John')).toBeInTheDocument()
-    expect(screen.getByText('OPEN SOURCE')).toBeInTheDocument()
+    expect(screen.getByText('Awaiting Volunteers')).toBeInTheDocument()
+    // The component displays helpType without lowercasing
     expect(screen.getByText('MVP')).toBeInTheDocument()
   })
 

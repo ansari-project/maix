@@ -33,7 +33,7 @@ interface Post {
   }
   project?: {
     id: string
-    title: string
+    name: string
   } | null
   product?: {
     id: string
@@ -57,7 +57,7 @@ interface Post {
 
 interface Project {
   id: string
-  title: string
+  name: string
 }
 
 interface Product {

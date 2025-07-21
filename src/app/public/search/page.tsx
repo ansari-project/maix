@@ -12,6 +12,25 @@ import { Search, Package, Folder, MessageSquare, Calendar, Users, ExternalLink }
 import { format } from "date-fns"
 import { Markdown } from "@/components/ui/markdown"
 
+function formatProjectStatus(status: string): { label: string; color: string } {
+  switch (status) {
+    case 'AWAITING_VOLUNTEERS':
+      return { label: 'Awaiting Volunteers', color: 'bg-blue-100 text-blue-800' }
+    case 'PLANNING':
+      return { label: 'Planning', color: 'bg-purple-100 text-purple-800' }
+    case 'IN_PROGRESS':
+      return { label: 'In Progress', color: 'bg-green-100 text-green-800' }
+    case 'ON_HOLD':
+      return { label: 'On Hold', color: 'bg-yellow-100 text-yellow-800' }
+    case 'COMPLETED':
+      return { label: 'Completed', color: 'bg-gray-100 text-gray-800' }
+    case 'CANCELLED':
+      return { label: 'Cancelled', color: 'bg-red-100 text-red-800' }
+    default:
+      return { label: status, color: 'bg-gray-100 text-gray-800' }
+  }
+}
+
 interface SearchResults {
   projects: any[]
   products: any[]
@@ -140,12 +159,20 @@ function SearchContent() {
                         <Markdown content={project.description} className="line-clamp-3 mb-4" />
                         <div className="flex items-center justify-between">
                           <div className="flex gap-2">
-                            <Badge variant="secondary">
-                              {project.projectType.toLowerCase().replace('_', ' ')}
+                            <Badge 
+                              variant="secondary" 
+                              className={`text-xs ${formatProjectStatus(project.status).color}`}
+                            >
+                              {formatProjectStatus(project.status).label}
                             </Badge>
                             <Badge variant="outline">
                               {project.helpType.toLowerCase().replace('_', ' ')}
                             </Badge>
+                            {!project.isActive && (
+                              <Badge variant="destructive" className="text-xs">
+                                Not Recruiting
+                              </Badge>
+                            )}
                           </div>
                           <Button variant="outline" size="sm" asChild>
                             <Link href="/auth/signin">View Project</Link>
@@ -267,12 +294,20 @@ function SearchContent() {
                     <Markdown content={project.description} />
                     <div className="flex items-center justify-between pt-4 border-t">
                       <div className="flex gap-2">
-                        <Badge variant="secondary">
-                          {project.projectType.toLowerCase().replace('_', ' ')}
+                        <Badge 
+                          variant="secondary" 
+                          className={`text-xs ${formatProjectStatus(project.status).color}`}
+                        >
+                          {formatProjectStatus(project.status).label}
                         </Badge>
                         <Badge variant="outline">
                           {project.helpType.toLowerCase().replace('_', ' ')}
                         </Badge>
+                        {!project.isActive && (
+                          <Badge variant="destructive" className="text-xs">
+                            Not Recruiting
+                          </Badge>
+                        )}
                       </div>
                       <Button asChild>
                         <Link href="/auth/signin">Sign In to Apply</Link>

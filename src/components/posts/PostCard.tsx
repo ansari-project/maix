@@ -31,7 +31,7 @@ interface Post {
   }
   project?: {
     id: string
-    title: string
+    name: string
   } | null
   product?: {
     id: string
@@ -152,7 +152,7 @@ export function PostCard({
                         href={`/projects/${post.project.id}`}
                         className="hover:text-primary"
                       >
-                        {post.project.title}
+                        {post.project.name}
                       </Link>
                     </>
                   )}
