@@ -237,7 +237,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                 )}
                 {isOwner && (
                   <Button variant="outline" asChild>
-                    <Link href={`/projects/${project.id}/applications`}>
+                    <Link href={`/projects/${project.id}/volunteers`}>
                       View Applications ({project.applications.length})
                     </Link>
                   </Button>
