@@ -1,10 +1,15 @@
 import React from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
-import { PublicFeedContainer } from '../PublicFeedContainer'
+import { FeedContainer } from '../FeedContainer'
 import '@testing-library/jest-dom'
+import { useSession } from 'next-auth/react'
 
 // Mock the fetch function
 global.fetch = jest.fn()
+
+// Mock next-auth
+jest.mock('next-auth/react')
+const mockUseSession = useSession as jest.MockedFunction<typeof useSession>
 
 // Mock next/link
 jest.mock('next/link', () => {
@@ -23,9 +28,14 @@ jest.mock('@/components/ui/markdown', () => ({
   ),
 }))
 
-describe('PublicFeedContainer', () => {
+describe('FeedContainer - Public Mode', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    // Mock as unauthenticated user
+    mockUseSession.mockReturnValue({
+      data: null,
+      status: 'unauthenticated',
+    } as any)
   })
 
   it('should render loading state initially', () => {
@@ -33,9 +43,11 @@ describe('PublicFeedContainer', () => {
       new Promise(() => {}) // Never resolves to keep loading state
     )
 
-    render(<PublicFeedContainer />)
+    const { container } = render(<FeedContainer isPublic={true} showHeader={false} />)
     
-    expect(screen.getByTestId('loading-spinner')).toBeInTheDocument()
+    const spinner = container.querySelector('.animate-spin')
+    expect(spinner).toBeInTheDocument()
+    expect(spinner).toHaveClass('border-primary')
   })
 
   it('should render feed items after loading', async () => {
@@ -75,15 +87,16 @@ describe('PublicFeedContainer', () => {
       json: async () => mockFeedData
     })
 
-    render(<PublicFeedContainer />)
+    render(<FeedContainer isPublic={true} showHeader={false} />)
 
     await waitFor(() => {
       expect(screen.getByText('New project: Test Project')).toBeInTheDocument()
       expect(screen.getByText('New product: Test Product')).toBeInTheDocument()
     })
 
-    expect(screen.getByText('by John Doe')).toBeInTheDocument()
-    expect(screen.getByText('by Jane Smith')).toBeInTheDocument()
+    // Should NOT show 'by' text in feed items
+    expect(screen.queryByText('by John Doe')).not.toBeInTheDocument()
+    expect(screen.queryByText('by Jane Smith')).not.toBeInTheDocument()
     expect(screen.getByText('MVP')).toBeInTheDocument()
     expect(screen.getByText('3 projects')).toBeInTheDocument()
   })
@@ -94,10 +107,10 @@ describe('PublicFeedContainer', () => {
       json: async () => ({ items: [] })
     })
 
-    render(<PublicFeedContainer />)
+    render(<FeedContainer isPublic={true} showHeader={false} />)
 
     await waitFor(() => {
-      expect(screen.getByText('No recent activity')).toBeInTheDocument()
+      expect(screen.getByText('No activities yet')).toBeInTheDocument()
     })
   })
 
@@ -144,7 +157,7 @@ describe('PublicFeedContainer', () => {
       json: async () => mockFeedData
     })
 
-    render(<PublicFeedContainer />)
+    render(<FeedContainer isPublic={true} showHeader={false} />)
 
     await waitFor(() => {
       expect(screen.getByText('John asked: How to implement authentication?')).toBeInTheDocument()
@@ -163,10 +176,10 @@ describe('PublicFeedContainer', () => {
     
     ;(global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'))
 
-    render(<PublicFeedContainer />)
+    render(<FeedContainer isPublic={true} showHeader={false} />)
 
     await waitFor(() => {
-      expect(screen.getByText('No recent activity')).toBeInTheDocument()
+      expect(screen.getByText('No activities yet')).toBeInTheDocument()
     })
 
     expect(consoleErrorSpy).toHaveBeenCalledWith(
@@ -175,30 +188,6 @@ describe('PublicFeedContainer', () => {
     )
 
     consoleErrorSpy.mockRestore()
-  })
-
-  it('should show Browse All Projects button', async () => {
-    ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        items: [{
-          id: 'proj1',
-          type: 'project_created',
-          title: 'New project: Test',
-          timestamp: '2024-01-01T00:00:00Z',
-          user: { id: 'user1', name: 'User' },
-          data: { id: 'proj1', name: 'Test', description: 'Desc', helpType: 'MVP' }
-        }]
-      })
-    })
-
-    render(<PublicFeedContainer />)
-
-    await waitFor(() => {
-      const browseButton = screen.getByText('Browse All Projects')
-      expect(browseButton).toBeInTheDocument()
-      expect(browseButton.closest('a')).toHaveAttribute('href', '/public/projects')
-    })
   })
 
   it('should format dates correctly', async () => {
@@ -219,10 +208,38 @@ describe('PublicFeedContainer', () => {
       json: async () => mockFeedData
     })
 
-    render(<PublicFeedContainer />)
+    render(<FeedContainer isPublic={true} showHeader={false} />)
 
     await waitFor(() => {
       expect(screen.getByText('Jan 15, 2024')).toBeInTheDocument()
+    })
+  })
+
+  it('should use public API endpoint', async () => {
+    ;(global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ items: [] })
+    })
+
+    render(<FeedContainer isPublic={true} showHeader={false} />)
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith('/api/public/feed')
+    })
+  })
+
+  it('should not show header when showHeader is false', async () => {
+    ;(global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ items: [] })
+    })
+
+    render(<FeedContainer isPublic={true} showHeader={false} />)
+
+    await waitFor(() => {
+      expect(screen.queryByText('Activity Feed')).not.toBeInTheDocument()
+      expect(screen.queryByText('Stay up to date with the latest activities')).not.toBeInTheDocument()
+      expect(screen.queryByText('Refresh Feed')).not.toBeInTheDocument()
     })
   })
 })

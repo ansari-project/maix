@@ -79,7 +79,6 @@ describe('manageProject tool', () => {
           goal: 'Create an innovative AI solution for education',
           description: 'This is a comprehensive test project description that meets the minimum 50 character requirement for validation.',
           helpType: 'MVP',
-          status: 'AWAITING_VOLUNTEERS',
           contactEmail: 'contact@example.com',
           targetCompletionDate: new Date('2024-12-31T23:59:59.000Z'),
           isActive: true,
@@ -114,7 +113,7 @@ describe('manageProject tool', () => {
       const params = {
         action: 'create' as const,
         name: 'Test Project',
-        goal: 'Short', // Too short - need at least 10 chars
+        goal: 'Too short', // Too short - need at least 10 chars
         description: 'This is a comprehensive test project description that meets the minimum 50 character requirement for validation.', // Valid length
         helpType: 'MVP' as const,
         contactEmail: 'contact@example.com',
@@ -266,7 +265,6 @@ describe('manageProject tool', () => {
           applications: {
             select: {
               id: true,
-              status: true,
               appliedAt: true,
               user: {
                 select: { id: true, name: true, email: true }
@@ -316,7 +314,6 @@ describe('manageProject tool', () => {
           applications: {
             select: {
               id: true,
-              status: true,
               appliedAt: true,
             }
           }

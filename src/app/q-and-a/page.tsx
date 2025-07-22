@@ -97,7 +97,7 @@ export default function QAndAPage() {
             <div>
               <h1 className="text-3xl font-bold text-primary mb-2">Q&A</h1>
               <p className="text-muted-foreground">
-                Ask questions and share knowledge with the Muslim tech community
+                Ask questions and share knowledge with the tech community
               </p>
             </div>
             <Button asChild>

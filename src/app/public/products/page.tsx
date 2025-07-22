@@ -84,7 +84,7 @@ export default function PublicProductsPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-primary mb-2">Browse Products</h1>
           <p className="text-muted-foreground">
-            Explore innovative products built by the Muslim tech community
+            Explore innovative products built by the tech community
           </p>
         </div>
 

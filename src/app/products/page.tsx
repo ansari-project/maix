@@ -108,7 +108,7 @@ export default function ProductsPage() {
               <div>
                 <h1 className="text-3xl font-bold text-primary mb-2">Products</h1>
                 <p className="text-muted-foreground">
-                  Discover and manage products in the MAIX community
+                  Discover and manage products in the Maix community
                 </p>
               </div>
               <Button asChild>
@@ -171,11 +171,10 @@ export default function ProductsPage() {
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <CardTitle className="text-lg line-clamp-2">
-                          {product.name}
+                          <Link href={`/products/${product.id}`} className="hover:underline">
+                            {product.name}
+                          </Link>
                         </CardTitle>
-                        <CardDescription className="text-sm text-muted-foreground">
-                          by {product.owner.name || product.owner.email}
-                        </CardDescription>
                       </div>
                       <div className="flex items-center gap-1 text-sm text-muted-foreground">
                         <Users className="h-4 w-4" />
@@ -185,7 +184,9 @@ export default function ProductsPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-sm mb-4">
-                      <Markdown content={product.description} className="prose-sm" />
+                      <Link href={`/products/${product.id}`} className="block hover:text-primary transition-colors">
+                        <Markdown content={product.description} className="prose-sm line-clamp-4" />
+                      </Link>
                     </div>
                     
                     <div className="flex items-center justify-between">

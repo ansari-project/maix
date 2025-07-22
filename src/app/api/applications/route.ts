@@ -20,7 +20,6 @@ export async function GET(request: Request) {
             id: true,
             name: true,
             helpType: true,
-            status: true,
             owner: {
               select: {
                 name: true,

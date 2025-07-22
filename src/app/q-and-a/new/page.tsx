@@ -79,7 +79,7 @@ export default function NewQuestionPage() {
             <CardHeader>
               <CardTitle>Ask a Question</CardTitle>
               <CardDescription>
-                Get help from the Muslim tech community
+                Get help from the tech community
               </CardDescription>
             </CardHeader>
             <CardContent>

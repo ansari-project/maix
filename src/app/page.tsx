@@ -4,7 +4,7 @@ import Link from "next/link"
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { redirect } from 'next/navigation'
-import { PublicFeedContainer } from "@/components/feed/PublicFeedContainer"
+import { PublicFeed } from "@/components/feed/PublicFeed"
 
 export default async function Home() {
   const session = await getServerSession(authOptions)
@@ -28,14 +28,14 @@ export default async function Home() {
             </div>
           </div>
           <h1 className="text-6xl font-bold text-primary-foreground mb-6">
-            MAIX - Meaningful AI Exchange
+            Maix - Meaningful AI Exchange
           </h1>
           <p className="text-2xl text-primary-foreground/90 mb-12">
             Connecting volunteers with AI projects to advance humanity
           </p>
           <Card className="w-full mx-auto">
             <CardHeader>
-              <CardTitle className="text-3xl mb-4">Welcome to MAIX</CardTitle>
+              <CardTitle className="text-3xl mb-4">Welcome to Maix</CardTitle>
               <CardDescription className="text-lg">
                 A platform that brings together skilled volunteers with meaningful 
                 AI projects, fostering innovation for the betterment of humanity.
@@ -100,17 +100,13 @@ export default async function Home() {
           </Card>
           
           {/* Activity Feed */}
-          <Card className="w-full mx-auto mt-8">
-            <CardHeader>
-              <CardTitle className="text-2xl mb-2">Recent Community Activity</CardTitle>
-              <CardDescription className="text-base">
-                See what&apos;s happening in the MAIX community
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <PublicFeedContainer />
-            </CardContent>
-          </Card>
+          <div className="w-full mx-auto mt-8">
+            <h2 className="text-2xl font-bold mb-2">Recent Community Activity</h2>
+            <p className="text-muted-foreground mb-6">
+              See what&apos;s happening in the Maix community
+            </p>
+            <PublicFeed />
+          </div>
         </div>
       </div>
     </main>

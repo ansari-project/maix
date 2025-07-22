@@ -98,10 +98,9 @@ describe('FeedContainer', () => {
       expect(screen.getByText('John asked: How to implement authentication?')).toBeInTheDocument()
     })
 
-    expect(screen.getByText('by John Doe')).toBeInTheDocument()
-    expect(screen.getByText('by John')).toBeInTheDocument()
-    expect(screen.getByText('Awaiting Volunteers')).toBeInTheDocument()
-    // The component displays helpType without lowercasing
+    // User name no longer displayed in feed items
+    // Check for the project elements we know exist
+    expect(screen.getByText('A test project description')).toBeInTheDocument()
     expect(screen.getByText('MVP')).toBeInTheDocument()
   })
 
@@ -327,7 +326,8 @@ describe('FeedContainer', () => {
     render(<FeedContainer />)
 
     await waitFor(() => {
-      expect(screen.getByText('by Unknown User')).toBeInTheDocument()
+      // User name is no longer displayed, checking for title instead
+      expect(screen.getByText('New project: Test')).toBeInTheDocument()
     })
   })
 })

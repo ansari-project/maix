@@ -109,7 +109,7 @@ function NewProjectForm() {
           <CardHeader>
             <CardTitle className="text-2xl">Post a New Project</CardTitle>
             <CardDescription>
-              Share your AI/tech project with the Muslim volunteer community
+              Share your AI/tech project with the volunteer community
             </CardDescription>
           </CardHeader>
           <CardContent>

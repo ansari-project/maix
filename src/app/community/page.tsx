@@ -38,7 +38,7 @@ export default function CommunityPage() {
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-primary mb-2">Community</h1>
             <p className="text-muted-foreground">
-              Connect with the Muslim tech community and share knowledge
+              Connect with the Meaningful tech community and share knowledge
             </p>
           </div>
 
@@ -49,7 +49,7 @@ export default function CommunityPage() {
                 Community Features Coming Soon
               </CardTitle>
               <CardDescription>
-                A vibrant community space for Muslim technologists to connect, share, and grow together.
+                A vibrant community space for technologists to connect, share, and grow together.
               </CardDescription>
             </CardHeader>
             <CardContent className="text-center py-12">
@@ -59,7 +59,7 @@ export default function CommunityPage() {
                     <Users className="h-8 w-8 text-primary mx-auto mb-2" />
                     <h3 className="font-semibold mb-1">Discussion Forums</h3>
                     <p className="text-sm text-muted-foreground">
-                      Share ideas and get advice from fellow Muslim developers
+                      Share ideas and get advice from fellow developers
                     </p>
                   </div>
                   <div className="p-4 border rounded-lg">
@@ -73,7 +73,7 @@ export default function CommunityPage() {
                     <Plus className="h-8 w-8 text-secondary mx-auto mb-2" />
                     <h3 className="font-semibold mb-1">Knowledge Sharing</h3>
                     <p className="text-sm text-muted-foreground">
-                      Tutorials, resources, and best practices for Islamic tech
+                      Tutorials, resources, and best practices for meaningful tech
                     </p>
                   </div>
                 </div>

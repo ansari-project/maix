@@ -2,16 +2,16 @@
 
 ## Project Overview
 
-Maix (Muslim AI Exchange) is a Next.js 14 application that connects Muslim volunteers with AI/tech projects. The platform uses modern web technologies with Islamic design principles to serve the Muslim tech community.
+Maix (Meaningful AI Exchange) is a Next.js 15 application that connects skilled volunteers with meaningful AI/tech projects. The platform uses modern web technologies to advance communities through collaborative innovation.
 
 ## Technology Stack
 
 ### Core Technologies
-- **Framework**: Next.js 14 with App Router
+- **Framework**: Next.js 15 with App Router
 - **Language**: TypeScript (strict mode)
 - **Database**: Neon (PostgreSQL with pgvector extension)
 - **Authentication**: NextAuth.js with Google OAuth
-- **Styling**: Tailwind CSS with Islamic design system
+- **Styling**: Tailwind CSS with custom design system
 - **UI Components**: shadcn/ui (Radix UI + Tailwind primitives)
 - **Deployment**: Vercel
 
@@ -39,7 +39,7 @@ maix/
 │   │   ├── ui/           # Basic UI components (Radix + Tailwind)
 │   │   ├── forms/        # Form components
 │   │   ├── layout/       # Layout components
-│   │   └── islamic/      # Islamic-themed components
+│   │   └── themed/       # Themed components
 │   ├── lib/              # Utilities and configurations
 │   │   ├── auth.ts       # NextAuth configuration
 │   │   ├── db.ts         # Prisma client
@@ -217,14 +217,14 @@ To ensure code quality and prevent deployment failures, always perform the follo
 - Handle errors gracefully
 
 ### UI/UX Guidelines
-- Follow Islamic design principles
+- Follow clean design principles
 - Use the defined color palette
 - Implement RTL support for Arabic content
 - Ensure accessibility (WCAG 2.1 AA)
 - Use semantic HTML elements
 - **All textarea fields must support Markdown**: Use the `<Markdown>` component from `@/components/ui/markdown` to render user-generated content. This ensures consistent formatting across Q&A answers, project descriptions, product descriptions, and all other long-form text content.
 
-## Islamic Design System
+## Design System
 
 ### Color Palette
 ```typescript
@@ -245,7 +245,7 @@ const islamicColors = {
 - Use appropriate font weights
 
 ### Components
-- Create reusable Islamic-themed components
+- Create reusable themed components
 - Use geometric patterns respectfully
 - Avoid religious symbols
 - Maintain cultural sensitivity
@@ -364,7 +364,7 @@ SENTRY_DSN="your-sentry-dsn"
 ### Creating New Component
 1. Place in appropriate `components/` subdirectory
 2. Use TypeScript with proper props interface
-3. Follow Islamic design principles
+3. Follow clean design principles
 4. Add proper accessibility attributes
 5. Include JSDoc comments
 
@@ -467,16 +467,16 @@ SENTRY_DSN="your-sentry-dsn"
 - Monitor connection usage
 - Set up alerts for issues
 
-## Islamic Considerations
+## Community Guidelines
 
 ### Content Guidelines
-- All projects must align with Islamic values
+- All projects must align with community values
 - No inappropriate content or imagery
 - Respect cultural sensitivities
 - Promote beneficial knowledge sharing
 
 ### Design Principles
-- Use Islamic geometric patterns respectfully
+- Use geometric patterns thoughtfully
 - Avoid religious symbols in UI
 - Maintain cultural authenticity
 - Consider prayer times in scheduling features
@@ -550,7 +550,7 @@ npm run test:e2e        # End-to-end tests
 ## Notes for Claude Code
 
 ### When Working on This Project
-1. Always follow Islamic principles and values
+1. Always follow community principles and values
 2. Use the defined color palette and design system
 3. Implement proper TypeScript typing
 4. Follow the established project structure
@@ -568,4 +568,4 @@ npm run test:e2e        # End-to-end tests
 4. **Scalability**: Design for growth and increased usage
 5. **Community**: Build features that foster collaboration and trust
 
-This file serves as a comprehensive guide for developing and maintaining the Maix platform while adhering to Islamic values and modern web development best practices.
+This file serves as a comprehensive guide for developing and maintaining the Maix platform while adhering to community values and modern web development best practices.

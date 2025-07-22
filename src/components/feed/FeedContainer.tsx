@@ -11,7 +11,8 @@ import {
   User, 
   Calendar,
   Package,
-  MessageCircle
+  MessageCircle,
+  ExternalLink
 } from "lucide-react"
 import { format } from "date-fns"
 import Link from "next/link"
@@ -50,22 +51,25 @@ interface FeedItem {
 
 interface FeedContainerProps {
   initialItems?: FeedItem[]
+  isPublic?: boolean
+  showHeader?: boolean
 }
 
-export function FeedContainer({ initialItems = [] }: FeedContainerProps) {
+export function FeedContainer({ initialItems = [], isPublic = false, showHeader = true }: FeedContainerProps) {
   const { data: session } = useSession()
   const [feedItems, setFeedItems] = useState<FeedItem[]>(initialItems)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (session) {
+    if (isPublic || session) {
       fetchFeedItems()
     }
-  }, [session])
+  }, [session, isPublic])
 
   const fetchFeedItems = async () => {
     try {
-      const response = await fetch("/api/feed")
+      const endpoint = isPublic ? "/api/public/feed" : "/api/feed"
+      const response = await fetch(endpoint)
       if (response.ok) {
         const data = await response.json()
         setFeedItems(data.items || [])
@@ -91,31 +95,35 @@ export function FeedContainer({ initialItems = [] }: FeedContainerProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <div>
-          <h1 className="text-3xl font-bold text-primary">Activity Feed</h1>
-          <p className="text-muted-foreground">
-            Stay up to date with the latest activities in the MAIX community
-          </p>
+      {showHeader && (
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div>
+            <h1 className="text-3xl font-bold text-primary">Activity Feed</h1>
+            <p className="text-muted-foreground">
+              Stay up to date with the latest activities in the Maix community
+            </p>
+          </div>
+          <Button variant="outline" onClick={fetchFeedItems}>
+            Refresh Feed
+          </Button>
         </div>
-        <Button variant="outline" onClick={fetchFeedItems}>
-          Refresh Feed
-        </Button>
-      </div>
+      )}
 
       <div className="space-y-4">
         {filteredItems.length === 0 ? (
           <Card>
             <CardContent className="text-center py-8">
               <p className="text-muted-foreground mb-4">No activities yet</p>
-              <p className="text-sm text-muted-foreground">
-                Start by creating a project or updating your profile to see activity here.
-              </p>
+              {!isPublic && (
+                <p className="text-sm text-muted-foreground">
+                  Start by creating a project or updating your profile to see activity here.
+                </p>
+              )}
             </CardContent>
           </Card>
         ) : (
           filteredItems.map((item) => (
-            <FeedItem key={item.id} item={item} />
+            <FeedItem key={item.id} item={item} isPublic={isPublic} />
           ))
         )}
       </div>
@@ -125,9 +133,10 @@ export function FeedContainer({ initialItems = [] }: FeedContainerProps) {
 
 interface FeedItemProps {
   item: FeedItem
+  isPublic?: boolean
 }
 
-function FeedItem({ item }: FeedItemProps) {
+function FeedItem({ item, isPublic = false }: FeedItemProps) {
   const Icon = getFeedItemIcon(item.type)
   const colorClass = getFeedItemColor(item.type)
 
@@ -170,11 +179,6 @@ function FeedItem({ item }: FeedItemProps) {
                 {format(new Date(item.timestamp), 'MMM dd, yyyy')}
               </span>
             </div>
-            {item.type !== 'product_created' && item.type !== 'product_update' && (
-              <p className="text-sm text-muted-foreground mt-1">
-                by {item.user.name || 'Unknown User'}
-              </p>
-            )}
             
             {/* Type-specific content */}
             {item.type === 'project_created' && item.data && (
@@ -200,6 +204,11 @@ function FeedItem({ item }: FeedItemProps) {
                     </Badge>
                   )}
                 </div>
+                <Button variant="link" size="sm" className="px-0 mt-1" asChild>
+                  <Link href={isPublic ? `/public/projects#${item.data.id}` : `/projects/${item.data.id}`}>
+                    View Project <ExternalLink className="h-3 w-3 ml-1" />
+                  </Link>
+                </Button>
               </div>
             )}
 
@@ -219,6 +228,11 @@ function FeedItem({ item }: FeedItemProps) {
                 <div className="text-sm">
                   <Markdown content={item.data.content || ''} className="prose-sm line-clamp-4" />
                 </div>
+                <Button variant="link" size="sm" className="px-0 mt-1" asChild>
+                  <Link href={isPublic ? `/public/products/${item.data.productId}` : `/products/${item.data.productId}`}>
+                    View Product <ExternalLink className="h-3 w-3 ml-1" />
+                  </Link>
+                </Button>
               </div>
             )}
 
@@ -232,6 +246,11 @@ function FeedItem({ item }: FeedItemProps) {
                     {item.data._count?.projects || 0} projects
                   </Badge>
                 </div>
+                <Button variant="link" size="sm" className="px-0 mt-1" asChild>
+                  <Link href={isPublic ? `/public/products/${item.data.id}` : `/products/${item.data.id}`}>
+                    View Product <ExternalLink className="h-3 w-3 ml-1" />
+                  </Link>
+                </Button>
               </div>
             )}
 
@@ -240,6 +259,11 @@ function FeedItem({ item }: FeedItemProps) {
                 <div className="text-sm">
                   <Markdown content={item.data.content || ''} className="prose-sm line-clamp-4" />
                 </div>
+                <Button variant="link" size="sm" className="px-0 mt-1" asChild>
+                  <Link href={isPublic ? `/public/questions/${item.data.id}` : `/q-and-a/${item.data.id}`}>
+                    View Question <ExternalLink className="h-3 w-3 ml-1" />
+                  </Link>
+                </Button>
               </div>
             )}
 
@@ -248,6 +272,11 @@ function FeedItem({ item }: FeedItemProps) {
                 <div className="text-sm">
                   <Markdown content={item.data.content || ''} className="prose-sm line-clamp-4" />
                 </div>
+                <Button variant="link" size="sm" className="px-0 mt-1" asChild>
+                  <Link href={isPublic ? `/public/questions/${item.data.parent?.id || item.data.questionId || item.data.parentId}` : `/q-and-a/${item.data.parent?.id || item.data.questionId || item.data.parentId}`}>
+                    View Discussion <ExternalLink className="h-3 w-3 ml-1" />
+                  </Link>
+                </Button>
               </div>
             )}
 

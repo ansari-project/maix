@@ -10,7 +10,6 @@ const projectFieldsSchema = {
   goal: z.string().min(10).max(500).regex(/^[^\n\r]+$/, "Goal must be a single line").describe("One-line project goal"),
   description: z.string().min(50).max(5000).describe("The project description"),
   helpType: z.enum(['ADVICE', 'PROTOTYPE', 'MVP', 'FULL_PRODUCT']).describe("The type of help needed"),
-  status: z.enum(['AWAITING_VOLUNTEERS', 'PLANNING', 'IN_PROGRESS', 'ON_HOLD', 'COMPLETED', 'CANCELLED']).describe("Project lifecycle status"),
   contactEmail: z.string().email().describe("Contact email for the project"),
   targetCompletionDate: z.string().datetime().optional().or(z.literal('')).describe("Target completion date (ISO 8601)"),
   isActive: z.boolean().optional().describe("Whether project is actively seeking help"),
@@ -25,7 +24,6 @@ const createProjectSchema = z.object({
   goal: projectFieldsSchema.goal,
   description: projectFieldsSchema.description,
   helpType: projectFieldsSchema.helpType,
-  status: projectFieldsSchema.status.optional(),
   contactEmail: projectFieldsSchema.contactEmail,
   targetCompletionDate: projectFieldsSchema.targetCompletionDate,
   isActive: projectFieldsSchema.isActive,
@@ -40,7 +38,6 @@ const updateProjectSchema = z.object({
   goal: projectFieldsSchema.goal.optional(),
   description: projectFieldsSchema.description.optional(),
   helpType: projectFieldsSchema.helpType.optional(),
-  status: projectFieldsSchema.status.optional(),
   contactEmail: projectFieldsSchema.contactEmail.optional(),
   targetCompletionDate: projectFieldsSchema.targetCompletionDate,
   isActive: projectFieldsSchema.isActive,
@@ -155,7 +152,6 @@ async function createProject(
       goal: validatedData.goal,
       description: validatedData.description,
       helpType: validatedData.helpType,
-      status: validatedData.status ?? 'AWAITING_VOLUNTEERS',
       contactEmail: validatedData.contactEmail,
       targetCompletionDate: validatedData.targetCompletionDate ? new Date(validatedData.targetCompletionDate) : null,
       isActive: validatedData.isActive ?? true,
@@ -207,7 +203,6 @@ async function updateProject(
   if (validatedData.goal !== undefined) updateData.goal = validatedData.goal;
   if (validatedData.description !== undefined) updateData.description = validatedData.description;
   if (validatedData.helpType !== undefined) updateData.helpType = validatedData.helpType;
-  if (validatedData.status !== undefined) updateData.status = validatedData.status;
   if (validatedData.contactEmail !== undefined) updateData.contactEmail = validatedData.contactEmail;
   if (validatedData.targetCompletionDate !== undefined) {
     updateData.targetCompletionDate = validatedData.targetCompletionDate ? new Date(validatedData.targetCompletionDate) : null;
@@ -302,7 +297,6 @@ async function getProject(
       applications: {
         select: {
           id: true,
-          status: true,
           appliedAt: true,
           user: {
             select: { id: true, name: true, email: true }
@@ -338,7 +332,6 @@ async function listProjects(context: MaixMcpContext): Promise<MaixMcpResponse> {
       applications: {
         select: {
           id: true,
-          status: true,
           appliedAt: true,
         }
       }
