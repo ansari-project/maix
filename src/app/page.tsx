@@ -16,7 +16,7 @@ export default async function Home() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-primary to-accent">
       <div className="container mx-auto px-4 py-16">
-        <div className="text-center">
+        <div>
           <div className="flex justify-end mb-8">
             <div className="flex gap-2">
               <Button asChild variant="outline" className="text-lg px-6 py-3">
@@ -43,7 +43,7 @@ export default async function Home() {
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-4 gap-8">
-                <Card className="text-center">
+                <Card>
                   <CardHeader>
                     <CardTitle className="text-2xl text-primary mb-3">Learn</CardTitle>
                     <CardDescription className="text-lg">
@@ -56,7 +56,7 @@ export default async function Home() {
                     </p>
                   </CardContent>
                 </Card>
-                <Card className="text-center">
+                <Card>
                   <CardHeader>
                     <CardTitle className="text-2xl text-secondary mb-3">Teach</CardTitle>
                     <CardDescription className="text-lg">
@@ -69,7 +69,7 @@ export default async function Home() {
                     </p>
                   </CardContent>
                 </Card>
-                <Card className="text-center">
+                <Card>
                   <CardHeader>
                     <CardTitle className="text-2xl text-accent mb-3">Help</CardTitle>
                     <CardDescription className="text-lg">
@@ -82,7 +82,7 @@ export default async function Home() {
                     </p>
                   </CardContent>
                 </Card>
-                <Card className="text-center">
+                <Card>
                   <CardHeader>
                     <CardTitle className="text-2xl text-brand-gold mb-3">Get Help</CardTitle>
                     <CardDescription className="text-lg">

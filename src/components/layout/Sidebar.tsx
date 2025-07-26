@@ -21,7 +21,8 @@ import {
   Key,
   Package,
   LogOut,
-  HelpCircle
+  HelpCircle,
+  Shield
 } from "lucide-react"
 
 interface NavigationItem {
@@ -91,6 +92,16 @@ export function Sidebar({ isCollapsed = false, onToggle, currentPath }: SidebarP
     }
   ]
 
+  // Admin items - only visible to admin
+  const adminItems: NavigationItem[] = session?.user?.email === 'waleedk@gmail.com' ? [
+    {
+      name: "Admin",
+      href: "/admin",
+      icon: Shield,
+      isActive: pathname === "/admin"
+    }
+  ] : []
+
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -134,6 +145,23 @@ export function Sidebar({ isCollapsed = false, onToggle, currentPath }: SidebarP
             />
           ))}
         </div>
+
+        {/* Admin Section */}
+        {adminItems.length > 0 && (
+          <>
+            <Separator className="my-4" />
+            <div className="space-y-1">
+              {adminItems.map((item) => (
+                <SidebarItem
+                  key={item.name}
+                  item={item}
+                  isCollapsed={isCollapsed}
+                  onClick={() => setIsMobileOpen(false)}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </nav>
 
       {/* User Profile Section */}
