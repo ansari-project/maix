@@ -56,7 +56,10 @@ maix/
     ├── guides/           # Extracted wisdom on how to use tools and features
     ├── howtos/           # Step-by-step instructions for users
     ├── faqs/             # Frequently asked questions
-    ├── ideas/            # Ideas still in incubation
+    ├── ideas/            # Ideas with status prefixes:
+    │                     # - done-: Completed features
+    │                     # - inprogress-: Currently being worked on
+    │                     # - todo-: Future features to implement
     └── ref/              # Reference material and API documentation
 ```
 
@@ -158,10 +161,11 @@ To ensure code quality and prevent deployment failures, always perform the follo
    - Run `npm run test` to ensure all tests pass
    - Fix any errors found during build or test
 
-2. **Gemini Code Review:**
-   - After successful local validation, use the `mcp__zen__chat` tool to request a code review from Gemini
+2. **Code Review (for non-trivial changes):**
+   - For significant features or complex changes, use the `mcp__zen__codereview` tool
+   - For simpler changes, use the `mcp__zen__chat` tool to request a code review
    - This provides an additional layer of scrutiny for logic, design, and best practices
-   - **Note**: Gemini tends to suggest overcomplication and optimizations that aren't important at our MVP stage
+   - **Note**: AI assistants tend to suggest overcomplication and optimizations that aren't important at our MVP stage
    - Focus on addressing critical issues (bugs, security, major design flaws) rather than all suggestions
    - Remember our principle: bias towards simple solutions for current problems
 
