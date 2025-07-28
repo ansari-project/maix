@@ -39,6 +39,7 @@ model User {
   personalAccessTokens PersonalAccessToken[]
   posts         Post[]
   comments      Comment[]
+  monitors      Monitor[]
 
   @@index([skills], type: Gin)
   @@map("users")
@@ -279,4 +280,149 @@ model Comment {
   @@index([authorId])
   @@index([parentId])
   @@map("comments")
+}
+
+// ===== CAUSEMON MODELS =====
+
+// Monitor model - tracks what a user wants to monitor
+model Monitor {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  
+  // What to monitor
+  publicFigureId String
+  publicFigure   PublicFigure @relation(fields: [publicFigureId], references: [id])
+  topicId        String
+  topic          Topic @relation(fields: [topicId], references: [id])
+  
+  // Settings
+  isActive       Boolean  @default(true)
+  emailFrequency String   @default("daily") // daily, weekly
+  
+  // Metadata
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  // Relations
+  emailReports   EmailReport[]
+  
+  @@unique([userId, publicFigureId, topicId])
+  @@index([userId])
+  @@index([isActive, emailFrequency])
+  @@map("monitors")
+}
+
+// PublicFigure model - people we can monitor
+model PublicFigure {
+  id          String   @id @default(cuid())
+  name        String
+  title       String?  // e.g., "Prime Minister of Australia"
+  imageUrl    String?
+  
+  // Search helpers
+  aliases     String[] // ["Albo", "Anthony Albanese", "PM Albanese"]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  monitors    Monitor[]
+  events      Event[]
+  
+  @@index([name])
+  @@map("public_figures")
+}
+
+// Topic model - causes/issues to track
+model Topic {
+  id          String   @id @default(cuid())
+  name        String   // "Palestine"
+  keywords    String[] // ["Gaza", "West Bank", "Palestinian", "Israel"]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  monitors    Monitor[]
+  events      Event[]
+  
+  @@index([name])
+  @@map("topics")
+}
+
+// Event model - something that happened (e.g., a speech)
+model Event {
+  id            String   @id @default(cuid())
+  
+  // What happened
+  publicFigureId String
+  publicFigure   PublicFigure @relation(fields: [publicFigureId], references: [id])
+  topicId        String
+  topic          Topic @relation(fields: [topicId], references: [id])
+  
+  // The event details
+  title          String   // "PM speaks at UN about Gaza"
+  summary        String   @db.Text // AI-generated summary across all articles
+  eventDate      DateTime // When the event happened
+  eventType      String   // "speech", "vote", "statement", "interview"
+  
+  // AI Analysis
+  sentiment      String?  // positive, negative, neutral
+  stance         String?  // supportive, opposed, neutral
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  // Relations
+  articles       Article[] // Multiple articles can cover one event
+  
+  @@index([publicFigureId, topicId, eventDate])
+  @@map("events")
+}
+
+// Article model - a source covering an event
+model Article {
+  id            String   @id @default(cuid())
+  eventId       String
+  event         Event    @relation(fields: [eventId], references: [id])
+  
+  // Article details
+  headline       String
+  sourceUrl      String   @unique
+  sourceType     String   // "media", "hansard", "committee", "press_release"
+  sourcePublisher String  // "The Guardian", "Parliament of Australia"
+  publishedAt    DateTime
+  
+  // Content
+  fullText       String?  @db.Text
+  keyQuotes      Json?    // Array of important quotes
+  
+  // For deduplication
+  contentHash    String   @unique
+  
+  createdAt      DateTime @default(now())
+  
+  @@index([eventId])
+  @@index([sourceUrl])
+  @@index([contentHash])
+  @@map("articles")
+}
+
+// EmailReport model - tracks sent emails
+model EmailReport {
+  id         String   @id @default(cuid())
+  monitorId  String
+  monitor    Monitor  @relation(fields: [monitorId], references: [id])
+  
+  // What was included (just tracking IDs, not relations)
+  eventIds   String[] // Array of event IDs included
+  eventCount Int      // For quick reference
+  
+  // Status
+  sentAt     DateTime @default(now())
+  status     String   @default("sent") // sent, failed, pending
+  
+  @@index([monitorId, sentAt])
+  @@map("email_reports")
 }
