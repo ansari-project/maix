@@ -5,82 +5,26 @@ const prisma = new PrismaClient();
 async function seedCausemon() {
   console.log('🌱 Seeding Causemon data...');
 
-  // Create public figures
-  const publicFigures = await Promise.all([
-    prisma.publicFigure.create({
-      data: {
-        name: 'Anthony Albanese',
-        title: 'Prime Minister of Australia',
-        aliases: ['Albo', 'PM Albanese', 'Anthony Norman Albanese'],
-      },
-    }),
-    prisma.publicFigure.create({
-      data: {
-        name: 'Joe Biden',
-        title: 'President of the United States',
-        aliases: ['President Biden', 'Joseph R. Biden Jr.', 'Biden'],
-      },
-    }),
-    prisma.publicFigure.create({
-      data: {
-        name: 'Rishi Sunak',
-        title: 'Prime Minister of the United Kingdom',
-        aliases: ['PM Sunak', 'Rishi Sunak MP'],
-      },
-    }),
-    prisma.publicFigure.create({
-      data: {
-        name: 'Justin Trudeau',
-        title: 'Prime Minister of Canada',
-        aliases: ['PM Trudeau', 'Justin Pierre James Trudeau'],
-      },
-    }),
-    prisma.publicFigure.create({
-      data: {
-        name: 'Emmanuel Macron',
-        title: 'President of France',
-        aliases: ['President Macron', 'Macron'],
-      },
-    }),
-  ]);
+  // Create one public figure
+  const publicFigure = await prisma.publicFigure.create({
+    data: {
+      name: 'Anthony Albanese',
+      title: 'Prime Minister of Australia',
+      aliases: ['Albo', 'PM Albanese', 'Anthony Norman Albanese'],
+    },
+  });
 
-  console.log(`✅ Created ${publicFigures.length} public figures`);
+  console.log(`✅ Created public figure: ${publicFigure.name}`);
 
-  // Create topics
-  const topics = await Promise.all([
-    prisma.topic.create({
-      data: {
-        name: 'Palestine',
-        keywords: ['Gaza', 'West Bank', 'Palestinian', 'Israel', 'ceasefire', 'humanitarian'],
-      },
-    }),
-    prisma.topic.create({
-      data: {
-        name: 'Climate Change',
-        keywords: ['climate', 'global warming', 'carbon', 'emissions', 'renewable', 'net zero'],
-      },
-    }),
-    prisma.topic.create({
-      data: {
-        name: 'Immigration',
-        keywords: ['refugees', 'asylum', 'immigration', 'migrants', 'border', 'visa'],
-      },
-    }),
-    prisma.topic.create({
-      data: {
-        name: 'Economy',
-        keywords: ['inflation', 'recession', 'unemployment', 'GDP', 'interest rates', 'cost of living'],
-      },
-    }),
-    prisma.topic.create({
-      data: {
-        name: 'Healthcare',
-        keywords: ['NHS', 'Medicare', 'healthcare', 'hospitals', 'doctors', 'medical', 'health'],
-      },
-    }),
-  ]);
+  // Create one topic
+  const topic = await prisma.topic.create({
+    data: {
+      name: 'Palestine',
+      keywords: ['Gaza', 'West Bank', 'Palestinian', 'Israel', 'ceasefire', 'humanitarian'],
+    },
+  });
 
-  console.log(`✅ Created ${topics.length} topics`);
+  console.log(`✅ Created topic: ${topic.name}`);
 }
 
 seedCausemon()
