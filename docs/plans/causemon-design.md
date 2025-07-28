@@ -237,10 +237,10 @@ model EmailReport {
 
 ## Implementation Plan
 
-1. **Week 1**: Database schema and basic CRUD APIs
-2. **Week 2**: Gemini with grounding integration
-3. **Week 3**: Email generation and cron jobs
-4. **Week 4**: Testing and refinement
+1. **Phase 1**: Database schema and basic CRUD APIs
+2. **Phase 2**: Gemini with grounding integration
+3. **Phase 3**: Email generation and cron jobs
+4. **Phase 4**: Testing and refinement
 
 ## Why This Design?
 

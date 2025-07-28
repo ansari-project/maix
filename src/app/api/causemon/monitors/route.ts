@@ -80,6 +80,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate public figure exists
+    const publicFigure = await prisma.publicFigure.findUnique({
+      where: { id: publicFigureId },
+    });
+
+    if (!publicFigure) {
+      return NextResponse.json(
+        { error: 'Invalid public figure' },
+        { status: 400 }
+      );
+    }
+
+    // Validate topic exists
+    const topic = await prisma.topic.findUnique({
+      where: { id: topicId },
+    });
+
+    if (!topic) {
+      return NextResponse.json(
+        { error: 'Invalid topic' },
+        { status: 400 }
+      );
+    }
+
     // For MVP, limit to 1 monitor per user
     const monitorCount = await prisma.monitor.count({
       where: { userId: session.user.id },

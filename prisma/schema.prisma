@@ -28,6 +28,7 @@ model User {
   availability  String?  // e.g., "10 hours/week", "weekends only"
   timezone      String?
   isActive      Boolean  @default(true)
+  lastDigestSentAt DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -299,6 +300,7 @@ model Monitor {
   // Settings
   isActive       Boolean  @default(true)
   emailFrequency String   @default("daily") // daily, weekly
+  lastSearchedAt DateTime? // Track last successful search
   
   // Metadata
   createdAt      DateTime @default(now())
@@ -370,6 +372,9 @@ model Event {
   // AI Analysis
   sentiment      String?  // positive, negative, neutral
   stance         String?  // supportive, opposed, neutral
+  
+  // Deduplication
+  deduplicationHash String @unique // Hash of title+date+publicFigureId
   
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt

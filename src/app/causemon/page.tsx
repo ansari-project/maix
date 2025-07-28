@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Trash2, TestTube, Mail, Pause, Play } from 'lucide-react';
+import { Trash2, TestTube, Mail, Pause, Play, Search } from 'lucide-react';
 
 interface PublicFigure {
   id: string;
@@ -41,6 +41,7 @@ export default function CausemonPage() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [testing, setTesting] = useState<string | null>(null);
+  const [searching, setSearching] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -174,6 +175,29 @@ export default function CausemonPage() {
     }
   };
 
+  const searchMonitor = async (id: string) => {
+    setSearching(id);
+    try {
+      const res = await fetch(`/api/causemon/monitors/${id}/search`, {
+        method: 'POST',
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to search');
+      }
+
+      const result = await res.json();
+      alert(`Search complete! Found ${result.eventsFound} events. Created ${result.eventsCreated} new events.`);
+      console.log('Search results:', result);
+    } catch (error: any) {
+      console.error('Error searching:', error);
+      alert(error.message || 'Failed to search');
+    } finally {
+      setSearching(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto py-8">
@@ -185,10 +209,20 @@ export default function CausemonPage() {
   return (
     <div className="container mx-auto py-8 max-w-4xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Causemon</h1>
-        <p className="text-muted-foreground">
-          Track what public figures say about causes you care about
-        </p>
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Causemon</h1>
+            <p className="text-muted-foreground">
+              Track what public figures say about causes you care about
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => router.push('/causemon/events')}
+          >
+            View Events
+          </Button>
+        </div>
       </div>
 
       {monitors.length === 0 ? (
@@ -274,6 +308,15 @@ export default function CausemonPage() {
                       title={monitor.isActive ? 'Pause' : 'Activate'}
                     >
                       {monitor.isActive ? <Pause /> : <Play />}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => searchMonitor(monitor.id)}
+                      disabled={searching === monitor.id || !monitor.isActive}
+                      title="Search Now"
+                    >
+                      <Search />
                     </Button>
                     <Button
                       variant="outline"
