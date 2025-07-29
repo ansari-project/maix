@@ -111,7 +111,8 @@ export default function CausemonPage() {
         throw new Error('Failed to delete monitor');
       }
 
-      setMonitors(monitors.filter((m) => m.id !== id));
+      // Refresh monitors from server to ensure UI is in sync
+      await fetchData();
       console.log('Monitor deleted successfully');
     } catch (error) {
       console.error('Error deleting monitor:', error);

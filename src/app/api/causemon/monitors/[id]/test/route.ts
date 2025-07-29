@@ -9,6 +9,9 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Move params destructuring outside try block for scope
+  const { id } = await params;
+  
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
@@ -16,7 +19,6 @@ export async function POST(
     }
 
     // Check if monitor exists and belongs to user
-    const { id } = await params;
     
     console.log('[TEST] Starting test for monitor ID:', id);
     console.log('[TEST] User ID:', session.user.id);
