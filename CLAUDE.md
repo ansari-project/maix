@@ -156,12 +156,18 @@ git add --all
 
 To ensure code quality and prevent deployment failures, always perform the following steps before committing changes:
 
-1. **Local Validation:**
+1. **Check for Dependency Changes:**
+   - **ALWAYS run `git status` before committing** to check for modified files
+   - **If you installed new packages**, ensure both `package.json` AND `package-lock.json` are staged
+   - **Never commit code that uses packages without committing the dependency files**
+   - Example: If you run `npm install resend`, you MUST `git add package.json package-lock.json`
+
+2. **Local Validation:**
    - Run `npm run build` to ensure no TypeScript or build errors
    - Run `npm run test` to ensure all tests pass
    - Fix any errors found during build or test
 
-2. **Code Review (for non-trivial changes):**
+3. **Code Review (for non-trivial changes):**
    - For significant features or complex changes, use the `mcp__zen__codereview` tool
    - For simpler changes, use the `mcp__zen__chat` tool to request a code review
    - This provides an additional layer of scrutiny for logic, design, and best practices
@@ -169,7 +175,7 @@ To ensure code quality and prevent deployment failures, always perform the follo
    - Focus on addressing critical issues (bugs, security, major design flaws) rather than all suggestions
    - Remember our principle: bias towards simple solutions for current problems
 
-3. **Never push code that fails to build or has failing tests**
+4. **Never push code that fails to build or has failing tests**
    - **NEVER use `git commit --no-verify` or `git push --no-verify`** to bypass pre-commit hooks
    - **NEVER delete test files to make failing tests pass** - this defeats the purpose of testing
    - If tests are failing, fix the test implementation to work correctly
@@ -180,6 +186,7 @@ To ensure code quality and prevent deployment failures, always perform the follo
 - A git pre-commit hook (`.husky/pre-commit`) automatically runs build and test checks
 - Commits will be blocked if build or tests fail
 - This ensures the checklist is followed reliably and prevents manual oversight
+- **NOTE**: Pre-commit hooks only check staged files, so missing dependencies won't be caught unless package files are staged
 
 ### Simplicity and Pragmatism
 - **Bias towards simple solutions**: Address problems we currently have, not hypothetical future scaling issues
