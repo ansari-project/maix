@@ -48,6 +48,9 @@ describe('/api/applications/[id]', () => {
       id: 'project-123',
       title: 'AI-Powered Learning Platform',
       owner: mockProjectOwner,
+      ownerId: 'owner-123',
+      organization: null,
+      organizationId: null,
     },
   }
 
@@ -371,6 +374,7 @@ describe('/api/applications/[id]', () => {
           project: {
             include: {
               owner: true,
+              organization: true,
             },
           },
         },

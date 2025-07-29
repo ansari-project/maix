@@ -10,6 +10,52 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Visibility enum for projects and products
+enum Visibility {
+  PUBLIC
+  PRIVATE
+}
+
+// Organization role enum
+enum OrgRole {
+  OWNER
+  MEMBER
+}
+
+// Organization model for team collaboration
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  members     OrganizationMember[]
+  projects    Project[]
+  products    Product[]
+  
+  @@map("organizations")
+}
+
+// Organization membership
+model OrganizationMember {
+  id             String       @id @default(cuid())
+  role           OrgRole      
+  joinedAt       DateTime     @default(now())
+  
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+  
+  @@unique([organizationId, userId])
+  @@index([userId])
+  @@index([organizationId])
+  @@map("organization_members")
+}
+
 // User model for volunteer profiles
 model User {
   id            String   @id @default(cuid())
@@ -41,6 +87,7 @@ model User {
   posts         Post[]
   comments      Comment[]
   monitors      Monitor[]
+  organizationMemberships OrganizationMember[]
 
   @@index([skills], type: Gin)
   @@map("users")
@@ -59,10 +106,13 @@ model Project {
   isActive              Boolean       @default(true) // Whether project is actively seeking help
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
+  visibility            Visibility    @default(PUBLIC) // Project visibility
 
-  // Relations
-  owner         User          @relation(fields: [ownerId], references: [id])
-  ownerId       String
+  // Relations - Dual ownership: EITHER user OR organization
+  owner         User?         @relation(fields: [ownerId], references: [id])
+  ownerId       String?
+  organization  Organization? @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  organizationId String?
   product       Product?      @relation(fields: [productId], references: [id])
   productId     String?
   applications  Application[]
@@ -86,10 +136,13 @@ model Product {
   url         String?  // Product website/demo URL
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  visibility  Visibility @default(PUBLIC) // Product visibility
 
-  // Relations
-  owner       User      @relation(fields: [ownerId], references: [id], onDelete: Restrict)
-  ownerId     String
+  // Relations - Dual ownership: EITHER user OR organization
+  owner       User?         @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  ownerId     String?
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  organizationId String?
   projects    Project[]
   
   // Relation for all PRODUCT_UPDATE posts (one-to-many)

@@ -34,6 +34,7 @@ export async function GET(request: Request) {
       searchProjects ? prisma.project.findMany({
         where: {
           isActive: true,
+          visibility: 'PUBLIC',
           OR: [
             { name: searchFilter },
             { description: searchFilter },
@@ -50,6 +51,7 @@ export async function GET(request: Request) {
       
       searchProducts ? prisma.product.findMany({
         where: {
+          visibility: 'PUBLIC',
           OR: [
             { name: searchFilter },
             { description: searchFilter }

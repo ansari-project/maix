@@ -8,8 +8,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { ArrowLeft } from "lucide-react"
+import { Switch } from "@/components/ui/switch"
+import { ArrowLeft, Lock, Globe } from "lucide-react"
 import Link from "next/link"
+import OrganizationSelector from "@/components/forms/OrganizationSelector"
 
 export default function NewProductPage() {
   const { data: session, status } = useSession()
@@ -18,7 +20,9 @@ export default function NewProductPage() {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    url: ""
+    url: "",
+    organizationId: "",
+    visibility: "PUBLIC" as "PUBLIC" | "PRIVATE"  // Default to PUBLIC
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -45,7 +49,10 @@ export default function NewProductPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          organizationId: formData.organizationId || undefined
+        }),
       })
 
       if (response.ok) {
@@ -123,6 +130,11 @@ export default function NewProductPage() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
+                <OrganizationSelector
+                  value={formData.organizationId}
+                  onChange={(value) => setFormData({...formData, organizationId: value || ""})}
+                />
+
                 <div className="space-y-2">
                   <Label htmlFor="name">Product Name *</Label>
                   <Input
@@ -174,6 +186,36 @@ export default function NewProductPage() {
                   <p className="text-sm text-muted-foreground">
                     Link to your product website, demo, or repository
                   </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="visibility">Product Visibility</Label>
+                  <div className="flex items-center space-x-3 p-4 border rounded-lg">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2">
+                        {formData.visibility === "PUBLIC" ? (
+                          <Globe className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <Lock className="h-4 w-4 text-amber-600" />
+                        )}
+                        <span className="font-medium">
+                          {formData.visibility === "PUBLIC" ? "Public" : "Private"}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {formData.visibility === "PUBLIC" 
+                          ? "Anyone can view this product" 
+                          : "Only you can view this product"}
+                      </p>
+                    </div>
+                    <Switch
+                      id="visibility"
+                      checked={formData.visibility === "PRIVATE"}
+                      onCheckedChange={(checked) => 
+                        setFormData({...formData, visibility: checked ? "PRIVATE" : "PUBLIC"})
+                      }
+                    />
+                  </div>
                 </div>
 
                 {errors.general && (

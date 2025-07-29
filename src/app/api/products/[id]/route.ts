@@ -4,6 +4,9 @@ import { productUpdateSchema } from "@/lib/validations"
 import { requireAuth } from "@/lib/auth-utils"
 import { handleApiError, parseRequestBody, successResponse } from "@/lib/api-utils"
 import { AuthorizationError } from "@/lib/errors"
+import { authOptions } from "@/lib/auth"
+import { getServerSession } from "next-auth/next"
+import { hasResourceAccess } from "@/lib/ownership-utils"
 
 export const dynamic = 'force-dynamic'
 
@@ -14,6 +17,10 @@ export async function GET(
 ) {
   try {
     const { id } = await params
+    
+    // Get current user session (if any)
+    const session = await getServerSession(authOptions)
+    const userId = session?.user?.id
     const product = await prisma.product.findUnique({
       where: { id },
       include: {
@@ -24,6 +31,13 @@ export async function GET(
             email: true
           }
         },
+        organization: {
+          select: {
+            id: true,
+            name: true,
+            slug: true
+          }
+        },
         projects: {
           orderBy: { createdAt: 'desc' },
           include: {
@@ -32,6 +46,13 @@ export async function GET(
                 id: true,
                 name: true,
                 email: true
+              }
+            },
+            organization: {
+              select: {
+                id: true,
+                name: true,
+                slug: true
               }
             },
             _count: {
@@ -46,6 +67,30 @@ export async function GET(
 
     if (!product) {
       throw new Error("Product not found")
+    }
+
+    // Check access permissions using hasResourceAccess
+    if (userId) {
+      const hasAccess = await hasResourceAccess(userId, product, 'read')
+      if (!hasAccess) {
+        // Return generic error to not reveal existence of private products
+        throw new Error("Product not found")
+      }
+    } else if (product.visibility === 'PRIVATE') {
+      // No user session and product is private
+      throw new Error("Product not found")
+    }
+
+    // Filter out private projects if user doesn't have access
+    if (product.projects) {
+      const projectAccessChecks = await Promise.all(
+        product.projects.map(async (project) => {
+          if (!userId) return project.visibility === 'PUBLIC'
+          return hasResourceAccess(userId, project, 'read')
+        })
+      )
+      
+      product.projects = product.projects.filter((_, index) => projectAccessChecks[index])
     }
 
     return successResponse(product)
@@ -73,8 +118,9 @@ export async function PUT(
       throw new Error("Product not found")
     }
 
-    if (existingProduct.ownerId !== user.id) {
-      throw new AuthorizationError("You can only update your own products")
+    const canUpdate = await hasResourceAccess(user.id, existingProduct, 'update')
+    if (!canUpdate) {
+      throw new AuthorizationError("You don't have permission to update this product")
     }
 
     // Update product
@@ -84,6 +130,7 @@ export async function PUT(
         ...(validatedData.name && { name: validatedData.name }),
         ...(validatedData.description && { description: validatedData.description }),
         ...(validatedData.url !== undefined && { url: validatedData.url || null }),
+        ...(validatedData.visibility && { visibility: validatedData.visibility }),
       },
       include: {
         owner: {
@@ -91,6 +138,13 @@ export async function PUT(
             id: true,
             name: true,
             email: true
+          }
+        },
+        organization: {
+          select: {
+            id: true,
+            name: true,
+            slug: true
           }
         }
       }
@@ -127,8 +181,9 @@ export async function DELETE(
       throw new Error("Product not found")
     }
 
-    if (existingProduct.ownerId !== user.id) {
-      throw new AuthorizationError("You can only delete your own products")
+    const canDelete = await hasResourceAccess(user.id, existingProduct, 'delete')
+    if (!canDelete) {
+      throw new AuthorizationError("You don't have permission to delete this product")
     }
 
     // Check if product has associated projects

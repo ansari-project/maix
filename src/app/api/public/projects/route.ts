@@ -13,7 +13,8 @@ export async function GET(request: Request) {
     
     // Build where clause for filtering
     const where: any = {
-      isActive: true
+      isActive: true,
+      visibility: 'PUBLIC'  // Only show public projects
     }
     
     if (search) {

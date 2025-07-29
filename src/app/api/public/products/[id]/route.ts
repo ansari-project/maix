@@ -13,13 +13,19 @@ export async function GET(
     const { id } = await params
     
     const product = await prisma.product.findUnique({
-      where: { id },
+      where: { 
+        id,
+        visibility: 'PUBLIC'  // Only show public products
+      },
       include: {
         owner: {
           select: { id: true, name: true }
         },
         projects: {
-          where: { isActive: true },
+          where: { 
+            isActive: true,
+            visibility: 'PUBLIC'  // Only show public projects
+          },
           include: {
             owner: {
               select: { id: true, name: true }

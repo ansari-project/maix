@@ -95,12 +95,22 @@ describe('/api/projects', () => {
       expect(response.status).toBe(200)
       expect(responseData).toEqual(mockProjects)
       expect(mockPrisma.project.findMany).toHaveBeenCalledWith({
-        where: { isActive: true },
+        where: { 
+          isActive: true,
+          visibility: 'PUBLIC'
+        },
         include: {
           owner: {
             select: {
               name: true,
               email: true,
+            },
+          },
+          organization: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
             },
           },
           product: {

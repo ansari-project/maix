@@ -3,14 +3,66 @@ import { prisma } from "@/lib/prisma"
 import { productCreateSchema } from "@/lib/validations"
 import { requireAuth } from "@/lib/auth-utils"
 import { handleApiError, parseRequestBody, successResponse } from "@/lib/api-utils"
+import { authOptions } from "@/lib/auth"
+import { getServerSession } from "next-auth/next"
+import { validateOwnership } from "@/lib/ownership-utils"
 
 export const dynamic = 'force-dynamic'
 
 // GET /api/products - List all products
 export async function GET() {
   try {
+    // Get current user session (if any)
+    const session = await getServerSession(authOptions)
+    const userId = session?.user?.id
+
+    if (!userId) {
+      // No session - only return public products
+      const products = await prisma.product.findMany({
+        where: {
+          visibility: 'PUBLIC'
+        },
+        orderBy: { createdAt: 'desc' },
+        include: {
+          owner: {
+            select: {
+              id: true,
+              name: true,
+              email: true
+            }
+          },
+          organization: {
+            select: {
+              id: true,
+              name: true,
+              slug: true
+            }
+          },
+          _count: {
+            select: {
+              projects: true
+            }
+          }
+        }
+      })
+      return successResponse(products)
+    }
+
+    // Use a single optimized query with OR conditions
     const products = await prisma.product.findMany({
-      orderBy: { createdAt: 'desc' },
+      where: {
+        OR: [
+          { visibility: 'PUBLIC' },
+          { ownerId: userId },
+          { 
+            organization: { 
+              members: { 
+                some: { userId } 
+              } 
+            } 
+          }
+        ]
+      },
       include: {
         owner: {
           select: {
@@ -19,12 +71,21 @@ export async function GET() {
             email: true
           }
         },
+        organization: {
+          select: {
+            id: true,
+            name: true,
+            slug: true
+          }
+        },
         _count: {
           select: {
             projects: true
           }
         }
-      }
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 50
     })
 
     return successResponse(products)
@@ -41,13 +102,42 @@ export async function POST(request: Request) {
 
     // Create product with associated discussion post
     const product = await prisma.$transaction(async (tx) => {
+      // Prepare ownership data
+      let ownerId: string | null = user.id
+      let organizationId: string | null = null
+
+      // If organizationId is provided, validate membership and set ownership
+      if (validatedData.organizationId) {
+        const isMember = await tx.organizationMember.findUnique({
+          where: {
+            organizationId_userId: {
+              organizationId: validatedData.organizationId,
+              userId: user.id
+            }
+          }
+        })
+
+        if (!isMember) {
+          throw new Error('You must be a member of the organization to create products under it')
+        }
+
+        // Set organization ownership
+        ownerId = null
+        organizationId = validatedData.organizationId
+      }
+
+      // Validate ownership constraint
+      validateOwnership({ ownerId, organizationId })
+
       // 1. Create the product first
       const newProduct = await tx.product.create({
         data: {
           name: validatedData.name,
           description: validatedData.description,
           url: validatedData.url || null,
-          ownerId: user.id
+          visibility: validatedData.visibility || 'PUBLIC',
+          ownerId,
+          organizationId
         }
       })
 
@@ -70,6 +160,13 @@ export async function POST(request: Request) {
               id: true,
               name: true,
               email: true
+            }
+          },
+          organization: {
+            select: {
+              id: true,
+              name: true,
+              slug: true
             }
           }
         }

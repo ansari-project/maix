@@ -97,6 +97,8 @@ export const projectCreateSchema = z.object({
     .optional()
     .or(z.literal('')),
   productId: z.string().cuid('Invalid product ID format').optional(),
+  visibility: z.enum(['PUBLIC', 'PRIVATE']).default('PUBLIC').optional(),
+  organizationId: z.string().cuid('Invalid organization ID format').optional(),
 })
 
 export const projectUpdateSchema = projectCreateSchema.partial()
@@ -106,6 +108,8 @@ export const productCreateSchema = z.object({
   name: z.string().min(1, "Product name is required"),
   description: z.string().min(1, "Product description is required"),
   url: z.string().url("Invalid URL").optional().or(z.literal("")),
+  visibility: z.enum(['PUBLIC', 'PRIVATE']).default('PUBLIC').optional(),
+  organizationId: z.string().cuid('Invalid organization ID format').optional(),
 })
 
 export const productUpdateSchema = productCreateSchema.partial()
@@ -143,7 +147,10 @@ export const applicationUpdateSchema = z.object({
   message: z.string()
     .max(1000, 'Response message must be less than 1000 characters long')
     .optional(),
-})
+}).refine(
+  (data) => data.status !== undefined || data.message !== undefined,
+  { message: 'At least one field (status or message) must be provided' }
+)
 
 // Comment validation schemas
 export const commentCreateSchema = z.object({

@@ -9,6 +9,10 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Switch } from "@/components/ui/switch"
+import { Lock, Globe } from "lucide-react"
+import OrganizationSelector from "@/components/forms/OrganizationSelector"
+import { useToast } from "@/hooks/use-toast"
 
 interface Product {
   id: string
@@ -19,6 +23,7 @@ function NewProjectForm() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [products, setProducts] = useState<Product[]>([])
   const [productsLoading, setProductsLoading] = useState(false)
@@ -29,7 +34,9 @@ function NewProjectForm() {
     helpType: "",
     contactEmail: "",
     targetCompletionDate: "",
-    productId: ""
+    productId: "",
+    organizationId: "",
+    visibility: "PUBLIC" as "PUBLIC" | "PRIVATE"  // Default to PUBLIC
   })
 
   const fetchUserProducts = useCallback(async () => {
@@ -38,15 +45,14 @@ function NewProjectForm() {
       const response = await fetch('/api/products')
       if (response.ok) {
         const data = await response.json()
-        // Only show products owned by the current user
-        const userProducts = data.filter((product: any) => product.owner.email === session?.user?.email)
-        setProducts(userProducts)
+        // The API already returns the correct list of products for the user
+        setProducts(data)
       }
     } catch (error) {
       console.error('Error fetching products:', error)
     }
     setProductsLoading(false)
-  }, [session?.user?.email])
+  }, [])
 
   useEffect(() => {
     if (session) {
@@ -55,6 +61,11 @@ function NewProjectForm() {
       const productId = searchParams.get('productId')
       if (productId) {
         setProject(prev => ({ ...prev, productId }))
+      }
+      // Set organizationId from query params if present
+      const organizationId = searchParams.get('organizationId')
+      if (organizationId) {
+        setProject(prev => ({ ...prev, organizationId }))
       }
     }
   }, [session, searchParams, fetchUserProducts])
@@ -66,7 +77,8 @@ function NewProjectForm() {
     try {
       const requestData = {
         ...project,
-        productId: project.productId || undefined
+        productId: project.productId || undefined,
+        organizationId: project.organizationId || undefined
       }
 
       const response = await fetch("/api/projects", {
@@ -79,11 +91,25 @@ function NewProjectForm() {
 
       if (response.ok) {
         const data = await response.json()
+        toast({
+          title: "Project created",
+          description: "Your project has been successfully created.",
+        })
         router.push(`/projects/${data.id}`)
       } else {
-        console.error("Error creating project")
+        const errorData = await response.json().catch(() => null)
+        toast({
+          title: "Error creating project",
+          description: errorData?.error || "Failed to create project. Please try again.",
+          variant: "destructive",
+        })
       }
     } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      })
       console.error("Error creating project:", error)
     }
     setLoading(false)
@@ -114,6 +140,11 @@ function NewProjectForm() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
+              <OrganizationSelector
+                value={project.organizationId}
+                onChange={(value) => setProject({...project, organizationId: value || ""})}
+              />
+
               <div className="space-y-2">
                 <Label htmlFor="name">Project Name *</Label>
                 <Input
@@ -204,6 +235,36 @@ function NewProjectForm() {
                   placeholder="Email for volunteers to contact you"
                   required
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="visibility">Project Visibility</Label>
+                <div className="flex items-center space-x-3 p-4 border rounded-lg">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2">
+                      {project.visibility === "PUBLIC" ? (
+                        <Globe className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <Lock className="h-4 w-4 text-amber-600" />
+                      )}
+                      <span className="font-medium">
+                        {project.visibility === "PUBLIC" ? "Public" : "Private"}
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {project.visibility === "PUBLIC" 
+                        ? "Anyone can view this project" 
+                        : "Only you can view this project"}
+                    </p>
+                  </div>
+                  <Switch
+                    id="visibility"
+                    checked={project.visibility === "PRIVATE"}
+                    onCheckedChange={(checked) => 
+                      setProject({...project, visibility: checked ? "PRIVATE" : "PUBLIC"})
+                    }
+                  />
+                </div>
               </div>
 
               <div className="flex gap-4">

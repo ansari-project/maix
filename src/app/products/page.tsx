@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
-import { Plus, ExternalLink, Package, Users } from "lucide-react"
+import { Plus, ExternalLink, Package, Users, Lock, Globe } from "lucide-react"
 import { Markdown } from "@/components/ui/markdown"
 
 interface Product {
@@ -16,6 +16,7 @@ interface Product {
   description: string
   url: string | null
   createdAt: string
+  visibility?: "PUBLIC" | "PRIVATE"  // Added visibility field
   owner: {
     id: string
     name: string | null
@@ -170,11 +171,16 @@ export default function ProductsPage() {
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <CardTitle className="text-lg line-clamp-2">
-                          <Link href={`/products/${product.id}`} className="hover:underline">
-                            {product.name}
-                          </Link>
-                        </CardTitle>
+                        <div className="flex items-start gap-2">
+                          <CardTitle className="text-lg line-clamp-2">
+                            <Link href={`/products/${product.id}`} className="hover:underline">
+                              {product.name}
+                            </Link>
+                          </CardTitle>
+                          {product.visibility === "PRIVATE" && (
+                            <Lock className="h-4 w-4 text-amber-600 mt-1" aria-label="Private product" />
+                          )}
+                        </div>
                       </div>
                       <div className="flex items-center gap-1 text-sm text-muted-foreground">
                         <Users className="h-4 w-4" />

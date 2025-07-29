@@ -3,20 +3,88 @@ import { prisma } from "@/lib/prisma"
 import { projectCreateSchema } from "@/lib/validations"
 import { requireAuth } from "@/lib/auth-utils"
 import { handleApiError, parseRequestBody, successResponse } from "@/lib/api-utils"
+import { authOptions } from "@/lib/auth"
+import { getServerSession } from "next-auth/next"
+import { validateOwnership } from "@/lib/ownership-utils"
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
+    // Get current user session (if any)
+    const session = await getServerSession(authOptions)
+    const userId = session?.user?.id
+
+    if (!userId) {
+      // No session - only return public projects
+      const projects = await prisma.project.findMany({
+        where: {
+          isActive: true,
+          visibility: 'PUBLIC'
+        },
+        include: {
+          owner: {
+            select: {
+              name: true,
+              email: true
+            }
+          },
+          organization: {
+            select: {
+              id: true,
+              name: true,
+              slug: true
+            }
+          },
+          product: {
+            select: {
+              id: true,
+              name: true,
+              url: true
+            }
+          },
+          _count: {
+            select: {
+              applications: true
+            }
+          }
+        },
+        orderBy: {
+          createdAt: 'desc'
+        },
+        take: 50
+      })
+      return successResponse(projects)
+    }
+
+    // Use a single optimized query with OR conditions
     const projects = await prisma.project.findMany({
       where: {
-        isActive: true
+        isActive: true,
+        OR: [
+          { visibility: 'PUBLIC' },
+          { ownerId: userId },
+          { 
+            organization: { 
+              members: { 
+                some: { userId } 
+              } 
+            } 
+          }
+        ]
       },
       include: {
         owner: {
           select: {
             name: true,
             email: true
+          }
+        },
+        organization: {
+          select: {
+            id: true,
+            name: true,
+            slug: true
           }
         },
         product: {
@@ -32,10 +100,8 @@ export async function GET() {
           }
         }
       },
-      orderBy: {
-        createdAt: 'desc'
-      },
-      take: 50 // Add pagination limit
+      orderBy: { createdAt: 'desc' },
+      take: 50
     })
 
     return successResponse(projects)
@@ -49,30 +115,65 @@ export async function POST(request: Request) {
     const user = await requireAuth()
     const validatedData = await parseRequestBody(request, projectCreateSchema)
 
-    // If productId is provided, validate user owns the product
-    if (validatedData.productId) {
-      const product = await prisma.product.findUnique({
-        where: { id: validatedData.productId }
-      })
-
-      if (!product) {
-        throw new Error("Product not found")
-      }
-
-      if (product.ownerId !== user.id) {
-        throw new Error("You can only associate projects with your own products")
-      }
-    }
-
     // Create project with associated discussion post
     const project = await prisma.$transaction(async (tx) => {
+      // Prepare ownership data
+      let ownerId: string | null = user.id
+      let organizationId: string | null = null
+
+      // If organizationId is provided, validate membership and set ownership
+      if (validatedData.organizationId) {
+        const isMember = await tx.organizationMember.findUnique({
+          where: {
+            organizationId_userId: {
+              organizationId: validatedData.organizationId,
+              userId: user.id
+            }
+          }
+        })
+
+        if (!isMember) {
+          throw new Error('You must be a member of the organization to create projects under it')
+        }
+
+        // Set organization ownership
+        ownerId = null
+        organizationId = validatedData.organizationId
+      }
+
+      // Validate ownership constraint
+      validateOwnership({ ownerId, organizationId })
+
+      // If productId is provided, validate ownership
+      if (validatedData.productId) {
+        const product = await tx.product.findUnique({
+          where: { id: validatedData.productId }
+        })
+
+        if (!product) {
+          throw new Error("Product not found")
+        }
+
+        // Check if the product has the same ownership
+        if ((product.ownerId !== ownerId) || (product.organizationId !== organizationId)) {
+          throw new Error("You can only associate projects with products that have the same ownership")
+        }
+      }
+
       // 1. Create the project first
       const newProject = await tx.project.create({
         data: {
-          ...validatedData,
-          // Convert targetCompletionDate string to Date if provided
+          name: validatedData.name,
+          goal: validatedData.goal,
+          description: validatedData.description,
+          contactEmail: validatedData.contactEmail,
+          helpType: validatedData.helpType,
+          status: validatedData.status,
+          visibility: validatedData.visibility || 'PUBLIC',
+          productId: validatedData.productId,
           targetCompletionDate: validatedData.targetCompletionDate ? new Date(validatedData.targetCompletionDate) : null,
-          ownerId: user.id
+          ownerId,
+          organizationId
         }
       })
 
@@ -94,6 +195,13 @@ export async function POST(request: Request) {
             select: {
               name: true,
               email: true
+            }
+          },
+          organization: {
+            select: {
+              id: true,
+              name: true,
+              slug: true
             }
           },
           product: {

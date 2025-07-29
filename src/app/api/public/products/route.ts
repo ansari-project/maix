@@ -11,7 +11,9 @@ export async function GET(request: Request) {
     const search = searchParams.get('search')
     
     // Build where clause for filtering
-    const where: any = {}
+    const where: any = {
+      visibility: 'PUBLIC'  // Only show public products
+    }
     
     if (search) {
       where.OR = [

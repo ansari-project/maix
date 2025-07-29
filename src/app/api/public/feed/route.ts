@@ -11,7 +11,10 @@ export async function GET() {
     const [projects, products, productUpdates, questions, answers] = await Promise.all([
       // Recent projects
       prisma.project.findMany({
-        where: { isActive: true },
+        where: { 
+          isActive: true,
+          visibility: 'PUBLIC'  // Only show public projects
+        },
         take: 10,
         orderBy: { createdAt: 'desc' },
         include: { 
@@ -20,6 +23,7 @@ export async function GET() {
       }),
       // Recent products
       prisma.product.findMany({
+        where: { visibility: 'PUBLIC' },  // Only show public products
         take: 10,
         orderBy: { createdAt: 'desc' },
         include: { 
@@ -27,9 +31,14 @@ export async function GET() {
           _count: { select: { projects: true } }
         }
       }),
-      // Product updates
+      // Product updates (only for public products)
       prisma.post.findMany({
-        where: { type: 'PRODUCT_UPDATE' },
+        where: { 
+          type: 'PRODUCT_UPDATE',
+          product: {
+            visibility: 'PUBLIC'
+          }
+        },
         take: 10,
         orderBy: { createdAt: 'desc' },
         include: {
@@ -37,24 +46,64 @@ export async function GET() {
           product: { select: { id: true, name: true } }
         }
       }),
-      // Recent questions
+      // Recent questions (only standalone or from public projects/products)
       prisma.post.findMany({
         where: { 
           type: 'QUESTION',
-          parentId: null 
+          parentId: null,
+          OR: [
+            // Standalone questions (no project/product association)
+            { 
+              projectId: null,
+              productId: null 
+            },
+            // Questions from public projects
+            {
+              project: {
+                visibility: 'PUBLIC'
+              }
+            },
+            // Questions from public products
+            {
+              product: {
+                visibility: 'PUBLIC'
+              }
+            }
+          ]
         },
         take: 10,
         orderBy: { createdAt: 'desc' },
         include: {
-          author: { select: { id: true, name: true } }
+          author: { select: { id: true, name: true } },
+          project: { select: { id: true, name: true, visibility: true } },
+          product: { select: { id: true, name: true, visibility: true } }
         }
       }),
-      // Recent answers
+      // Recent answers (only for public questions)
       prisma.post.findMany({
         where: { 
           type: 'ANSWER',
           parent: {
-            type: 'QUESTION'
+            type: 'QUESTION',
+            OR: [
+              // Answers to standalone questions
+              { 
+                projectId: null,
+                productId: null 
+              },
+              // Answers to questions from public projects
+              {
+                project: {
+                  visibility: 'PUBLIC'
+                }
+              },
+              // Answers to questions from public products
+              {
+                product: {
+                  visibility: 'PUBLIC'
+                }
+              }
+            ]
           }
         },
         take: 10,
@@ -65,7 +114,9 @@ export async function GET() {
             select: { 
               id: true, 
               content: true,
-              author: { select: { id: true, name: true } }
+              author: { select: { id: true, name: true } },
+              project: { select: { id: true, name: true, visibility: true } },
+              product: { select: { id: true, name: true, visibility: true } }
             }
           }
         }

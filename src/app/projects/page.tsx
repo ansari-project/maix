@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Package, ExternalLink } from "lucide-react"
+import { Package, ExternalLink, Lock, Globe } from "lucide-react"
 import { Markdown } from "@/components/ui/markdown"
 
 interface Project {
@@ -22,6 +22,7 @@ interface Project {
   targetCompletionDate?: string
   isActive: boolean
   createdAt: string
+  visibility?: "PUBLIC" | "PRIVATE"  // Added visibility field
   owner: {
     name: string
     email: string
@@ -151,7 +152,12 @@ export default function ProjectsPage() {
               <Card key={project.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex justify-between items-start">
-                    <CardTitle className="line-clamp-2">{project.name}</CardTitle>
+                    <div className="flex items-start gap-2">
+                      <CardTitle className="line-clamp-2">{project.name}</CardTitle>
+                      {project.visibility === "PRIVATE" && (
+                        <Lock className="h-4 w-4 text-amber-600 mt-1" aria-label="Private project" />
+                      )}
+                    </div>
                     <div className="flex gap-1">
                       <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
                         {project.helpType.replace('_', ' ')}
