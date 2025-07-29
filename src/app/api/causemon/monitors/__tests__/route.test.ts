@@ -14,9 +14,13 @@ jest.mock('@/lib/prisma', () => ({
     },
     publicFigure: {
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
+      create: jest.fn(),
     },
     topic: {
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
+      create: jest.fn(),
     },
   },
 }));
@@ -130,74 +134,71 @@ describe('/api/causemon/monitors', () => {
       expect(data.error).toBe('Public figure and topic are required');
     });
 
-    it('should return 400 if user already has a monitor', async () => {
+    it('should create monitor successfully with new public figure and topic', async () => {
       (getServerSession as jest.Mock).mockResolvedValue(mockSession);
+      (prisma.publicFigure.findFirst as jest.Mock).mockResolvedValue(null);
+      (prisma.topic.findFirst as jest.Mock).mockResolvedValue(null);
+      (prisma.publicFigure.create as jest.Mock).mockResolvedValue({ id: 'pf1', name: 'Anthony Albanese' });
+      (prisma.topic.create as jest.Mock).mockResolvedValue({ id: 'topic1', name: 'Palestine' });
       (prisma.monitor.findUnique as jest.Mock).mockResolvedValue(null);
-      (prisma.monitor.count as jest.Mock).mockResolvedValue(1);
-      (prisma.publicFigure.findUnique as jest.Mock).mockResolvedValue({ id: 'pf1' });
-      (prisma.topic.findUnique as jest.Mock).mockResolvedValue({ id: 'topic1' });
+      
+      const mockMonitor = {
+        id: 'monitor1',
+        userId: 'user123',
+        publicFigureId: 'pf1',
+        topicId: 'topic1',
+        isActive: true,
+        emailFrequency: 'daily',
+        publicFigure: { id: 'pf1', name: 'Anthony Albanese' },
+        topic: { id: 'topic1', name: 'Palestine' },
+      };
+
+      (prisma.monitor.create as jest.Mock).mockResolvedValue(mockMonitor);
 
       const request = new NextRequest('http://localhost/api/causemon/monitors', {
         method: 'POST',
         body: JSON.stringify({
-          publicFigureId: 'pf1',
-          topicId: 'topic1',
+          publicFigureName: 'Anthony Albanese',
+          topicName: 'Palestine',
         }),
       });
 
       const response = await POST(request);
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(201);
       const data = await response.json();
-      expect(data.error).toBe('You can only have one monitor in the beta version');
+      expect(data).toEqual(mockMonitor);
     });
 
-    it('should return 400 if public figure does not exist', async () => {
+    it('should return 409 if monitor already exists', async () => {
       (getServerSession as jest.Mock).mockResolvedValue(mockSession);
-      (prisma.monitor.findUnique as jest.Mock).mockResolvedValue(null);
-      (prisma.monitor.count as jest.Mock).mockResolvedValue(0);
-      (prisma.publicFigure.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.publicFigure.findFirst as jest.Mock).mockResolvedValue({ id: 'pf1', name: 'John Doe' });
+      (prisma.topic.findFirst as jest.Mock).mockResolvedValue({ id: 'topic1', name: 'Climate Change' });
+      (prisma.monitor.findUnique as jest.Mock).mockResolvedValue({
+        id: 'existing',
+        userId: 'user123',
+        publicFigureId: 'pf1',
+        topicId: 'topic1',
+      });
 
       const request = new NextRequest('http://localhost/api/causemon/monitors', {
         method: 'POST',
         body: JSON.stringify({
-          publicFigureId: 'invalid',
-          topicId: 'topic1',
+          publicFigureName: 'John Doe',
+          topicName: 'Climate Change',
         }),
       });
 
       const response = await POST(request);
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(409);
       const data = await response.json();
-      expect(data.error).toBe('Invalid public figure');
+      expect(data.error).toBe('Monitor already exists for this combination');
     });
 
-    it('should return 400 if topic does not exist', async () => {
+    it('should create monitor with existing public figure and topic', async () => {
       (getServerSession as jest.Mock).mockResolvedValue(mockSession);
+      (prisma.publicFigure.findFirst as jest.Mock).mockResolvedValue({ id: 'pf1', name: 'John Doe' });
+      (prisma.topic.findFirst as jest.Mock).mockResolvedValue({ id: 'topic1', name: 'Climate Change' });
       (prisma.monitor.findUnique as jest.Mock).mockResolvedValue(null);
-      (prisma.monitor.count as jest.Mock).mockResolvedValue(0);
-      (prisma.publicFigure.findUnique as jest.Mock).mockResolvedValue({ id: 'pf1' });
-      (prisma.topic.findUnique as jest.Mock).mockResolvedValue(null);
-
-      const request = new NextRequest('http://localhost/api/causemon/monitors', {
-        method: 'POST',
-        body: JSON.stringify({
-          publicFigureId: 'pf1',
-          topicId: 'invalid',
-        }),
-      });
-
-      const response = await POST(request);
-      expect(response.status).toBe(400);
-      const data = await response.json();
-      expect(data.error).toBe('Invalid topic');
-    });
-
-    it('should create monitor successfully', async () => {
-      (getServerSession as jest.Mock).mockResolvedValue(mockSession);
-      (prisma.monitor.findUnique as jest.Mock).mockResolvedValue(null);
-      (prisma.monitor.count as jest.Mock).mockResolvedValue(0);
-      (prisma.publicFigure.findUnique as jest.Mock).mockResolvedValue({ id: 'pf1' });
-      (prisma.topic.findUnique as jest.Mock).mockResolvedValue({ id: 'topic1' });
       
       const mockMonitor = {
         id: 'monitor1',
@@ -215,8 +216,8 @@ describe('/api/causemon/monitors', () => {
       const request = new NextRequest('http://localhost/api/causemon/monitors', {
         method: 'POST',
         body: JSON.stringify({
-          publicFigureId: 'pf1',
-          topicId: 'topic1',
+          publicFigureName: 'John Doe',
+          topicName: 'Climate Change',
         }),
       });
 
@@ -224,17 +225,46 @@ describe('/api/causemon/monitors', () => {
       expect(response.status).toBe(201);
       const data = await response.json();
       expect(data).toEqual(mockMonitor);
-      expect(prisma.monitor.create).toHaveBeenCalledWith({
-        data: {
-          userId: 'user123',
-          publicFigureId: 'pf1',
-          topicId: 'topic1',
-          emailFrequency: 'daily',
-        },
-        include: {
-          publicFigure: true,
-          topic: true,
-        },
+    });
+
+    it('should handle case-insensitive matching for names', async () => {
+      (getServerSession as jest.Mock).mockResolvedValue(mockSession);
+      (prisma.publicFigure.findFirst as jest.Mock).mockResolvedValue({ id: 'pf1', name: 'John Doe' });
+      (prisma.topic.findFirst as jest.Mock).mockResolvedValue({ id: 'topic1', name: 'Climate Change' });
+      (prisma.monitor.findUnique as jest.Mock).mockResolvedValue(null);
+      
+      const mockMonitor = {
+        id: 'monitor1',
+        userId: 'user123',
+        publicFigureId: 'pf1',
+        topicId: 'topic1',
+        isActive: true,
+        emailFrequency: 'daily',
+        publicFigure: { id: 'pf1', name: 'John Doe' },
+        topic: { id: 'topic1', name: 'Climate Change' },
+      };
+
+      (prisma.monitor.create as jest.Mock).mockResolvedValue(mockMonitor);
+
+      const request = new NextRequest('http://localhost/api/causemon/monitors', {
+        method: 'POST',
+        body: JSON.stringify({
+          publicFigureName: 'JOHN DOE',
+          topicName: 'climate change',
+        }),
+      });
+
+      const response = await POST(request);
+      expect(response.status).toBe(201);
+      
+      // Verify case-insensitive search was performed
+      expect(prisma.publicFigure.findFirst).toHaveBeenCalledWith({
+        where: {
+          name: {
+            equals: 'JOHN DOE',
+            mode: 'insensitive'
+          }
+        }
       });
     });
   });
