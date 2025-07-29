@@ -19,14 +19,14 @@ style: |
     color: white;
     text-align: center;
     margin-bottom: 30px;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    text-shadow: none;
   }
   
   h2 {
     font-size: 48px;
     color: #ffffff;
     margin-bottom: 25px;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+    text-shadow: none;
     text-align: center;
     border-bottom: 3px solid rgba(255,255,255,0.3);
     padding-bottom: 15px;
@@ -37,6 +37,7 @@ style: |
     color: #e8f4f8;
     margin-bottom: 20px;
     text-align: left;
+    text-shadow: none;
   }
   
   h4 {
@@ -44,6 +45,7 @@ style: |
     color: #d6e9f5;
     margin-bottom: 15px;
     text-align: left;
+    text-shadow: none;
   }
   
   ul, ol {
@@ -56,7 +58,7 @@ style: |
   
   li {
     margin-bottom: 12px;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    text-shadow: none;
     text-align: left;
   }
   
@@ -142,7 +144,7 @@ style: |
     font-size: 48px;
     font-weight: bold;
     color: #d97706;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    text-shadow: none;
   }
   
   /* Success story box */
@@ -160,15 +162,13 @@ style: |
 
 *maix.io*
 
-*What if every community organization had access to Silicon Valley AI talent?*
-
 ---
 
 ## The Problem We Face
 
 ### The Great Disconnect
-- Millions of skilled AI professionals want to help
-- Thousands of orgs need AI help 
+- Skilled AI professionals want to help
+- Orgs need AI help 
 - No centralized repository of experience for AI
 - No AI tailored to social good work
 

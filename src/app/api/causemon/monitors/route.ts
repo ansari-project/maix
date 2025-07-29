@@ -74,7 +74,10 @@ export async function POST(request: NextRequest) {
 
     if (!publicFigure) {
       publicFigure = await prisma.publicFigure.create({
-        data: { name: publicFigureName }
+        data: { 
+          name: publicFigureName,
+          aliases: []
+        }
       });
     }
 
@@ -90,7 +93,10 @@ export async function POST(request: NextRequest) {
 
     if (!topic) {
       topic = await prisma.topic.create({
-        data: { name: topicName }
+        data: { 
+          name: topicName,
+          keywords: []
+        }
       });
     }
 

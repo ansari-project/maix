@@ -51,10 +51,17 @@ export async function POST(
     });
 
     // Search for recent content
+    const figureAliases = monitor.publicFigure.aliases?.length > 0 
+      ? `(${monitor.publicFigure.aliases.join(', ')})` 
+      : '';
+    const topicKeywords = monitor.topic.keywords?.length > 0 
+      ? `(${monitor.topic.keywords.join(', ')})` 
+      : '';
+    
     const prompt = `
       Search for recent news articles and statements from the last 24 hours where 
-      ${monitor.publicFigure.name} (${monitor.publicFigure.aliases.join(', ')}) 
-      mentioned or discussed ${monitor.topic.name} (${monitor.topic.keywords.join(', ')}).
+      ${monitor.publicFigure.name} ${figureAliases} 
+      mentioned or discussed ${monitor.topic.name} ${topicKeywords}.
       
       For each relevant finding, extract:
       - Event title (what happened)
