@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Trash2, TestTube, Mail, Pause, Play, Search } from 'lucide-react';
 
@@ -34,10 +34,8 @@ export default function CausemonPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [monitors, setMonitors] = useState<Monitor[]>([]);
-  const [publicFigures, setPublicFigures] = useState<PublicFigure[]>([]);
-  const [topics, setTopics] = useState<Topic[]>([]);
-  const [selectedFigure, setSelectedFigure] = useState('');
-  const [selectedTopic, setSelectedTopic] = useState('');
+  const [publicFigureName, setPublicFigureName] = useState('');
+  const [topicName, setTopicName] = useState('');
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [testing, setTesting] = useState<string | null>(null);
@@ -53,25 +51,14 @@ export default function CausemonPage() {
 
   const fetchData = async () => {
     try {
-      const [monitorsRes, figuresRes, topicsRes] = await Promise.all([
-        fetch('/api/causemon/monitors'),
-        fetch('/api/causemon/public-figures'),
-        fetch('/api/causemon/topics'),
-      ]);
+      const monitorsRes = await fetch('/api/causemon/monitors');
 
-      if (!monitorsRes.ok || !figuresRes.ok || !topicsRes.ok) {
+      if (!monitorsRes.ok) {
         throw new Error('Failed to fetch data');
       }
 
-      const [monitorsData, figuresData, topicsData] = await Promise.all([
-        monitorsRes.json(),
-        figuresRes.json(),
-        topicsRes.json(),
-      ]);
-
+      const monitorsData = await monitorsRes.json();
       setMonitors(monitorsData);
-      setPublicFigures(figuresData);
-      setTopics(topicsData);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -80,8 +67,8 @@ export default function CausemonPage() {
   };
 
   const createMonitor = async () => {
-    if (!selectedFigure || !selectedTopic) {
-      alert('Please select both a public figure and a topic');
+    if (!publicFigureName.trim() || !topicName.trim()) {
+      alert('Please enter both a public figure and a topic');
       return;
     }
 
@@ -91,8 +78,8 @@ export default function CausemonPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          publicFigureId: selectedFigure,
-          topicId: selectedTopic,
+          publicFigureName: publicFigureName.trim(),
+          topicName: topicName.trim(),
         }),
       });
 
@@ -102,9 +89,9 @@ export default function CausemonPage() {
       }
 
       const newMonitor = await res.json();
-      setMonitors([newMonitor]);
-      setSelectedFigure('');
-      setSelectedTopic('');
+      setMonitors([...monitors, newMonitor]);
+      setPublicFigureName('');
+      setTopicName('');
       console.log('Monitor created successfully');
     } catch (error: any) {
       console.error('Error creating monitor:', error);
@@ -225,63 +212,52 @@ export default function CausemonPage() {
         </div>
       </div>
 
-      {monitors.length === 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Create Your First Monitor</CardTitle>
-            <CardDescription>
-              Select a public figure and topic to start receiving daily updates
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">
-                Public Figure
-              </label>
-              <Select value={selectedFigure} onValueChange={setSelectedFigure}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a public figure" />
-                </SelectTrigger>
-                <SelectContent>
-                  {publicFigures.map((figure) => (
-                    <SelectItem key={figure.id} value={figure.id}>
-                      <div>
-                        <div className="font-medium">{figure.name}</div>
-                        {figure.title && (
-                          <div className="text-sm text-muted-foreground">
-                            {figure.title}
-                          </div>
-                        )}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium mb-2 block">Topic</label>
-              <Select value={selectedTopic} onValueChange={setSelectedTopic}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a topic" />
-                </SelectTrigger>
-                <SelectContent>
-                  {topics.map((topic) => (
-                    <SelectItem key={topic.id} value={topic.id}>
-                      {topic.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <Button
-              onClick={createMonitor}
-              disabled={creating || !selectedFigure || !selectedTopic}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Create New Monitor</CardTitle>
+          <CardDescription>
+            Enter any public figure and topic to start receiving daily updates
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <label className="text-sm font-medium mb-2 block">
+              Public Figure
+            </label>
+            <Input
+              value={publicFigureName}
+              onChange={(e) => setPublicFigureName(e.target.value)}
+              placeholder="e.g., Anthony Albanese"
               className="w-full"
-            >
-              {creating ? 'Creating...' : 'Create Monitor'}
-            </Button>
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium mb-2 block">Topic</label>
+            <Input
+              value={topicName}
+              onChange={(e) => setTopicName(e.target.value)}
+              placeholder="e.g., Palestine"
+              className="w-full"
+            />
+          </div>
+
+          <Button
+            onClick={createMonitor}
+            disabled={creating || !publicFigureName.trim() || !topicName.trim()}
+            className="w-full"
+          >
+            {creating ? 'Creating...' : 'Create Monitor'}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {monitors.length === 0 ? (
+        <Card className="text-center py-12">
+          <CardContent>
+            <p className="text-muted-foreground">
+              No monitors yet. Create your first monitor above!
+            </p>
           </CardContent>
         </Card>
       ) : (
@@ -371,10 +347,6 @@ export default function CausemonPage() {
               </CardContent>
             </Card>
           ))}
-
-          <div className="text-center text-sm text-muted-foreground mt-8">
-            <p>Beta version: Limited to 1 monitor per user</p>
-          </div>
         </div>
       )}
     </div>

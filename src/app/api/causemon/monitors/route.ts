@@ -53,13 +53,51 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { publicFigureId, topicId, emailFrequency = 'daily' } = body;
+    const { publicFigureName, topicName, emailFrequency = 'daily' } = body;
 
-    if (!publicFigureId || !topicId) {
+    if (!publicFigureName || !topicName) {
       return NextResponse.json(
         { error: 'Public figure and topic are required' },
         { status: 400 }
       );
+    }
+
+    // Find or create public figure (case-insensitive)
+    let publicFigure = await prisma.publicFigure.findFirst({
+      where: {
+        name: {
+          equals: publicFigureName,
+          mode: 'insensitive'
+        }
+      }
+    });
+
+    if (!publicFigure) {
+      publicFigure = await prisma.publicFigure.create({
+        data: { 
+          name: publicFigureName,
+          aliases: []
+        }
+      });
+    }
+
+    // Find or create topic (case-insensitive)
+    let topic = await prisma.topic.findFirst({
+      where: {
+        name: {
+          equals: topicName,
+          mode: 'insensitive'
+        }
+      }
+    });
+
+    if (!topic) {
+      topic = await prisma.topic.create({
+        data: { 
+          name: topicName,
+          keywords: []
+        }
+      });
     }
 
     // Check if monitor already exists
@@ -67,8 +105,8 @@ export async function POST(request: NextRequest) {
       where: {
         userId_publicFigureId_topicId: {
           userId: session.user.id,
-          publicFigureId,
-          topicId,
+          publicFigureId: publicFigure.id,
+          topicId: topic.id,
         },
       },
     });
@@ -80,47 +118,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate public figure exists
-    const publicFigure = await prisma.publicFigure.findUnique({
-      where: { id: publicFigureId },
-    });
-
-    if (!publicFigure) {
-      return NextResponse.json(
-        { error: 'Invalid public figure' },
-        { status: 400 }
-      );
-    }
-
-    // Validate topic exists
-    const topic = await prisma.topic.findUnique({
-      where: { id: topicId },
-    });
-
-    if (!topic) {
-      return NextResponse.json(
-        { error: 'Invalid topic' },
-        { status: 400 }
-      );
-    }
-
-    // For MVP, limit to 1 monitor per user
-    const monitorCount = await prisma.monitor.count({
-      where: { userId: session.user.id },
-    });
-
-    if (monitorCount >= 1) {
-      return NextResponse.json(
-        { error: 'You can only have one monitor in the beta version' },
-        { status: 400 }
-      );
-    }
-
     const monitor = await prisma.monitor.create({
       data: {
         userId: session.user.id,
-        publicFigureId,
-        topicId,
+        publicFigureId: publicFigure.id,
+        topicId: topic.id,
         emailFrequency,
       },
       include: {

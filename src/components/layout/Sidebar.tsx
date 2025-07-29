@@ -22,7 +22,8 @@ import {
   Package,
   LogOut,
   HelpCircle,
-  Shield
+  Shield,
+  Megaphone
 } from "lucide-react"
 
 interface NavigationItem {
@@ -83,6 +84,16 @@ export function Sidebar({ isCollapsed = false, onToggle, currentPath }: SidebarP
     }
   ]
 
+  // Apps section - visible to all authenticated users
+  const appItems: NavigationItem[] = session ? [
+    {
+      name: "Causemon",
+      href: "/causemon",
+      icon: Megaphone,
+      isActive: pathname === "/causemon"
+    }
+  ] : []
+
   const settingsItems: NavigationItem[] = [
     {
       name: "Settings",
@@ -131,6 +142,26 @@ export function Sidebar({ isCollapsed = false, onToggle, currentPath }: SidebarP
             />
           ))}
         </div>
+
+        {/* Apps Section */}
+        {appItems.length > 0 && (
+          <>
+            <Separator className="my-4" />
+            <div className="space-y-1">
+              {!isCollapsed && (
+                <p className="text-xs font-semibold text-muted-foreground px-3 mb-2">APPS</p>
+              )}
+              {appItems.map((item) => (
+                <SidebarItem
+                  key={item.name}
+                  item={item}
+                  isCollapsed={isCollapsed}
+                  onClick={() => setIsMobileOpen(false)}
+                />
+              ))}
+            </div>
+          </>
+        )}
 
         <Separator className="my-4" />
 
