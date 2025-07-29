@@ -227,6 +227,62 @@ describe('/api/causemon/monitors', () => {
       expect(data).toEqual(mockMonitor);
     });
 
+    it('should create public figure and topic with empty arrays for aliases and keywords', async () => {
+      (getServerSession as jest.Mock).mockResolvedValue(mockSession);
+      (prisma.publicFigure.findFirst as jest.Mock).mockResolvedValue(null);
+      (prisma.topic.findFirst as jest.Mock).mockResolvedValue(null);
+      (prisma.publicFigure.create as jest.Mock).mockResolvedValue({ 
+        id: 'pf1', 
+        name: 'New Person',
+        aliases: [] 
+      });
+      (prisma.topic.create as jest.Mock).mockResolvedValue({ 
+        id: 'topic1', 
+        name: 'New Topic',
+        keywords: []
+      });
+      (prisma.monitor.findUnique as jest.Mock).mockResolvedValue(null);
+      
+      const mockMonitor = {
+        id: 'monitor1',
+        userId: 'user123',
+        publicFigureId: 'pf1',
+        topicId: 'topic1',
+        isActive: true,
+        emailFrequency: 'daily',
+        publicFigure: { id: 'pf1', name: 'New Person', aliases: [] },
+        topic: { id: 'topic1', name: 'New Topic', keywords: [] },
+      };
+
+      (prisma.monitor.create as jest.Mock).mockResolvedValue(mockMonitor);
+
+      const request = new NextRequest('http://localhost/api/causemon/monitors', {
+        method: 'POST',
+        body: JSON.stringify({
+          publicFigureName: 'New Person',
+          topicName: 'New Topic',
+        }),
+      });
+
+      const response = await POST(request);
+      expect(response.status).toBe(201);
+      
+      // Verify that create was called with empty arrays
+      expect(prisma.publicFigure.create).toHaveBeenCalledWith({
+        data: {
+          name: 'New Person',
+          aliases: []
+        }
+      });
+      
+      expect(prisma.topic.create).toHaveBeenCalledWith({
+        data: {
+          name: 'New Topic',
+          keywords: []
+        }
+      });
+    });
+
     it('should handle case-insensitive matching for names', async () => {
       (getServerSession as jest.Mock).mockResolvedValue(mockSession);
       (prisma.publicFigure.findFirst as jest.Mock).mockResolvedValue({ id: 'pf1', name: 'John Doe' });
