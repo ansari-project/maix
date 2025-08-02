@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Trash2, Mail, Pause, Play, Search, Loader2 } from 'lucide-react';
+import { Trash2, Mail, Pause, Play, Search, Loader2, FileText } from 'lucide-react';
 
 interface PublicFigure {
   id: string;
@@ -329,6 +329,14 @@ export default function CausemonPage() {
                     <Button
                       variant="outline"
                       size="icon"
+                      onClick={() => router.push(`/causemon/events?monitorId=${monitor.id}`)}
+                      title="View Events"
+                    >
+                      <FileText className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
                       onClick={() => toggleMonitor(monitor.id, monitor.isActive)}
                       title={monitor.isActive ? 'Pause' : 'Activate'}
                     >
@@ -430,9 +438,6 @@ export default function CausemonPage() {
                         <div className="text-sm text-muted-foreground space-y-1">
                           <div>• Created {searchResults[monitor.id].eventsCreated} new events</div>
                           <div>• Skipped {searchResults[monitor.id].eventsSkipped} duplicates</div>
-                          {searchResults[monitor.id].estimatedCost && (
-                            <div>• Estimated cost: ${searchResults[monitor.id].estimatedCost.toFixed(4)}</div>
-                          )}
                           {searchResults[monitor.id].timing && (
                             <div>
                               • Timing: Search {(searchResults[monitor.id].timing.searchDuration / 1000).toFixed(1)}s, 
@@ -440,6 +445,42 @@ export default function CausemonPage() {
                             </div>
                           )}
                         </div>
+
+                        {/* Display all found events */}
+                        {searchResults[monitor.id].allEvents && searchResults[monitor.id].allEvents.length > 0 && (
+                          <div className="mt-4 space-y-3">
+                            <h4 className="text-sm font-semibold">All Events Found:</h4>
+                            <div className="space-y-2">
+                              {searchResults[monitor.id].allEvents.map((eventItem: any, index: number) => (
+                                <div key={index} className="text-xs p-3 bg-background border rounded-lg space-y-1">
+                                  <div className="flex items-center justify-between">
+                                    <span className="font-medium">{eventItem.event.title}</span>
+                                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                      eventItem.status === 'NEW' 
+                                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                                        : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
+                                    }`}>
+                                      {eventItem.status}
+                                    </span>
+                                  </div>
+                                  <div className="text-muted-foreground">
+                                    {eventItem.event.eventDate} • {eventItem.event.summary}
+                                  </div>
+                                  {eventItem.event.quotes && eventItem.event.quotes.length > 0 && (
+                                    <div className="text-muted-foreground italic">
+                                      &ldquo;{eventItem.event.quotes[0]}&rdquo;
+                                    </div>
+                                  )}
+                                  {eventItem.event.sources && eventItem.event.sources.length > 0 && (
+                                    <div className="text-xs text-muted-foreground">
+                                      Source: {eventItem.event.sources[0].publisher}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
                         {searchResults[monitor.id].eventsCreated > 0 && (
                           <Button

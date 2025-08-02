@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -34,12 +34,16 @@ interface Event {
   }>;
 }
 
-export default function EventsPage() {
+function EventsContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState(7);
+  const [monitorInfo, setMonitorInfo] = useState<{name: string, title?: string, topic: string} | null>(null);
+  
+  const monitorId = searchParams.get('monitorId');
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -51,12 +55,27 @@ export default function EventsPage() {
 
   const fetchEvents = async () => {
     try {
-      const res = await fetch(`/api/causemon/events?days=${days}`);
+      const params = new URLSearchParams({ days: days.toString() });
+      if (monitorId) {
+        params.append('monitorId', monitorId);
+      }
+      
+      const res = await fetch(`/api/causemon/events?${params}`);
       if (!res.ok) {
         throw new Error('Failed to fetch events');
       }
       const data = await res.json();
       setEvents(data);
+      
+      // Extract monitor info from first event if filtering by monitor
+      if (monitorId && data.length > 0) {
+        const firstEvent = data[0];
+        setMonitorInfo({
+          name: firstEvent.publicFigure.name,
+          title: firstEvent.publicFigure.title,
+          topic: firstEvent.topic.name
+        });
+      }
     } catch (error) {
       console.error('Error fetching events:', error);
     } finally {
@@ -111,11 +130,28 @@ export default function EventsPage() {
   return (
     <div className="container mx-auto py-8 max-w-4xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Causemon Events</h1>
-        <p className="text-muted-foreground">
-          Recent statements and speeches tracked by your monitors
-        </p>
-        <div className="mt-4 flex gap-2">
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">
+              {monitorInfo ? `Events: ${monitorInfo.name} on ${monitorInfo.topic}` : 'Causemon Events'}
+            </h1>
+            <p className="text-muted-foreground">
+              {monitorInfo 
+                ? `Recent statements and speeches by ${monitorInfo.name}${monitorInfo.title ? ` (${monitorInfo.title})` : ''} about ${monitorInfo.topic}`
+                : 'Recent statements and speeches tracked by your monitors'
+              }
+            </p>
+          </div>
+          {monitorId && (
+            <Button
+              variant="outline"
+              onClick={() => router.push('/causemon/events')}
+            >
+              View All Events
+            </Button>
+          )}
+        </div>
+        <div className="flex gap-2">
           <Button
             variant={days === 7 ? 'default' : 'outline'}
             size="sm"
@@ -213,5 +249,13 @@ export default function EventsPage() {
           ))}
       </div>
     </div>
+  );
+}
+
+export default function EventsPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto py-8"><div className="animate-pulse">Loading...</div></div>}>
+      <EventsContent />
+    </Suspense>
   );
 }

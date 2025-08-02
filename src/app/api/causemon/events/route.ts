@@ -14,13 +14,20 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const days = parseInt(searchParams.get('days') || '7', 10);
     const limit = parseInt(searchParams.get('limit') || '50', 10);
+    const monitorId = searchParams.get('monitorId');
 
-    // Get user's active monitors
+    // Get user's active monitors (filter by specific monitor if provided)
+    const monitorWhere: any = {
+      userId: session.user.id,
+      isActive: true,
+    };
+    
+    if (monitorId) {
+      monitorWhere.id = monitorId;
+    }
+
     const monitors = await prisma.monitor.findMany({
-      where: {
-        userId: session.user.id,
-        isActive: true,
-      },
+      where: monitorWhere,
       select: {
         publicFigureId: true,
         topicId: true,
