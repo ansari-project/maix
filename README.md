@@ -227,7 +227,10 @@ maix/
     ├── guides/           # Extracted wisdom on how to use tools and features
     ├── howtos/           # Step-by-step instructions for users
     ├── faqs/             # Frequently asked questions
-    ├── ideas/            # Ideas still in incubation
+    ├── ideas/            # Feature ideas and proposals
+    │   ├── done/         # Completed features
+    │   ├── inprogress-*  # Currently being worked on
+    │   └── todo-*        # Future features to implement
     └── ref/              # Reference material and API documentation
 ```
 
