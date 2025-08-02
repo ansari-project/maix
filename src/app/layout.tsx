@@ -9,7 +9,7 @@ import { AxiomWebVitals } from 'next-axiom'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'MAIX - Meaningful AI Exchange',
+  title: 'Maix - Meaningful AI Exchange',
   description: 'A platform connecting volunteers with AI projects to advance humanity',
 }
 

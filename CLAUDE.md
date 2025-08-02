@@ -125,6 +125,16 @@ maix/
 - Group related changes into a single commit
 - **NEVER use `git add .` or `git add --all`** - Always specify individual files
 
+#### Git Push Guidelines - CRITICAL
+- **NEVER force push (`git push --force` or `git push --force-with-lease`)** without explicit user permission
+- **ALWAYS pull before pushing** to check for remote changes
+- **If push is rejected**, inform the user and ask how to proceed:
+  - Option 1: Pull and merge changes
+  - Option 2: Pull with rebase
+  - Option 3: Review conflicts together
+- **NEVER make unilateral decisions** about resolving divergent branches
+- **Remember**: This is a collaborative repository - force pushing can lose other people's work
+
 #### Pre-Commit Mental Checklist
 Before every commit, Claude Code MUST verify:
 1. ✅ **Check CLAUDE.md**: Review commit guidelines (especially line 116 about Claude suffixes)
