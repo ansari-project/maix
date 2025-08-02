@@ -1,8 +1,14 @@
 import { NextRequest } from 'next/server'
 
 // Mock all dependencies first before importing anything
-jest.mock('@/lib/auth-utils')
-jest.mock('@/lib/api-utils')
+jest.mock('@/lib/auth-utils', () => ({
+  requireAuth: jest.fn()
+}))
+jest.mock('@/lib/api-utils', () => ({
+  handleApiError: jest.fn(),
+  parseRequestBody: jest.fn(),
+  successResponse: jest.fn()
+}))
 jest.mock('@/lib/auth', () => ({
   authOptions: {}
 }))
@@ -219,10 +225,10 @@ describe('Visibility Security Tests', () => {
         // Note: visibility is NOT provided, should default to PUBLIC
       }
       
-      const req = new NextRequest('http://localhost:3000/api/projects', {
-        method: 'POST',
-        body: JSON.stringify(requestBody)
-      })
+      const req = {
+        json: jest.fn().mockResolvedValue(requestBody),
+        text: jest.fn().mockResolvedValue(JSON.stringify(requestBody))
+      } as any
       
       const response = await projectsPOST(req)
       const data = await response.json()

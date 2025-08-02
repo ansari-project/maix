@@ -64,8 +64,8 @@ describe('Organization Core Functionality', () => {
       const orgResource = { 
         ownerId: null, 
         organizationId: 'org1', 
-        visibility: 'PRIVATE' 
-      }
+        visibility: 'PRIVATE'
+      } as { ownerId: string | null; organizationId: string | null; visibility: string }
       
       // Mock member check - user is a member
       (prisma.organizationMember.findUnique as jest.Mock).mockResolvedValueOnce({
@@ -79,20 +79,20 @@ describe('Organization Core Functionality', () => {
       const orgResource = { 
         ownerId: null, 
         organizationId: 'org1', 
-        visibility: 'PRIVATE' 
-      }
+        visibility: 'PRIVATE'
+      } as { ownerId: string | null; organizationId: string | null; visibility: string }
       
       // Mock MEMBER role - cannot delete
       (prisma.organizationMember.findUnique as jest.Mock).mockResolvedValueOnce({
         role: 'MEMBER',
       })
-      expect(await hasResourceAccess('user1', orgResource, 'delete')).toBe(false)
+      expect(await hasResourceAccess('user1', orgResource, 'delete')).toBe(false);
       
       // Mock OWNER role - can delete
       (prisma.organizationMember.findUnique as jest.Mock).mockResolvedValueOnce({
         role: 'OWNER',
       })
-      expect(await hasResourceAccess('user1', orgResource, 'delete')).toBe(true)
+      expect(await hasResourceAccess('user1', orgResource, 'delete')).toBe(true);
     })
   })
 })

@@ -56,7 +56,11 @@ describe('Ownership Utils', () => {
     })
 
     it('should allow org members to access org resources', async () => {
-      const resource = { ownerId: null, organizationId: 'org1', visibility: 'PRIVATE' }
+      const resource = { 
+        ownerId: null, 
+        organizationId: 'org1', 
+        visibility: 'PRIVATE' 
+      } as { ownerId: string | null; organizationId: string | null; visibility: string }
       
       (prisma.organizationMember.findUnique as jest.Mock).mockResolvedValueOnce({
         role: 'MEMBER',
@@ -67,19 +71,23 @@ describe('Ownership Utils', () => {
     })
 
     it('should require OWNER role for delete on org resources', async () => {
-      const resource = { ownerId: null, organizationId: 'org1', visibility: 'PRIVATE' }
+      const resource = { 
+        ownerId: null, 
+        organizationId: 'org1', 
+        visibility: 'PRIVATE' 
+      } as { ownerId: string | null; organizationId: string | null; visibility: string }
       
       // Test MEMBER cannot delete
       (prisma.organizationMember.findUnique as jest.Mock).mockResolvedValueOnce({
         role: 'MEMBER',
       })
-      expect(await hasResourceAccess('user1', resource, 'delete')).toBe(false)
+      expect(await hasResourceAccess('user1', resource, 'delete')).toBe(false);
       
       // Test OWNER can delete
       (prisma.organizationMember.findUnique as jest.Mock).mockResolvedValueOnce({
         role: 'OWNER',
       })
-      expect(await hasResourceAccess('user1', resource, 'delete')).toBe(true)
+      expect(await hasResourceAccess('user1', resource, 'delete')).toBe(true);
     })
   })
 

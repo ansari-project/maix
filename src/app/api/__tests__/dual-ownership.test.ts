@@ -92,17 +92,16 @@ describe('Dual Ownership Tests', () => {
         })
       )
 
-      const req = new NextRequest('http://localhost/api/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: 'Test Project',
-          goal: 'Test project goal description',
-          description: 'This is a test project with a detailed description of at least 50 characters',
-          contactEmail: 'contact@example.com',
-          helpType: 'MVP'
-        })
-      })
+      const requestBody = {
+        name: 'Test Project',
+        goal: 'Test project goal description',
+        description: 'This is a test project with a detailed description of at least 50 characters',
+        contactEmail: 'contact@example.com',
+        helpType: 'MVP'
+      }
+      const req = {
+        json: jest.fn().mockResolvedValue(requestBody)
+      } as any
 
       const response = await createProject(req)
       const data = await response.json()
@@ -140,18 +139,17 @@ describe('Dual Ownership Tests', () => {
         })
       )
 
-      const req = new NextRequest('http://localhost/api/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: 'Test Project',
-          goal: 'Test project goal description',
-          description: 'This is a test project with a detailed description of at least 50 characters',
-          contactEmail: 'contact@example.com',
-          helpType: 'MVP',
-          organizationId: mockOrg.id
-        })
-      })
+      const requestBody = {
+        name: 'Test Project',
+        goal: 'Test project goal description',
+        description: 'This is a test project with a detailed description of at least 50 characters',
+        contactEmail: 'contact@example.com',
+        helpType: 'MVP',
+        organizationId: mockOrg.id
+      }
+      const req = {
+        json: jest.fn().mockResolvedValue(requestBody)
+      } as any
 
       const response = await createProject(req)
       const data = await response.json()
@@ -170,18 +168,17 @@ describe('Dual Ownership Tests', () => {
         })
       )
 
-      const req = new NextRequest('http://localhost/api/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: 'Test Project',
-          goal: 'Test project goal description',
-          description: 'This is a test project with a detailed description of at least 50 characters',
-          contactEmail: 'contact@example.com',
-          helpType: 'MVP',
-          organizationId: mockOrg.id
-        })
-      })
+      const requestBody = {
+        name: 'Test Project',
+        goal: 'Test project goal description',
+        description: 'This is a test project with a detailed description of at least 50 characters',
+        contactEmail: 'contact@example.com',
+        helpType: 'MVP',
+        organizationId: mockOrg.id
+      }
+      const req = {
+        json: jest.fn().mockResolvedValue(requestBody)
+      } as any
 
       const response = await createProject(req)
       const data = await response.json()
@@ -220,15 +217,14 @@ describe('Dual Ownership Tests', () => {
         })
       )
 
-      const req = new NextRequest('http://localhost/api/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: 'Test Product',
-          description: 'Test product description',
-          organizationId: mockOrg.id
-        })
-      })
+      const requestBody = {
+        name: 'Test Product',
+        description: 'Test product description',
+        organizationId: mockOrg.id
+      }
+      const req = {
+        json: jest.fn().mockResolvedValue(requestBody)
+      } as any
 
       const response = await createProduct(req)
       const data = await response.json()

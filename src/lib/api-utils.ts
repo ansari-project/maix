@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 import { logger, LogEvent } from "./logger"
 import { Prisma } from "@prisma/client"
-import { AuthError, AuthorizationError } from "./errors"
+import { AuthError, AuthorizationError, ValidationError } from "./errors"
 
 export function handleApiError(error: unknown, context?: string) {
   // Log first, so we always have a record
@@ -26,6 +26,11 @@ export function handleApiError(error: unknown, context?: string) {
   // Handle authorization errors
   if (error instanceof AuthorizationError) {
     return NextResponse.json({ message: error.message }, { status: 403 })
+  }
+
+  // Handle validation errors
+  if (error instanceof ValidationError) {
+    return NextResponse.json({ message: error.message }, { status: 400 })
   }
 
   // Handle Zod validation errors

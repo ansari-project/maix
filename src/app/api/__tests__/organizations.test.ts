@@ -5,6 +5,17 @@ jest.mock('next-auth/next')
 jest.mock('@/lib/auth', () => ({
   authOptions: {}
 }))
+jest.mock('@prisma/client', () => ({
+  Prisma: {
+    PrismaClientKnownRequestError: class PrismaClientKnownRequestError extends Error {
+      code: string
+      constructor(message: string, { code }: { code: string }) {
+        super(message)
+        this.code = code
+      }
+    }
+  }
+}))
 jest.mock('@/lib/prisma', () => ({
   prisma: {
     organization: {
@@ -60,9 +71,9 @@ describe('Organizations API', () => {
       const data = await response.json()
 
       expect(response.status).toBe(200)
-      expect(data.data).toHaveLength(1)
-      expect(data.data[0].userRole).toBe('OWNER')
-      expect(data.data[0].members).toBeUndefined()
+      expect(data).toHaveLength(1)
+      expect(data[0].userRole).toBe('OWNER')
+      expect(data[0].members).toBeUndefined()
     })
 
     it('should return 401 if not authenticated', async () => {
@@ -90,18 +101,17 @@ describe('Organizations API', () => {
         _count: { members: 1, projects: 0, products: 0 },
       })
 
-      const request = new Request('http://localhost:3000/api/organizations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: 'New Org', slug: 'new-org' }),
-      })
+      const requestBody = { name: 'New Org', slug: 'new-org' }
+      const request = {
+        json: jest.fn().mockResolvedValue(requestBody)
+      } as any
 
       const response = await POST(request)
       const data = await response.json()
 
       expect(response.status).toBe(200)
-      expect(data.data.name).toBe('New Org')
-      expect(data.data.userRole).toBe('OWNER')
+      expect(data.name).toBe('New Org')
+      expect(data.userRole).toBe('OWNER')
     })
 
     it('should return 400 if slug already exists', async () => {
@@ -112,11 +122,10 @@ describe('Organizations API', () => {
         slug: 'new-org',
       })
 
-      const request = new Request('http://localhost:3000/api/organizations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: 'New Org', slug: 'new-org' }),
-      })
+      const requestBody = { name: 'New Org', slug: 'new-org' }
+      const request = {
+        json: jest.fn().mockResolvedValue(requestBody)
+      } as any
 
       const response = await POST(request)
       const data = await response.json()
@@ -164,7 +173,7 @@ describe('Organizations API', () => {
       const data = await response.json()
 
       expect(response.status).toBe(200)
-      expect(data.data.message).toContain('deleted successfully')
+      expect(data.message).toContain('deleted successfully')
     })
 
     it('should return 403 if user is not owner', async () => {

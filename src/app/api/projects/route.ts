@@ -6,6 +6,7 @@ import { handleApiError, parseRequestBody, successResponse } from "@/lib/api-uti
 import { authOptions } from "@/lib/auth"
 import { getServerSession } from "next-auth/next"
 import { validateOwnership } from "@/lib/ownership-utils"
+import { ValidationError } from "@/lib/errors"
 
 export const dynamic = 'force-dynamic'
 
@@ -133,7 +134,7 @@ export async function POST(request: Request) {
         })
 
         if (!isMember) {
-          throw new Error('You must be a member of the organization to create projects under it')
+          throw new ValidationError('You must be a member of the organization to create projects under it')
         }
 
         // Set organization ownership
