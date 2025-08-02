@@ -10,6 +10,11 @@ jest.mock('next-auth/react', () => ({
   SessionProvider: ({ children }: { children: React.ReactNode }) => children
 }))
 
+// Mock Markdown component
+jest.mock('@/components/ui/markdown', () => ({
+  Markdown: ({ content }: { content: string }) => <div>{content}</div>
+}))
+
 // Mock fetch
 global.fetch = jest.fn()
 
@@ -124,9 +129,13 @@ describe('FeedContainer - Celebration Display', () => {
     render(<FeedContainer />)
 
     await waitFor(() => {
-      const feedItems = screen.getAllByText(/project:/i)
-      expect(feedItems[0]).toHaveTextContent('Completed: Recently Completed')
-      expect(feedItems[1]).toHaveTextContent('New project: Older Project')
+      // Check that both projects are displayed
+      expect(screen.getByText('🎉 Completed: Recently Completed 🎉')).toBeInTheDocument()
+      expect(screen.getByText('New project: Older Project')).toBeInTheDocument()
+      
+      // The completed project should have the green ring styling
+      const completedProjectCard = screen.getByText('🎉 Completed: Recently Completed 🎉').closest('.hover\\:shadow-md')
+      expect(completedProjectCard).toHaveClass('ring-2', 'ring-green-400', 'ring-offset-2')
     })
   })
 })

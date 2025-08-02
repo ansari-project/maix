@@ -68,7 +68,10 @@ describe('GET /api/feed', () => {
         description: 'Project description',
         projectType: 'OPEN_SOURCE',
         helpType: 'MVP',
+        status: 'IN_PROGRESS',
+        isActive: true,
         createdAt: new Date('2024-01-01'),
+        updatedAt: new Date('2024-01-01'),
         owner: { id: 'user1', name: 'John Doe' }
       }
     ]
@@ -218,13 +221,19 @@ describe('GET /api/feed', () => {
       {
         id: 'proj1',
         name: 'Old Project',
+        status: 'IN_PROGRESS',
+        isActive: true,
         createdAt: new Date('2024-01-01'),
+        updatedAt: new Date('2024-01-01'),
         owner: { id: 'user1', name: 'User' }
       },
       {
         id: 'proj2',
         name: 'New Project',
+        status: 'IN_PROGRESS',
+        isActive: true,
         createdAt: new Date('2024-01-10'),
+        updatedAt: new Date('2024-01-10'),
         owner: { id: 'user2', name: 'User2' }
       }
     ]
@@ -250,7 +259,10 @@ describe('GET /api/feed', () => {
     const mockProjects = Array.from({ length: 25 }, (_, i) => ({
       id: `proj${i}`,
       name: `Project ${i}`,
+      status: 'IN_PROGRESS',
+      isActive: true,
       createdAt: new Date(`2024-01-${String(i + 1).padStart(2, '0')}`),
+      updatedAt: new Date(`2024-01-${String(i + 1).padStart(2, '0')}`),
       owner: { id: 'user1', name: 'User' }
     }))
 

@@ -10,6 +10,7 @@ const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^@/components/ui/markdown$': '<rootDir>/src/components/ui/__mocks__/markdown.tsx',
   },
   testEnvironment: 'jest-environment-jsdom',
   collectCoverageFrom: [

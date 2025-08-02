@@ -1,6 +1,5 @@
 import { GET } from '../route'
 import { prisma } from '@/lib/prisma'
-import { NextRequest } from 'next/server'
 
 jest.mock('@/lib/prisma', () => ({
   prisma: {
@@ -56,7 +55,10 @@ describe('/api/public/feed', () => {
           name: 'Test Project',
           description: 'A test project',
           helpType: 'MVP',
+          status: 'IN_PROGRESS',
+          isActive: true,
           createdAt: new Date('2024-01-01'),
+          updatedAt: new Date('2024-01-01'),
           owner: { id: 'user1', name: 'John Doe' }
         }
       ]
@@ -123,8 +125,7 @@ describe('/api/public/feed', () => {
         return Promise.resolve([])
       })
 
-      const request = new NextRequest('http://localhost:3000/api/public/feed')
-      const response = await GET(request)
+      const response = await GET()
       const data = await response.json()
 
       expect(response.status).toBe(200)
@@ -156,8 +157,7 @@ describe('/api/public/feed', () => {
       ;(prisma.product.findMany as jest.Mock).mockResolvedValue([])
       ;(prisma.post.findMany as jest.Mock).mockResolvedValue([])
 
-      const request = new NextRequest('http://localhost:3000/api/public/feed')
-      const response = await GET(request)
+      const response = await GET()
       const data = await response.json()
 
       expect(response.status).toBe(200)
@@ -170,7 +170,10 @@ describe('/api/public/feed', () => {
         name: `Project ${i}`,
         description: 'Description',
         helpType: 'MVP',
+        status: 'IN_PROGRESS',
+        isActive: true,
         createdAt: new Date(Date.now() - i * 1000),
+        updatedAt: new Date(Date.now() - i * 1000),
         owner: { id: `user${i}`, name: `User ${i}` }
       }))
 
@@ -178,8 +181,7 @@ describe('/api/public/feed', () => {
       ;(prisma.product.findMany as jest.Mock).mockResolvedValue([])
       ;(prisma.post.findMany as jest.Mock).mockResolvedValue([])
 
-      const request = new NextRequest('http://localhost:3000/api/public/feed')
-      const response = await GET(request)
+      const response = await GET()
       const data = await response.json()
 
       expect(response.status).toBe(200)
@@ -221,8 +223,7 @@ describe('/api/public/feed', () => {
         return Promise.resolve([])
       })
 
-      const request = new NextRequest('http://localhost:3000/api/public/feed')
-      const response = await GET(request)
+      const response = await GET()
       const data = await response.json()
 
       expect(response.status).toBe(200)
@@ -233,8 +234,7 @@ describe('/api/public/feed', () => {
     it('should handle database errors gracefully', async () => {
       ;(prisma.project.findMany as jest.Mock).mockRejectedValue(new Error('Database error'))
 
-      const request = new NextRequest('http://localhost:3000/api/public/feed')
-      const response = await GET(request)
+      const response = await GET()
       const data = await response.json()
 
       expect(response.status).toBe(500)
