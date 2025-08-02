@@ -1,6 +1,42 @@
 import { NextRequest } from 'next/server'
-import { Prisma } from '@prisma/client'
 import { ZodError } from 'zod'
+
+// Mock the Prisma module with inline classes
+jest.mock('@prisma/client', () => ({
+  Prisma: {
+    PrismaClientKnownRequestError: class extends Error {
+      code: string
+      clientVersion: string
+      meta?: any
+
+      constructor(message: string, options: { code: string; clientVersion: string; meta?: any }) {
+        super(message)
+        this.name = 'PrismaClientKnownRequestError'
+        this.code = options.code
+        this.clientVersion = options.clientVersion
+        this.meta = options.meta
+      }
+    },
+    PrismaClientUnknownRequestError: class extends Error {
+      clientVersion: string
+
+      constructor(message: string, options: { clientVersion: string }) {
+        super(message)
+        this.name = 'PrismaClientUnknownRequestError'
+        this.clientVersion = options.clientVersion
+      }
+    },
+    PrismaClientValidationError: class extends Error {
+      clientVersion: string
+
+      constructor(message: string, options: { clientVersion: string }) {
+        super(message)
+        this.name = 'PrismaClientValidationError'
+        this.clientVersion = options.clientVersion
+      }
+    },
+  },
+}))
 
 // Mock the logger before importing
 jest.mock('@/lib/logger', () => ({
@@ -14,6 +50,7 @@ jest.mock('@/lib/logger', () => ({
 
 import { apiHandler } from '../api-handler'
 import { logger } from '@/lib/logger'
+import { Prisma } from '@prisma/client'
 
 const mockLogger = logger as jest.Mocked<typeof logger>
 

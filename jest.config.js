@@ -18,7 +18,11 @@ const customJestConfig = {
     '!src/**/*.d.ts',
     '!src/**/types.ts',
   ],
-  testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/.next/'],
+  testPathIgnorePatterns: [
+    '<rootDir>/node_modules/', 
+    '<rootDir>/.next/',
+    '<rootDir>/src/__tests__/helpers/'
+  ],
   transformIgnorePatterns: [
     '/node_modules/',
     '^.+\\.module\\.(css|sass|scss)$',

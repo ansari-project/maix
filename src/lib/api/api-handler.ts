@@ -13,7 +13,7 @@ export function apiHandler(handlers: Handlers) {
     const handler = handlers[method]
 
     if (!handler) {
-      const allowedMethods = Object.keys(handlers).join(', ')
+      const allowedMethods = Object.keys(handlers).join(',')
       return NextResponse.json(
         { error: `Method ${method} Not Allowed. Allowed methods: ${allowedMethods}` },
         { 

@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 // Mock all dependencies first before importing anything
 jest.mock('@/lib/auth-utils', () => ({
@@ -7,7 +7,9 @@ jest.mock('@/lib/auth-utils', () => ({
 jest.mock('@/lib/api-utils', () => ({
   handleApiError: jest.fn(),
   parseRequestBody: jest.fn(),
-  successResponse: jest.fn()
+  successResponse: jest.fn((data, status = 200) => 
+    NextResponse.json(data, { status })
+  )
 }))
 jest.mock('@/lib/auth', () => ({
   authOptions: {}
@@ -37,15 +39,65 @@ jest.mock('@/lib/prisma', () => ({
   }
 }))
 
+// Mock test helper utilities
+jest.mock('@/__tests__/helpers/api-test-utils.helper', () => ({
+  createMockRequest: jest.fn((method, url, body, headers) => {
+    const requestInit = {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        ...headers,
+      },
+    }
+    
+    if (body && method !== 'GET') {
+      requestInit.body = JSON.stringify(body)
+    }
+    
+    return new NextRequest(url, requestInit)
+  }),
+  mockSession: jest.fn((user) => {
+    const mockGetServerSession = require('next-auth/next').getServerSession
+    
+    if (user) {
+      mockGetServerSession.mockResolvedValue({
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name
+        },
+        expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      })
+    } else {
+      mockGetServerSession.mockResolvedValue(null)
+    }
+  }),
+  createTestUser: jest.fn((overrides) => ({
+    id: overrides.id || 'test-user-id',
+    email: overrides.email || 'test@example.com',
+    name: overrides.name || 'Test User',
+    ...overrides
+  }))
+}))
+
 // Mock Prisma constructor and errors
 jest.mock('@prisma/client', () => ({
   Prisma: {
     PrismaClientKnownRequestError: class PrismaClientKnownRequestError extends Error {
       code: string
-      constructor(message: string, code: string) {
+      constructor(message: string, { code }: { code: string }) {
         super(message)
         this.code = code
-        this.name = 'PrismaClientKnownRequestError'
+      }
+    },
+    PrismaClientUnknownRequestError: class PrismaClientUnknownRequestError extends Error {
+      constructor(message: string) {
+        super(message)
+      }
+    },
+    PrismaClientValidationError: class PrismaClientValidationError extends Error {
+      constructor(message: string) {
+        super(message)
       }
     }
   }
@@ -62,41 +114,19 @@ import { GET as projectDetailGET } from '@/app/api/projects/[id]/route'
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
-import { 
-  mockRequireAuth, 
-  mockAuthenticatedUser, 
-  mockAuthenticationFailure, 
-  resetTestMocks, 
-  mockUser,
-  mockApiErrorResponse,
-  mockApiSuccessResponse,
-  mockHandleApiError,
-  mockSuccessResponse,
-  mockParseRequestBody
-} from '@/lib/test-utils'
+import { createMockRequest, mockSession, createTestUser } from '@/__tests__/helpers/api-test-utils.helper'
 
 describe('Visibility Security Tests', () => {
+  const mockUser = createTestUser({
+    id: 'user-123',
+    email: 'test@example.com',
+    name: 'Test User'
+  })
+
   beforeEach(() => {
-    resetTestMocks()
-    
-    // Mock success response for all tests
-    mockSuccessResponse.mockImplementation((data: any, status = 200) => 
-      NextResponse.json({ success: true, data }, { status })
-    )
-    
-    // Mock handleApiError to return proper error responses
-    mockHandleApiError.mockImplementation((error: any, context?: string) => {
-      if (error.name === 'AuthError') {
-        return NextResponse.json({ error: error.message }, { status: 401 })
-      }
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-    })
-    
-    // Mock parseRequestBody for POST requests
-    mockParseRequestBody.mockImplementation(async (request: NextRequest) => {
-      const text = await request.text()
-      return JSON.parse(text)
-    })
+    jest.clearAllMocks()
+    // Mock user lookup for authentication
+    ;(prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser)
   })
 
   describe('Public Search', () => {
@@ -119,9 +149,9 @@ describe('Visibility Security Tests', () => {
       const response = await publicSearchGET(req)
       const data = await response.json()
       
-      expect(data.success).toBe(true)
-      expect(data.data.projects).toHaveLength(1)
-      expect(data.data.projects[0].id).toBe('1')
+      expect(response.status).toBe(200)
+      expect(data.projects).toHaveLength(1)
+      expect(data.projects[0].id).toBe('1')
       
       // Verify visibility filter was applied
       expect(prisma.project.findMany).toHaveBeenCalledWith(
@@ -197,25 +227,50 @@ describe('Visibility Security Tests', () => {
   describe('Project Creation Defaults', () => {
     it('should create project with PUBLIC visibility by default', async () => {
       // Mock authenticated user
-      mockAuthenticatedUser()
+      mockSession(mockUser)
       
       const mockCreatedProject = {
         id: 'newproject',
         name: 'New Project',
-        description: 'Test description',
-        goal: 'Test goal',
+        description: 'Test description that is at least 50 characters long to meet validation requirements',
+        goal: 'Test goal for the project',
         helpType: 'ADVICE',
+        status: 'AWAITING_VOLUNTEERS',
+        isActive: true,
         visibility: 'PUBLIC',
+        contactEmail: 'test@example.com',
         ownerId: mockUser.id,
+        organizationId: null,
+        productId: null,
+        targetCompletionDate: null,
+        embedding: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
         owner: {
+          id: mockUser.id,
           name: mockUser.name,
           email: mockUser.email
         },
-        product: null
+        organization: null,
+        product: null,
+        _count: {
+          applications: 0
+        }
       }
       
       // Mock successful transaction
-      ;(prisma.$transaction as jest.Mock).mockResolvedValue(mockCreatedProject)
+      ;(prisma.$transaction as jest.Mock).mockImplementation(async (callback) => {
+        const tx = {
+          project: {
+            create: jest.fn().mockResolvedValue(mockCreatedProject),
+            findUnique: jest.fn().mockResolvedValue(mockCreatedProject),
+          },
+          post: {
+            create: jest.fn(),
+          },
+        }
+        return callback(tx as any)
+      })
       ;(prisma.user.findMany as jest.Mock).mockResolvedValue([]) // No other users to notify
       
       const requestBody = {
@@ -227,17 +282,20 @@ describe('Visibility Security Tests', () => {
         // Note: visibility is NOT provided, should default to PUBLIC
       }
       
-      const req = {
-        json: jest.fn().mockResolvedValue(requestBody),
-        text: jest.fn().mockResolvedValue(JSON.stringify(requestBody))
-      } as any
+      const request = new NextRequest('http://localhost:3000/api/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      })
       
-      const response = await projectsPOST(req)
+      const response = await projectsPOST(request)
       const data = await response.json()
       
       expect(response.status).toBe(201)
-      expect(data.success).toBe(true)
-      expect(data.data.visibility).toBe('PUBLIC')
+      expect(data.name).toBe('New Project')
+      expect(data.visibility).toBe('PUBLIC')
       
       // Verify the transaction was called
       expect(prisma.$transaction).toHaveBeenCalled()

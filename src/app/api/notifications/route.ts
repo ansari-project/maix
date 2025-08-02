@@ -7,8 +7,8 @@ import { logger } from '@/lib/logger'
 const handleGet = withAuth(async (request: AuthenticatedRequest) => {
   const { searchParams } = new URL(request.url)
   
-  const limit = parseInt(searchParams.get('limit') || '20')
-  const offset = parseInt(searchParams.get('offset') || '0')
+  const limit = parseInt(searchParams.get('limit') || '20') || 20
+  const offset = parseInt(searchParams.get('offset') || '0') || 0
 
   const notifications = await NotificationService.getUserNotifications(
     request.user.id,

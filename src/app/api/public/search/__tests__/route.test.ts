@@ -4,6 +4,28 @@ import { prisma } from '@/lib/prisma'
 import { filterPublicData } from '@/lib/public-data-filter'
 
 // Mock dependencies
+jest.mock('@prisma/client', () => ({
+  Prisma: {
+    PrismaClientKnownRequestError: class PrismaClientKnownRequestError extends Error {
+      code: string
+      constructor(message: string, { code }: { code: string }) {
+        super(message)
+        this.code = code
+      }
+    },
+    PrismaClientUnknownRequestError: class PrismaClientUnknownRequestError extends Error {
+      constructor(message: string) {
+        super(message)
+      }
+    },
+    PrismaClientValidationError: class PrismaClientValidationError extends Error {
+      constructor(message: string) {
+        super(message)
+      }
+    }
+  }
+}))
+
 jest.mock('@/lib/prisma', () => ({
   prisma: {
     project: {

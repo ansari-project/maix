@@ -2,9 +2,31 @@ import { NextRequest } from 'next/server'
 import { GET, POST } from '../route'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
+import { createMockRequest, mockSession, createTestUser } from '@/__tests__/helpers/api-test-utils.helper'
 
 // Mock dependencies
 jest.mock('next-auth/next')
+jest.mock('@prisma/client', () => ({
+  Prisma: {
+    PrismaClientKnownRequestError: class PrismaClientKnownRequestError extends Error {
+      code: string
+      constructor(message: string, { code }: { code: string }) {
+        super(message)
+        this.code = code
+      }
+    },
+    PrismaClientUnknownRequestError: class PrismaClientUnknownRequestError extends Error {
+      constructor(message: string) {
+        super(message)
+      }
+    },
+    PrismaClientValidationError: class PrismaClientValidationError extends Error {
+      constructor(message: string) {
+        super(message)
+      }
+    }
+  }
+}))
 jest.mock('@/lib/prisma', () => ({
   prisma: {
     organization: {
@@ -15,29 +37,34 @@ jest.mock('@/lib/prisma', () => ({
     organizationMember: {
       create: jest.fn(),
     },
+    user: {
+      findUnique: jest.fn(),
+    },
     $transaction: jest.fn(),
   },
 }))
 
-const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>
 const mockPrisma = prisma as jest.Mocked<typeof prisma>
 
 describe('/api/organizations', () => {
-  beforeEach(() => {
-    jest.clearAllMocks()
-  })
-
-  const mockUser = {
+  const mockUser = createTestUser({
     id: 'test-user-id',
     email: 'test@example.com',
     name: 'Test User',
-  }
+  })
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    // Mock user lookup for authentication
+    mockPrisma.user.findUnique.mockResolvedValue(mockUser as any)
+  })
 
   describe('GET', () => {
     it('should return 401 if not authenticated', async () => {
-      mockGetServerSession.mockResolvedValueOnce(null)
+      mockSession(null)
 
-      const response = await GET()
+      const request = createMockRequest('GET', 'http://localhost:3000/api/organizations')
+      const response = await GET(request)
       const data = await response.json()
 
       expect(response.status).toBe(401)
@@ -45,10 +72,7 @@ describe('/api/organizations', () => {
     })
 
     it('should return user organizations', async () => {
-      mockGetServerSession.mockResolvedValueOnce({
-        user: mockUser,
-        expires: '2024-01-01',
-      })
+      mockSession(mockUser)
 
       const mockOrganizations = [
         {
@@ -81,7 +105,8 @@ describe('/api/organizations', () => {
 
       mockPrisma.organization.findMany.mockResolvedValueOnce(mockOrganizations as any)
 
-      const response = await GET()
+      const request = createMockRequest('GET', 'http://localhost:3000/api/organizations')
+      const response = await GET(request)
       const data = await response.json()
 
       expect(response.status).toBe(200)
@@ -122,28 +147,26 @@ describe('/api/organizations', () => {
     })
 
     it('should handle database errors', async () => {
-      mockGetServerSession.mockResolvedValueOnce({
-        user: mockUser,
-        expires: '2024-01-01',
-      })
+      mockSession(mockUser)
 
       mockPrisma.organization.findMany.mockRejectedValueOnce(new Error('Database error'))
 
-      const response = await GET()
+      const request = createMockRequest('GET', 'http://localhost:3000/api/organizations')
+      const response = await GET(request)
       const data = await response.json()
 
       expect(response.status).toBe(500)
-      expect(data.message).toBe('Internal server error')
+      expect(data.error).toBe('Internal server error')
     })
   })
 
   describe('POST', () => {
     it('should return 401 if not authenticated', async () => {
-      mockGetServerSession.mockResolvedValueOnce(null)
+      mockSession(null)
 
-      const request = new NextRequest('http://localhost:3000/api/organizations', {
-        method: 'POST',
-        body: JSON.stringify({ name: 'New Org', slug: 'new-org' }),
+      const request = createMockRequest('POST', 'http://localhost:3000/api/organizations', {
+        name: 'New Org',
+        slug: 'new-org'
       })
 
       const response = await POST(request)
@@ -154,10 +177,7 @@ describe('/api/organizations', () => {
     })
 
     it('should create a new organization', async () => {
-      mockGetServerSession.mockResolvedValueOnce({
-        user: mockUser,
-        expires: '2024-01-01',
-      })
+      mockSession(mockUser)
 
       const newOrgData = {
         name: 'New Organization',
@@ -172,21 +192,13 @@ describe('/api/organizations', () => {
       }
 
       mockPrisma.organization.findUnique.mockResolvedValueOnce(null) // Slug not taken
-      mockPrisma.$transaction.mockImplementationOnce(async (callback) => {
-        return callback({
-          organization: {
-            create: jest.fn().mockResolvedValueOnce(createdOrg),
-          },
-          organizationMember: {
-            create: jest.fn().mockResolvedValueOnce({}),
-          },
-        } as any)
-      })
+      mockPrisma.organization.create.mockResolvedValueOnce({
+        ...createdOrg,
+        members: [{ role: 'OWNER' }],
+        _count: { members: 1, projects: 0, products: 0 }
+      } as any)
 
-      const request = new NextRequest('http://localhost:3000/api/organizations', {
-        method: 'POST',
-        body: JSON.stringify(newOrgData),
-      })
+      const request = createMockRequest('POST', 'http://localhost:3000/api/organizations', newOrgData)
 
       const response = await POST(request)
       const data = await response.json()
@@ -196,11 +208,8 @@ describe('/api/organizations', () => {
       expect(data.slug).toBe(newOrgData.slug)
     })
 
-    it('should return 409 if slug already exists', async () => {
-      mockGetServerSession.mockResolvedValueOnce({
-        user: mockUser,
-        expires: '2024-01-01',
-      })
+    it('should return 400 if slug already exists', async () => {
+      mockSession(mockUser)
 
       const newOrgData = {
         name: 'New Organization',
@@ -213,40 +222,31 @@ describe('/api/organizations', () => {
         slug: 'existing-slug',
       } as any)
 
-      const request = new NextRequest('http://localhost:3000/api/organizations', {
-        method: 'POST',
-        body: JSON.stringify(newOrgData),
-      })
+      const request = createMockRequest('POST', 'http://localhost:3000/api/organizations', newOrgData)
 
       const response = await POST(request)
       const data = await response.json()
 
-      expect(response.status).toBe(409)
+      expect(response.status).toBe(400)
       expect(data.error).toBe('An organization with this slug already exists')
     })
 
     it('should validate input data', async () => {
-      mockGetServerSession.mockResolvedValueOnce({
-        user: mockUser,
-        expires: '2024-01-01',
-      })
+      mockSession(mockUser)
 
       const invalidData = {
         name: 'A', // Too short
         slug: 'invalid slug with spaces', // Invalid format
       }
 
-      const request = new NextRequest('http://localhost:3000/api/organizations', {
-        method: 'POST',
-        body: JSON.stringify(invalidData),
-      })
+      const request = createMockRequest('POST', 'http://localhost:3000/api/organizations', invalidData)
 
       const response = await POST(request)
       const data = await response.json()
 
       expect(response.status).toBe(400)
-      expect(data.message).toBe('Invalid input')
-      expect(data.errors).toBeDefined()
+      expect(data.error).toContain('Validation failed')
+      expect(data.details).toBeDefined()
     })
   })
 })

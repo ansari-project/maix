@@ -1,50 +1,45 @@
 import { NextRequest } from 'next/server'
 import { GET, POST } from '../route'
+import { createMockRequest, mockSession, createTestUser } from '@/__tests__/helpers/api-test-utils.helper'
 
 // Mock all dependencies at the top
-jest.mock('next-auth/next', () => ({
-  getServerSession: jest.fn(),
-}))
-
-jest.mock('@/lib/auth-utils', () => ({
-  requireAuth: jest.fn(),
-}))
-
+jest.mock('next-auth/next')
 jest.mock('@/lib/prisma', () => ({
   prisma: {
     product: {
       findMany: jest.fn(),
+      create: jest.fn(),
+      findUnique: jest.fn(),
+    },
+    user: {
+      findUnique: jest.fn(),
+    },
+    post: {
+      create: jest.fn(),
     },
     $transaction: jest.fn(),
   },
 }))
 
-jest.mock('@/lib/errors')
-jest.mock('@prisma/client')
-
 // Import mocked functions
 import { getServerSession } from 'next-auth/next'
-import { requireAuth } from '@/lib/auth-utils'
 import { prisma } from '@/lib/prisma'
 
 const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>
-const mockRequireAuth = requireAuth as jest.MockedFunction<typeof requireAuth>
 const mockPrisma = prisma as jest.Mocked<typeof prisma>
 
 describe('/api/products - Simplified Tests', () => {
+  const mockUser = createTestUser()
+
   beforeEach(() => {
     jest.clearAllMocks()
+    // Mock user lookup for authentication
+    mockPrisma.user.findUnique.mockResolvedValue(mockUser as any)
   })
-
-  const mockUser = {
-    id: 'test-user-id',
-    email: 'test@example.com',
-    name: 'Test User',
-  }
 
   describe('GET', () => {
     it('should return only public products when not authenticated', async () => {
-      mockGetServerSession.mockResolvedValueOnce(null)
+      mockSession(null) // No authentication
 
       const mockProducts = [
         {
@@ -56,7 +51,8 @@ describe('/api/products - Simplified Tests', () => {
 
       mockPrisma.product.findMany.mockResolvedValueOnce(mockProducts as any)
 
-      const response = await GET()
+      const request = createMockRequest('GET', 'http://localhost:3000/api/products')
+      const response = await GET(request)
       const data = await response.json()
 
       expect(response.status).toBe(200)
@@ -73,10 +69,7 @@ describe('/api/products - Simplified Tests', () => {
     })
 
     it('should return public + owned products when authenticated', async () => {
-      mockGetServerSession.mockResolvedValueOnce({
-        user: mockUser,
-        expires: '2024-01-01',
-      })
+      mockSession(mockUser) // Authenticated
 
       const mockProducts = [
         { id: 'product-1', visibility: 'PUBLIC' },
@@ -85,7 +78,8 @@ describe('/api/products - Simplified Tests', () => {
 
       mockPrisma.product.findMany.mockResolvedValueOnce(mockProducts as any)
 
-      const response = await GET()
+      const request = createMockRequest('GET', 'http://localhost:3000/api/products')
+      const response = await GET(request)
       const data = await response.json()
 
       expect(response.status).toBe(200)
@@ -101,7 +95,7 @@ describe('/api/products - Simplified Tests', () => {
 
   describe('POST', () => {
     it('should create a product with valid data', async () => {
-      mockRequireAuth.mockResolvedValueOnce(mockUser)
+      mockSession(mockUser) // Authenticated
 
       const productData = {
         name: 'New Product',
@@ -129,13 +123,11 @@ describe('/api/products - Simplified Tests', () => {
         return callback(tx as any)
       })
 
-      const request = new NextRequest('http://localhost:3000/api/products', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(productData),
-      })
+      const request = createMockRequest(
+        'POST',
+        'http://localhost:3000/api/products',
+        productData
+      )
 
       const response = await POST(request)
       const data = await response.json()
@@ -146,26 +138,24 @@ describe('/api/products - Simplified Tests', () => {
     })
 
     it('should validate required fields', async () => {
-      mockRequireAuth.mockResolvedValueOnce(mockUser)
+      mockSession(mockUser) // Authenticated
 
       const invalidData = {
         name: '', // Empty name should fail validation
         description: 'Test',
       }
 
-      const request = new NextRequest('http://localhost:3000/api/products', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(invalidData),
-      })
+      const request = createMockRequest(
+        'POST',
+        'http://localhost:3000/api/products',
+        invalidData
+      )
 
       const response = await POST(request)
       const data = await response.json()
 
       expect(response.status).toBe(400)
-      expect(data.message).toBe('Invalid input')
+      expect(data.error).toContain('Validation failed') // Updated to match apiHandler error format
     })
   })
 })

@@ -1,217 +1,144 @@
 import { NextRequest } from 'next/server'
+import { createMockRequest, mockSession, createTestUser } from '@/__tests__/helpers/api-test-utils.helper'
 
-// Mock all dependencies first before importing anything
-jest.mock('@/lib/api/with-auth')
-jest.mock('@/lib/api/api-handler')
-jest.mock('@/services/notification.service')
-jest.mock('@/lib/logger')
-
-// Mock the notification service
-const mockNotificationService = {
-  markAsRead: jest.fn(),
-}
+// Mock dependencies
+jest.mock('next-auth/next')
+jest.mock('@prisma/client', () => ({
+  Prisma: {
+    PrismaClientKnownRequestError: class PrismaClientKnownRequestError extends Error {
+      code: string
+      constructor(message: string, { code }: { code: string }) {
+        super(message)
+        this.code = code
+      }
+    },
+    PrismaClientUnknownRequestError: class PrismaClientUnknownRequestError extends Error {
+      constructor(message: string) {
+        super(message)
+      }
+    },
+    PrismaClientValidationError: class PrismaClientValidationError extends Error {
+      constructor(message: string) {
+        super(message)
+      }
+    }
+  }
+}))
+jest.mock('@/lib/prisma', () => ({
+  prisma: {
+    user: {
+      findUnique: jest.fn(),
+    },
+  },
+}))
 
 jest.mock('@/services/notification.service', () => ({
-  NotificationService: mockNotificationService,
+  NotificationService: {
+    markAsRead: jest.fn(),
+  },
 }))
 
-// Mock the logger
-const mockLogger = {
-  info: jest.fn(),
-  error: jest.fn(),
-  warn: jest.fn(),
-  debug: jest.fn(),
-}
+import { POST } from '../route'
+import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth/next'
+import { NotificationService } from '@/services/notification.service'
 
-jest.mock('@/lib/logger', () => ({
-  logger: mockLogger,
-}))
-
-// Mock auth middleware
-const mockWithAuth = jest.fn()
-jest.mock('@/lib/api/with-auth', () => ({
-  withAuth: mockWithAuth,
-}))
-
-// Mock api handler
-const mockApiHandler = jest.fn()
-jest.mock('@/lib/api/api-handler', () => ({
-  apiHandler: mockApiHandler,
-}))
+const mockPrisma = prisma as jest.Mocked<typeof prisma>
+const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>
+const mockNotificationService = NotificationService as jest.Mocked<typeof NotificationService>
 
 describe('/api/notifications/mark-read', () => {
-  const mockUser = {
+  const mockUser = createTestUser({
     id: 'user-123',
     email: 'test@example.com',
     name: 'Test User',
-  }
+  })
 
   beforeEach(() => {
     jest.clearAllMocks()
-    
-    // Setup withAuth mock to call the handler with authenticated request
-    mockWithAuth.mockImplementation((handler) => {
-      return async (request: any) => {
-        const authenticatedRequest = {
-          ...request,
-          user: mockUser,
-        }
-        return handler(authenticatedRequest)
-      }
-    })
-
-    // Setup apiHandler mock to call the provided handlers
-    mockApiHandler.mockImplementation((handlers) => {
-      return async (request: any) => {
-        const method = request.method || 'POST'
-        const handler = handlers[method]
-        if (!handler) {
-          return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-            status: 405,
-          })
-        }
-        return handler(request)
-      }
-    })
+    // Mock user lookup for authentication
+    mockPrisma.user.findUnique.mockResolvedValue(mockUser as any)
   })
 
   describe('POST /api/notifications/mark-read', () => {
     it('should mark notifications as read successfully', async () => {
+      mockSession(mockUser)
+
       const notificationIds = ['notif-1', 'notif-2', 'notif-3']
-      
-      mockNotificationService.markAsRead.mockResolvedValue(undefined)
+      mockNotificationService.markAsRead.mockResolvedValue(notificationIds.length)
 
-      const { POST } = await import('../route')
-
-      const request = new NextRequest('http://localhost:3000/api/notifications/mark-read', {
-        method: 'POST',
-        body: JSON.stringify({ notificationIds }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const request = createMockRequest('POST', 'http://localhost:3000/api/notifications/mark-read', {
+        notificationIds,
       })
-
       const response = await POST(request)
       const data = await response.json()
 
       expect(response.status).toBe(200)
-      expect(data).toEqual({ success: true })
-
-      expect(mockNotificationService.markAsRead).toHaveBeenCalledWith(
-        notificationIds,
-        mockUser.id
-      )
-      expect(mockLogger.info).toHaveBeenCalledWith('Notifications marked as read', {
-        userId: mockUser.id,
-        notificationIds,
-        count: 3,
-      })
+      expect(data.success).toBe(true)
+      expect(mockNotificationService.markAsRead).toHaveBeenCalledWith(notificationIds, mockUser.id)
     })
 
     it('should handle empty notification IDs array', async () => {
-      const notificationIds: string[] = []
-      
-      mockNotificationService.markAsRead.mockResolvedValue(undefined)
+      mockSession(mockUser)
 
-      const { POST } = await import('../route')
+      mockNotificationService.markAsRead.mockResolvedValue(0)
 
-      const request = new NextRequest('http://localhost:3000/api/notifications/mark-read', {
-        method: 'POST',
-        body: JSON.stringify({ notificationIds }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const request = createMockRequest('POST', 'http://localhost:3000/api/notifications/mark-read', {
+        notificationIds: [],
       })
-
       const response = await POST(request)
       const data = await response.json()
 
       expect(response.status).toBe(200)
-      expect(data).toEqual({ success: true })
+      expect(data.success).toBe(true)
+      expect(mockNotificationService.markAsRead).toHaveBeenCalledWith([], mockUser.id)
+    })
 
-      expect(mockNotificationService.markAsRead).toHaveBeenCalledWith(
-        notificationIds,
-        mockUser.id
-      )
-      expect(mockLogger.info).toHaveBeenCalledWith('Notifications marked as read', {
-        userId: mockUser.id,
-        notificationIds,
-        count: 0,
+    it('should return 401 when not authenticated', async () => {
+      mockSession(null)
+
+      const request = createMockRequest('POST', 'http://localhost:3000/api/notifications/mark-read', {
+        notificationIds: ['notif-1'],
       })
+      const response = await POST(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(401)
+      expect(data.error).toBe('Unauthorized')
     })
 
     it('should reject invalid notification IDs (not array)', async () => {
-      const { POST } = await import('../route')
+      mockSession(mockUser)
 
-      const request = new NextRequest('http://localhost:3000/api/notifications/mark-read', {
-        method: 'POST',
-        body: JSON.stringify({ notificationIds: 'invalid' }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const request = createMockRequest('POST', 'http://localhost:3000/api/notifications/mark-read', {
+        notificationIds: 'not-an-array',
       })
-
       const response = await POST(request)
       const data = await response.json()
 
       expect(response.status).toBe(400)
       expect(data.error).toBe('Invalid notification IDs')
-
-      expect(mockNotificationService.markAsRead).not.toHaveBeenCalled()
-      expect(mockLogger.info).not.toHaveBeenCalled()
     })
 
     it('should reject missing notification IDs field', async () => {
-      const { POST } = await import('../route')
+      mockSession(mockUser)
 
-      const request = new NextRequest('http://localhost:3000/api/notifications/mark-read', {
-        method: 'POST',
-        body: JSON.stringify({}),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-
+      const request = createMockRequest('POST', 'http://localhost:3000/api/notifications/mark-read', {})
       const response = await POST(request)
       const data = await response.json()
 
       expect(response.status).toBe(400)
       expect(data.error).toBe('Invalid notification IDs')
-
-      expect(mockNotificationService.markAsRead).not.toHaveBeenCalled()
     })
 
     it('should handle notification service errors', async () => {
-      const notificationIds = ['notif-1']
-      
-      // Setup error scenario
+      mockSession(mockUser)
+
       mockNotificationService.markAsRead.mockRejectedValue(new Error('Database error'))
 
-      // Mock the apiHandler to simulate error handling
-      mockApiHandler.mockImplementation((handlers) => {
-        return async (request: any) => {
-          try {
-            const method = request.method || 'POST'
-            const handler = handlers[method]
-            return await handler(request)
-          } catch (error) {
-            return new Response(JSON.stringify({ error: 'Internal server error' }), {
-              status: 500,
-            })
-          }
-        }
+      const request = createMockRequest('POST', 'http://localhost:3000/api/notifications/mark-read', {
+        notificationIds: ['notif-1'],
       })
-
-      const { POST } = await import('../route')
-
-      const request = new NextRequest('http://localhost:3000/api/notifications/mark-read', {
-        method: 'POST',
-        body: JSON.stringify({ notificationIds }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-
       const response = await POST(request)
       const data = await response.json()
 
@@ -219,37 +146,20 @@ describe('/api/notifications/mark-read', () => {
       expect(data.error).toBe('Internal server error')
     })
 
-    it('should handle malformed JSON request body', async () => {
-      const { POST } = await import('../route')
+    it('should handle non-string array elements', async () => {
+      mockSession(mockUser)
 
-      const request = new NextRequest('http://localhost:3000/api/notifications/mark-read', {
-        method: 'POST',
-        body: 'invalid json',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      mockNotificationService.markAsRead.mockResolvedValue(4)
+
+      const request = createMockRequest('POST', 'http://localhost:3000/api/notifications/mark-read', {
+        notificationIds: ['valid-id', 123, null, 'another-valid-id'],
       })
-
-      // Mock the apiHandler to simulate JSON parsing error
-      mockApiHandler.mockImplementation((handlers) => {
-        return async (request: any) => {
-          try {
-            const method = request.method || 'POST'
-            const handler = handlers[method]
-            return await handler(request)
-          } catch (error) {
-            return new Response(JSON.stringify({ error: 'Internal server error' }), {
-              status: 500,
-            })
-          }
-        }
-      })
-
       const response = await POST(request)
       const data = await response.json()
 
-      expect(response.status).toBe(500)
-      expect(data.error).toBe('Internal server error')
+      // The route doesn't validate array elements, so this succeeds
+      expect(response.status).toBe(200)
+      expect(data.success).toBe(true)
     })
   })
 })

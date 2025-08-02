@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import { createMockRequest, mockSession, createTestUser } from '@/__tests__/helpers/api-test-utils.helper'
 
 // Mock dependencies
 jest.mock('next-auth/next')
@@ -35,6 +36,9 @@ jest.mock('@/lib/prisma', () => ({
     product: {
       count: jest.fn(),
     },
+    user: {
+      findUnique: jest.fn(),
+    },
   },
 }))
 
@@ -44,17 +48,21 @@ import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
 
 describe('Organizations API', () => {
-  const mockSession = {
-    user: { id: 'user1', email: 'test@example.com' },
-  }
+  const mockUser = createTestUser({
+    id: 'user1',
+    email: 'test@example.com',
+    name: 'Test User'
+  })
 
   beforeEach(() => {
     jest.clearAllMocks()
+    // Mock user lookup for authentication
+    ;(prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser)
   })
 
   describe('GET /api/organizations', () => {
     it('should return user organizations', async () => {
-      (getServerSession as jest.Mock).mockResolvedValue(mockSession);
+      mockSession(mockUser);
       (prisma.organization.findMany as jest.Mock).mockResolvedValue([
         {
           id: 'org1',
@@ -67,7 +75,8 @@ describe('Organizations API', () => {
         },
       ])
 
-      const response = await GET()
+      const request = createMockRequest('GET', 'http://localhost:3000/api/organizations')
+      const response = await GET(request)
       const data = await response.json()
 
       expect(response.status).toBe(200)
@@ -77,9 +86,10 @@ describe('Organizations API', () => {
     })
 
     it('should return 401 if not authenticated', async () => {
-      (getServerSession as jest.Mock).mockResolvedValue(null)
+      mockSession(null)
 
-      const response = await GET()
+      const request = createMockRequest('GET', 'http://localhost:3000/api/organizations')
+      const response = await GET(request)
       const data = await response.json()
 
       expect(response.status).toBe(401)
@@ -89,7 +99,7 @@ describe('Organizations API', () => {
 
   describe('POST /api/organizations', () => {
     it('should create a new organization', async () => {
-      (getServerSession as jest.Mock).mockResolvedValue(mockSession);
+      mockSession(mockUser);
       (prisma.organization.findUnique as jest.Mock).mockResolvedValue(null);
       (prisma.organization.create as jest.Mock).mockResolvedValue({
         id: 'org1',
@@ -102,20 +112,22 @@ describe('Organizations API', () => {
       })
 
       const requestBody = { name: 'New Org', slug: 'new-org' }
-      const request = {
-        json: jest.fn().mockResolvedValue(requestBody)
-      } as any
+      const request = createMockRequest(
+        'POST',
+        'http://localhost:3000/api/organizations',
+        requestBody
+      )
 
       const response = await POST(request)
       const data = await response.json()
 
-      expect(response.status).toBe(200)
+      expect(response.status).toBe(201)
       expect(data.name).toBe('New Org')
       expect(data.userRole).toBe('OWNER')
     })
 
     it('should return 400 if slug already exists', async () => {
-      (getServerSession as jest.Mock).mockResolvedValue(mockSession);
+      mockSession(mockUser);
       (prisma.organization.findUnique as jest.Mock).mockResolvedValue({
         id: 'existing',
         name: 'Existing',
@@ -123,9 +135,11 @@ describe('Organizations API', () => {
       })
 
       const requestBody = { name: 'New Org', slug: 'new-org' }
-      const request = {
-        json: jest.fn().mockResolvedValue(requestBody)
-      } as any
+      const request = createMockRequest(
+        'POST',
+        'http://localhost:3000/api/organizations',
+        requestBody
+      )
 
       const response = await POST(request)
       const data = await response.json()
@@ -137,7 +151,7 @@ describe('Organizations API', () => {
 
   describe('DELETE /api/organizations/[id]', () => {
     it('should prevent deletion if org has resources', async () => {
-      (getServerSession as jest.Mock).mockResolvedValue(mockSession);
+      mockSession(mockUser);
       (prisma.organizationMember.findUnique as jest.Mock).mockResolvedValue({
         role: 'OWNER',
       });
@@ -157,7 +171,7 @@ describe('Organizations API', () => {
     })
 
     it('should delete organization if no resources', async () => {
-      (getServerSession as jest.Mock).mockResolvedValue(mockSession);
+      mockSession(mockUser);
       (prisma.organizationMember.findUnique as jest.Mock).mockResolvedValue({
         role: 'OWNER',
       });
@@ -177,7 +191,7 @@ describe('Organizations API', () => {
     })
 
     it('should return 403 if user is not owner', async () => {
-      (getServerSession as jest.Mock).mockResolvedValue(mockSession);
+      mockSession(mockUser);
       (prisma.organizationMember.findUnique as jest.Mock).mockResolvedValue({
         role: 'MEMBER',
       })

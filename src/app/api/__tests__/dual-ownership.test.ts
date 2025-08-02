@@ -7,15 +7,11 @@ import { prisma } from '@/lib/prisma'
 import { POST as createProject } from '@/app/api/projects/route'
 import { POST as createProduct } from '@/app/api/products/route'
 import { POST as createOrg } from '@/app/api/organizations/route'
+import { createMockRequest, mockSession, createTestUser } from '@/__tests__/helpers/api-test-utils.helper'
 
 // Mock next-auth
 jest.mock('next-auth/next')
 const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>
-
-// Mock auth-utils
-jest.mock('@/lib/auth-utils', () => ({
-  requireAuth: jest.fn()
-}))
 
 // Mock Prisma
 jest.mock('@/lib/prisma', () => ({
@@ -50,11 +46,11 @@ jest.mock('@/lib/prisma', () => ({
 }))
 
 describe('Dual Ownership Tests', () => {
-  const mockUser = {
+  const mockUser = createTestUser({
     id: 'cjld2cjxh0000qzrmn831i7rn',
     email: 'test@example.com',
     name: 'Test User'
-  }
+  })
 
   const mockOrg = {
     id: 'cjld2cyuq0000t3rmniod1foy',
@@ -64,12 +60,10 @@ describe('Dual Ownership Tests', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
-    mockGetServerSession.mockResolvedValue({
-      user: mockUser,
-      expires: '2025-12-31'
-    })
-    const { requireAuth } = require('@/lib/auth-utils')
-    requireAuth.mockResolvedValue(mockUser)
+    mockSession(mockUser)
+    
+    // Mock the user lookup in withAuth
+    ;(prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser)
   })
 
   describe('Project Creation with Dual Ownership', () => {
@@ -105,9 +99,12 @@ describe('Dual Ownership Tests', () => {
         contactEmail: 'contact@example.com',
         helpType: 'MVP'
       }
-      const req = {
-        json: jest.fn().mockResolvedValue(requestBody)
-      } as any
+      
+      const req = createMockRequest(
+        'POST',
+        'http://localhost:3000/api/projects',
+        requestBody
+      )
 
       const response = await createProject(req)
       const data = await response.json()
@@ -154,9 +151,12 @@ describe('Dual Ownership Tests', () => {
         helpType: 'MVP',
         organizationId: mockOrg.id
       }
-      const req = {
-        json: jest.fn().mockResolvedValue(requestBody)
-      } as any
+      
+      const req = createMockRequest(
+        'POST',
+        'http://localhost:3000/api/projects',
+        requestBody
+      )
 
       const response = await createProject(req)
       const data = await response.json()
@@ -184,15 +184,18 @@ describe('Dual Ownership Tests', () => {
         helpType: 'MVP',
         organizationId: mockOrg.id
       }
-      const req = {
-        json: jest.fn().mockResolvedValue(requestBody)
-      } as any
+      
+      const req = createMockRequest(
+        'POST',
+        'http://localhost:3000/api/projects',
+        requestBody
+      )
 
       const response = await createProject(req)
       const data = await response.json()
 
       expect(response.status).toBe(400)
-      expect(data.message).toContain('must be a member of the organization')
+      expect(data.error).toContain('must be a member of the organization')
     })
   })
 
@@ -231,9 +234,12 @@ describe('Dual Ownership Tests', () => {
         description: 'Test product description',
         organizationId: mockOrg.id
       }
-      const req = {
-        json: jest.fn().mockResolvedValue(requestBody)
-      } as any
+      
+      const req = createMockRequest(
+        'POST',
+        'http://localhost:3000/api/products',
+        requestBody
+      )
 
       const response = await createProduct(req)
       const data = await response.json()
