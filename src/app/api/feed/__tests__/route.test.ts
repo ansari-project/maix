@@ -73,14 +73,6 @@ describe('GET /api/feed', () => {
       }
     ]
 
-    const mockApplications = [
-      {
-        id: 'app1',
-        appliedAt: new Date('2024-01-02'),
-        user: { id: 'user2', name: 'Jane Smith' },
-        project: { id: 'proj1', name: 'Test Project' }
-      }
-    ]
 
     const mockProductUpdates = [
       {
@@ -128,7 +120,6 @@ describe('GET /api/feed', () => {
     ]
 
     ;(prisma.project.findMany as jest.Mock).mockResolvedValueOnce(mockProjects)
-    ;(prisma.application.findMany as jest.Mock).mockResolvedValueOnce(mockApplications)
     ;(prisma.post.findMany as jest.Mock)
       .mockResolvedValueOnce(mockProductUpdates) // First call for product updates
       .mockResolvedValueOnce(mockQuestionAnswers) // Second call for questions/answers
@@ -144,7 +135,6 @@ describe('GET /api/feed', () => {
     // Check that all types are included
     const types = data.items.map((item: any) => item.type)
     expect(types).toContain('project_created')
-    expect(types).toContain('volunteer_applied')
     expect(types).toContain('product_update')
     expect(types).toContain('product_created')
     expect(types).toContain('question_asked')
@@ -172,7 +162,6 @@ describe('GET /api/feed', () => {
     ;(requireAuth as jest.Mock).mockResolvedValueOnce(mockUser)
 
     ;(prisma.project.findMany as jest.Mock).mockResolvedValueOnce([])
-    ;(prisma.application.findMany as jest.Mock).mockResolvedValueOnce([])
     ;(prisma.post.findMany as jest.Mock).mockResolvedValue([])
     ;(prisma.product.findMany as jest.Mock).mockResolvedValueOnce([])
 

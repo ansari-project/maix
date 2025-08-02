@@ -39,7 +39,7 @@ function formatProjectStatus(status: string): { label: string; color: string } {
 
 interface FeedItem {
   id: string
-  type: 'project_created' | 'volunteer_applied' | 'profile_updated' | 'product_update' | 'product_created' | 'question_asked' | 'answer_posted'
+  type: 'project_created' | 'profile_updated' | 'product_update' | 'product_created' | 'question_asked' | 'answer_posted'
   title: string
   timestamp: Date
   user: {
@@ -140,8 +140,10 @@ function FeedItem({ item, isPublic = false }: FeedItemProps) {
   const Icon = getFeedItemIcon(item.type)
   const colorClass = getFeedItemColor(item.type)
 
+  const isCompletedProject = item.type === 'project_created' && item.data?.status === 'COMPLETED'
+  
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className={`hover:shadow-md transition-shadow ${isCompletedProject ? 'ring-2 ring-green-400 ring-offset-2' : ''}`}>
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
           <div className={`p-2 rounded-full ${colorClass}`}>
@@ -153,7 +155,7 @@ function FeedItem({ item, isPublic = false }: FeedItemProps) {
                 {/* Make title clickable for items with links */}
                 {(item.type === 'project_created' && item.data?.id) ? (
                   <Link href={`/projects/${item.data.id}`} className="hover:text-primary">
-                    {item.title}
+                    {item.data.status === 'COMPLETED' ? `🎉 ${item.title} 🎉` : item.title}
                   </Link>
                 ) : (item.type === 'product_created' && item.data?.id) ? (
                   <Link href={`/products/${item.data.id}`} className="hover:text-primary">
@@ -183,6 +185,19 @@ function FeedItem({ item, isPublic = false }: FeedItemProps) {
             {/* Type-specific content */}
             {item.type === 'project_created' && item.data && (
               <div className="mt-2">
+                {/* Special celebration display for completed projects */}
+                {item.data.status === 'COMPLETED' && (
+                  <div className="mb-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-2xl">🎉</span>
+                      <span className="font-semibold text-green-800">Project Completed!</span>
+                      <span className="text-2xl">🎊</span>
+                    </div>
+                    <p className="text-sm text-green-700">
+                      Congratulations to the team for successfully delivering this project! 🚀
+                    </p>
+                  </div>
+                )}
                 <div className="text-sm">
                   <Markdown content={item.data.description || ''} className="prose-sm line-clamp-4" />
                 </div>
@@ -212,16 +227,6 @@ function FeedItem({ item, isPublic = false }: FeedItemProps) {
               </div>
             )}
 
-            {item.type === 'volunteer_applied' && item.data && (
-              <div className="mt-2">
-                <p className="text-sm text-muted-foreground">
-                  Volunteered for: {item.data.project?.name}
-                </p>
-                <Badge variant="secondary" className="text-xs mt-1">
-                  {item.data.status}
-                </Badge>
-              </div>
-            )}
 
             {item.type === 'product_update' && item.data && (
               <div className="mt-2">
@@ -292,8 +297,6 @@ function getFeedItemIcon(type: FeedItem['type']) {
   switch (type) {
     case 'project_created':
       return FolderOpen
-    case 'volunteer_applied':
-      return FileText
     case 'profile_updated':
       return User
     case 'product_update':
@@ -311,8 +314,6 @@ function getFeedItemColor(type: FeedItem['type']) {
   switch (type) {
     case 'project_created':
       return 'bg-blue-100 text-blue-800'
-    case 'volunteer_applied':
-      return 'bg-green-100 text-green-800'
     case 'profile_updated':
       return 'bg-orange-100 text-orange-800'
     case 'product_update':

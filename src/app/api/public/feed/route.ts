@@ -135,7 +135,9 @@ export async function GET() {
           id: p.id,
           name: p.name,
           description: p.description,
-          helpType: p.helpType
+          helpType: p.helpType,
+          status: p.status,
+          isActive: p.isActive
         }
       })),
       ...products.map(p => ({

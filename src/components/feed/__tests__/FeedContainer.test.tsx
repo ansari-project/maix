@@ -158,18 +158,6 @@ describe('FeedContainer', () => {
             parentId: 'q1'
           }
         },
-        {
-          id: 'app1',
-          type: 'volunteer_applied',
-          title: 'David volunteered for Test Project',
-          timestamp: '2024-01-04T00:00:00Z',
-          user: { id: 'user4', name: 'David' },
-          data: {
-            id: 'app1',
-            project: { title: 'Test Project' },
-            status: 'PENDING'
-          }
-        }
       ]
     }
 
@@ -184,14 +172,12 @@ describe('FeedContainer', () => {
       expect(screen.getByText('New product: Test Product')).toBeInTheDocument()
       expect(screen.getByText('Product update: Test Product')).toBeInTheDocument()
       expect(screen.getByText('Charlie answered a question')).toBeInTheDocument()
-      expect(screen.getByText('David volunteered for Test Project')).toBeInTheDocument()
     })
 
     // Check for specific content
     expect(screen.getByText('5 projects')).toBeInTheDocument()
     expect(screen.getByText('Released version 2.0')).toBeInTheDocument()
     expect(screen.getByText('You can use NextAuth.js for authentication')).toBeInTheDocument()
-    expect(screen.getByText('PENDING')).toBeInTheDocument()
 
     // Check for correct links - titles are now clickable links
     const productLink = screen.getByRole('link', { name: 'New product: Test Product' })
