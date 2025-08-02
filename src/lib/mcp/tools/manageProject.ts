@@ -14,6 +14,7 @@ const projectFieldsSchema = {
   targetCompletionDate: z.string().datetime().optional().or(z.literal('')).describe("Target completion date (ISO 8601)"),
   isActive: z.boolean().optional().describe("Whether project is actively seeking help"),
   productId: z.string().optional().describe("Associated product ID"),
+  organizationId: z.string().optional().describe("Organization ID to create project under"),
 };
 
 /**
@@ -28,6 +29,7 @@ const createProjectSchema = z.object({
   targetCompletionDate: projectFieldsSchema.targetCompletionDate,
   isActive: projectFieldsSchema.isActive,
   productId: projectFieldsSchema.productId,
+  organizationId: projectFieldsSchema.organizationId,
 });
 
 /**
@@ -42,6 +44,7 @@ const updateProjectSchema = z.object({
   targetCompletionDate: projectFieldsSchema.targetCompletionDate,
   isActive: projectFieldsSchema.isActive,
   productId: projectFieldsSchema.productId,
+  organizationId: projectFieldsSchema.organizationId,
 });
 
 /**
@@ -59,6 +62,7 @@ const manageProjectBaseSchema = z.object({
   targetCompletionDate: z.string().datetime().optional().or(z.literal('')).describe("Target completion date (ISO 8601)"),
   isActive: z.boolean().optional().describe("Whether project is actively seeking help"),
   productId: z.string().optional().describe("Associated product ID"),
+  organizationId: z.string().optional().describe("Organization ID to create project under"),
 });
 
 /**
@@ -146,6 +150,25 @@ async function createProject(
   
   const validatedData = validationResult.data;
   
+  // If organizationId is provided, validate user is a member
+  if (validatedData.organizationId) {
+    const membership = await prisma.organizationMember.findUnique({
+      where: {
+        organizationId_userId: {
+          organizationId: validatedData.organizationId,
+          userId: context.user.id,
+        }
+      }
+    });
+    
+    if (!membership) {
+      return {
+        success: false,
+        error: "You are not a member of the specified organization",
+      };
+    }
+  }
+  
   const newProject = await prisma.project.create({
     data: {
       name: validatedData.name,
@@ -156,11 +179,16 @@ async function createProject(
       targetCompletionDate: validatedData.targetCompletionDate ? new Date(validatedData.targetCompletionDate) : null,
       isActive: validatedData.isActive ?? true,
       productId: validatedData.productId,
-      ownerId: context.user.id,
+      // Dual ownership: Either user OR organization owns it, never both
+      ownerId: validatedData.organizationId ? null : context.user.id,
+      organizationId: validatedData.organizationId,
     },
     include: {
       owner: {
         select: { id: true, name: true, email: true }
+      },
+      organization: {
+        select: { id: true, name: true, slug: true }
       }
     }
   });
@@ -196,6 +224,27 @@ async function updateProject(
   
   const validatedData = validationResult.data;
   
+  // If organizationId is being changed, validate membership
+  if (validatedData.organizationId !== undefined) {
+    if (validatedData.organizationId) {
+      const membership = await prisma.organizationMember.findUnique({
+        where: {
+          organizationId_userId: {
+            organizationId: validatedData.organizationId,
+            userId: context.user.id,
+          }
+        }
+      });
+      
+      if (!membership) {
+        return {
+          success: false,
+          error: "You are not a member of the specified organization",
+        };
+      }
+    }
+  }
+  
   // Prepare update data (only include fields that were provided)
   const updateData: any = {};
   
@@ -210,16 +259,35 @@ async function updateProject(
   if (validatedData.isActive !== undefined) updateData.isActive = validatedData.isActive;
   if (validatedData.productId !== undefined) updateData.productId = validatedData.productId;
   
+  // Handle dual ownership change
+  if (validatedData.organizationId !== undefined) {
+    updateData.organizationId = validatedData.organizationId;
+    updateData.ownerId = validatedData.organizationId ? null : context.user.id;
+  }
+  
   try {
     const updatedProject = await prisma.project.update({
       where: { 
         id: projectId,
-        ownerId: context.user.id, // Security: Ensure user owns the project
+        OR: [
+          { ownerId: context.user.id }, // User-owned project
+          { 
+            organizationId: { not: null },
+            organization: {
+              members: {
+                some: { userId: context.user.id }
+              }
+            }
+          } // Organization-owned project where user is member
+        ]
       },
       data: updateData,
       include: {
         owner: {
           select: { id: true, name: true, email: true }
+        },
+        organization: {
+          select: { id: true, name: true, slug: true }
         }
       }
     });
@@ -255,7 +323,17 @@ async function deleteProject(
     await prisma.project.delete({
       where: { 
         id: projectId,
-        ownerId: context.user.id, // Security: Ensure user owns the project
+        OR: [
+          { ownerId: context.user.id }, // User-owned project
+          { 
+            organizationId: { not: null },
+            organization: {
+              members: {
+                some: { userId: context.user.id }
+              }
+            }
+          } // Organization-owned project where user is member
+        ]
       },
     });
     
@@ -288,11 +366,24 @@ async function getProject(
   const project = await prisma.project.findFirst({
     where: { 
       id: projectId,
-      ownerId: context.user.id, // Security: Ensure user owns the project
+      OR: [
+        { ownerId: context.user.id }, // User-owned project
+        { 
+          organizationId: { not: null },
+          organization: {
+            members: {
+              some: { userId: context.user.id }
+            }
+          }
+        } // Organization-owned project where user is member
+      ]
     },
     include: {
       owner: {
         select: { id: true, name: true, email: true }
+      },
+      organization: {
+        select: { id: true, name: true, slug: true }
       },
       applications: {
         select: {
@@ -324,10 +415,25 @@ async function getProject(
  */
 async function listProjects(context: MaixMcpContext): Promise<MaixMcpResponse> {
   const projects = await prisma.project.findMany({
-    where: { ownerId: context.user.id },
+    where: {
+      OR: [
+        { ownerId: context.user.id }, // User-owned projects
+        { 
+          organizationId: { not: null },
+          organization: {
+            members: {
+              some: { userId: context.user.id }
+            }
+          }
+        } // Organization-owned projects where user is member
+      ]
+    },
     include: {
       owner: {
         select: { id: true, name: true, email: true }
+      },
+      organization: {
+        select: { id: true, name: true, slug: true }
       },
       applications: {
         select: {

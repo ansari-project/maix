@@ -11,6 +11,8 @@ import { manageProjectTool } from "@/lib/mcp/tools/manageProject";
 import { handleSearchProjects, SearchProjectsSchema } from "@/lib/mcp/tools/searchProjects";
 import { handleManageProduct, manageProductParameters } from "@/lib/mcp/tools/manageProduct";
 import { handleSearchProducts, SearchProductsSchema } from "@/lib/mcp/tools/searchProducts";
+import { manageOrganizationTool } from "@/lib/mcp/tools/manageOrganization";
+import { manageOrganizationMemberTool } from "@/lib/mcp/tools/manageOrganizationMember";
 
 // Type definitions for type safety
 type MaixAuthInfo = {
@@ -412,6 +414,72 @@ const mcpHandler = createMcpHandler(
           console.error("Failed to search products:", error);
           return {
             content: [{ type: "text", text: error instanceof Error ? error.message : "An error occurred while searching products." }],
+          };
+        }
+      }
+    );
+
+    // Tool: Manage organizations
+    server.tool(
+      manageOrganizationTool.name,
+      manageOrganizationTool.description,
+      manageOrganizationTool.parametersShape,
+      async (params, extra) => {
+        try {
+          const user = (extra.authInfo as MaixAuthInfo).extra.user;
+          const context = { user };
+          const result = await manageOrganizationTool.handler(params, context);
+          
+          if (result.success) {
+            let message = result.message || 'Operation completed successfully';
+            if (result.data && typeof result.data === 'object') {
+              message += '\n\n' + JSON.stringify(result.data, null, 2);
+            }
+            return {
+              content: [{ type: "text", text: message }],
+            };
+          } else {
+            return {
+              content: [{ type: "text", text: result.error || 'Organization operation failed' }],
+            };
+          }
+        } catch (error) {
+          console.error("Failed to manage organization:", error);
+          return {
+            content: [{ type: "text", text: error instanceof Error ? error.message : "An error occurred while managing the organization." }],
+          };
+        }
+      }
+    );
+
+    // Tool: Manage organization members
+    server.tool(
+      manageOrganizationMemberTool.name,
+      manageOrganizationMemberTool.description,
+      manageOrganizationMemberTool.parametersShape,
+      async (params, extra) => {
+        try {
+          const user = (extra.authInfo as MaixAuthInfo).extra.user;
+          const context = { user };
+          const result = await manageOrganizationMemberTool.handler(params, context);
+          
+          if (result.success) {
+            let message = result.message || 'Operation completed successfully';
+            if (result.data && typeof result.data === 'object') {
+              message += '\n\n' + JSON.stringify(result.data, null, 2);
+            }
+            return {
+              content: [{ type: "text", text: message }],
+            };
+          } else {
+            return {
+              content: [{ type: "text", text: result.error || 'Organization member operation failed' }],
+            };
+          }
+        } catch (error) {
+          console.error("Failed to manage organization member:", error);
+          return {
+            content: [{ type: "text", text: error instanceof Error ? error.message : "An error occurred while managing organization members." }],
           };
         }
       }

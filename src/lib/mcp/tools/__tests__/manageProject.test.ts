@@ -84,10 +84,14 @@ describe('manageProject tool', () => {
           isActive: true,
           productId: undefined,
           ownerId: 'user-123',
+          organizationId: undefined,
         },
         include: {
           owner: {
             select: { id: true, name: true, email: true }
+          },
+          organization: {
+            select: { id: true, name: true, slug: true }
           }
         }
       });
@@ -146,7 +150,17 @@ describe('manageProject tool', () => {
       expect(mockPrisma.project.update).toHaveBeenCalledWith({
         where: { 
           id: 'project-123',
-          ownerId: 'user-123',
+          OR: [
+            { ownerId: 'user-123' },
+            { 
+              organizationId: { not: null },
+              organization: {
+                members: {
+                  some: { userId: 'user-123' }
+                }
+              }
+            }
+          ]
         },
         data: {
           name: 'Updated Project Name',
@@ -155,6 +169,9 @@ describe('manageProject tool', () => {
         include: {
           owner: {
             select: { id: true, name: true, email: true }
+          },
+          organization: {
+            select: { id: true, name: true, slug: true }
           }
         }
       });
@@ -207,7 +224,17 @@ describe('manageProject tool', () => {
       expect(mockPrisma.project.delete).toHaveBeenCalledWith({
         where: { 
           id: 'project-123',
-          ownerId: 'user-123',
+          OR: [
+            { ownerId: 'user-123' },
+            { 
+              organizationId: { not: null },
+              organization: {
+                members: {
+                  some: { userId: 'user-123' }
+                }
+              }
+            }
+          ]
         },
       });
     });
@@ -256,11 +283,24 @@ describe('manageProject tool', () => {
       expect(mockPrisma.project.findFirst).toHaveBeenCalledWith({
         where: { 
           id: 'project-123',
-          ownerId: 'user-123',
+          OR: [
+            { ownerId: 'user-123' },
+            { 
+              organizationId: { not: null },
+              organization: {
+                members: {
+                  some: { userId: 'user-123' }
+                }
+              }
+            }
+          ]
         },
         include: {
           owner: {
             select: { id: true, name: true, email: true }
+          },
+          organization: {
+            select: { id: true, name: true, slug: true }
           },
           applications: {
             select: {
@@ -306,10 +346,25 @@ describe('manageProject tool', () => {
       expect(result.message).toBe('Found 2 projects');
       
       expect(mockPrisma.project.findMany).toHaveBeenCalledWith({
-        where: { ownerId: 'user-123' },
+        where: {
+          OR: [
+            { ownerId: 'user-123' },
+            { 
+              organizationId: { not: null },
+              organization: {
+                members: {
+                  some: { userId: 'user-123' }
+                }
+              }
+            }
+          ]
+        },
         include: {
           owner: {
             select: { id: true, name: true, email: true }
+          },
+          organization: {
+            select: { id: true, name: true, slug: true }
           },
           applications: {
             select: {

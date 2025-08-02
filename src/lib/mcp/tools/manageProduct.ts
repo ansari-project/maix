@@ -19,6 +19,7 @@ export const manageProductParameters = z.object({
   name: z.string().min(1).max(255).optional().describe("The product name"),
   description: z.string().min(10).max(5000).optional().describe("The product description"),
   url: z.string().url().optional().or(z.literal('')).describe("The product website/demo URL"),
+  organizationId: z.string().optional().describe("Organization ID to create product under"),
 });
 
 /**
@@ -87,16 +88,40 @@ async function createProduct(
     return { success: false, error: "Description is required to create a product" };
   }
   
+  // If organizationId is provided, validate user is a member
+  if (productData.organizationId) {
+    const membership = await prisma.organizationMember.findUnique({
+      where: {
+        organizationId_userId: {
+          organizationId: productData.organizationId,
+          userId: context.user.id,
+        }
+      }
+    });
+    
+    if (!membership) {
+      return {
+        success: false,
+        error: "You are not a member of the specified organization",
+      };
+    }
+  }
+  
   const newProduct = await prisma.product.create({
     data: {
       name: productData.name,
       description: productData.description,
       url: productData.url || null,
-      ownerId: context.user.id,
+      // Dual ownership: Either user OR organization owns it, never both
+      ownerId: productData.organizationId ? null : context.user.id,
+      organizationId: productData.organizationId,
     },
     include: {
       owner: {
         select: { id: true, name: true, email: true }
+      },
+      organization: {
+        select: { id: true, name: true, slug: true }
       }
     }
   });
@@ -123,20 +148,60 @@ async function updateProduct(
   // Prepare update data (only include fields that were provided)
   const updateData: any = {};
   
+  // If organizationId is being changed, validate membership
+  if (productData.organizationId !== undefined) {
+    if (productData.organizationId) {
+      const membership = await prisma.organizationMember.findUnique({
+        where: {
+          organizationId_userId: {
+            organizationId: productData.organizationId,
+            userId: context.user.id,
+          }
+        }
+      });
+      
+      if (!membership) {
+        return {
+          success: false,
+          error: "You are not a member of the specified organization",
+        };
+      }
+    }
+  }
+
   if (productData.name !== undefined) updateData.name = productData.name;
   if (productData.description !== undefined) updateData.description = productData.description;
   if (productData.url !== undefined) updateData.url = productData.url || null;
+  
+  // Handle dual ownership change
+  if (productData.organizationId !== undefined) {
+    updateData.organizationId = productData.organizationId;
+    updateData.ownerId = productData.organizationId ? null : context.user.id;
+  }
   
   try {
     const updatedProduct = await prisma.product.update({
       where: { 
         id: productId,
-        ownerId: context.user.id, // Security: Ensure user owns the product
+        OR: [
+          { ownerId: context.user.id }, // User-owned product
+          { 
+            organizationId: { not: null },
+            organization: {
+              members: {
+                some: { userId: context.user.id }
+              }
+            }
+          } // Organization-owned product where user is member
+        ]
       },
       data: updateData,
       include: {
         owner: {
           select: { id: true, name: true, email: true }
+        },
+        organization: {
+          select: { id: true, name: true, slug: true }
         }
       }
     });
@@ -172,7 +237,17 @@ async function deleteProduct(
     await prisma.product.delete({
       where: { 
         id: productId,
-        ownerId: context.user.id, // Security: Ensure user owns the product
+        OR: [
+          { ownerId: context.user.id }, // User-owned product
+          { 
+            organizationId: { not: null },
+            organization: {
+              members: {
+                some: { userId: context.user.id }
+              }
+            }
+          } // Organization-owned product where user is member
+        ]
       },
     });
     
@@ -205,11 +280,24 @@ async function getProduct(
   const product = await prisma.product.findFirst({
     where: { 
       id: productId,
-      ownerId: context.user.id, // Security: Ensure user owns the product
+      OR: [
+        { ownerId: context.user.id }, // User-owned product
+        { 
+          organizationId: { not: null },
+          organization: {
+            members: {
+              some: { userId: context.user.id }
+            }
+          }
+        } // Organization-owned product where user is member
+      ]
     },
     include: {
       owner: {
         select: { id: true, name: true, email: true }
+      },
+      organization: {
+        select: { id: true, name: true, slug: true }
       },
       projects: {
         select: {
@@ -247,10 +335,25 @@ async function getProduct(
  */
 async function listProducts(context: MaixMcpContext): Promise<MaixMcpResponse> {
   const products = await prisma.product.findMany({
-    where: { ownerId: context.user.id },
+    where: {
+      OR: [
+        { ownerId: context.user.id }, // User-owned products
+        { 
+          organizationId: { not: null },
+          organization: {
+            members: {
+              some: { userId: context.user.id }
+            }
+          }
+        } // Organization-owned products where user is member
+      ]
+    },
     include: {
       owner: {
         select: { id: true, name: true, email: true }
+      },
+      organization: {
+        select: { id: true, name: true, slug: true }
       },
       _count: {
         select: {

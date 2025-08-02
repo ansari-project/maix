@@ -88,10 +88,14 @@ describe('manageProduct tool', () => {
           description: 'This is a comprehensive test product description that meets the minimum character requirement.',
           url: 'https://testproduct.com',
           ownerId: 'user-123',
+          organizationId: undefined,
         },
         include: {
           owner: {
             select: { id: true, name: true, email: true }
+          },
+          organization: {
+            select: { id: true, name: true, slug: true }
           }
         }
       });
@@ -116,10 +120,14 @@ describe('manageProduct tool', () => {
           description: 'This is a comprehensive test product description that meets the minimum character requirement.',
           url: null,
           ownerId: 'user-123',
+          organizationId: undefined,
         },
         include: {
           owner: {
             select: { id: true, name: true, email: true }
+          },
+          organization: {
+            select: { id: true, name: true, slug: true }
           }
         }
       });
@@ -145,10 +153,14 @@ describe('manageProduct tool', () => {
           description: 'This is a comprehensive test product description that meets the minimum character requirement.',
           url: null,
           ownerId: 'user-123',
+          organizationId: undefined,
         },
         include: {
           owner: {
             select: { id: true, name: true, email: true }
+          },
+          organization: {
+            select: { id: true, name: true, slug: true }
           }
         }
       });
@@ -232,7 +244,17 @@ describe('manageProduct tool', () => {
       expect(mockPrisma.product.update).toHaveBeenCalledWith({
         where: { 
           id: 'product-123',
-          ownerId: 'user-123',
+          OR: [
+            { ownerId: 'user-123' },
+            { 
+              organizationId: { not: null },
+              organization: {
+                members: {
+                  some: { userId: 'user-123' }
+                }
+              }
+            }
+          ]
         },
         data: {
           name: 'Updated Product Name',
@@ -241,6 +263,9 @@ describe('manageProduct tool', () => {
         include: {
           owner: {
             select: { id: true, name: true, email: true }
+          },
+          organization: {
+            select: { id: true, name: true, slug: true }
           }
         }
       });
@@ -261,7 +286,17 @@ describe('manageProduct tool', () => {
       expect(mockPrisma.product.update).toHaveBeenCalledWith({
         where: { 
           id: 'product-123',
-          ownerId: 'user-123',
+          OR: [
+            { ownerId: 'user-123' },
+            { 
+              organizationId: { not: null },
+              organization: {
+                members: {
+                  some: { userId: 'user-123' }
+                }
+              }
+            }
+          ]
         },
         data: {
           name: 'Updated Name Only',
@@ -269,6 +304,9 @@ describe('manageProduct tool', () => {
         include: {
           owner: {
             select: { id: true, name: true, email: true }
+          },
+          organization: {
+            select: { id: true, name: true, slug: true }
           }
         }
       });
@@ -290,7 +328,17 @@ describe('manageProduct tool', () => {
       expect(mockPrisma.product.update).toHaveBeenCalledWith({
         where: { 
           id: 'product-123',
-          ownerId: 'user-123',
+          OR: [
+            { ownerId: 'user-123' },
+            { 
+              organizationId: { not: null },
+              organization: {
+                members: {
+                  some: { userId: 'user-123' }
+                }
+              }
+            }
+          ]
         },
         data: {
           url: null,
@@ -298,6 +346,9 @@ describe('manageProduct tool', () => {
         include: {
           owner: {
             select: { id: true, name: true, email: true }
+          },
+          organization: {
+            select: { id: true, name: true, slug: true }
           }
         }
       });
@@ -350,7 +401,17 @@ describe('manageProduct tool', () => {
       expect(mockPrisma.product.delete).toHaveBeenCalledWith({
         where: { 
           id: 'product-123',
-          ownerId: 'user-123',
+          OR: [
+            { ownerId: 'user-123' },
+            { 
+              organizationId: { not: null },
+              organization: {
+                members: {
+                  some: { userId: 'user-123' }
+                }
+              }
+            }
+          ]
         },
       });
     });
@@ -400,7 +461,17 @@ describe('manageProduct tool', () => {
       expect(mockPrisma.product.findFirst).toHaveBeenCalledWith({
         where: { 
           id: 'product-123',
-          ownerId: 'user-123',
+          OR: [
+            { ownerId: 'user-123' },
+            { 
+              organizationId: { not: null },
+              organization: {
+                members: {
+                  some: { userId: 'user-123' }
+                }
+              }
+            }
+          ]
         },
         include: {
           owner: {
@@ -420,6 +491,9 @@ describe('manageProduct tool', () => {
               projects: true,
               updates: true,
             }
+          },
+          organization: {
+            select: { id: true, name: true, slug: true }
           }
         }
       });
@@ -475,7 +549,19 @@ describe('manageProduct tool', () => {
       expect(result.message).toBe('Found 2 products');
       
       expect(mockPrisma.product.findMany).toHaveBeenCalledWith({
-        where: { ownerId: 'user-123' },
+        where: {
+          OR: [
+            { ownerId: 'user-123' },
+            { 
+              organizationId: { not: null },
+              organization: {
+                members: {
+                  some: { userId: 'user-123' }
+                }
+              }
+            }
+          ]
+        },
         include: {
           owner: {
             select: { id: true, name: true, email: true }
@@ -485,6 +571,9 @@ describe('manageProduct tool', () => {
               projects: true,
               updates: true,
             }
+          },
+          organization: {
+            select: { id: true, name: true, slug: true }
           }
         },
         orderBy: { createdAt: 'desc' },

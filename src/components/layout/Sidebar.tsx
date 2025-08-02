@@ -81,6 +81,12 @@ export function Sidebar({ isCollapsed = false, onToggle, currentPath }: SidebarP
       href: "/volunteering",
       icon: FileText,
       isActive: pathname === "/volunteering"
+    },
+    {
+      name: "Organizations",
+      href: "/organizations",
+      icon: Users,
+      isActive: pathname === "/organizations" || pathname.startsWith("/organizations/")
     }
   ]
 
