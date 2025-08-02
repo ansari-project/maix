@@ -46,7 +46,7 @@ export default function SignInPage() {
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Sign In</CardTitle>
           <CardDescription className="text-center">
-            Enter your email and password to access MAIX
+            Enter your email and password to access Maix
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -32,7 +32,7 @@ export function PublicHeader() {
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-6">
             <Link href="/" className="text-xl font-bold text-primary">
-              MAIX
+              Maix
             </Link>
             
             <nav className="hidden md:flex items-center gap-4">

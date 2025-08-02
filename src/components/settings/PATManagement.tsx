@@ -291,7 +291,7 @@ export function PATManagement() {
           <DialogHeader>
             <DialogTitle>Claude Code Setup</DialogTitle>
             <DialogDescription>
-              Quick setup to connect Claude Code with MAIX
+              Quick setup to connect Claude Code with Maix
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-6">
@@ -301,7 +301,7 @@ export function PATManagement() {
                   1
                 </div>
                 <div className="space-y-2 flex-1">
-                  <h4 className="font-semibold">Generate a MAIX Personal Access Token (PAT)</h4>
+                  <h4 className="font-semibold">Generate a Maix Personal Access Token (PAT)</h4>
                   <p className="text-sm text-muted-foreground">
                     Click the &quot;New Token&quot; button above to create a token, then copy it.
                   </p>
@@ -328,7 +328,7 @@ export function PATManagement() {
                   3
                 </div>
                 <div className="space-y-2 flex-1">
-                  <h4 className="font-semibold">Add MAIX to Claude Code</h4>
+                  <h4 className="font-semibold">Add Maix to Claude Code</h4>
                   <div className="bg-muted p-3 rounded-lg">
                     <code className="text-sm block break-all">
                       claude mcp add maix https://www.maix.io/api/mcp --transport http --header &quot;Authorization: Bearer ${"{MAIX_PAT}"}&quot;
@@ -340,7 +340,7 @@ export function PATManagement() {
             
             <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg">
               <p className="text-sm font-medium text-green-800 dark:text-green-200">
-                That&apos;s it! Claude Code can now interact with MAIX.
+                That&apos;s it! Claude Code can now interact with Maix.
               </p>
             </div>
           </div>

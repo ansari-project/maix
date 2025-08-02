@@ -21,6 +21,10 @@ jest.mock('@/lib/auth-utils', () => ({
 jest.mock('@/lib/prisma', () => ({
   prisma: {
     $transaction: jest.fn(),
+    user: {
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+    },
     project: {
       create: jest.fn(),
       findUnique: jest.fn(),
@@ -91,6 +95,8 @@ describe('Dual Ownership Tests', () => {
           }
         })
       )
+      ;(prisma.user.findMany as jest.Mock).mockResolvedValue([])
+      ;(prisma.user.findMany as jest.Mock).mockResolvedValue([])
 
       const requestBody = {
         name: 'Test Project',
@@ -138,6 +144,7 @@ describe('Dual Ownership Tests', () => {
           }
         })
       )
+      ;(prisma.user.findMany as jest.Mock).mockResolvedValue([])
 
       const requestBody = {
         name: 'Test Project',
@@ -167,6 +174,7 @@ describe('Dual Ownership Tests', () => {
           }
         })
       )
+      ;(prisma.user.findMany as jest.Mock).mockResolvedValue([])
 
       const requestBody = {
         name: 'Test Project',
@@ -216,6 +224,7 @@ describe('Dual Ownership Tests', () => {
           }
         })
       )
+      ;(prisma.user.findMany as jest.Mock).mockResolvedValue([])
 
       const requestBody = {
         name: 'Test Product',

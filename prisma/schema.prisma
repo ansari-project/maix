@@ -88,6 +88,8 @@ model User {
   comments      Comment[]
   monitors      Monitor[]
   organizationMemberships OrganizationMember[]
+  notifications          Notification[]
+  notificationPreference NotificationPreference?
 
   @@index([skills], type: Gin)
   @@map("users")
@@ -116,6 +118,7 @@ model Project {
   product       Product?      @relation(fields: [productId], references: [id])
   productId     String?
   applications  Application[]
+  notifications Notification[]
   
   // Relation for all PROJECT_UPDATE posts (one-to-many)
   updates Post[] @relation("ProjectUpdates")
@@ -334,6 +337,60 @@ model Comment {
   @@index([authorId])
   @@index([parentId])
   @@map("comments")
+}
+
+// ===== NOTIFICATION MODELS =====
+
+enum NotificationType {
+  // Applications
+  APPLICATION_NEW        // Someone applied to your project
+  APPLICATION_ACCEPTED   // Your application was accepted
+  APPLICATION_REJECTED   // Your application was rejected
+  
+  // Q&A
+  ANSWER_NEW            // Someone answered your question
+  NEW_QUESTION          // New question posted (for followers)
+  
+  // Projects
+  NEW_PROJECT           // New project needs volunteers
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  type        NotificationType
+  title       String
+  message     String           @db.Text
+  entityType  String           // "application", "post", "project"
+  entityId    String           // ID of related entity
+  read        Boolean          @default(false)
+  readAt      DateTime?
+  createdAt   DateTime         @default(now())
+  
+  // User who receives the notification
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Direct relation to project (most common case)
+  projectId   String?
+  project     Project?         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, read, createdAt])
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+// Simple preferences - just email on/off for MVP
+model NotificationPreference {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  emailEnabled Boolean  @default(true)
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@map("notification_preferences")
 }
 
 // ===== CAUSEMON MODELS =====

@@ -97,7 +97,7 @@ function SearchContent() {
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-primary mb-2">Search MAIX</h1>
+          <h1 className="text-3xl font-bold text-primary mb-2">Search Maix</h1>
           <p className="text-muted-foreground">
             Find projects, products, and answers across the platform
           </p>

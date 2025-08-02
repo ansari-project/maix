@@ -38,6 +38,7 @@
     "@radix-ui/react-switch": "^1.2.5",
     "@radix-ui/react-tabs": "^1.1.12",
     "@radix-ui/react-toast": "^1.1.5",
+    "@react-email/components": "^0.4.0",
     "@tailwindcss/typography": "^0.5.16",
     "@types/bcryptjs": "^2.4.6",
     "bcryptjs": "^3.0.2",

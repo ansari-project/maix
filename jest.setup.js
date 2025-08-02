@@ -1,5 +1,10 @@
 import '@testing-library/jest-dom'
 
+// Add polyfills for TextEncoder/TextDecoder (required by React Email)
+const { TextEncoder, TextDecoder } = require('util')
+global.TextEncoder = TextEncoder
+global.TextDecoder = TextDecoder
+
 // Silence React act warnings in tests
 const originalError = console.error
 beforeAll(() => {
@@ -111,6 +116,24 @@ jest.mock('./src/lib/prisma', () => ({
     },
     application: {
       findUnique: jest.fn(),
+      findMany: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+    },
+    notification: {
+      findMany: jest.fn(),
+      create: jest.fn(),
+      updateMany: jest.fn(),
+      count: jest.fn(),
+    },
+    notificationPreference: {
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+    },
+    post: {
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
     },
@@ -121,4 +144,32 @@ jest.mock('./src/lib/prisma', () => ({
 jest.mock('bcryptjs', () => ({
   hash: jest.fn(),
   compare: jest.fn(),
+}))
+
+// Mock Resend
+jest.mock('resend', () => ({
+  Resend: jest.fn().mockImplementation(() => ({
+    emails: {
+      send: jest.fn().mockResolvedValue({ id: 'test-email-id' }),
+    },
+  })),
+}))
+
+// Mock NotificationService
+jest.mock('@/services/notification.service', () => ({
+  NotificationService: {
+    createApplicationNew: jest.fn().mockResolvedValue({ id: 'test-notification' }),
+    createApplicationStatusChanged: jest.fn().mockResolvedValue({ id: 'test-notification' }),
+    createAnswerNew: jest.fn().mockResolvedValue({ id: 'test-notification' }),
+    createNewProject: jest.fn().mockResolvedValue({ id: 'test-notification' }),
+    createNewQuestion: jest.fn().mockResolvedValue({ id: 'test-notification' }),
+    getUserNotifications: jest.fn().mockResolvedValue([]),
+    markAsRead: jest.fn().mockResolvedValue({ count: 0 }),
+    getUnreadCount: jest.fn().mockResolvedValue(0),
+  },
+}))
+
+// Mock email service
+jest.mock('@/services/email.service', () => ({
+  sendNotificationEmail: jest.fn().mockResolvedValue({ id: 'test-email' }),
 }))

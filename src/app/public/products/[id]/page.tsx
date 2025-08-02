@@ -248,10 +248,10 @@ export default function PublicProductDetailPage() {
             <CardContent className="text-center py-8">
               <h3 className="text-lg font-semibold mb-2">Want to contribute?</h3>
               <p className="text-muted-foreground mb-4">
-                Join MAIX to collaborate on projects and connect with the community
+                Join Maix to collaborate on projects and connect with the community
               </p>
               <Button asChild>
-                <Link href="/auth/signup">Join MAIX</Link>
+                <Link href="/auth/signup">Join Maix</Link>
               </Button>
             </CardContent>
           </Card>

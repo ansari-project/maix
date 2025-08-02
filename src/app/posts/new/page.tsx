@@ -18,7 +18,7 @@ export default async function NewPostPage() {
             Ask a Question
           </h1>
           <p className="text-muted-foreground">
-            Get help from the MAIX community on your AI projects and challenges
+            Get help from the Maix community on your AI projects and challenges
           </p>
         </div>
         

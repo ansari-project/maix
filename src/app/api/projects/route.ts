@@ -8,6 +8,7 @@ import { withAuth, type AuthenticatedRequest } from '@/lib/api/with-auth'
 import { logger } from '@/lib/logger'
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
+import { NotificationService } from "@/services/notification.service"
 
 export const dynamic = 'force-dynamic'
 
@@ -219,6 +220,31 @@ const handlePost = withAuth(async (request: AuthenticatedRequest) => {
 
   if (!project) {
     throw new Error('Failed to create project')
+  }
+
+  // Send notifications for new project (to all active users)
+  // This runs after the transaction completes to ensure the project exists
+  const activeUsers = await prisma.user.findMany({
+    where: { 
+      isActive: true,
+      id: { not: request.user.id } // Don't notify the creator
+    },
+    select: { id: true }
+  })
+
+  // Create notifications for each user 
+  // NOTE: Currently synchronous for MVP simplicity. For scale, consider:
+  // 1. Background job queue (Bull/BullMQ with Redis)
+  // 2. Promise.allSettled() for parallel processing
+  // 3. Batch notification creation with single DB transaction
+  for (const activeUser of activeUsers) {
+    await NotificationService.createNewProject({
+      userId: activeUser.id,
+      projectName: project.name,
+      projectGoal: project.goal,
+      projectId: project.id,
+      helpType: project.helpType
+    })
   }
 
   logger.info('Project created', {
