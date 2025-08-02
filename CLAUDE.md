@@ -1,5 +1,12 @@
 # CLAUDE.md - Maix Project Instructions
 
+## ⚠️ CRITICAL REMINDERS - READ BEFORE EVERY GIT OPERATION ⚠️
+
+1. **NEVER FORCE PUSH** - This can permanently delete other people's work
+2. **ALWAYS CHECK FOR REMOTE CHANGES** before pushing: `git fetch origin && git log HEAD..origin/main --oneline`
+3. **IF PUSH FAILS** - STOP and ask the user how to proceed. DO NOT make decisions independently.
+4. **This is a COLLABORATIVE repository** - Other developers' work must be protected
+
 ## Project Overview
 
 Maix (Meaningful AI Exchange) is a Next.js 15 application that connects skilled volunteers with meaningful AI/tech projects. The platform uses modern web technologies to advance communities through collaborative innovation.
@@ -125,15 +132,25 @@ maix/
 - Group related changes into a single commit
 - **NEVER use `git add .` or `git add --all`** - Always specify individual files
 
-#### Git Push Guidelines - CRITICAL
+#### Git Push Guidelines - CRITICAL - READ THIS EVERY TIME BEFORE PUSHING
 - **NEVER force push (`git push --force` or `git push --force-with-lease`)** without explicit user permission
-- **ALWAYS pull before pushing** to check for remote changes
-- **If push is rejected**, inform the user and ask how to proceed:
+- **ALWAYS run `git fetch origin && git status` before pushing** to check for remote changes
+- **If push is rejected**, STOP and inform the user:
+  - Say: "Push was rejected because remote has changes. How would you like me to proceed?"
   - Option 1: Pull and merge changes
-  - Option 2: Pull with rebase
+  - Option 2: Pull with rebase  
   - Option 3: Review conflicts together
+  - **WAIT FOR USER RESPONSE** - Do not proceed without explicit instructions
 - **NEVER make unilateral decisions** about resolving divergent branches
-- **Remember**: This is a collaborative repository - force pushing can lose other people's work
+- **NEVER use --force or --force-with-lease** even if it seems like the "easy" solution
+- **Remember**: This is a collaborative repository - force pushing can permanently lose other people's work
+
+##### Git Push Pre-Check (MANDATORY)
+Before EVERY push, you MUST:
+1. Run `git fetch origin`
+2. Run `git log HEAD..origin/main --oneline` to see remote commits you don't have
+3. If there are remote commits, inform the user BEFORE attempting to push
+4. Only proceed with push after confirming approach with user
 
 #### Pre-Commit Mental Checklist
 Before every commit, Claude Code MUST verify:
