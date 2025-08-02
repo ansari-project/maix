@@ -1,21 +1,17 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
-import { logger, LogEvent } from "./logger"
+import { logger } from "./logger"
 import { Prisma } from "@prisma/client"
 import { AuthError, AuthorizationError, ValidationError } from "./errors"
 
 export function handleApiError(error: unknown, context?: string) {
   // Log first, so we always have a record
-  if (context) {
-    console.error(`${context} error:`, error)
-    if (logger && logger.apiError) {
-      logger.apiError(context, error as Error)
-    }
+  const operation = context || "API operation"
+  
+  if (error instanceof Error) {
+    logger.error(`${operation} failed`, error, { context })
   } else {
-    console.error("API error:", error)
-    if (logger && logger.apiError) {
-      logger.apiError("API operation", error as Error)
-    }
+    logger.error(`${operation} failed`, undefined, { context, error })
   }
 
   // Handle custom auth errors

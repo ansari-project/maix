@@ -2,6 +2,7 @@ import { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { prisma } from "./prisma"
 import bcrypt from "bcryptjs"
+import { logger } from "./logger"
 
 export const authOptions: NextAuthOptions = {
   // Remove adapter for credentials provider
@@ -28,7 +29,11 @@ export const authOptions: NextAuthOptions = {
         // Check if password was hashed with old rounds (12) and upgrade to new rounds (8)
         const oldRounds = user.password.substring(4, 6)
         if (oldRounds === '12') {
-          console.log(`Upgrading password hash for ${user.email} from 12 to 8 rounds`)
+          logger.info('Upgrading password hash rounds', { 
+            email: user.email, 
+            fromRounds: 12, 
+            toRounds: 8 
+          })
           const newHash = await bcrypt.hash(credentials.password, 8)
           await prisma.user.update({
             where: { id: user.id },

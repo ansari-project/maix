@@ -1,182 +1,213 @@
-import { NextRequest } from 'next/server'
+import pino from 'pino'
 
-// Log levels
-export enum LogLevel {
-  ERROR = 'error',
-  WARN = 'warn',
-  INFO = 'info',
-  DEBUG = 'debug'
-}
+// Determine if we're in a browser environment
+const isBrowser = typeof window !== 'undefined'
 
-// Essential log event types for MVP (following MAIX principle of iterative complexity)
-export enum LogEvent {
-  // Authentication events (essential for security)
-  AUTH_LOGIN = 'auth.login',
-  AUTH_FAILED = 'auth.failed',
-  
-  
-  // API events (essential for debugging)
-  API_ERROR = 'api.error',
-  
-  // Database events (essential for debugging)
-  DB_ERROR = 'db.error',
-  
-  // TODO: Add more event types as needed (iterative complexity):
-  // - USER_CREATED, PROJECT_CREATED when we need user analytics
-  // - SECURITY_UNAUTHORIZED when we need security monitoring  
-  // - DB_QUERY_SLOW when we observe performance issues
-}
-
-// Base log entry structure
-interface BaseLogEntry {
-  timestamp: string
-  level: LogLevel
-  event: LogEvent
-  message: string
-  environment: string
-  version?: string
-}
-
-// Extended log entry with optional context
-interface LogEntry extends BaseLogEntry {
-  userId?: string
-  sessionId?: string
-  requestId?: string
-  userAgent?: string
-  ip?: string
-  path?: string
-  method?: string
-  statusCode?: number
-  duration?: number
-  error?: {
-    name: string
-    message: string
-    stack?: string
+// Create base pino configuration
+const pinoConfig = {
+  level: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'development' ? 'debug' : 'info'),
+  // Base fields included in all logs
+  base: {
+    env: process.env.NODE_ENV,
+    version: process.env.npm_package_version || '0.1.0'
+  },
+  // CRITICAL: Redact sensitive fields to prevent PII/secret leaks
+  redact: {
+    paths: [
+      // HTTP headers that might contain secrets
+      'req.headers.authorization',
+      'req.headers.cookie',
+      'req.headers["x-api-key"]',
+      'res.headers["set-cookie"]',
+      // Common sensitive field names anywhere in the log
+      '*.password',
+      '*.passwordHash',
+      '*.token',
+      '*.apiKey',
+      '*.secret',
+      '*.sessionId',
+      '*.refreshToken',
+      '*.accessToken',
+      // Database connection strings
+      '*.DATABASE_URL',
+      '*.connectionString',
+      // User PII
+      '*.email', // Consider if you need emails in logs
+      '*.phone',
+      '*.ssn',
+      '*.creditCard',
+      '*.cvv',
+      // Request/response bodies that might contain sensitive data
+      'body.password',
+      'body.token',
+      'body.user.password',
+      'body.user.passwordHash',
+      // Maix-specific sensitive fields
+      '*.ANTHROPIC_API_KEY',
+      '*.GEMINI_API_KEY',
+      '*.RESEND_API_KEY',
+      '*.NEXTAUTH_SECRET',
+      '*.AXIOM_TOKEN',
+      '*.MAIX_PAT'
+    ],
+    censor: '[REDACTED]',
+    remove: false // Keep the keys but censor the values
   }
-  metadata?: Record<string, any>
 }
 
+// Create pino logger
+const pinoLogger = pino(pinoConfig)
+
+// Format log for development console
+const formatDevLog = (level: string, message: string, data?: Record<string, any>) => {
+  if (process.env.NODE_ENV === 'development' && !isBrowser) {
+    const colors = {
+      debug: '\x1b[90m', // gray
+      info: '\x1b[36m',  // cyan
+      warn: '\x1b[33m',  // yellow
+      error: '\x1b[31m'  // red
+    }
+    const color = colors[level as keyof typeof colors] || ''
+    const reset = '\x1b[0m'
+    const timestamp = new Date().toISOString().split('T')[1].slice(0, 8)
+    
+    console.log(`${color}[${timestamp}] ${level.toUpperCase()} ${message}${reset}`)
+    if (data && Object.keys(data).length > 0) {
+      console.log('  Data:', JSON.stringify(data, null, 2))
+    }
+  }
+}
+
+// Wrapper that provides convenience methods and development formatting
 class Logger {
-  private environment: string
-  private version: string
+  private pino = pinoLogger
 
-  constructor() {
-    this.environment = process.env.NODE_ENV || 'development'
-    this.version = process.env.npm_package_version || '0.1.0'
+  // Ensure logs are flushed on serverless function end
+  async flush() {
+    // In production, logs are automatically sent to Vercel/Axiom
+    // This method is kept for API compatibility
   }
 
-  private createBaseEntry(level: LogLevel, event: LogEvent, message: string): BaseLogEntry {
+  // Core logging methods with structured data
+  debug(message: string, data?: Record<string, any>) {
+    this.pino.debug(data, message)
+    if (process.env.NODE_ENV === 'development' && !isBrowser) {
+      formatDevLog('debug', message, data)
+    }
+  }
+
+  info(message: string, data?: Record<string, any>) {
+    this.pino.info(data, message)
+    if (process.env.NODE_ENV === 'development' && !isBrowser) {
+      formatDevLog('info', message, data)
+    }
+  }
+
+  warn(message: string, data?: Record<string, any>) {
+    this.pino.warn(data, message)
+    if (process.env.NODE_ENV === 'development' && !isBrowser) {
+      formatDevLog('warn', message, data)
+    }
+  }
+
+  error(message: string, error?: Error | unknown, data?: Record<string, any>) {
+    const errorData = error instanceof Error ? {
+      error: {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      },
+      ...data
+    } : data
+
+    this.pino.error(errorData, message)
+    if (process.env.NODE_ENV === 'development' && !isBrowser) {
+      formatDevLog('error', message, errorData)
+    }
+  }
+
+  // Child logger with additional context
+  child(bindings: Record<string, any>) {
+    const childPino = this.pino.child(bindings)
+    const isDev = process.env.NODE_ENV === 'development' && !isBrowser
+    
     return {
-      timestamp: new Date().toISOString(),
-      level,
-      event,
-      message,
-      environment: this.environment,
-      version: this.version
-    }
-  }
+      debug: (message: string, data?: Record<string, any>) => {
+        childPino.debug(data, message)
+        if (isDev) {
+          formatDevLog('debug', message, { ...bindings, ...data })
+        }
+      },
+      info: (message: string, data?: Record<string, any>) => {
+        childPino.info(data, message)
+        if (isDev) {
+          formatDevLog('info', message, { ...bindings, ...data })
+        }
+      },
+      warn: (message: string, data?: Record<string, any>) => {
+        childPino.warn(data, message)
+        if (isDev) {
+          formatDevLog('warn', message, { ...bindings, ...data })
+        }
+      },
+      error: (message: string, error?: Error | unknown, data?: Record<string, any>) => {
+        const errorData = error instanceof Error ? {
+          error: {
+            name: error.name,
+            message: error.message,
+            stack: error.stack
+          },
+          ...data
+        } : data
 
-  private log(entry: LogEntry) {
-    // In development, use console with formatted output
-    if (this.environment === 'development') {
-      const color = this.getColorForLevel(entry.level)
-      console.log(
-        `${color}[${entry.timestamp}] ${entry.level.toUpperCase()} ${entry.event}${'\x1b[0m'}`
-      )
-      console.log(`  Message: ${entry.message}`)
-      if (entry.userId) console.log(`  User: ${entry.userId}`)
-      if (entry.path) console.log(`  Path: ${entry.method} ${entry.path}`)
-      if (entry.statusCode) console.log(`  Status: ${entry.statusCode}`)
-      if (entry.duration) console.log(`  Duration: ${entry.duration}ms`)
-      if (entry.error) {
-        console.log(`  Error: ${entry.error.name}: ${entry.error.message}`)
-        if (entry.error.stack) console.log(`  Stack: ${entry.error.stack}`)
+        childPino.error(errorData, message)
+        if (isDev) {
+          formatDevLog('error', message, { ...bindings, ...errorData })
+        }
+      },
+      flush: async () => {
+        // In production, logs are automatically sent to Vercel/Axiom
       }
-      if (entry.metadata) console.log(`  Metadata:`, entry.metadata)
-      console.log('') // Empty line for readability
-    } else {
-      // In production, output structured JSON for log aggregation
-      console.log(JSON.stringify(entry))
     }
   }
 
-  private getColorForLevel(level: LogLevel): string {
-    switch (level) {
-      case LogLevel.ERROR: return '\x1b[31m' // Red
-      case LogLevel.WARN: return '\x1b[33m'  // Yellow
-      case LogLevel.INFO: return '\x1b[36m'  // Cyan
-      case LogLevel.DEBUG: return '\x1b[90m' // Gray
-      default: return '\x1b[0m'
-    }
-  }
-
-  // Core logging methods
-  error(event: LogEvent, message: string, context?: Partial<LogEntry>) {
-    this.log({
-      ...this.createBaseEntry(LogLevel.ERROR, event, message),
-      ...context
-    })
-  }
-
-  warn(event: LogEvent, message: string, context?: Partial<LogEntry>) {
-    this.log({
-      ...this.createBaseEntry(LogLevel.WARN, event, message),
-      ...context
-    })
-  }
-
-  info(event: LogEvent, message: string, context?: Partial<LogEntry>) {
-    this.log({
-      ...this.createBaseEntry(LogLevel.INFO, event, message),
-      ...context
-    })
-  }
-
-  debug(event: LogEvent, message: string, context?: Partial<LogEntry>) {
-    // Only log debug in development
-    if (this.environment === 'development') {
-      this.log({
-        ...this.createBaseEntry(LogLevel.DEBUG, event, message),
-        ...context
-      })
-    }
-  }
-
-  // Essential helper methods for MVP
-
-  // Log authentication events
-  authLogin(userId: string) {
-    this.info(LogEvent.AUTH_LOGIN, `User ${userId} logged in`, { userId })
+  // Convenience methods for common scenarios
+  
+  // Authentication logging
+  authLogin(userId: string, email: string) {
+    this.info('User logged in', { event: 'auth.login', userId, email })
   }
 
   authFailed(email: string, reason: string) {
-    this.warn(LogEvent.AUTH_FAILED, `Authentication failed for ${email}: ${reason}`, {
-      metadata: { email, reason }
+    this.warn('Authentication failed', { event: 'auth.failed', email, reason })
+  }
+
+  // API logging
+  apiRequest(method: string, path: string, userId?: string) {
+    this.info('API request', { event: 'api.request', method, path, userId })
+  }
+
+  apiResponse(method: string, path: string, statusCode: number, duration: number) {
+    const level = statusCode >= 500 ? 'error' : statusCode >= 400 ? 'warn' : 'info'
+    this[level]('API response', { 
+      event: 'api.response', 
+      method, 
+      path, 
+      statusCode, 
+      duration 
     })
   }
 
+  // Database logging
+  dbQuery(operation: string, table: string, duration?: number) {
+    this.debug('Database query', { event: 'db.query', operation, table, duration })
+  }
 
-  // Log database errors (essential for debugging)
   dbError(operation: string, error: Error, metadata?: Record<string, any>) {
-    this.error(LogEvent.DB_ERROR, `Database operation failed: ${operation}`, {
-      error: {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      },
-      metadata
-    })
-  }
-
-  // Log API errors (essential for debugging)
-  apiError(operation: string, error: Error, metadata?: Record<string, any>) {
-    this.error(LogEvent.API_ERROR, `API operation failed: ${operation}`, {
-      error: {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      },
-      metadata
+    this.error('Database error', error, { 
+      event: 'db.error', 
+      operation, 
+      ...metadata 
     })
   }
 }
@@ -184,5 +215,11 @@ class Logger {
 // Export singleton instance
 export const logger = new Logger()
 
-// Export types for use in other modules
-export type { LogEntry }
+// Export type for request logger middleware
+export interface RequestLogger {
+  debug: (message: string, data?: Record<string, any>) => void
+  info: (message: string, data?: Record<string, any>) => void
+  warn: (message: string, data?: Record<string, any>) => void
+  error: (message: string, error?: Error | unknown, data?: Record<string, any>) => void
+  flush: () => Promise<void>
+}

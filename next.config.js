@@ -1,3 +1,5 @@
+const { withAxiom } = require('next-axiom');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -12,4 +14,5 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+// Wrap with Axiom for automatic instrumentation
+module.exports = withAxiom(nextConfig);

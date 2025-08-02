@@ -208,9 +208,28 @@ To ensure code quality and prevent deployment failures, always perform the follo
 **Content Moderation**: Rather than implementing a complex content moderation system with status fields, review workflows, admin interfaces, and approval processes upfront, we start with simple content posting and will only add moderation if we experience actual abuse problems. This allows us to focus on core functionality and user value rather than building defensive infrastructure for hypothetical issues.
 
 ### Performance and Security Priorities
-- Rate limiting is NOT a priority for this project
-- Focus on input validation and data security over traffic management
-- Prioritize user experience and functionality over restrictive controls
+
+#### Threat Model Context
+- **What we are**: A community platform for volunteer matching
+- **What we're NOT**: A financial service, healthcare system, or sensitive data processor
+- **No money exchanged**: No payment processing, no financial transactions
+- **Low-value target**: Not attractive to sophisticated attackers
+- **Data sensitivity**: Public profiles and project information (not PII-heavy)
+
+#### Security Approach
+- **Focus on basics**: Input validation (already implemented with Zod)
+- **Skip security theater**: No complex CSRF tokens, rate limiting, or audit logs
+- **Pragmatic protection**: Prevent SQL injection (Prisma handles this), XSS (React handles this)
+- **Authentication**: Basic session management with NextAuth is sufficient
+- **Priority**: User experience and functionality over restrictive controls
+
+#### What NOT to Implement
+- Rate limiting (not worth the complexity)
+- Complex security headers (nice-to-have, not critical)
+- Audit logging (unless legally required)
+- CSRF protection beyond basic session validation
+- Penetration testing or security audits
+- Any security measure that adds complexity without addressing a real threat
 
 ### Database Operations
 - Always use Prisma for database operations
@@ -583,3 +602,76 @@ npm run test:e2e        # End-to-end tests
 5. **Community**: Build features that foster collaboration and trust
 
 This file serves as a comprehensive guide for developing and maintaining the Maix platform while adhering to community values and modern web development best practices.
+
+## Code Health Protocol
+
+### Periodic Code Health Reviews
+
+Conduct code health reviews to maintain quality without over-engineering. Follow this protocol:
+
+#### 1. Analyze Current State
+- **Unused Dependencies**: Check for packages in package.json not imported anywhere
+- **Code Duplication**: Look for copy-pasted patterns across files
+- **Complexity Hotspots**: Identify functions >50 lines or deeply nested logic
+- **Console Logging**: Count console.* statements in production code
+- **Test Coverage**: Identify untested critical paths
+
+#### 2. Prioritize Based on Threat Model
+- **We ARE**: A community platform for volunteer matching
+- **We ARE NOT**: A bank, healthcare system, or payment processor
+- **Data Sensitivity**: Low (public profiles, no financial data)
+- **Attack Surface**: Small (not an attractive target)
+
+#### 3. Order of Operations
+1. **Quick Wins First** (can do immediately):
+   - Remove unused dependencies
+   - Fix security vulnerabilities from npm audit
+   - Clean up obvious dead code
+
+2. **Improve Observability** (before making changes):
+   - Replace console.log with structured logging
+   - Consider Vercel-optimized solutions (Logflare, Axiom)
+   - Add performance timing to identify real bottlenecks
+
+3. **Create Safety Net** (before refactoring):
+   - Write comprehensive tests for code to be changed
+   - Focus on integration tests over unit tests
+   - Test actual user flows, not implementation details
+
+4. **Refactor with Confidence** (after tests pass):
+   - Reduce code duplication
+   - Simplify complex functions
+   - Extract shared patterns
+
+#### 4. What to Skip
+- **Security Theater**: Complex CSRF, rate limiting, audit logs
+- **Premature Optimization**: Caching before measuring
+- **Over-Engineering**: Microservices, GraphQL, event sourcing
+- **Perfect Coverage**: 100% test coverage is wasteful
+
+#### 5. Success Metrics
+- **Developer Velocity**: Can we ship features faster?
+- **Bug Frequency**: Are we fixing the same bugs repeatedly?
+- **Performance**: Do users complain about speed?
+- **Maintainability**: Can new developers understand the code?
+
+### Testing Philosophy
+
+#### Test Everything That Matters
+- **Business Logic**: Rules that could break user flows
+- **Data Integrity**: Ensure data stays consistent
+- **User Journeys**: Critical paths users actually follow
+- **Error Handling**: What happens when things go wrong
+- **API Contracts**: Ensure endpoints behave as documented
+
+#### Skip Testing Boilerplate
+- Simple getters/setters
+- Framework-provided functionality
+- Third-party library internals
+- UI pixel perfection
+
+#### Test Before Refactoring
+1. Write tests for existing behavior
+2. Ensure tests pass with current code
+3. Refactor with confidence
+4. Tests still pass = successful refactor

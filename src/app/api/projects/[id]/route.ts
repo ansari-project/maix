@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { hasResourceAccess } from "@/lib/ownership-utils"
+import { logger } from "@/lib/logger"
 
 export async function GET(
   request: Request,
@@ -68,7 +69,7 @@ export async function GET(
 
     return NextResponse.json(project)
   } catch (error) {
-    console.error("Project fetch error:", error)
+    logger.error("Project fetch error", error, { projectId: (await params).id })
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
