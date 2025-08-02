@@ -17,8 +17,7 @@ export async function GET(
     
     const project = await prisma.project.findUnique({
       where: {
-        id,
-        isActive: true
+        id
       },
       include: {
         owner: {
