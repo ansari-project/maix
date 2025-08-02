@@ -13,7 +13,7 @@ export async function GET() {
     const [projects, productUpdates, products, posts] = await Promise.all([
       prisma.project.findMany({
         take: 10,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { updatedAt: 'desc' },
         include: { 
           owner: { select: { id: true, name: true } }
         }
@@ -59,8 +59,8 @@ export async function GET() {
       ...projects.map(p => ({
         id: p.id,
         type: 'project_created' as const,
-        title: `New project: ${p.name}`,
-        timestamp: p.createdAt,
+        title: p.status === 'COMPLETED' ? `Completed: ${p.name}` : `New project: ${p.name}`,
+        timestamp: p.updatedAt,
         user: p.owner,
         data: p
       })),

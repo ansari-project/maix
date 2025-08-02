@@ -12,11 +12,10 @@ export async function GET() {
       // Recent projects
       prisma.project.findMany({
         where: { 
-          isActive: true,
           visibility: 'PUBLIC'  // Only show public projects
         },
         take: 10,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { updatedAt: 'desc' },
         include: { 
           owner: { select: { id: true, name: true } }
         }
@@ -128,8 +127,8 @@ export async function GET() {
       ...projects.map(p => ({
         id: p.id,
         type: 'project_created' as const,
-        title: `New project: ${p.name}`,
-        timestamp: p.createdAt,
+        title: p.status === 'COMPLETED' ? `Completed: ${p.name}` : `New project: ${p.name}`,
+        timestamp: p.updatedAt,
         user: filterPublicUser(p.owner),
         data: {
           id: p.id,
