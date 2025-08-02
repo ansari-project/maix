@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Trash2, TestTube, Mail, Pause, Play, Search } from 'lucide-react';
+import { Trash2, Mail, Pause, Play, Search, Loader2 } from 'lucide-react';
 
 interface PublicFigure {
   id: string;
@@ -30,6 +30,51 @@ interface Monitor {
   createdAt: string;
 }
 
+// Circular progress component
+const CircularProgress = ({ progress, size = 16 }: { progress: number; size?: number }) => {
+  const radius = (size - 2) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const strokeDasharray = circumference;
+  const strokeDashoffset = circumference - (progress / 100) * circumference;
+
+  return (
+    <div className="relative inline-flex items-center justify-center">
+      <svg
+        width={size}
+        height={size}
+        className="transform -rotate-90"
+      >
+        {/* Background circle */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke="currentColor"
+          strokeWidth="2"
+          fill="none"
+          className="text-muted-foreground/20"
+        />
+        {/* Progress circle */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke="currentColor"
+          strokeWidth="2"
+          fill="none"
+          strokeDasharray={strokeDasharray}
+          strokeDashoffset={strokeDashoffset}
+          className="text-primary transition-all duration-1000 ease-linear"
+          strokeLinecap="round"
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <Search className="h-2.5 w-2.5" />
+      </div>
+    </div>
+  );
+};
+
 export default function CausemonPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -38,8 +83,9 @@ export default function CausemonPage() {
   const [topicName, setTopicName] = useState('');
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
-  const [testing, setTesting] = useState<string | null>(null);
   const [searching, setSearching] = useState<string | null>(null);
+  const [searchResults, setSearchResults] = useState<{[key: string]: any}>({});
+  const [searchProgress, setSearchProgress] = useState<{[key: string]: number}>({});
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -141,30 +187,24 @@ export default function CausemonPage() {
     }
   };
 
-  const testMonitor = async (id: string) => {
-    setTesting(id);
-    try {
-      const res = await fetch(`/api/causemon/monitors/${id}/test`, {
-        method: 'POST',
-      });
-
-      if (!res.ok) {
-        throw new Error('Failed to test monitor');
-      }
-
-      const result = await res.json();
-      alert(`Test Results: Found ${result.eventsFound} events. Check console for details.`);
-      console.log('Test results:', result);
-    } catch (error) {
-      console.error('Error testing monitor:', error);
-      alert('Failed to test monitor');
-    } finally {
-      setTesting(null);
-    }
-  };
 
   const searchMonitor = async (id: string) => {
     setSearching(id);
+    setSearchResults(prev => ({ ...prev, [id]: null })); // Clear previous results
+    setSearchProgress(prev => ({ ...prev, [id]: 0 })); // Start progress at 0
+
+    // Start progress animation (60 second estimate)
+    const progressInterval = setInterval(() => {
+      setSearchProgress(prev => {
+        const currentProgress = prev[id] || 0;
+        if (currentProgress >= 100) {
+          clearInterval(progressInterval);
+          return prev;
+        }
+        return { ...prev, [id]: currentProgress + (100 / 60) }; // Increment by ~1.67% per second
+      });
+    }, 1000);
+    
     try {
       const res = await fetch(`/api/causemon/monitors/${id}/search`, {
         method: 'POST',
@@ -176,13 +216,21 @@ export default function CausemonPage() {
       }
 
       const result = await res.json();
-      alert(`Search complete! Found ${result.eventsFound} events. Created ${result.eventsCreated} new events.`);
+      setSearchResults(prev => ({ ...prev, [id]: result }));
       console.log('Search results:', result);
     } catch (error: any) {
       console.error('Error searching:', error);
-      alert(error.message || 'Failed to search');
+      setSearchResults(prev => ({ 
+        ...prev, 
+        [id]: { 
+          error: error.message || 'Failed to search',
+          success: false 
+        } 
+      }));
     } finally {
+      clearInterval(progressInterval);
       setSearching(null);
+      setSearchProgress(prev => ({ ...prev, [id]: 100 })); // Complete progress
     }
   };
 
@@ -291,18 +339,15 @@ export default function CausemonPage() {
                       size="icon"
                       onClick={() => searchMonitor(monitor.id)}
                       disabled={searching === monitor.id || !monitor.isActive}
-                      title="Search Now"
+                      title={searching === monitor.id ? 
+                        `Searching... ${Math.round(searchProgress[monitor.id] || 0)}%` : 
+                        "Search Now"}
                     >
-                      <Search />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => testMonitor(monitor.id)}
-                      disabled={testing === monitor.id}
-                      title="Test Monitor"
-                    >
-                      <TestTube />
+                      {searching === monitor.id ? (
+                        <CircularProgress progress={searchProgress[monitor.id] || 0} size={16} />
+                      ) : (
+                        <Search className="h-4 w-4" />
+                      )}
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
@@ -333,7 +378,7 @@ export default function CausemonPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
                   <Mail className="h-4 w-4" />
                   <span>
                     {monitor.emailFrequency === 'daily'
@@ -345,6 +390,71 @@ export default function CausemonPage() {
                     Status: {monitor.isActive ? 'Active' : 'Paused'}
                   </span>
                 </div>
+
+                {/* Search Progress Display */}
+                {searching === monitor.id && (
+                  <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <div className="flex items-center gap-3">
+                      <CircularProgress progress={searchProgress[monitor.id] || 0} size={20} />
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                          Searching for events...
+                        </div>
+                        <div className="text-xs text-blue-700 dark:text-blue-300">
+                          Progress: {Math.round(searchProgress[monitor.id] || 0)}% 
+                          {searchProgress[monitor.id] && searchProgress[monitor.id] > 0 && (
+                            <span> • Estimated time remaining: {Math.max(0, Math.round(60 - (searchProgress[monitor.id] * 0.6)))}s</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Search Results Display */}
+                {searchResults[monitor.id] && (
+                  <div className="mt-4 p-4 bg-muted/50 rounded-lg">
+                    {searchResults[monitor.id].error ? (
+                      <div className="text-sm text-destructive">
+                        <strong>Search failed:</strong> {searchResults[monitor.id].error}
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="text-sm">
+                          <strong>Search completed!</strong> Found {searchResults[monitor.id].eventsFound} events in{' '}
+                          {searchResults[monitor.id].timing ? 
+                            `${(searchResults[monitor.id].timing.totalDuration / 1000).toFixed(1)}s` : 
+                            'unknown time'}
+                        </div>
+                        
+                        <div className="text-sm text-muted-foreground space-y-1">
+                          <div>• Created {searchResults[monitor.id].eventsCreated} new events</div>
+                          <div>• Skipped {searchResults[monitor.id].eventsSkipped} duplicates</div>
+                          {searchResults[monitor.id].estimatedCost && (
+                            <div>• Estimated cost: ${searchResults[monitor.id].estimatedCost.toFixed(4)}</div>
+                          )}
+                          {searchResults[monitor.id].timing && (
+                            <div>
+                              • Timing: Search {(searchResults[monitor.id].timing.searchDuration / 1000).toFixed(1)}s, 
+                              Processing {(searchResults[monitor.id].timing.processingDuration / 1000).toFixed(1)}s
+                            </div>
+                          )}
+                        </div>
+
+                        {searchResults[monitor.id].eventsCreated > 0 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => router.push('/causemon/events')}
+                            className="mt-2"
+                          >
+                            View New Events
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}

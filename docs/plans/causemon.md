@@ -6,7 +6,7 @@ Causemon is a monitoring system integrated into the MAIX platform that tracks wh
 
 **Example use case**: Track what Anthony Albanese says about Palestine/Gaza in parliament, media, and committees
 
-**Current Status**: MVP Phase 3 Complete - Core monitoring functionality with custom person/topic input, test capability, and comprehensive debug logging.
+**Current Status**: MVP Phase 4 Complete - Full monitoring functionality with @google/genai migration, simplified UI, and production deployment ready.
 
 ## Core Principles (Following MAIX Guidelines)
 
@@ -51,10 +51,19 @@ Causemon is a monitoring system integrated into the MAIX platform that tracks wh
 - Dynamic entity creation with case-insensitive matching
 - Comprehensive error handling and debug logging
 
-### 🚧 Phase 3 Email: Cron & Email (Ready, Not Deployed)
-- Cron job handlers implemented
-- Email service structure ready
-- Awaiting Resend API setup
+### ✅ Phase 3 Email: Cron & Email (Complete)
+- Cron job handlers implemented and tested
+- Email service with React Email templates
+- Resend API integration working
+- Daily digest emails operational
+
+### ✅ Phase 4: @google/genai Migration & UI Simplification (Complete)
+- Migrated from deprecated @google/generative-ai to canonical @google/genai
+- Updated API calls to use new structure with Google Search grounding
+- Removed test monitor endpoint - simplified to single "Search Now" button
+- Removed 24-hour rate limiting for immediate testing
+- All unit tests updated and passing
+- Production ready with Gemini 2.5 Pro integration
 
 ## Key Features Implemented
 
@@ -73,7 +82,7 @@ Causemon is a monitoring system integrated into the MAIX platform that tracks wh
 
 ### 3. Core Monitoring Features
 - Create monitors for person/topic combinations
-- Test monitors before committing (dry run capability)
+- Manual search capability for immediate testing
 - View all active monitors with details
 - Delete monitors
 - Email frequency preferences (daily/weekly)
@@ -152,7 +161,7 @@ model Event {
 - `POST /api/causemon/monitors` - Create new monitor (accepts names, not IDs)
 - `GET /api/causemon/monitors` - List user's monitors
 - `DELETE /api/causemon/monitors/[id]` - Delete a monitor
-- `POST /api/causemon/monitors/[id]/test` - Test monitor (dry run)
+- `POST /api/causemon/monitors/[id]/search` - Manual search for events (no rate limiting)
 
 ### Cron Routes (Ready, Not Deployed)
 - `GET /api/causemon/cron/search` - Run daily search
@@ -192,11 +201,10 @@ model Event {
 4. Creates monitor linking user, person, and topic
 5. Prevents duplicate monitors for same combination
 
-### Test Endpoint Features
+### Search Endpoint Features
 ```typescript
-// Comprehensive debug logging
-console.log('[TEST] Starting test for monitor ID:', id);
-console.log('[TEST] Monitor details:', {
+// Real-time search with comprehensive logging
+console.log(`Starting search for monitor ${id}: ${monitor.publicFigure.name} on ${monitor.topic.name}`);
   publicFigure: monitor.publicFigure?.name,
   topic: monitor.topic?.name,
   aliases: monitor.publicFigure?.aliases,

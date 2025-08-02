@@ -9,6 +9,11 @@ jest.mock('@/lib/prisma', () => ({
       findUnique: jest.fn(),
       create: jest.fn(),
     },
+    article: {
+      create: jest.fn(),
+      findUnique: jest.fn(),
+      update: jest.fn(),
+    },
     monitor: {
       update: jest.fn(),
     },
@@ -62,6 +67,8 @@ describe('EventProcessor', () => {
         .mockResolvedValueOnce(null); // Second event is new
 
       (prisma.event.create as jest.Mock).mockResolvedValue({ id: 'new-event' });
+      (prisma.article.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.article.create as jest.Mock).mockResolvedValue({ id: 'new-article' });
       (prisma.monitor.update as jest.Mock).mockResolvedValue({});
 
       const result = await processor.processSearchResults(
@@ -108,6 +115,8 @@ describe('EventProcessor', () => {
     it('should create events with proper deduplication hash', async () => {
       (prisma.event.findUnique as jest.Mock).mockResolvedValue(null);
       (prisma.event.create as jest.Mock).mockResolvedValue({ id: 'new-event' });
+      (prisma.article.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.article.create as jest.Mock).mockResolvedValue({ id: 'new-article' });
 
       await processor.processSearchResults(
         { events: [mockSearchResult.events[0]] },
@@ -150,6 +159,8 @@ describe('EventProcessor', () => {
         id: 'new', 
         eventType: data.eventType 
       }));
+      (prisma.article.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.article.create as jest.Mock).mockResolvedValue({ id: 'new-article' });
 
       await processor.processSearchResults(
         eventsWithTypes,
@@ -182,6 +193,8 @@ describe('EventProcessor', () => {
     it('should store quotes in articles', async () => {
       (prisma.event.findUnique as jest.Mock).mockResolvedValue(null);
       (prisma.event.create as jest.Mock).mockResolvedValue({ id: 'new-event' });
+      (prisma.article.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.article.create as jest.Mock).mockResolvedValue({ id: 'new-article' });
 
       await processor.processSearchResults(
         { events: [mockSearchResult.events[0]] },
@@ -190,15 +203,25 @@ describe('EventProcessor', () => {
         'topic1'
       );
 
+      // Event should be created without articles (separate creation)
       expect(prisma.event.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
-          articles: {
-            create: expect.arrayContaining([
-              expect.objectContaining({
-                keyQuotes: ['We must act now', 'Climate change is real'],
-              }),
-            ]),
-          },
+          publicFigureId: 'pf1',
+          topicId: 'topic1',
+          title: 'PM speaks on climate change',
+          eventType: 'speech',
+          deduplicationHash: expect.any(String),
+        }),
+      });
+
+      // Articles should be created separately
+      expect(prisma.article.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          eventId: 'new-event',
+          sourceUrl: 'https://example.com/article1',
+          sourcePublisher: 'Example News',
+          headline: 'PM Climate Speech',
+          keyQuotes: ['We must act now', 'Climate change is real'],
         }),
       });
     });

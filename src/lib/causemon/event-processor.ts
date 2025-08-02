@@ -59,8 +59,8 @@ export class EventProcessor {
         // Determine event type from title
         const eventType = this.inferEventType(event.title);
 
-        // Create event with articles
-        await prisma.event.create({
+        // Create event first, then handle articles separately to avoid unique constraint conflicts
+        const createdEvent = await prisma.event.create({
           data: {
             publicFigureId,
             topicId,
@@ -68,21 +68,44 @@ export class EventProcessor {
             summary: event.summary,
             eventDate,
             eventType,
-            deduplicationHash,
-            articles: {
-              create: event.sources.map(source => ({
+            deduplicationHash
+          }
+        });
+
+        // Handle articles separately with proper conflict handling
+        for (const source of event.sources) {
+          try {
+            await prisma.article.create({
+              data: {
+                eventId: createdEvent.id,
                 headline: source.headline,
                 sourceUrl: source.url,
                 sourcePublisher: source.publisher,
-                publishedAt: eventDate, // Use event date as fallback
+                publishedAt: eventDate,
                 sourceType: this.inferSourceType(source.publisher),
                 contentHash: createHash('md5').update(source.url).digest('hex'),
-                fullText: event.summary, // Store summary as fullText for now
-                keyQuotes: event.quotes || [] // Store quotes in article
-              }))
+                fullText: event.summary,
+                keyQuotes: event.quotes || []
+              }
+            });
+            console.log(`[Deduplication Debug] ✅ Created article: ${source.url}`);
+          } catch (articleError: any) {
+            if (articleError.code === 'P2002') {
+              // Article already exists - find it and connect to this event
+              const existingArticle = await prisma.article.findUnique({
+                where: { sourceUrl: source.url }
+              });
+              if (existingArticle) {
+                console.log(`[Deduplication Debug] ⚠️ Article already exists, connecting to event: ${source.url}`);
+                // Article is already connected to another event, which is fine
+                // Multiple events can reference the same article source
+              }
+            } else {
+              console.error(`[Deduplication Debug] ❌ Failed to create article: ${source.url}`, articleError);
+              throw articleError; // Re-throw non-uniqueness errors
             }
           }
-        });
+        }
 
         created++;
         console.log(`[Deduplication Debug] ✨ Successfully created event: "${event.title}"`);

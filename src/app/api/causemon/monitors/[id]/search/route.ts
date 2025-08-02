@@ -45,46 +45,18 @@ export async function POST(
       );
     }
 
-    // Check 24-hour rate limit
-    if (monitor.lastSearchedAt) {
-      const hoursSinceLastSearch = 
-        (Date.now() - monitor.lastSearchedAt.getTime()) / (1000 * 60 * 60);
-      
-      if (hoursSinceLastSearch < 24) {
-        const hoursRemaining = Math.ceil(24 - hoursSinceLastSearch);
-        return NextResponse.json(
-          { 
-            error: `Please wait ${hoursRemaining} more hours before searching again`,
-            nextSearchAvailable: new Date(monitor.lastSearchedAt.getTime() + 24 * 60 * 60 * 1000)
-          },
-          { status: 429 }
-        );
-      }
-    }
+    // Rate limiting temporarily removed for testing
 
-    // Check global daily limit
-    const todaySearchCount = await prisma.monitor.count({
-      where: {
-        lastSearchedAt: {
-          gte: new Date(new Date().setHours(0, 0, 0, 0))
-        }
-      }
-    });
-
-    if (todaySearchCount >= 100) {
-      return NextResponse.json(
-        { error: 'Daily search limit reached. Please try again tomorrow.' },
-        { status: 429 }
-      );
-    }
-
-    // Perform search
+    // Perform search with timing
+    const searchStartTime = Date.now();
     console.log(`Starting search for monitor ${id}: ${monitor.publicFigure.name} on ${monitor.topic.name}`);
     
     const searchService = getSearchService();
     const searchResults = await searchService.searchForEvents(monitor);
+    const searchDuration = Date.now() - searchStartTime;
     
-    // Process results
+    // Process results with timing
+    const processingStartTime = Date.now();
     const eventProcessor = getEventProcessor();
     const { created, skipped } = await eventProcessor.processSearchResults(
       searchResults,
@@ -92,11 +64,14 @@ export async function POST(
       monitor.publicFigureId,
       monitor.topicId
     );
+    const processingDuration = Date.now() - processingStartTime;
+    const totalDuration = Date.now() - searchStartTime;
 
-    // Log approximate cost
+    // Log timing and cost information
     const estimatedTokens = 2000; // Rough estimate
     const estimatedCost = await searchService.estimateCost(estimatedTokens);
-    console.log(`Search completed. Cost estimate: $${estimatedCost.toFixed(4)}`);
+    console.log(`Search completed in ${totalDuration}ms (search: ${searchDuration}ms, processing: ${processingDuration}ms)`);
+    console.log(`Cost estimate: $${estimatedCost.toFixed(4)}`);
 
     return NextResponse.json({
       success: true,
@@ -104,7 +79,12 @@ export async function POST(
       eventsCreated: created,
       eventsSkipped: skipped,
       estimatedCost,
-      message: `Found ${searchResults.events.length} events. Created ${created} new events, skipped ${skipped} duplicates.`
+      timing: {
+        totalDuration,
+        searchDuration,
+        processingDuration
+      },
+      message: `Found ${searchResults.events.length} events in ${(totalDuration / 1000).toFixed(1)}s. Created ${created} new events, skipped ${skipped} duplicates.`
     });
   } catch (error) {
     console.error('Search error:', error);

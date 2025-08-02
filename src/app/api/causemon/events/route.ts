@@ -67,6 +67,7 @@ export async function GET(request: NextRequest) {
             sourceUrl: true,
             sourcePublisher: true,
             publishedAt: true,
+            keyQuotes: true,
           },
           orderBy: {
             publishedAt: 'desc',

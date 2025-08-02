@@ -116,12 +116,23 @@ Search for recent news and statements ${dateFilter} where ${publicFigure.name}
 (also known as: ${publicFigure.aliases?.join(', ') || 'no aliases'}) 
 discussed ${topic.name} (related keywords: ${topic.keywords?.join(', ') || 'no keywords'}).
 
-Focus on:
-- Speeches and public statements
-- Interviews and press conferences
-- Official government communications
-- Committee hearings or parliamentary sessions
-- Press releases or official statements
+Focus specifically on:
+- Parliamentary speeches and debates (Hansard records)
+- Government committee hearings and testimonies
+- Official government press releases and statements
+- Parliamentary question time records
+- Senate and House of Representatives proceedings
+- Press conferences and media interviews
+- Official speeches at public events
+- Government policy announcements
+
+Search sources including:
+- Parliament House official records (Hansard)
+- Government department websites and press releases
+- Parliamentary committee transcripts
+- Official government social media accounts
+- Mainstream news media coverage
+- Government meeting minutes and reports
 
 Important: Only include events where ${publicFigure.name} personally spoke or made a statement about ${topic.name}.
 Do not include events where others merely mentioned them or spoke about them.

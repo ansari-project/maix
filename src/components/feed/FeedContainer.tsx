@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -60,13 +60,7 @@ export function FeedContainer({ initialItems = [], isPublic = false, showHeader 
   const [feedItems, setFeedItems] = useState<FeedItem[]>(initialItems)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    if (isPublic || session) {
-      fetchFeedItems()
-    }
-  }, [session, isPublic])
-
-  const fetchFeedItems = async () => {
+  const fetchFeedItems = useCallback(async () => {
     try {
       const endpoint = isPublic ? "/api/public/feed" : "/api/feed"
       const response = await fetch(endpoint)
@@ -78,7 +72,13 @@ export function FeedContainer({ initialItems = [], isPublic = false, showHeader 
       console.error("Error fetching feed items:", error)
     }
     setLoading(false)
-  }
+  }, [isPublic])
+
+  useEffect(() => {
+    if (isPublic || session) {
+      fetchFeedItems()
+    }
+  }, [session, isPublic, fetchFeedItems])
 
   // Show all items directly without filtering tabs
   const filteredItems = feedItems
