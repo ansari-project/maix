@@ -35,7 +35,7 @@ export async function sendNotificationEmail(params: EmailParams) {
     const emailComponent = getEmailComponent(type, user, params)
     
     await resend.emails.send({
-      from: 'Maix <notifications@maix.dev>',
+      from: process.env.EMAIL_FROM || 'Maix <ai-noreply@maix.io>',
       to: user.email,
       subject: getEmailSubject(type, params),
       react: emailComponent

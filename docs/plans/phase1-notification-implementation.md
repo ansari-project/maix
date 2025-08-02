@@ -372,7 +372,7 @@ export async function sendNotificationEmail(params: EmailParams) {
     const emailHtml = await renderEmailTemplate(type, user, params)
     
     await resend.emails.send({
-      from: 'MAIX <notifications@maix.dev>',
+      from: process.env.EMAIL_FROM || 'Maix <ai-noreply@maix.io>',
       to: user.email,
       subject: getEmailSubject(type, params),
       html: emailHtml

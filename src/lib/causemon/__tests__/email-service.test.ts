@@ -133,7 +133,7 @@ describe('EmailService', () => {
       await service.sendDailyDigest('user@example.com', 'John Smith', mockEvents);
 
       expect(mockSend).toHaveBeenCalledWith({
-        from: 'Causemon <noreply@maix.app>',
+        from: 'Maix <ai-noreply@maix.io>',
         to: 'user@example.com',
         subject: expect.any(String),
         html: expect.any(String),

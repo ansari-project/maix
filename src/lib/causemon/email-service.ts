@@ -25,7 +25,7 @@ export class EmailService {
     const html = this.generateHTML(userName, events);
 
     await this.resend.emails.send({
-      from: process.env.EMAIL_FROM || 'Causemon <noreply@maix.app>',
+      from: process.env.EMAIL_FROM || 'Maix <ai-noreply@maix.io>',
       to: userEmail,
       subject,
       html
