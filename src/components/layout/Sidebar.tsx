@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Separator } from "@/components/ui/separator"
+import { NotificationDropdown } from "@/components/notifications/NotificationDropdown"
 import { 
   Home, 
   User, 
@@ -123,15 +124,21 @@ export function Sidebar({ isCollapsed = false, onToggle, currentPath }: SidebarP
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="p-6 border-b">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-sm">M</span>
-          </div>
-          {!isCollapsed && (
-            <div>
-              <h2 className="font-semibold text-primary">MAIX</h2>
-              <p className="text-xs text-muted-foreground">Meaningful AI Exchange</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-sm">M</span>
             </div>
+            {!isCollapsed && (
+              <div>
+                <h2 className="font-semibold text-primary">Maix</h2>
+                <p className="text-xs text-muted-foreground">Meaningful AI Exchange</p>
+              </div>
+            )}
+          </div>
+          {/* Notification bell - show on desktop when not collapsed */}
+          {!isCollapsed && session && (
+            <NotificationDropdown />
           )}
         </div>
       </div>
@@ -244,17 +251,28 @@ export function Sidebar({ isCollapsed = false, onToggle, currentPath }: SidebarP
 
   return (
     <>
-      {/* Mobile Sidebar */}
-      <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
-        <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="md:hidden">
-            <Menu className="h-4 w-4" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="p-0 w-64">
-          <SidebarContent />
-        </SheetContent>
-      </Sheet>
+      {/* Mobile Header */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-background border-b">
+        <div className="flex items-center justify-between p-4">
+          <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-4 w-4" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="p-0 w-64">
+              <SidebarContent />
+            </SheetContent>
+          </Sheet>
+          
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-primary">Maix</span>
+          </div>
+          
+          {/* Notification bell for mobile */}
+          {session && <NotificationDropdown />}
+        </div>
+      </div>
 
       {/* Desktop Sidebar */}
       <div className={cn(

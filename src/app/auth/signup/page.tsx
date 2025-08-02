@@ -64,7 +64,7 @@ export default function SignUpPage() {
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Sign Up</CardTitle>
           <CardDescription className="text-center">
-            Create your account to join the MAIX community
+            Create your account to join the Maix community
           </CardDescription>
         </CardHeader>
         <CardContent>

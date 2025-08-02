@@ -190,10 +190,10 @@ export default function PublicQuestionDetailPage() {
           <CardContent className="text-center py-8">
             <h3 className="text-lg font-semibold mb-2">Have an answer?</h3>
             <p className="text-muted-foreground mb-4">
-              Join MAIX to share your knowledge and help the community
+              Join Maix to share your knowledge and help the community
             </p>
             <Button asChild>
-              <Link href="/auth/signup">Join MAIX</Link>
+              <Link href="/auth/signup">Join Maix</Link>
             </Button>
           </CardContent>
         </Card>

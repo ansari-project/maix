@@ -182,7 +182,7 @@ export function PostsFeed({
         <div>
           <h1 className="text-3xl font-bold text-primary">Community Discussions</h1>
           <p className="text-muted-foreground">
-            Ask questions, share updates, and engage with the MAIX community
+            Ask questions, share updates, and engage with the Maix community
           </p>
         </div>
         
