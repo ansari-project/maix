@@ -18,7 +18,8 @@ jest.mock('next-auth/next', () => ({
 jest.mock('@/lib/prisma', () => ({
   prisma: {
     user: {
-      findUnique: jest.fn()
+      findUnique: jest.fn(),
+      findMany: jest.fn()
     },
     project: {
       findMany: jest.fn(),
@@ -215,6 +216,7 @@ describe('Visibility Security Tests', () => {
       
       // Mock successful transaction
       ;(prisma.$transaction as jest.Mock).mockResolvedValue(mockCreatedProject)
+      ;(prisma.user.findMany as jest.Mock).mockResolvedValue([]) // No other users to notify
       
       const requestBody = {
         name: 'New Project',

@@ -5,6 +5,9 @@ jest.mock('@/lib/auth-utils')
 jest.mock('@/lib/api-utils')
 jest.mock('@/lib/prisma', () => ({
   prisma: {
+    user: {
+      findMany: jest.fn(),
+    },
     post: {
       create: jest.fn(),
       findMany: jest.fn(),
@@ -92,6 +95,7 @@ describe('/api/posts', () => {
         content: 'How do I implement AI in my project?'
       })
       mockPrisma.post.create.mockResolvedValue(mockPost as any)
+      mockPrisma.user.findMany.mockResolvedValue([]) // No other users to notify
       mockSuccessResponse.mockReturnValue(
         mockApiSuccessResponse(mockPost, 201) as any
       )

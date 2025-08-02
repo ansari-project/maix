@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { applicationCreateSchema } from "@/lib/validations"
 import { requireAuth } from "@/lib/auth-utils"
 import { handleApiError, parseRequestBody, successResponse } from "@/lib/api-utils"
+import { NotificationService } from "@/services/notification.service"
 
 export const dynamic = 'force-dynamic'
 
@@ -60,11 +61,25 @@ export async function POST(
         },
         project: {
           select: {
-            name: true
+            name: true,
+            ownerId: true
           }
         }
       }
     })
+
+    // Send notification to project owner
+    if (project.ownerId) {
+      await NotificationService.createApplicationNew({
+        projectOwnerId: project.ownerId,
+        applicantName: user.name || user.email,
+        applicantEmail: user.email,
+        projectId: project.id,
+        projectName: project.name,
+        applicationId: application.id,
+        applicationMessage: message
+      })
+    }
 
     return successResponse(application, 201)
   } catch (error) {

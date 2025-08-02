@@ -5,6 +5,7 @@ import { postCreateSchema } from '@/lib/validations'
 import { requireAuth } from '@/lib/auth-utils'
 import { handleApiError, parseRequestBody, successResponse } from '@/lib/api-utils'
 import { AuthorizationError } from '@/lib/errors'
+import { NotificationService } from '@/services/notification.service'
 
 // Note: PROJECT_DISCUSSION and PRODUCT_DISCUSSION posts are created automatically
 // when projects/products are created, not through this endpoint
@@ -101,6 +102,45 @@ export async function POST(request: Request) {
         }
       }
     })
+
+    // Send notification for new answer
+    if (type === 'ANSWER' && parentId) {
+      const question = await prisma.post.findUnique({
+        where: { id: parentId },
+        include: { author: true }
+      })
+      
+      if (question && question.authorId && question.authorId !== userId) {
+        await NotificationService.createAnswerNew({
+          questionAuthorId: question.authorId,
+          answererName: user.name || 'Someone',
+          questionTitle: question.content.substring(0, 100),
+          questionId: parentId,
+          answerId: post.id
+        })
+      }
+    }
+
+    // Send notification for new question (to all active users)
+    if (type === 'QUESTION') {
+      const activeUsers = await prisma.user.findMany({
+        where: { 
+          isActive: true,
+          id: { not: userId } // Don't notify the author
+        },
+        select: { id: true }
+      })
+
+      // Create notifications for each user (we can optimize this later with batching)
+      for (const activeUser of activeUsers) {
+        await NotificationService.createNewQuestion({
+          userId: activeUser.id,
+          questionTitle: content.substring(0, 100),
+          authorName: user.name || 'Someone',
+          questionId: post.id
+        })
+      }
+    }
 
     return successResponse(post, 201)
   } catch (error) {

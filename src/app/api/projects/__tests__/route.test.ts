@@ -7,6 +7,7 @@ jest.mock('@/lib/prisma', () => ({
   prisma: {
     user: {
       findUnique: jest.fn(),
+      findMany: jest.fn(),
     },
     project: {
       findMany: jest.fn(),
@@ -176,6 +177,7 @@ describe('/api/projects', () => {
         mockApiSuccessResponse(mockProject, 201) as any
       )
       mockPrisma.$transaction.mockResolvedValue(mockProject as any)
+      mockPrisma.user.findMany.mockResolvedValue([]) // No other users to notify
 
       const request = createMockRequest(validProjectData)
       const response = await POST(request)
@@ -309,6 +311,7 @@ describe('/api/projects', () => {
         mockApiSuccessResponse(data, status) as any
       )
       mockPrisma.$transaction.mockResolvedValue(mockProject as any)
+      mockPrisma.user.findMany.mockResolvedValue([]) // No other users to notify
 
       const request = createMockRequest(dataWithEmptyUrl)
       const response = await POST(request)

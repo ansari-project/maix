@@ -32,7 +32,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         currentPath={pathname}
       />
       <main className={cn(
-        "transition-all duration-300",
+        "transition-all duration-300 pt-16 md:pt-0",
         sidebarCollapsed ? "md:ml-16" : "md:ml-64"
       )}>
         {children}

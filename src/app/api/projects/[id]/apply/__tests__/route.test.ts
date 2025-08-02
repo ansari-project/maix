@@ -116,6 +116,7 @@ describe('/api/projects/[id]/apply', () => {
           project: {
             select: {
               name: true,
+              ownerId: true,
             },
           },
         },

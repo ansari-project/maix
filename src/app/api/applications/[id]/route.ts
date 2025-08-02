@@ -5,6 +5,7 @@ import { requireAuth } from "@/lib/auth-utils"
 import { handleApiError, parseRequestBody, successResponse } from "@/lib/api-utils"
 import { AuthorizationError } from "@/lib/errors"
 import { hasResourceAccess } from "@/lib/ownership-utils"
+import { NotificationService } from "@/services/notification.service"
 
 export const dynamic = 'force-dynamic'
 
@@ -55,6 +56,17 @@ export async function PATCH(
         }
       }
     })
+
+    // Send notification to applicant if status changed to accepted/rejected
+    if (status === 'ACCEPTED' || status === 'REJECTED') {
+      await NotificationService.createApplicationStatusChanged({
+        applicantId: application.userId,
+        projectName: application.project.name,
+        projectId: application.projectId,
+        applicationId: application.id,
+        accepted: status === 'ACCEPTED'
+      })
+    }
 
     return successResponse(updatedApplication)
   } catch (error) {
