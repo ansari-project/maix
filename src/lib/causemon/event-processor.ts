@@ -8,9 +8,10 @@ export class EventProcessor {
     monitorId: string,
     publicFigureId: string,
     topicId: string
-  ): Promise<{ created: number; skipped: number }> {
+  ): Promise<{ created: number; skipped: number; allEvents: Array<{ event: any; status: 'NEW' | 'EXISTING'; existingId?: string }> }> {
     let created = 0;
     let skipped = 0;
+    const allEvents: Array<{ event: any; status: 'NEW' | 'EXISTING'; existingId?: string }> = [];
 
     console.log(`\n[Deduplication Debug] Processing ${results.events.length} events for monitor ${monitorId}`);
     console.log(`[Deduplication Debug] Public Figure ID: ${publicFigureId}, Topic ID: ${topicId}`);
@@ -42,6 +43,14 @@ export class EventProcessor {
           console.log(`[Deduplication Debug] Existing event ID: ${existing.id}`);
           console.log(`[Deduplication Debug] Existing event created at: ${existing.createdAt}`);
           console.log(`[Deduplication Debug] Skipping: "${event.title}" on ${event.eventDate}`);
+          
+          // Add to allEvents as EXISTING
+          allEvents.push({
+            event,
+            status: 'EXISTING',
+            existingId: existing.id
+          });
+          
           skipped++;
           continue;
         }
@@ -110,6 +119,12 @@ export class EventProcessor {
         created++;
         console.log(`[Deduplication Debug] ✨ Successfully created event: "${event.title}"`);
         console.log(`[Deduplication Debug] Event ID: ${deduplicationHash}`);
+        
+        // Add to allEvents as NEW
+        allEvents.push({
+          event,
+          status: 'NEW'
+        });
       } catch (error) {
         console.error(`[Deduplication Debug] ❌ Failed to process event "${event.title}":`, error);
         if (error instanceof Error && 'code' in error && error.code === 'P2002') {
@@ -130,7 +145,7 @@ export class EventProcessor {
       data: { lastSearchedAt: new Date() }
     });
 
-    return { created, skipped };
+    return { created, skipped, allEvents };
   }
 
   private createEventHash(title: string, eventDate: string, publicFigureId: string): string {

@@ -58,7 +58,7 @@ export async function POST(
     // Process results with timing
     const processingStartTime = Date.now();
     const eventProcessor = getEventProcessor();
-    const { created, skipped } = await eventProcessor.processSearchResults(
+    const { created, skipped, allEvents } = await eventProcessor.processSearchResults(
       searchResults,
       monitor.id,
       monitor.publicFigureId,
@@ -67,18 +67,15 @@ export async function POST(
     const processingDuration = Date.now() - processingStartTime;
     const totalDuration = Date.now() - searchStartTime;
 
-    // Log timing and cost information
-    const estimatedTokens = 2000; // Rough estimate
-    const estimatedCost = await searchService.estimateCost(estimatedTokens);
+    // Log timing information (removed cost calculation)
     console.log(`Search completed in ${totalDuration}ms (search: ${searchDuration}ms, processing: ${processingDuration}ms)`);
-    console.log(`Cost estimate: $${estimatedCost.toFixed(4)}`);
 
     return NextResponse.json({
       success: true,
       eventsFound: searchResults.events.length,
       eventsCreated: created,
       eventsSkipped: skipped,
-      estimatedCost,
+      allEvents,
       timing: {
         totalDuration,
         searchDuration,
