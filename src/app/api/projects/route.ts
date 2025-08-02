@@ -232,7 +232,11 @@ const handlePost = withAuth(async (request: AuthenticatedRequest) => {
     select: { id: true }
   })
 
-  // Create notifications for each user (we can optimize this later with batching)
+  // Create notifications for each user 
+  // NOTE: Currently synchronous for MVP simplicity. For scale, consider:
+  // 1. Background job queue (Bull/BullMQ with Redis)
+  // 2. Promise.allSettled() for parallel processing
+  // 3. Batch notification creation with single DB transaction
   for (const activeUser of activeUsers) {
     await NotificationService.createNewProject({
       userId: activeUser.id,
