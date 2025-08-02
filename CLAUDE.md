@@ -20,7 +20,10 @@ Maix (Meaningful AI Exchange) is a Next.js 15 application that connects skilled 
 - **Form Handling**: React Hook Form + Zod validation
 - **State Management**: React Query/TanStack Query
 - **Real-time**: Pusher or Ably (when implemented)
-- **AI/ML**: Claude Sonnet 4 API for embeddings and natural language processing
+- **AI/ML**: 
+  - Claude Sonnet 4 API for embeddings and natural language processing
+  - **IMPORTANT**: For Google Gemini integration, ALWAYS use `@google/genai` package. This is the CANONICAL and ONLY library to use UNDER ALL CIRCUMSTANCES. Do NOT use `@google/generative-ai` or any other package.
+  - **See the guide**: Always refer to `/docs/guides/google-genai-sdk-usage.md` for proper usage of the Google Generative AI SDK, including model selection, search grounding configuration, and API patterns.
 - **Icons**: Lucide React
 - **Animations**: Framer Motion
 

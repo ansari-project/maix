@@ -33,6 +33,8 @@ export class EmailService {
   }
 
   private generateHTML(userName: string, events: EventWithRelations[]): string {
+    const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://maix.io';
+    
     return `
 <!DOCTYPE html>
 <html>
@@ -54,16 +56,33 @@ export class EmailService {
         <strong>${event.publicFigure.name}</strong> on ${event.topic.name}
       </p>
       <p>${event.summary}</p>
-      <a href="${process.env.NEXT_PUBLIC_URL}/causemon/events" style="color: #1E3A8A;">
-        View Details →
-      </a>
+      
+      ${event.articles && event.articles.length > 0 ? `
+        <div style="margin-top: 10px;">
+          <p style="margin-bottom: 5px; font-weight: bold; font-size: 14px;">Sources:</p>
+          ${event.articles.map(article => `
+            <div style="margin-bottom: 5px; font-size: 14px;">
+              • <a href="${article.sourceUrl}" style="color: #1E3A8A; text-decoration: none;">
+                ${article.headline || article.sourcePublisher}
+              </a>
+              <span style="color: #666; font-size: 12px;">(${article.sourcePublisher})</span>
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
+      
+      <div style="margin-top: 10px;">
+        <a href="${baseUrl}/causemon/events" style="color: #1E3A8A; font-weight: bold;">
+          View Full Details →
+        </a>
+      </div>
     </div>
   `).join('')}
   
   <hr style="margin: 30px 0;">
   
   <p style="color: #666; font-size: 14px;">
-    <a href="${process.env.NEXT_PUBLIC_URL}/causemon">Manage monitors</a>
+    <a href="${baseUrl}/causemon">Manage monitors</a>
   </p>
 </body>
 </html>

@@ -12,6 +12,9 @@ export class EventProcessor {
     let created = 0;
     let skipped = 0;
 
+    console.log(`\n[Deduplication Debug] Processing ${results.events.length} events for monitor ${monitorId}`);
+    console.log(`[Deduplication Debug] Public Figure ID: ${publicFigureId}, Topic ID: ${topicId}`);
+
     for (const event of results.events) {
       try {
         // Create deduplication hash
@@ -21,16 +24,29 @@ export class EventProcessor {
           publicFigureId
         );
 
+        console.log(`\n[Deduplication Debug] Processing event: "${event.title}"`);
+        console.log(`[Deduplication Debug] Event date: ${event.eventDate}`);
+        console.log(`[Deduplication Debug] Generated hash: ${deduplicationHash}`);
+        console.log(`[Deduplication Debug] Hash components:`);
+        console.log(`  - Normalized title: "${event.title.toLowerCase().replace(/[^a-z0-9]/g, '')}"`);
+        console.log(`  - Date string: "${new Date(event.eventDate).toISOString().split('T')[0]}"`);
+        console.log(`  - Public figure ID: "${publicFigureId}"`);
+
         // Check if event already exists
         const existing = await prisma.event.findUnique({
           where: { deduplicationHash }
         });
 
         if (existing) {
-          console.log(`Event already exists: ${event.title} on ${event.eventDate}`);
+          console.log(`[Deduplication Debug] ⚠️ DUPLICATE FOUND - Event already exists`);
+          console.log(`[Deduplication Debug] Existing event ID: ${existing.id}`);
+          console.log(`[Deduplication Debug] Existing event created at: ${existing.createdAt}`);
+          console.log(`[Deduplication Debug] Skipping: "${event.title}" on ${event.eventDate}`);
           skipped++;
           continue;
         }
+
+        console.log(`[Deduplication Debug] ✅ NEW EVENT - No duplicate found`);
 
         // Parse event date
         const eventDate = new Date(event.eventDate);
@@ -69,12 +85,21 @@ export class EventProcessor {
         });
 
         created++;
-        console.log(`Created event: ${event.title}`);
+        console.log(`[Deduplication Debug] ✨ Successfully created event: "${event.title}"`);
+        console.log(`[Deduplication Debug] Event ID: ${deduplicationHash}`);
       } catch (error) {
-        console.error(`Failed to process event "${event.title}":`, error);
+        console.error(`[Deduplication Debug] ❌ Failed to process event "${event.title}":`, error);
+        if (error instanceof Error && 'code' in error && error.code === 'P2002') {
+          console.error(`[Deduplication Debug] Unique constraint violation - possible race condition`);
+        }
         skipped++;
       }
     }
+
+    console.log(`\n[Deduplication Debug] Summary:`);
+    console.log(`[Deduplication Debug] Total events processed: ${results.events.length}`);
+    console.log(`[Deduplication Debug] Created: ${created}`);
+    console.log(`[Deduplication Debug] Skipped (duplicates/errors): ${skipped}`)
 
     // Update monitor's last searched timestamp
     await prisma.monitor.update({
@@ -95,7 +120,16 @@ export class EventProcessor {
     
     // Create hash
     const content = `${normalizedTitle}-${dateStr}-${publicFigureId}`;
-    return createHash('md5').update(content).digest('hex');
+    const hash = createHash('md5').update(content).digest('hex');
+    
+    // Debug logging for hash creation
+    console.log(`[Hash Debug] Creating hash for: "${title}"`);
+    console.log(`[Hash Debug] Normalized: "${normalizedTitle}"`);
+    console.log(`[Hash Debug] Date: ${dateStr}, Public Figure: ${publicFigureId}`);
+    console.log(`[Hash Debug] Content string: "${content}"`);
+    console.log(`[Hash Debug] Generated hash: ${hash}`);
+    
+    return hash;
   }
 
   private inferEventType(title: string): string {

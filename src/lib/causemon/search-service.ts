@@ -1,6 +1,7 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import { z } from 'zod';
 import { PublicFigure, Topic, Monitor } from '@prisma/client';
+import { getGeminiLogger } from './gemini-logger';
 
 // Response validation schema
 const SearchResultSchema = z.object({
@@ -27,33 +28,45 @@ interface MonitorWithRelations extends Monitor {
 }
 
 export class GeminiSearchService {
-  private genAI: GoogleGenerativeAI;
-  private model: any;
+  private genAI: GoogleGenAI;
 
   constructor(apiKey: string) {
-    this.genAI = new GoogleGenerativeAI(apiKey);
-    this.model = this.genAI.getGenerativeModel({
-      model: 'gemini-1.5-pro',
-      tools: [{
-        googleSearchRetrieval: {}
-      }],
-      generationConfig: {
-        temperature: 0.2,
-        maxOutputTokens: 4096,
-      }
-    });
+    this.genAI = new GoogleGenAI({ apiKey });
   }
 
   async searchForEvents(monitor: MonitorWithRelations): Promise<SearchResult> {
+    const logger = getGeminiLogger();
     const prompt = this.buildSearchPrompt(monitor);
     
     // Retry logic with exponential backoff
     let lastError: Error | null = null;
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        const result = await this.model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
+        const startTime = Date.now();
+        
+        // Log the request
+        logger.logRequest(prompt, {
+          model: 'gemini-2.5-pro',
+          monitor: `${monitor.publicFigure.name} on ${monitor.topic.name}`,
+          attempt: attempt + 1
+        });
+        
+        const result = await this.genAI.models.generateContent({
+          model: 'gemini-2.5-pro',
+          contents: prompt,
+          config: {
+            tools: [{
+              googleSearch: {}
+            }],
+            temperature: 0.0
+          }
+        });
+        const text = result.text || '';
+        
+        const duration = Date.now() - startTime;
+        
+        // Log the raw response
+        logger.logResponse({ text, response: result }, duration);
         
         // Extract JSON from response
         const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -72,6 +85,7 @@ export class GeminiSearchService {
         return validated;
       } catch (error) {
         lastError = error as Error;
+        logger.logError(error, prompt);
         console.error(`Search attempt ${attempt + 1} failed:`, error);
         
         // Exponential backoff
@@ -87,17 +101,18 @@ export class GeminiSearchService {
   private buildSearchPrompt(monitor: MonitorWithRelations): string {
     const { publicFigure, topic } = monitor;
     
-    // Build date filter
-    const afterDate = monitor.lastSearchedAt 
-      ? `after:${monitor.lastSearchedAt.toISOString().split('T')[0]}`
-      : 'from the last 7 days';
+    // Build date filter - always search last 2 days to catch everything
+    const today = new Date();
+    const twoDaysAgo = new Date(today);
+    twoDaysAgo.setDate(today.getDate() - 2);
+    const dateFilter = `from ${twoDaysAgo.toISOString().split('T')[0]} to ${today.toISOString().split('T')[0]}`;
     
     // Include aliases and keywords for better search coverage
     const figureNames = [publicFigure.name, ...(publicFigure.aliases || [])].join(' OR ');
     const topicKeywords = [topic.name, ...(topic.keywords || [])].join(' OR ');
     
     return `
-Search for recent content ${afterDate} where ${publicFigure.name} 
+Search for recent news and statements ${dateFilter} where ${publicFigure.name} 
 (also known as: ${publicFigure.aliases?.join(', ') || 'no aliases'}) 
 discussed ${topic.name} (related keywords: ${topic.keywords?.join(', ') || 'no keywords'}).
 
@@ -131,7 +146,7 @@ Return as JSON:
 If no relevant events are found, return: {"events": []}
 
 Remember:
-- Only include events from ${afterDate}
+- Only include events from ${dateFilter}
 - Focus on ${publicFigure.name}'s actual statements about ${topic.name}
 - Provide direct quotes when available
 - Include reputable sources only
@@ -154,9 +169,9 @@ let searchService: GeminiSearchService | null = null;
 
 export function getSearchService(): GeminiSearchService {
   if (!searchService) {
-    const apiKey = process.env.GOOGLE_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      throw new Error('GOOGLE_API_KEY environment variable is not set');
+      throw new Error('GEMINI_API_KEY environment variable is not set');
     }
     searchService = new GeminiSearchService(apiKey);
   }

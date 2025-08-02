@@ -11,8 +11,12 @@ export async function GET(request: NextRequest) {
     return new Response('Unauthorized', { status: 401 });
   }
 
+  // Check for force parameter to bypass date filtering
+  const { searchParams } = new URL(request.url);
+  const force = searchParams.get('force') === 'true';
+
   try {
-    console.log('Starting daily Causemon cron job');
+    console.log('Starting daily Causemon cron job', force ? '(FORCED)' : '');
 
     // Get all active monitors
     const monitors = await prisma.monitor.findMany({
@@ -73,18 +77,24 @@ export async function GET(request: NextRequest) {
 
     for (const [userId, userResults] of Array.from(userEvents.entries())) {
       try {
-        // Get today's events for this user
+        // Get events for this user
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
+        const eventFilter: any = {
+          OR: userResults.map((r: any) => ({
+            publicFigureId: r.monitor.publicFigureId,
+            topicId: r.monitor.topicId
+          }))
+        };
+
+        // Only filter by date if not forcing
+        if (!force) {
+          eventFilter.createdAt = { gte: today };
+        }
+
         const events = await prisma.event.findMany({
-          where: {
-            createdAt: { gte: today },
-            OR: userResults.map((r: any) => ({
-              publicFigureId: r.monitor.publicFigureId,
-              topicId: r.monitor.topicId
-            }))
-          },
+          where: eventFilter,
           include: {
             publicFigure: true,
             topic: true,

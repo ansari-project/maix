@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { POST } from '../route';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 
 // Mock dependencies
 jest.mock('@/lib/prisma', () => ({
@@ -17,11 +17,11 @@ jest.mock('next-auth', () => ({
   getServerSession: jest.fn(),
 }));
 
-jest.mock('@google/generative-ai', () => ({
-  GoogleGenerativeAI: jest.fn().mockImplementation(() => ({
-    getGenerativeModel: jest.fn().mockReturnValue({
+jest.mock('@google/genai', () => ({
+  GoogleGenAI: jest.fn().mockImplementation(() => ({
+    models: {
       generateContent: jest.fn(),
-    }),
+    },
   })),
 }));
 
@@ -37,11 +37,11 @@ describe('/api/causemon/monitors/[id]/test', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    process.env.GOOGLE_API_KEY = 'test-api-key';
+    process.env.GEMINI_API_KEY = 'test-api-key';
   });
 
   afterEach(() => {
-    delete process.env.GOOGLE_API_KEY;
+    delete process.env.GEMINI_API_KEY;
   });
 
   it('should return 401 if not authenticated', async () => {
@@ -110,14 +110,12 @@ describe('/api/causemon/monitors/[id]/test', () => {
     // Mock Gemini response
     const mockModel = {
       generateContent: jest.fn().mockResolvedValue({
-        response: {
-          text: jest.fn().mockReturnValue('[]'), // Empty results
-        },
+        text: '[]', // Empty results
       }),
     };
 
-    (GoogleGenerativeAI as jest.Mock).mockImplementation(() => ({
-      getGenerativeModel: jest.fn().mockReturnValue(mockModel),
+    (GoogleGenAI as jest.Mock).mockImplementation(() => ({
+      models: mockModel,
     }));
 
     const request = new NextRequest('http://localhost/api/causemon/monitors/monitor123/test', {
@@ -132,7 +130,7 @@ describe('/api/causemon/monitors/[id]/test', () => {
     expect(data.eventsFound).toBe(0);
     
     // Verify the prompt was constructed without throwing errors
-    const promptCall = mockModel.generateContent.mock.calls[0][0];
+    const promptCall = mockModel.generateContent.mock.calls[0][0].contents || mockModel.generateContent.mock.calls[0][0];
     expect(promptCall).toContain('Custom Person');
     expect(promptCall).toContain('Custom Topic');
     expect(promptCall).not.toContain('undefined');
@@ -164,14 +162,12 @@ describe('/api/causemon/monitors/[id]/test', () => {
     // Mock Gemini response
     const mockModel = {
       generateContent: jest.fn().mockResolvedValue({
-        response: {
-          text: jest.fn().mockReturnValue('[]'),
-        },
+        text: '[]',
       }),
     };
 
-    (GoogleGenerativeAI as jest.Mock).mockImplementation(() => ({
-      getGenerativeModel: jest.fn().mockReturnValue(mockModel),
+    (GoogleGenAI as jest.Mock).mockImplementation(() => ({
+      models: mockModel,
     }));
 
     const request = new NextRequest('http://localhost/api/causemon/monitors/monitor123/test', {
@@ -209,14 +205,12 @@ describe('/api/causemon/monitors/[id]/test', () => {
 
     const mockModel = {
       generateContent: jest.fn().mockResolvedValue({
-        response: {
-          text: jest.fn().mockReturnValue('[]'),
-        },
+        text: '[]',
       }),
     };
 
-    (GoogleGenerativeAI as jest.Mock).mockImplementation(() => ({
-      getGenerativeModel: jest.fn().mockReturnValue(mockModel),
+    (GoogleGenAI as jest.Mock).mockImplementation(() => ({
+      models: mockModel,
     }));
 
     const request = new NextRequest('http://localhost/api/causemon/monitors/monitor123/test', {
@@ -228,13 +222,13 @@ describe('/api/causemon/monitors/[id]/test', () => {
     expect(response.status).toBe(200);
     
     // Verify aliases and keywords were included in the prompt
-    const promptCall = mockModel.generateContent.mock.calls[0][0];
+    const promptCall = mockModel.generateContent.mock.calls[0][0].contents || mockModel.generateContent.mock.calls[0][0];
     expect(promptCall).toContain('(JD, Johnny)');
     expect(promptCall).toContain('(global warming, environment)');
   });
 
-  it('should return 500 if Google API key not configured', async () => {
-    delete process.env.GOOGLE_API_KEY;
+  it('should return 500 if Gemini API key not configured', async () => {
+    delete process.env.GEMINI_API_KEY;
     
     (getServerSession as jest.Mock).mockResolvedValue(mockSession);
     (prisma.monitor.findUnique as jest.Mock).mockResolvedValue({
@@ -251,6 +245,6 @@ describe('/api/causemon/monitors/[id]/test', () => {
     const response = await POST(request, { params: mockParams });
     expect(response.status).toBe(500);
     const data = await response.json();
-    expect(data.error).toBe('Google API key not configured');
+    expect(data.error).toBe('Gemini API key not configured');
   });
 });

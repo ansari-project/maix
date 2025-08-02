@@ -1,12 +1,12 @@
 import { GeminiSearchService } from '../search-service';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 
 // Mock the Google Generative AI
-jest.mock('@google/generative-ai', () => ({
-  GoogleGenerativeAI: jest.fn().mockImplementation(() => ({
-    getGenerativeModel: jest.fn().mockReturnValue({
+jest.mock('@google/genai', () => ({
+  GoogleGenAI: jest.fn().mockImplementation(() => ({
+    models: {
       generateContent: jest.fn(),
-    }),
+    },
   })),
 }));
 
@@ -50,10 +50,10 @@ describe('GeminiSearchService', () => {
     mockGenerateContent = jest.fn();
     
     // Override the mock implementation to return our mock
-    (GoogleGenerativeAI as jest.Mock).mockImplementation(() => ({
-      getGenerativeModel: jest.fn().mockReturnValue({
+    (GoogleGenAI as jest.Mock).mockImplementation(() => ({
+      models: {
         generateContent: mockGenerateContent,
-      }),
+      },
     }));
     
     service = new GeminiSearchService('test-api-key');
@@ -61,47 +61,45 @@ describe('GeminiSearchService', () => {
 
   describe('searchForEvents', () => {
     it('should successfully parse and return search results', async () => {
-      const mockResponse = {
-        response: {
-          text: () => JSON.stringify({
-            events: [
+      const mockResponseData = {
+        events: [
+          {
+            title: 'PM speaks about climate at UN',
+            eventDate: '2024-01-15',
+            summary: 'Prime Minister addresses climate action',
+            quotes: ['We must act now', 'Climate change is real'],
+            sources: [
               {
-                title: 'PM speaks about climate at UN',
-                eventDate: '2024-01-15',
-                summary: 'Prime Minister addresses climate action',
-                quotes: ['We must act now', 'Climate change is real'],
-                sources: [
-                  {
-                    url: 'https://example.com/article',
-                    publisher: 'Example News',
-                    headline: 'PM Climate Speech',
-                  },
-                ],
+                url: 'https://example.com/article',
+                publisher: 'Example News',
+                headline: 'PM Climate Speech',
               },
             ],
-          }),
-        },
+          },
+        ],
       };
 
-      mockGenerateContent.mockResolvedValue(mockResponse);
+      mockGenerateContent.mockResolvedValue({
+        text: JSON.stringify(mockResponseData),
+      });
 
       const result = await service.searchForEvents(mockMonitor);
 
       expect(result.events).toHaveLength(1);
       expect(result.events[0].title).toBe('PM speaks about climate at UN');
       expect(result.events[0].quotes).toHaveLength(2);
-      expect(mockGenerateContent).toHaveBeenCalledWith(expect.stringContaining('John Doe'));
-      expect(mockGenerateContent).toHaveBeenCalledWith(expect.stringContaining('Climate Change'));
+      expect(mockGenerateContent).toHaveBeenCalledWith(expect.objectContaining({
+        contents: expect.stringContaining('John Doe')
+      }));
+      expect(mockGenerateContent).toHaveBeenCalledWith(expect.objectContaining({
+        contents: expect.stringContaining('Climate Change')
+      }));
     });
 
     it('should handle empty results', async () => {
-      const mockResponse = {
-        response: {
-          text: () => JSON.stringify({ events: [] }),
-        },
-      };
-
-      mockGenerateContent.mockResolvedValue(mockResponse);
+      mockGenerateContent.mockResolvedValue({
+        text: JSON.stringify({ events: [] }),
+      });
 
       const result = await service.searchForEvents(mockMonitor);
 
@@ -114,9 +112,7 @@ describe('GeminiSearchService', () => {
         .mockRejectedValueOnce(new Error('Network error'))
         .mockRejectedValueOnce(new Error('Timeout'))
         .mockResolvedValueOnce({
-          response: {
-            text: () => JSON.stringify({ events: [] }),
-          },
+          text: JSON.stringify({ events: [] }),
         });
 
       const startTime = Date.now();
@@ -140,23 +136,19 @@ describe('GeminiSearchService', () => {
     });
 
     it('should validate response with Zod schema', async () => {
-      const mockResponse = {
-        response: {
-          text: () => JSON.stringify({
-            events: [
-              {
-                title: 'Invalid event',
-                eventDate: 'not-a-date', // Invalid date
-                summary: 'Summary',
-                quotes: [],
-                sources: [],
-              },
-            ],
-          }),
-        },
-      };
-
-      mockGenerateContent.mockResolvedValue(mockResponse);
+      mockGenerateContent.mockResolvedValue({
+        text: JSON.stringify({
+          events: [
+            {
+              title: 'Invalid event',
+              eventDate: 'not-a-date', // Invalid date
+              summary: 'Summary',
+              quotes: [],
+              sources: [],
+            },
+          ],
+        }),
+      });
 
       await expect(service.searchForEvents(mockMonitor)).rejects.toThrow();
     });
@@ -174,20 +166,16 @@ describe('GeminiSearchService', () => {
         },
       };
 
-      const mockResponse = {
-        response: {
-          text: () => JSON.stringify({ events: [] }),
-        },
-      };
-
-      mockGenerateContent.mockResolvedValue(mockResponse);
+      mockGenerateContent.mockResolvedValue({
+        text: JSON.stringify({ events: [] }),
+      });
 
       const result = await service.searchForEvents(monitorWithoutAliases as any);
 
       expect(result.events).toHaveLength(0);
-      expect(mockGenerateContent).toHaveBeenCalledWith(
-        expect.stringContaining('no aliases')
-      );
+      expect(mockGenerateContent).toHaveBeenCalledWith(expect.objectContaining({
+        contents: expect.stringContaining('no aliases')
+      }));
     });
   });
 

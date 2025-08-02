@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 
 // POST /api/causemon/monitors/[id]/test - Test monitor (dry run)
 export async function POST(
@@ -71,18 +71,14 @@ export async function POST(
     }
 
     // Initialize Gemini with grounding
-    if (!process.env.GOOGLE_API_KEY) {
+    if (!process.env.GEMINI_API_KEY) {
       return NextResponse.json(
-        { error: 'Google API key not configured' },
+        { error: 'Gemini API key not configured' },
         { status: 500 }
       );
     }
 
-    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-pro',
-      tools: [{ googleSearchRetrieval: {} }],
-    });
+    const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
     // Search for recent content
     const figureAliases = monitor.publicFigure.aliases?.length > 0 
@@ -121,7 +117,14 @@ export async function POST(
     console.log('[TEST] Sending prompt to Gemini');
     let result;
     try {
-      result = await model.generateContent(prompt);
+      result = await genAI.models.generateContent({
+        model: 'gemini-2.5-pro',
+        contents: prompt,
+        config: {
+          tools: [{ googleSearch: {} }],
+          temperature: 0.0
+        }
+      });
     } catch (geminiError) {
       console.error('[TEST] Gemini API error:', geminiError);
       return NextResponse.json(
@@ -133,8 +136,7 @@ export async function POST(
       );
     }
     
-    const response = await result.response;
-    const text = response.text();
+    const text = result.text || '';
     console.log('[TEST] Gemini response received, length:', text.length);
 
     // Try to parse JSON from response
