@@ -6,7 +6,7 @@ Causemon is a monitoring system integrated into the MAIX platform that tracks wh
 
 **Example use case**: Track what Anthony Albanese says about Palestine/Gaza in parliament, media, and committees
 
-**Current Status**: MVP Phase 4 Complete - Full monitoring functionality with @google/genai migration, simplified UI, and production deployment ready.
+**Current Status**: MVP Phase 5 Complete - Full monitoring functionality with enhanced search display and monitor-specific events viewing.
 
 ## Core Principles (Following MAIX Guidelines)
 
@@ -65,6 +65,15 @@ Causemon is a monitoring system integrated into the MAIX platform that tracks wh
 - All unit tests updated and passing
 - Production ready with Gemini 2.5 Pro integration
 
+### ✅ Phase 5: Enhanced Search Display & Events Navigation (Complete)
+- Enhanced search results to show ALL found events (both new and existing) with status indicators
+- Removed cost display from search results interface
+- Added monitor-specific events viewing with "View Events" button (FileText icon)
+- Implemented proper URL parameters for filtering events by specific monitor
+- Added contextual page headers showing monitor details in events view
+- Added navigation between all events and monitor-specific views
+- Enhanced user experience with Suspense boundaries and proper loading states
+
 ## Key Features Implemented
 
 ### 1. Custom Person & Topic Input
@@ -88,12 +97,23 @@ Causemon is a monitoring system integrated into the MAIX platform that tracks wh
 - Email frequency preferences (daily/weekly)
 
 ### 4. Search & Analysis
-- Gemini 1.5 Pro with Google Search grounding
+- Gemini 2.5 Pro with Google Search grounding
 - Searches for recent statements from public figures
 - Extracts structured data: title, date, summary, quotes, sources
 - Groups related articles into single events
 - Comprehensive error handling with retry logic
 - Debug logging for production troubleshooting
+- Enhanced search display showing ALL found events with NEW/EXISTING status
+- Real-time search progress indicators with circular progress bars
+
+### 5. Events Management & Navigation
+- Comprehensive events viewing page with date-based organization
+- Monitor-specific events filtering via URL parameters
+- Context-aware page headers showing monitor details
+- Navigation between all events and monitor-specific views
+- Source attribution with external links and publication dates
+- Quote extraction and display with proper formatting
+- Events sorted chronologically with full metadata
 
 ## Database Schema (Current)
 
@@ -160,8 +180,10 @@ model Event {
 ### Protected Routes (Implemented)
 - `POST /api/causemon/monitors` - Create new monitor (accepts names, not IDs)
 - `GET /api/causemon/monitors` - List user's monitors
+- `PATCH /api/causemon/monitors/[id]` - Update monitor (pause/activate)
 - `DELETE /api/causemon/monitors/[id]` - Delete a monitor
 - `POST /api/causemon/monitors/[id]/search` - Manual search for events (no rate limiting)
+- `GET /api/causemon/events` - Get events for user's monitors (supports monitorId filtering)
 
 ### Cron Routes (Ready, Not Deployed)
 - `GET /api/causemon/cron/search` - Run daily search
@@ -191,6 +213,8 @@ model Event {
 - Added "Apps" section to sidebar (visible to all authenticated users)
 - Causemon link under Apps section
 - Consistent with MAIX design system
+- Monitor-specific events navigation via FileText icon buttons
+- Breadcrumb-style navigation between events views
 
 ## Implementation Details
 
@@ -298,22 +322,23 @@ CRON_SECRET="..."           # For cron job authentication
 
 ## Future Roadmap
 
-### Phase 3 Completion (Email & Cron)
+### Phase 6: Production Email & Cron Deployment
 - Deploy Vercel cron jobs for daily searches
-- Implement React Email templates
-- Set up Resend for email delivery
-- Add email tracking and analytics
+- Production email delivery via Resend
+- Email tracking and analytics
+- Performance monitoring and alerting
 
-### Phase 4+ Enhancements
-- Historical event viewing and analytics
-- Sentiment/stance analysis
-- Weekly digest options
-- Export capabilities (CSV, PDF)
-- Advanced filtering and search
-- Multiple monitors per search batch
-- API for external access
-- RSS feeds
-- Slack/Discord notifications
+### Phase 7+ Enhancements
+- Sentiment/stance analysis with AI
+- Weekly digest options with customizable frequency
+- Export capabilities (CSV, PDF) for events data
+- Advanced filtering and search within events
+- Multiple monitors per search batch optimization
+- API for external access with rate limiting
+- RSS feeds for programmatic access
+- Slack/Discord notifications integration
+- Historical analytics and trending analysis
+- Event categorization and tagging
 
 ## Security Considerations
 
