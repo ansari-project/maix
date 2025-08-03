@@ -148,3 +148,14 @@ docs/outward/*.pptx
 # E2E test artifacts (removed)
 test-results/
 playwright-report/
+
+# Backup files - DO NOT COMMIT
+*.sql
+backups/*.sql
+backups/*.dump
+backups/*.backup
+*.dump
+*.backup
+
+# But allow migration files
+!prisma/migrations/**/*.sql
