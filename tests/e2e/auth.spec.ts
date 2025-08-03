@@ -13,8 +13,8 @@ test.describe('Authentication Flow', () => {
     // Verify we're on the dashboard
     await expect(page).toHaveURL(/.*\/dashboard.*/)
     
-    // Verify user menu is visible (indicates successful authentication)
-    await expect(page.locator('[data-testid="user-menu"]')).toBeVisible()
+    // Verify we're logged in by checking for Sign Out button
+    await expect(page.locator('button:has-text("Sign Out")')).toBeVisible()
   })
 
   test('should allow existing user to sign in', async ({ page, authHelper, testUser }) => {
@@ -23,14 +23,14 @@ test.describe('Authentication Flow', () => {
     // Verify we're on the dashboard
     await expect(page).toHaveURL(/.*\/dashboard.*/)
     
-    // Verify user menu is visible
-    await expect(page.locator('[data-testid="user-menu"]')).toBeVisible()
+    // Verify we're logged in
+    await expect(page.locator('button:has-text("Sign Out")')).toBeVisible()
   })
 
   test('should allow user to sign out', async ({ page, authHelper, testUser }) => {
     // First sign in
     await authHelper.signIn(testUser.email, testUser.password)
-    await expect(page.locator('[data-testid="user-menu"]')).toBeVisible()
+    await expect(page.locator('button:has-text("Sign Out")')).toBeVisible()
     
     // Then sign out
     await authHelper.signOut()
@@ -45,13 +45,13 @@ test.describe('Authentication Flow', () => {
   test('should persist authentication across page reloads', async ({ page, authHelper, testUser }) => {
     // Sign in
     await authHelper.signIn(testUser.email, testUser.password)
-    await expect(page.locator('[data-testid="user-menu"]')).toBeVisible()
+    await expect(page.locator('button:has-text("Sign Out")')).toBeVisible()
     
     // Reload the page
     await page.reload()
     
     // Verify we're still authenticated
-    await expect(page.locator('[data-testid="user-menu"]')).toBeVisible()
+    await expect(page.locator('button:has-text("Sign Out")')).toBeVisible()
   })
 
   test('should redirect to sign in page when accessing protected route while unauthenticated', async ({ page }) => {
@@ -66,12 +66,12 @@ test.describe('Authentication Flow', () => {
     await page.goto('/auth/signin')
     
     // Try to sign in with invalid credentials
-    await page.fill('input[name="email"]', 'nonexistent@test.com')
-    await page.fill('input[name="password"]', 'WrongPassword123!')
+    await page.fill('input#email', 'nonexistent@test.com')
+    await page.fill('input#password', 'WrongPassword123!')
     await page.click('button[type="submit"]')
     
     // Should show error message
-    await expect(page.locator('text=Invalid credentials')).toBeVisible({
+    await expect(page.locator('text=Invalid email or password')).toBeVisible({
       timeout: 10000
     })
     

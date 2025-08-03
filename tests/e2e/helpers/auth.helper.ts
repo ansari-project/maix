@@ -29,21 +29,12 @@ export class AuthHelper {
     // Wait for navigation to dashboard
     await this.page.waitForURL('**/dashboard/**')
     
-    // Verify we're logged in by checking for Dashboard link or Sign Out button
-    await expect(this.page.locator('text=Dashboard').or(this.page.locator('text=Sign Out'))).toBeVisible()
+    // Verify we're logged in by checking for Sign Out button
+    await expect(this.page.locator('button:has-text("Sign Out")')).toBeVisible()
   }
 
   async signUp(user: TestUser) {
     await this.page.goto('/auth/signup')
-    
-    // Wait for page to load and check for errors
-    await this.page.waitForLoadState('networkidle')
-    
-    // Check if there's a runtime error dialog
-    const errorDialog = this.page.locator('dialog:has-text("Runtime Error")')
-    if (await errorDialog.isVisible()) {
-      throw new Error('Application has runtime error - check dev server logs')
-    }
     
     // Wait for the signup form to be present
     await this.page.waitForSelector('form', { timeout: 10000 })
@@ -58,29 +49,13 @@ export class AuthHelper {
     // Submit the form
     await this.page.click('button[type="submit"]')
     
-    // Wait for either redirect to signin or error messages
-    try {
-      // Wait for redirect to sign in page (since signup redirects there)
-      await this.page.waitForURL('**/auth/signin**', { timeout: 10000 })
-      
-      // Now sign in with the newly created account
-      await this.signIn(user.email, user.password)
-    } catch (error) {
-      // Take a screenshot for debugging
-      await this.page.screenshot({ path: 'signup-debug.png' })
-      
-      // Check current URL
-      const currentUrl = this.page.url()
-      
-      // Check for validation errors on the signup page
-      const errorElements = await this.page.locator('.text-red-600').count()
-      if (errorElements > 0) {
-        const errorText = await this.page.locator('.text-red-600').first().textContent()
-        throw new Error(`Signup failed with error: ${errorText}`)
-      }
-      
-      throw new Error(`Signup form submitted but didn't redirect. Current URL: ${currentUrl}`)
-    }
+    // Wait for redirect to signin page with success message
+    await this.page.waitForURL('**/auth/signin?message=Account%20created%20successfully', { 
+      timeout: 10000 
+    })
+    
+    // Now sign in with the newly created account
+    await this.signIn(user.email, user.password)
   }
 
   async signOut() {

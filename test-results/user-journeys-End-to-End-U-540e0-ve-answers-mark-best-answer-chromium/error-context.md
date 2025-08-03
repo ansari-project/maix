@@ -1,0 +1,268 @@
+# Page snapshot
+
+```yaml
+- alert
+- text: M
+- heading "Maix" [level=2]
+- paragraph: Meaningful AI Exchange
+- button:
+  - img
+- navigation:
+  - link "Dashboard":
+    - /url: /dashboard/home
+    - img
+    - text: Dashboard
+  - link "My Profile":
+    - /url: /profile
+    - img
+    - text: My Profile
+  - link "Q + A":
+    - /url: /q-and-a
+    - img
+    - text: Q + A
+  - link "Products":
+    - /url: /products
+    - img
+    - text: Products
+  - link "Projects":
+    - /url: /projects
+    - img
+    - text: Projects
+  - link "My Volunteering":
+    - /url: /volunteering
+    - img
+    - text: My Volunteering
+  - link "Organizations":
+    - /url: /organizations
+    - img
+    - text: Organizations
+  - paragraph: APPS
+  - link "Causemon":
+    - /url: /causemon
+    - img
+    - text: Causemon
+  - link "Settings":
+    - /url: /settings
+    - img
+    - text: Settings
+- text: Q
+- paragraph: Question Asker
+- paragraph: "@questioner-1754202474772"
+- button "Sign Out":
+  - img
+  - text: Sign Out
+- main:
+  - heading "Activity Feed" [level=1]
+  - paragraph: Stay up to date with the latest activities in the Maix community
+  - button "Refresh Feed"
+  - img
+  - 'heading "New project: Full Product Build" [level=3]':
+    - 'link "New project: Full Product Build"':
+      - /url: /projects/cmdvaus7k000729qgcp8ayr32
+  - text: Aug 02, 2025
+  - paragraph: This is a test project description that is long enough to meet validation requirements.
+  - text: Awaiting Volunteers FULL PRODUCT
+  - link "View Project":
+    - /url: /projects/cmdvaus7k000729qgcp8ayr32
+    - text: View Project
+    - img
+  - img
+  - 'heading "New project: Prototype Development" [level=3]':
+    - 'link "New project: Prototype Development"':
+      - /url: /projects/cmdvaurv1000529qg6lwlwp75
+  - text: Aug 02, 2025
+  - paragraph: This is a test project description that is long enough to meet validation requirements.
+  - text: Awaiting Volunteers PROTOTYPE
+  - link "View Project":
+    - /url: /projects/cmdvaurv1000529qg6lwlwp75
+    - text: View Project
+    - img
+  - img
+  - 'heading "New project: Quick Advice Needed" [level=3]':
+    - 'link "New project: Quick Advice Needed"':
+      - /url: /projects/cmdvaurq3000329qguiw1enwh
+  - text: Aug 02, 2025
+  - paragraph: This is a test project description that is long enough to meet validation requirements.
+  - text: Awaiting Volunteers ADVICE
+  - link "View Project":
+    - /url: /projects/cmdvaurq3000329qguiw1enwh
+    - text: View Project
+    - img
+  - img
+  - 'heading "New project: Open Source AI Chat Bot" [level=3]':
+    - 'link "New project: Open Source AI Chat Bot"':
+      - /url: /projects/cmdvaukza000311lm5zu8qy43
+  - text: Aug 02, 2025
+  - paragraph: We are building an open-source AI chatbot that can handle customer support queries. The bot will use natural language processing to understand customer questions and provide helpful responses. We need volunteers with experience in Python, NLP, and chatbot development.
+  - text: Awaiting Volunteers MVP
+  - link "View Project":
+    - /url: /projects/cmdvaukza000311lm5zu8qy43
+    - text: View Project
+    - img
+  - img
+  - 'heading "Test User asked: Best practices for React performance optimization techniques" [level=3]':
+    - 'link "Test User asked: Best practices for React performance optimization techniques"':
+      - /url: /q-and-a/cmdvau2y400087nmnqh3hdjfe
+  - text: Aug 02, 2025
+  - paragraph: Best practices for React performance optimization techniques
+  - link "View Question":
+    - /url: /q-and-a/cmdvau2y400087nmnqh3hdjfe
+    - text: View Question
+    - img
+  - img
+  - 'heading "Test User asked: How to implement GraphQL subscriptions with real-time updates?" [level=3]':
+    - 'link "Test User asked: How to implement GraphQL subscriptions with real-time updates?"':
+      - /url: /q-and-a/cmdvau2vk00067nmn44o28lhx
+  - text: Aug 02, 2025
+  - paragraph: How to implement GraphQL subscriptions with real-time updates?
+  - link "View Question":
+    - /url: /q-and-a/cmdvau2vk00067nmn44o28lhx
+    - text: View Question
+    - img
+  - img
+  - 'heading "Test User asked: General question not tied to any project" [level=3]':
+    - 'link "Test User asked: General question not tied to any project"':
+      - /url: /q-and-a/cmdvau201000fzptwxyxqueb3
+  - text: Aug 02, 2025
+  - paragraph: General question not tied to any project
+  - link "View Question":
+    - /url: /q-and-a/cmdvau201000fzptwxyxqueb3
+    - text: View Question
+    - img
+  - img
+  - 'heading "Test User asked: Product-specific question about features" [level=3]':
+    - 'link "Test User asked: Product-specific question about features"':
+      - /url: /q-and-a/cmdvau1uy000dzptwo6v0bmur
+  - text: Aug 02, 2025
+  - paragraph: Product-specific question about features
+  - link "View Question":
+    - /url: /q-and-a/cmdvau1uy000dzptwo6v0bmur
+    - text: View Question
+    - img
+  - img
+  - 'heading "Test User asked: Project-specific question about implementation" [level=3]':
+    - 'link "Test User asked: Project-specific question about implementation"':
+      - /url: /q-and-a/cmdvau1q6000bzptwz9z4tfkw
+  - text: Aug 02, 2025
+  - paragraph: Project-specific question about implementation
+  - link "View Question":
+    - /url: /q-and-a/cmdvau1q6000bzptwz9z4tfkw
+    - text: View Question
+    - img
+  - img
+  - 'heading "New product: Filter Test Product" [level=3]':
+    - 'link "New product: Filter Test Product"':
+      - /url: /products/cmdvau1ix0009zptw0qwhcwto
+  - text: Aug 02, 2025
+  - paragraph: This is a test product description.
+  - text: 0 projects
+  - link "View Product":
+    - /url: /products/cmdvau1ix0009zptw0qwhcwto
+    - text: View Product
+    - img
+  - img
+  - 'heading "New project: Filter Test Project" [level=3]':
+    - 'link "New project: Filter Test Project"':
+      - /url: /projects/cmdvau16a0007zptwp7rp1g09
+  - text: Aug 02, 2025
+  - paragraph: This is a test project description that is long enough to meet validation requirements.
+  - text: Awaiting Volunteers MVP
+  - link "View Project":
+    - /url: /projects/cmdvau16a0007zptwp7rp1g09
+    - text: View Project
+    - img
+  - img
+  - 'heading "Test User asked: What are the best practices for API design in REST?" [level=3]':
+    - 'link "Test User asked: What are the best practices for API design in REST?"':
+      - /url: /q-and-a/cmdvau0nn00037nmn9wkjneir
+  - text: Aug 02, 2025
+  - paragraph: What are the best practices for API design in REST?
+  - link "View Question":
+    - /url: /q-and-a/cmdvau0nn00037nmn9wkjneir
+    - text: View Question
+    - img
+  - img
+  - 'heading "Question Asker asked: How do I handle errors in async/await functions?" [level=3]':
+    - 'link "Question Asker asked: How do I handle errors in async/await functions?"':
+      - /url: /q-and-a/cmdvatxtx0004zptwrw38i118
+  - text: Aug 02, 2025
+  - paragraph: How do I handle errors in async/await functions?
+  - link "View Question":
+    - /url: /q-and-a/cmdvatxtx0004zptwrw38i118
+    - text: View Question
+    - img
+  - img
+  - 'heading "Question Asker asked: What is the difference between useEffect and useLayoutEffect in React?" [level=3]':
+    - 'link "Question Asker asked: What is the difference between useEffect and useLayoutEffect in React?"':
+      - /url: /q-and-a/cmdvatwbc0003ttvl3fqnod6a
+  - text: Aug 02, 2025
+  - paragraph: What is the difference between useEffect and useLayoutEffect in React?
+  - link "View Question":
+    - /url: /q-and-a/cmdvatwbc0003ttvl3fqnod6a
+    - text: View Question
+    - img
+  - img
+  - 'heading "Test User asked: How to optimize database queries in Prisma?" [level=3]':
+    - 'link "Test User asked: How to optimize database queries in Prisma?"':
+      - /url: /q-and-a/cmdvatuky0004wnjm9rgjeor1
+  - text: Aug 02, 2025
+  - paragraph: How to optimize database queries in Prisma?
+  - link "View Question":
+    - /url: /q-and-a/cmdvatuky0004wnjm9rgjeor1
+    - text: View Question
+    - img
+  - img
+  - 'heading "Test User asked: What are the best practices for React state management?" [level=3]':
+    - 'link "Test User asked: What are the best practices for React state management?"':
+      - /url: /q-and-a/cmdvatufq0002wnjm66d2tv4v
+  - text: Aug 02, 2025
+  - paragraph: What are the best practices for React state management?
+  - link "View Question":
+    - /url: /q-and-a/cmdvatufq0002wnjm66d2tv4v
+    - text: View Question
+    - img
+  - img
+  - 'heading "New product: Q&A Test Product" [level=3]':
+    - 'link "New product: Q&A Test Product"':
+      - /url: /products/cmdvatnjg0004zp3rlzf1wda7
+  - text: Aug 02, 2025
+  - paragraph: This is a test product description.
+  - text: 0 projects
+  - link "View Product":
+    - /url: /products/cmdvatnjg0004zp3rlzf1wda7
+    - text: View Product
+    - img
+  - img
+  - 'heading "New project: Q&A Test Project" [level=3]':
+    - 'link "New project: Q&A Test Project"':
+      - /url: /projects/cmdvatnet0002zp3rat2yvk2i
+  - text: Aug 02, 2025
+  - paragraph: This is a test project description that is long enough to meet validation requirements.
+  - text: Awaiting Volunteers MVP
+  - link "View Project":
+    - /url: /projects/cmdvatnet0002zp3rat2yvk2i
+    - text: View Project
+    - img
+  - img
+  - 'heading "New project: Non-Owner Edit Test" [level=3]':
+    - 'link "New project: Non-Owner Edit Test"':
+      - /url: /projects/cmdvatlxe0003vg6iieq51drk
+  - text: Aug 02, 2025
+  - paragraph: This is a test project description that is long enough to meet validation requirements.
+  - text: Awaiting Volunteers MVP
+  - link "View Project":
+    - /url: /projects/cmdvatlxe0003vg6iieq51drk
+    - text: View Project
+    - img
+  - img
+  - 'heading "New project: Apply Test Project" [level=3]':
+    - 'link "New project: Apply Test Project"':
+      - /url: /projects/cmdvatiob0008jckby3f8ffj3
+  - text: Aug 02, 2025
+  - paragraph: This project is for testing the application process.
+  - text: Awaiting Volunteers MVP
+  - link "View Project":
+    - /url: /projects/cmdvatiob0008jckby3f8ffj3
+    - text: View Project
+    - img
+```

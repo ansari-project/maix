@@ -1,0 +1,64 @@
+# Page snapshot
+
+```yaml
+- alert
+- text: M
+- heading "Maix" [level=2]
+- paragraph: Meaningful AI Exchange
+- button:
+  - img
+- navigation:
+  - link "Dashboard":
+    - /url: /dashboard/home
+    - img
+    - text: Dashboard
+  - link "My Profile":
+    - /url: /profile
+    - img
+    - text: My Profile
+  - link "Q + A":
+    - /url: /q-and-a
+    - img
+    - text: Q + A
+  - link "Products":
+    - /url: /products
+    - img
+    - text: Products
+  - link "Projects":
+    - /url: /projects
+    - img
+    - text: Projects
+  - link "My Volunteering":
+    - /url: /volunteering
+    - img
+    - text: My Volunteering
+  - link "Organizations":
+    - /url: /organizations
+    - img
+    - text: Organizations
+  - paragraph: APPS
+  - link "Causemon":
+    - /url: /causemon
+    - img
+    - text: Causemon
+  - link "Settings":
+    - /url: /settings
+    - img
+    - text: Settings
+- text: T
+- paragraph: Test User
+- paragraph: "@test-1754202449936-klct8avl4"
+- button "Sign Out":
+  - img
+  - text: Sign Out
+- main:
+  - link "Back to Q&A":
+    - /url: /q-and-a
+    - img
+    - text: Back to Q&A
+  - text: Ask a Question Get help from the tech community Your Question
+  - textbox "Your Question"
+  - paragraph: Write a clear, specific question. Include relevant details about your tech stack, what you've tried, and what you're trying to achieve.
+  - button "Post Question"
+  - button "Cancel"
+```

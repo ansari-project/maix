@@ -18,9 +18,10 @@ export const test = base.extend<MyFixtures>({
   
   // Test user fixture - creates a user and cleans up after
   testUser: async ({}, use) => {
-    // Create a unique test user
+    // Create a unique test user with more entropy
+    const uniqueId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     const userData = {
-      email: `test-${Date.now()}@test.com`,
+      email: `test-${uniqueId}@test.com`,
       password: 'TestPassword123!',
       name: 'Test User'
     }

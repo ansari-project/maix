@@ -1,0 +1,71 @@
+# Page snapshot
+
+```yaml
+- alert
+- text: M
+- heading "Maix" [level=2]
+- paragraph: Meaningful AI Exchange
+- button:
+  - img
+- navigation:
+  - link "Dashboard":
+    - /url: /dashboard/home
+    - img
+    - text: Dashboard
+  - link "My Profile":
+    - /url: /profile
+    - img
+    - text: My Profile
+  - link "Q + A":
+    - /url: /q-and-a
+    - img
+    - text: Q + A
+  - link "Products":
+    - /url: /products
+    - img
+    - text: Products
+  - link "Projects":
+    - /url: /projects
+    - img
+    - text: Projects
+  - link "My Volunteering":
+    - /url: /volunteering
+    - img
+    - text: My Volunteering
+  - link "Organizations":
+    - /url: /organizations
+    - img
+    - text: Organizations
+  - paragraph: APPS
+  - link "Causemon":
+    - /url: /causemon
+    - img
+    - text: Causemon
+  - link "Settings":
+    - /url: /settings
+    - img
+    - text: Settings
+- text: T
+- paragraph: Test User
+- paragraph: "@test-1754202405025-yp9j6im9f"
+- button "Sign Out":
+  - img
+  - text: Sign Out
+- main:
+  - heading "Apply Test Project" [level=1]
+  - paragraph: Posted by Project Owner
+  - button "Apply to Volunteer"
+  - text: MVP Awaiting Volunteers
+  - heading "Goal" [level=3]
+  - paragraph: Testing application functionality
+  - heading "Description" [level=3]
+  - paragraph: This project is for testing the application process.
+  - text: Project Updates
+  - paragraph: No updates posted yet.
+  - text: Apply to this Project Tell the project owner why you'd be a great fit Application Message
+  - textbox "Application Message"
+  - button "Submit Application" [disabled]
+  - text: "Project Details Applications: 0 Status: Awaiting Volunteers Recruiting: Yes Posted: 8/2/2025 Contact Email:"
+  - link "project@test.com":
+    - /url: mailto:project@test.com
+```
