@@ -5,7 +5,19 @@ import bcrypt from "bcryptjs"
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
+    let body;
+    try {
+      body = await request.json()
+    } catch (jsonError) {
+      console.error("JSON parsing error:", jsonError)
+      return NextResponse.json(
+        { 
+          message: "Invalid JSON in request body",
+          error: jsonError instanceof Error ? jsonError.message : "Unknown JSON parsing error"
+        },
+        { status: 400 }
+      )
+    }
     
     // Validate input with Zod
     const validation = signupSchema.safeParse(body)
