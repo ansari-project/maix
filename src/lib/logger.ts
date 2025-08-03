@@ -81,15 +81,21 @@ const createTransport = () => {
 
   if (process.env.NODE_ENV === 'production' && process.env.AXIOM_TOKEN && process.env.AXIOM_DATASET) {
     // Production: Send to Axiom using @axiomhq/pino transport
-    return pino.transport({
-      target: '@axiomhq/pino',
-      options: {
-        dataset: process.env.AXIOM_DATASET,
-        token: process.env.AXIOM_TOKEN,
-      },
-    })
+    try {
+      return pino.transport({
+        target: '@axiomhq/pino',
+        options: {
+          dataset: process.env.AXIOM_DATASET,
+          token: process.env.AXIOM_TOKEN,
+        },
+      })
+    } catch (error) {
+      // If Axiom transport fails, fall back to basic logging
+      console.warn('Failed to initialize Axiom transport, falling back to console logging:', error)
+      return undefined
+    }
   } else {
-    // Development: Don't use transport to avoid worker thread issues
+    // Development or missing Axiom config: Don't use transport
     return undefined
   }
 }
