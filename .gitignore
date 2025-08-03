@@ -144,3 +144,7 @@ docs/outward/*.pptx
 
 # Allow src/lib but ignore Python lib directories
 !src/lib/
+
+# E2E test artifacts (removed)
+test-results/
+playwright-report/

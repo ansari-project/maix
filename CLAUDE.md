@@ -242,7 +242,6 @@ To ensure code quality and prevent deployment failures, always perform the follo
 2. **Local Validation:**
    - Run `npm run build` to ensure no TypeScript or build errors
    - Run `npm run test` to ensure all unit tests pass
-   - Run `npm run test:e2e` to ensure E2E tests pass (requires dev server running)
    - Fix any errors found during build or test
 
 3. **Code Review (for non-trivial changes):**
@@ -263,8 +262,6 @@ To ensure code quality and prevent deployment failures, always perform the follo
 **Enforcement**: 
 - A git pre-commit hook (`.husky/pre-commit`) automatically runs build and unit tests
 - Build failures and unit test failures will block commits
-- E2E tests are disabled by default to avoid database pollution
-- E2E tests can be enabled with `RUN_E2E=1 git commit ...` if needed (requires dev server running)
 - This ensures the checklist is followed reliably and prevents manual oversight
 - **NOTE**: Pre-commit hooks only check staged files, so missing dependencies won't be caught unless package files are staged
 
@@ -494,26 +491,26 @@ SENTRY_DSN="your-sentry-dsn"
 
 ### Pragmatic Testing Approach
 
-**Testing Pyramid (Inverted for React Apps):**
-1. **E2E Tests** (Primary) - Use Playwright for complete user workflows
-2. **Unit Tests** (Secondary) - Focus on business logic and utilities
-3. **Integration Tests** (Minimal) - Only for complex component interactions
+**Testing Priority:**
+1. **Unit Tests** - Focus on business logic and utilities
+2. **API Route Tests** - Test API endpoints with mocked database
+3. **Component Tests** - Test basic rendering and simple interactions
 
 ### When to Use Each Test Type
 
-#### E2E Tests (Playwright) - PRIMARY CHOICE
+#### Unit Tests - PRIMARY CHOICE
 **Use for:**
-- Complete user workflows (form submissions, navigation flows)
-- Complex component interactions (modals, dropdowns, multi-step forms)
-- Authentication flows
-- Critical business paths
-- Cross-browser compatibility
+- Business logic functions
+- Utility functions
+- Data transformations
+- Validation logic
+- API route handlers
 
-**Why E2E is preferred:**
-- Tests real user experience
-- No complex mocking required
-- Catches integration issues
-- Works with real browsers and components
+**Why unit tests are preferred:**
+- Fast and reliable
+- Easy to debug
+- Tests specific functionality in isolation
+- No complex setup required
 
 #### Unit Tests (Jest + RTL) - SECONDARY CHOICE
 **Use for:**
@@ -542,44 +539,7 @@ SENTRY_DSN="your-sentry-dsn"
 - **State Management Complexity**: Multiple async API calls, React state updates
 - **Mock Coordination**: Fetch mocks, router mocks, context mocks become brittle
 
-**Solution**: Use E2E tests for complex UI workflows instead of fighting mocking complexity.
-
-### E2E Testing Implementation
-
-#### Playwright Configuration
-- **Single Browser Testing**: Use Chromium only for faster feedback during development
-- **Parallel Execution**: Tests run in parallel by default for speed
-- **Fixtures**: Use custom fixtures for auth helpers and database setup
-- **Global Setup/Teardown**: Clean database before and after test runs
-
-#### Writing E2E Tests
-```typescript
-// Use page objects and helpers for common workflows
-await authHelper.signUp(userData)
-await authHelper.signIn(email, password)
-
-// Test actual user behavior, not implementation details
-await page.fill('input#email', 'user@example.com')
-await page.click('button[type="submit"]')
-await expect(page).toHaveURL(/.*\/dashboard.*/)
-
-// Use specific selectors, avoid data-testid when possible
-await page.locator('button:has-text("Sign Out")').click()
-```
-
-#### Common E2E Patterns
-- **Authentication**: Test signup → signin → signout flow
-- **Form Submission**: Fill forms, submit, verify redirect/success
-- **Navigation**: Click links, verify URL changes and content
-- **Error Handling**: Submit invalid data, verify error messages
-- **Persistence**: Reload page, verify state is maintained
-
-#### Debugging E2E Tests
-```bash
-npx playwright test --headed     # Run with visible browser
-npx playwright test --debug      # Step through test execution
-npx playwright test --ui         # Interactive test runner
-```
+**Solution**: Focus on unit testing business logic and API endpoints instead of complex UI tests.
 
 ### Testing Standards
 
@@ -587,13 +547,7 @@ npx playwright test --ui         # Interactive test runner
 - **Keep it simple**: Test basic rendering and simple interactions only
 - **Mock minimally**: Only mock what's absolutely necessary
 - **Focus on logic**: Extract business logic into testable functions
-- **Avoid complex scenarios**: If mocking becomes complex, use E2E instead
-
-#### E2E Test Standards
-- **Test user journeys**: Complete end-to-end workflows
-- **Use realistic data**: Test with actual API responses
-- **Focus on critical paths**: Login, core features, error scenarios
-- **Keep tests maintainable**: Use page object patterns for complex apps
+- **Avoid complex scenarios**: If testing becomes complex, extract logic to testable functions
 
 ## Performance Considerations
 
@@ -817,9 +771,6 @@ npx prisma db seed       # Seed database
 ```bash
 npm run test                     # Run unit tests
 npm run test:watch               # Watch mode
-npx playwright test              # Run all E2E tests
-npx playwright test --ui         # Run E2E tests with UI
-npx playwright test auth.spec.ts # Run specific E2E test file
 ```
 
 ## Troubleshooting
@@ -963,18 +914,17 @@ Conduct code health reviews to maintain quality without over-engineering. Follow
 ### Testing Philosophy
 
 #### Test Everything That Matters
-- **User Journeys**: Critical paths users actually follow (use E2E tests)
-- **Business Logic**: Rules that could break user flows (use unit tests)
-- **Data Integrity**: Ensure data stays consistent (use integration tests)
-- **Error Handling**: What happens when things go wrong (use E2E for UI, unit for functions)
-- **API Contracts**: Ensure endpoints behave as documented (use integration tests)
+- **Business Logic**: Rules that could break user flows
+- **Data Integrity**: Ensure data stays consistent
+- **Error Handling**: What happens when things go wrong
+- **API Contracts**: Ensure endpoints behave as documented
 
 #### Skip Testing Boilerplate
 - Simple getters/setters
 - Framework-provided functionality
 - Third-party library internals
 - UI pixel perfection
-- **Complex UI component interactions** (use E2E instead)
+- **Complex UI component interactions** (extract logic instead)
 
 #### Test Before Refactoring
 1. Write tests for existing behavior (choose appropriate test type)
@@ -989,7 +939,7 @@ Conduct code health reviews to maintain quality without over-engineering. Follow
 - Frequent test breakage due to implementation changes
 - Complex async state management in tests
 
-**Solution**: Switch to E2E tests which test the actual user experience without mocking complexity.
+**Solution**: Extract business logic into testable functions instead of testing complex UI interactions.
 
 ### Practical Examples
 

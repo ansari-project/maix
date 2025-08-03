@@ -16,24 +16,5 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-# Step 3: E2E tests (disabled by default - enable with RUN_E2E=1)
-if [ "$RUN_E2E" = "1" ]; then
-  echo "🎭 Running E2E tests..."
-  # Check if dev server is running
-  curl -s http://localhost:3000 > /dev/null 2>&1
-  if [ $? -ne 0 ]; then
-    echo "⚠️  Dev server not running at http://localhost:3000"
-    echo "   Please run 'npm run dev' in another terminal before committing with E2E tests."
-    exit 1
-  else
-    npm run test:e2e
-    if [ $? -ne 0 ]; then
-      echo "❌ E2E tests failed. Please fix failing tests before committing."
-      exit 1
-    fi
-  fi
-else
-  echo "⏭️  Skipping E2E tests (set RUN_E2E=1 to enable)"
-fi
 
 echo "✅ All pre-commit checks passed!"
