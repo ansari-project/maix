@@ -16,6 +16,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2 } from "lucide-react"
@@ -26,6 +27,10 @@ const formSchema = z.object({
     .min(3, "Slug must be at least 3 characters")
     .max(50)
     .regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens"),
+  mission: z.string().min(10, "Mission must be at least 10 characters").max(500).optional(),
+  description: z.string().min(10, "Description must be at least 10 characters").max(5000).optional(),
+  url: z.string().url("Must be a valid URL").optional().or(z.literal('')),
+  aiEngagement: z.string().min(10, "AI Engagement must be at least 10 characters").max(2000).optional(),
 })
 
 type FormData = z.infer<typeof formSchema>
@@ -40,6 +45,10 @@ export default function NewOrganizationPage() {
     defaultValues: {
       name: "",
       slug: "",
+      mission: "",
+      description: "",
+      url: "",
+      aiEngagement: "",
     },
   })
 
@@ -136,6 +145,93 @@ export default function NewOrganizationPage() {
                     </FormControl>
                     <FormDescription>
                       Unique URL identifier for your organization
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="mission"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mission Statement</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Our mission is to..." 
+                        className="resize-none"
+                        rows={3}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      A brief statement of your organization&apos;s purpose (optional)
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Detailed description of your organization..." 
+                        className="resize-none"
+                        rows={6}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Detailed information about your organization (optional, supports Markdown)
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="url"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Website URL</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="url"
+                        placeholder="https://example.com" 
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Your organization&apos;s website (optional)
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="aiEngagement"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>AI Engagement</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Describe how your organization engages with AI technology..." 
+                        className="resize-none"
+                        rows={4}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      How your organization uses or plans to use AI technology (optional)
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

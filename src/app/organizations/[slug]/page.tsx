@@ -4,8 +4,9 @@ import { authOptions } from "@/lib/auth"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { FolderOpen, Users, Settings, LogOut } from "lucide-react"
+import { FolderOpen, Users, Settings, LogOut, Globe } from "lucide-react"
 import Link from "next/link"
+import { Markdown } from "@/components/ui/markdown"
 import OrganizationProjectsList from "./components/OrganizationProjectsList"
 import OrganizationMembersList from "./components/OrganizationMembersList"
 import LeaveOrganizationButton from "./components/LeaveOrganizationButton"
@@ -37,12 +38,36 @@ export default async function OrganizationPage({ params }: PageProps) {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <div className="flex justify-between items-start">
-          <div>
+          <div className="flex-1">
             <h1 className="text-3xl font-bold">{organization.name}</h1>
-            <p className="text-muted-foreground mt-2">
-              {organization._count?.members || 0} member{organization._count?.members !== 1 ? 's' : ''} • 
-              {' '}{organization._count?.projects || 0} project{organization._count?.projects !== 1 ? 's' : ''}
-            </p>
+            {organization.mission && (
+              <p className="text-lg text-muted-foreground mt-2 mb-4">
+                {organization.mission}
+              </p>
+            )}
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <span>
+                {organization._count?.members || 0} member{organization._count?.members !== 1 ? 's' : ''}
+              </span>
+              <span>•</span>
+              <span>
+                {organization._count?.projects || 0} project{organization._count?.projects !== 1 ? 's' : ''}
+              </span>
+              {organization.url && (
+                <>
+                  <span>•</span>
+                  <a 
+                    href={organization.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 hover:text-primary"
+                  >
+                    <Globe className="w-3 h-3" />
+                    Website
+                  </a>
+                </>
+              )}
+            </div>
           </div>
           <div className="flex gap-2">
             {isOwner && (
@@ -59,6 +84,25 @@ export default async function OrganizationPage({ params }: PageProps) {
           </div>
         </div>
       </div>
+
+      {organization.description && (
+        <Card className="mb-8">
+          <CardContent className="pt-6">
+            <Markdown content={organization.description} />
+          </CardContent>
+        </Card>
+      )}
+
+      {organization.aiEngagement && (
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>AI Engagement</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Markdown content={organization.aiEngagement} />
+          </CardContent>
+        </Card>
+      )}
 
       <Tabs defaultValue="projects" className="w-full">
         <TabsList className="grid w-full grid-cols-2 max-w-md">

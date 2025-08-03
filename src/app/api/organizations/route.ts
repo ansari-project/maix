@@ -74,6 +74,10 @@ const handlePost = withAuth(async (request: AuthenticatedRequest) => {
     data: {
       name: validatedData.name,
       slug: validatedData.slug,
+      mission: validatedData.mission,
+      description: validatedData.description,
+      url: validatedData.url,
+      aiEngagement: validatedData.aiEngagement,
       members: {
         create: {
           userId: request.user.id,

@@ -17,13 +17,18 @@ const handleGet = async (request: Request) => {
   // Get current user session (if any)
   const session = await getServerSession(authOptions)
   const userId = session?.user?.id
+  
+  // Get query parameters
+  const { searchParams } = new URL(request.url)
+  const organizationId = searchParams.get('organizationId')
 
   if (!userId) {
     // No session - only return public projects
     const projects = await prisma.project.findMany({
       where: {
         isActive: true,
-        visibility: 'PUBLIC'
+        visibility: 'PUBLIC',
+        ...(organizationId && { organizationId })
       },
       include: {
         owner: {
@@ -66,6 +71,7 @@ const handleGet = async (request: Request) => {
   const projects = await prisma.project.findMany({
     where: {
       isActive: true,
+      ...(organizationId && { organizationId }),
       OR: [
         { visibility: 'PUBLIC' },
         { ownerId: userId },
