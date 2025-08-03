@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,166 +7,128 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Visibility enum for projects and products
-enum Visibility {
-  PUBLIC
-  PRIVATE
-}
-
-// Organization role enum
-enum OrgRole {
-  OWNER
-  MEMBER
-}
-
-// Organization model for team collaboration
 model Organization {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  // Relations
-  members     OrganizationMember[]
-  projects    Project[]
-  products    Product[]
-  
+  id        String               @id @default(cuid())
+  name      String
+  slug      String               @unique
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  members   OrganizationMember[]
+  products  Product[]
+  projects  Project[]
+
   @@map("organizations")
 }
 
-// Organization membership
 model OrganizationMember {
   id             String       @id @default(cuid())
-  role           OrgRole      
+  role           OrgRole
   joinedAt       DateTime     @default(now())
-  
-  // Relations
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId String
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId         String
-  
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([organizationId, userId])
   @@index([userId])
   @@index([organizationId])
   @@map("organization_members")
 }
 
-// User model for volunteer profiles
 model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
-  username      String   @unique
-  name          String?
-  image         String?
-  password      String?
-  specialty     Specialty?
-  experienceLevel ExperienceLevel?
-  bio           String?
-  linkedinUrl   String?
-  githubUrl     String?
-  portfolioUrl  String?
-  skills        String[] // Array of skill names
-  availability  String?  // e.g., "10 hours/week", "weekends only"
-  timezone      String?
-  isActive      Boolean  @default(true)
-  lastDigestSentAt DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  // Relations
-  applications  Application[]
-  projects      Project[]
-  products      Product[]
-  messages      Message[]
-  personalAccessTokens PersonalAccessToken[]
-  posts         Post[]
-  comments      Comment[]
-  monitors      Monitor[]
+  id                      String                  @id @default(cuid())
+  email                   String                  @unique
+  username                String                  @unique
+  name                    String?
+  image                   String?
+  password                String?
+  specialty               Specialty?
+  experienceLevel         ExperienceLevel?
+  bio                     String?
+  linkedinUrl             String?
+  githubUrl               String?
+  portfolioUrl            String?
+  skills                  String[]
+  availability            String?
+  timezone                String?
+  isActive                Boolean                 @default(true)
+  createdAt               DateTime                @default(now())
+  updatedAt               DateTime                @updatedAt
+  lastDigestSentAt        DateTime?
+  applications            Application[]
+  comments                Comment[]
+  messages                Message[]
+  monitors                Monitor[]
+  notificationPreference  NotificationPreference?
+  notifications           Notification[]
   organizationMemberships OrganizationMember[]
-  notifications          Notification[]
-  notificationPreference NotificationPreference?
+  personalAccessTokens    PersonalAccessToken[]
+  posts                   Post[]
+  products                Product[]
+  projects                Project[]
 
   @@index([skills], type: Gin)
   @@map("users")
 }
 
-// Project model - simplified to essential fields only
 model Project {
-  id                    String        @id @default(cuid())
-  name                  String        // Project name
-  goal                  String        // One-line project goal
-  description           String        @db.Text // Project description (longer text)
-  contactEmail          String        // Contact email for the project
-  helpType              HelpType      // Type of help needed
-  status                ProjectStatus @default(AWAITING_VOLUNTEERS) // Project lifecycle status
-  targetCompletionDate  DateTime?     // Target date for project completion
-  isActive              Boolean       @default(true) // Whether project is actively seeking help
-  createdAt             DateTime      @default(now())
-  updatedAt             DateTime      @updatedAt
-  visibility            Visibility    @default(PUBLIC) // Project visibility
-
-  // Relations - Dual ownership: EITHER user OR organization
-  owner         User?         @relation(fields: [ownerId], references: [id])
-  ownerId       String?
-  organization  Organization? @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  organizationId String?
-  product       Product?      @relation(fields: [productId], references: [id])
-  productId     String?
-  applications  Application[]
-  notifications Notification[]
-  
-  // Relation for all PROJECT_UPDATE posts (one-to-many)
-  updates Post[] @relation("ProjectUpdates")
-
-  // Back-relation to the single discussion post for this project (one-to-one)
-  discussionPost Post? @relation("ProjectDiscussionThread")
+  id                   String         @id @default(cuid())
+  name                 String
+  goal                 String
+  description          String
+  contactEmail         String
+  helpType             HelpType
+  status               ProjectStatus  @default(AWAITING_VOLUNTEERS)
+  targetCompletionDate DateTime?
+  isActive             Boolean        @default(true)
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  ownerId              String?
+  productId            String?
+  organizationId       String?
+  visibility           Visibility     @default(PUBLIC)
+  applications         Application[]
+  notifications        Notification[]
+  discussionPost       Post?          @relation("ProjectDiscussionThread")
+  updates              Post[]         @relation("ProjectUpdates")
+  organization         Organization?  @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  owner                User?          @relation(fields: [ownerId], references: [id])
+  product              Product?       @relation(fields: [productId], references: [id])
 
   @@index([isActive, createdAt])
   @@index([status])
   @@map("projects")
 }
 
-// Product model for organizing projects under products
 model Product {
-  id          String   @id @default(cuid())
-  name        String
-  description String
-  url         String?  // Product website/demo URL
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  visibility  Visibility @default(PUBLIC) // Product visibility
-
-  // Relations - Dual ownership: EITHER user OR organization
-  owner       User?         @relation(fields: [ownerId], references: [id], onDelete: Restrict)
-  ownerId     String?
-  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  id             String        @id @default(cuid())
+  name           String
+  description    String
+  url            String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  ownerId        String?
   organizationId String?
-  projects    Project[]
-  
-  // Relation for all PRODUCT_UPDATE posts (one-to-many)
-  updates Post[] @relation("ProductUpdates")
-
-  // Back-relation to the single discussion post for this product (one-to-one)
-  discussionPost Post? @relation("ProductDiscussionThread")
+  visibility     Visibility    @default(PUBLIC)
+  discussionPost Post?         @relation("ProductDiscussionThread")
+  updates        Post[]        @relation("ProductUpdates")
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  owner          User?         @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  projects       Project[]
 
   @@map("products")
 }
 
-// Application model for volunteer applications to projects
 model Application {
   id          String            @id @default(cuid())
   message     String
   status      ApplicationStatus @default(PENDING)
   appliedAt   DateTime          @default(now())
   respondedAt DateTime?
-
-  // Relations
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-  project   Project @relation(fields: [projectId], references: [id])
-  projectId String
+  userId      String
+  projectId   String
+  project     Project           @relation(fields: [projectId], references: [id])
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, projectId])
   @@index([userId])
@@ -177,22 +136,234 @@ model Application {
   @@map("applications")
 }
 
-// Message model for communication between users
 model Message {
   id          String   @id @default(cuid())
   content     String
   isRead      Boolean  @default(false)
   sentAt      DateTime @default(now())
-
-  // Relations
-  sender      User   @relation(fields: [senderId], references: [id])
   senderId    String
   recipientId String
+  sender      User     @relation(fields: [senderId], references: [id])
 
   @@map("messages")
 }
 
-// Enums
+model PersonalAccessToken {
+  id         String    @id @default(cuid())
+  userId     String
+  tokenHash  String    @unique
+  name       String
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+  expiresAt  DateTime?
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("personal_access_tokens")
+}
+
+/// Structured content posts for questions, answers, and updates.
+/// Implements the "Discussion Anchor Pattern" where PROJECT_DISCUSSION and PRODUCT_DISCUSSION
+/// posts serve as anchors for comments on projects/products.
+model Post {
+  id                        String    @id @default(cuid())
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+  type                      PostType
+  content                   String
+  authorId                  String?
+  projectId                 String?
+  projectDiscussionThreadId String?   @unique
+  productId                 String?
+  productDiscussionThreadId String?   @unique
+  parentId                  String?
+  isResolved                Boolean   @default(false)
+  bestAnswerId              String?   @unique
+  comments                  Comment[]
+  author                    User?     @relation(fields: [authorId], references: [id])
+  bestAnswer                Post?     @relation("BestAnswer", fields: [bestAnswerId], references: [id], onDelete: Restrict)
+  questionForBestAnswer     Post?     @relation("BestAnswer")
+  parent                    Post?     @relation("PostReplies", fields: [parentId], references: [id], onDelete: Restrict)
+  replies                   Post[]    @relation("PostReplies")
+  productDiscussionThread   Product?  @relation("ProductDiscussionThread", fields: [productDiscussionThreadId], references: [id], onDelete: Cascade)
+  product                   Product?  @relation("ProductUpdates", fields: [productId], references: [id], onDelete: Cascade)
+  projectDiscussionThread   Project?  @relation("ProjectDiscussionThread", fields: [projectDiscussionThreadId], references: [id], onDelete: Cascade)
+  project                   Project?  @relation("ProjectUpdates", fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([authorId])
+  @@index([projectId])
+  @@index([productId])
+  @@index([parentId])
+  @@index([projectDiscussionThreadId])
+  @@index([productDiscussionThreadId])
+  @@index([bestAnswerId])
+  @@index([type, createdAt])
+  @@map("posts")
+}
+
+model Comment {
+  id        String    @id @default(cuid())
+  content   String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  authorId  String?
+  postId    String
+  parentId  String?
+  author    User?     @relation(fields: [authorId], references: [id])
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Restrict)
+  replies   Comment[] @relation("CommentReplies")
+  post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@index([authorId])
+  @@index([parentId])
+  @@map("comments")
+}
+
+model Notification {
+  id         String           @id @default(cuid())
+  type       NotificationType
+  title      String
+  message    String
+  entityType String
+  entityId   String
+  read       Boolean          @default(false)
+  readAt     DateTime?
+  createdAt  DateTime         @default(now())
+  userId     String
+  projectId  String?
+  project    Project?         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read, createdAt])
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+model NotificationPreference {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  emailEnabled Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
+}
+
+model Monitor {
+  id             String        @id @default(cuid())
+  userId         String
+  publicFigureId String
+  topicId        String
+  isActive       Boolean       @default(true)
+  emailFrequency String        @default("daily")
+  lastSearchedAt DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  emailReports   EmailReport[]
+  publicFigure   PublicFigure  @relation(fields: [publicFigureId], references: [id])
+  topic          Topic         @relation(fields: [topicId], references: [id])
+  user           User          @relation(fields: [userId], references: [id])
+
+  @@unique([userId, publicFigureId, topicId])
+  @@index([userId])
+  @@index([isActive, emailFrequency])
+  @@map("monitors")
+}
+
+model PublicFigure {
+  id        String    @id @default(cuid())
+  name      String
+  title     String?
+  imageUrl  String?
+  aliases   String[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  events    Event[]
+  monitors  Monitor[]
+
+  @@index([name])
+  @@map("public_figures")
+}
+
+model Topic {
+  id        String    @id @default(cuid())
+  name      String
+  keywords  String[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  events    Event[]
+  monitors  Monitor[]
+
+  @@index([name])
+  @@map("topics")
+}
+
+model Event {
+  id                String       @id @default(cuid())
+  publicFigureId    String
+  topicId           String
+  title             String
+  summary           String
+  eventDate         DateTime
+  eventType         String
+  sentiment         String?
+  stance            String?
+  deduplicationHash String       @unique
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  articles          Article[]
+  publicFigure      PublicFigure @relation(fields: [publicFigureId], references: [id])
+  topic             Topic        @relation(fields: [topicId], references: [id])
+
+  @@index([publicFigureId, topicId, eventDate])
+  @@map("events")
+}
+
+model Article {
+  id              String   @id @default(cuid())
+  eventId         String
+  headline        String
+  sourceUrl       String   @unique
+  sourceType      String
+  sourcePublisher String
+  publishedAt     DateTime
+  fullText        String?
+  keyQuotes       Json?
+  contentHash     String   @unique
+  createdAt       DateTime @default(now())
+  event           Event    @relation(fields: [eventId], references: [id])
+
+  @@index([eventId])
+  @@index([sourceUrl])
+  @@index([contentHash])
+  @@map("articles")
+}
+
+model EmailReport {
+  id         String   @id @default(cuid())
+  monitorId  String
+  eventIds   String[]
+  eventCount Int
+  sentAt     DateTime @default(now())
+  status     String   @default("sent")
+  monitor    Monitor  @relation(fields: [monitorId], references: [id])
+
+  @@index([monitorId, sentAt])
+  @@map("email_reports")
+}
+
+enum Visibility {
+  PUBLIC
+  PRIVATE
+}
+
+enum OrgRole {
+  OWNER
+  MEMBER
+}
+
 enum Specialty {
   AI
   FULL_STACK
@@ -229,7 +400,6 @@ enum ApplicationStatus {
   WITHDRAWN
 }
 
-// Post types for structured content
 enum PostType {
   QUESTION
   ANSWER
@@ -239,305 +409,11 @@ enum PostType {
   PRODUCT_DISCUSSION
 }
 
-
-// Personal Access Token model for MCP API authentication
-model PersonalAccessToken {
-  id         String   @id @default(cuid())
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId     String
-  tokenHash  String   @unique  // CRITICAL: Store hash, not raw token
-  name       String   // User-friendly name like "Claude Code on MacBook"
-  createdAt  DateTime @default(now())
-  lastUsedAt DateTime?
-  expiresAt  DateTime?  // Optional expiration
-  
-  @@index([userId])
-  @@map("personal_access_tokens")
-}
-
-/// Structured content posts for questions, answers, and updates.
-/// Implements the "Discussion Anchor Pattern" where PROJECT_DISCUSSION and PRODUCT_DISCUSSION
-/// posts serve as anchors for comments on projects/products.
-model Post {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  type    PostType
-  content String   @db.Text
-
-  // Author relationship (optional to handle deleted users)
-  authorId String?
-  author   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
-
-  // Optional relationships for specific post types
-  // A post can be an update FOR a project
-  projectId String?
-  project   Project? @relation("ProjectUpdates", fields: [projectId], references: [id], onDelete: Cascade)
-
-  // A post can be the discussion thread FOR a project (holds FK to project)
-  projectDiscussionThreadId String? @unique
-  projectDiscussionThread   Project? @relation("ProjectDiscussionThread", fields: [projectDiscussionThreadId], references: [id], onDelete: Cascade)
-
-  // A post can be an update FOR a product
-  productId String?
-  product   Product? @relation("ProductUpdates", fields: [productId], references: [id], onDelete: Cascade)
-
-  // A post can be the discussion thread FOR a product (holds FK to product)
-  productDiscussionThreadId String? @unique
-  productDiscussionThread   Product? @relation("ProductDiscussionThread", fields: [productDiscussionThreadId], references: [id], onDelete: Cascade)
-
-  // Self-referencing for Questions/Answers
-  parentId String?
-  parent   Post?   @relation("PostReplies", fields: [parentId], references: [id], onDelete: Restrict)
-  replies  Post[]  @relation("PostReplies")
-
-  // Q&A Resolution fields
-  isResolved   Boolean @default(false) // For questions - marks if question has been resolved
-  bestAnswerId String? @unique         // Reference to the best answer for this question
-  bestAnswer   Post?   @relation("BestAnswer", fields: [bestAnswerId], references: [id], onDelete: Restrict)
-  
-  // Back-relation: this answer is marked as best for which question
-  questionForBestAnswer Post? @relation("BestAnswer")
-
-  // Comments relationship
-  comments Comment[]
-
-  @@index([authorId])
-  @@index([projectId])
-  @@index([productId])
-  @@index([parentId])
-  @@index([projectDiscussionThreadId])
-  @@index([productDiscussionThreadId])
-  @@index([bestAnswerId])
-  @@index([type, createdAt])
-  @@map("posts")
-}
-
-model Comment {
-  id        String   @id @default(cuid())
-  content   String   @db.Text
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Author relationship (optional to handle deleted users)
-  authorId  String?
-  author    User?     @relation(fields: [authorId], references: [id], onDelete: SetNull)
-
-  // Post relationship (comments attach to posts only)
-  postId    String
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-
-  // Self-referencing for future threading (MVP: flat comments only)
-  parentId  String?
-  parent    Comment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Restrict)
-  replies   Comment[] @relation("CommentReplies")
-
-  @@index([postId])
-  @@index([authorId])
-  @@index([parentId])
-  @@map("comments")
-}
-
-// ===== NOTIFICATION MODELS =====
-
 enum NotificationType {
-  // Applications
-  APPLICATION_NEW        // Someone applied to your project
-  APPLICATION_ACCEPTED   // Your application was accepted
-  APPLICATION_REJECTED   // Your application was rejected
-  
-  // Q&A
-  ANSWER_NEW            // Someone answered your question
-  NEW_QUESTION          // New question posted (for followers)
-  
-  // Projects
-  NEW_PROJECT           // New project needs volunteers
-}
-
-model Notification {
-  id          String           @id @default(cuid())
-  type        NotificationType
-  title       String
-  message     String           @db.Text
-  entityType  String           // "application", "post", "project"
-  entityId    String           // ID of related entity
-  read        Boolean          @default(false)
-  readAt      DateTime?
-  createdAt   DateTime         @default(now())
-  
-  // User who receives the notification
-  userId      String
-  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Direct relation to project (most common case)
-  projectId   String?
-  project     Project?         @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  
-  @@index([userId, read, createdAt])
-  @@index([userId, createdAt])
-  @@map("notifications")
-}
-
-// Simple preferences - just email on/off for MVP
-model NotificationPreference {
-  id           String   @id @default(cuid())
-  userId       String   @unique
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  emailEnabled Boolean  @default(true)
-  
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  
-  @@map("notification_preferences")
-}
-
-// ===== CAUSEMON MODELS =====
-
-// Monitor model - tracks what a user wants to monitor
-model Monitor {
-  id            String   @id @default(cuid())
-  userId        String
-  user          User     @relation(fields: [userId], references: [id])
-  
-  // What to monitor
-  publicFigureId String
-  publicFigure   PublicFigure @relation(fields: [publicFigureId], references: [id])
-  topicId        String
-  topic          Topic @relation(fields: [topicId], references: [id])
-  
-  // Settings
-  isActive       Boolean  @default(true)
-  emailFrequency String   @default("daily") // daily, weekly
-  lastSearchedAt DateTime? // Track last successful search
-  
-  // Metadata
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  
-  // Relations
-  emailReports   EmailReport[]
-  
-  @@unique([userId, publicFigureId, topicId])
-  @@index([userId])
-  @@index([isActive, emailFrequency])
-  @@map("monitors")
-}
-
-// PublicFigure model - people we can monitor
-model PublicFigure {
-  id          String   @id @default(cuid())
-  name        String
-  title       String?  // e.g., "Prime Minister of Australia"
-  imageUrl    String?
-  
-  // Search helpers
-  aliases     String[] // ["Albo", "Anthony Albanese", "PM Albanese"]
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  // Relations
-  monitors    Monitor[]
-  events      Event[]
-  
-  @@index([name])
-  @@map("public_figures")
-}
-
-// Topic model - causes/issues to track
-model Topic {
-  id          String   @id @default(cuid())
-  name        String   // "Palestine"
-  keywords    String[] // ["Gaza", "West Bank", "Palestinian", "Israel"]
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  // Relations
-  monitors    Monitor[]
-  events      Event[]
-  
-  @@index([name])
-  @@map("topics")
-}
-
-// Event model - something that happened (e.g., a speech)
-model Event {
-  id            String   @id @default(cuid())
-  
-  // What happened
-  publicFigureId String
-  publicFigure   PublicFigure @relation(fields: [publicFigureId], references: [id])
-  topicId        String
-  topic          Topic @relation(fields: [topicId], references: [id])
-  
-  // The event details
-  title          String   // "PM speaks at UN about Gaza"
-  summary        String   @db.Text // AI-generated summary across all articles
-  eventDate      DateTime // When the event happened
-  eventType      String   // "speech", "vote", "statement", "interview"
-  
-  // AI Analysis
-  sentiment      String?  // positive, negative, neutral
-  stance         String?  // supportive, opposed, neutral
-  
-  // Deduplication
-  deduplicationHash String @unique // Hash of title+date+publicFigureId
-  
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  
-  // Relations
-  articles       Article[] // Multiple articles can cover one event
-  
-  @@index([publicFigureId, topicId, eventDate])
-  @@map("events")
-}
-
-// Article model - a source covering an event
-model Article {
-  id            String   @id @default(cuid())
-  eventId       String
-  event         Event    @relation(fields: [eventId], references: [id])
-  
-  // Article details
-  headline       String
-  sourceUrl      String   @unique
-  sourceType     String   // "media", "hansard", "committee", "press_release"
-  sourcePublisher String  // "The Guardian", "Parliament of Australia"
-  publishedAt    DateTime
-  
-  // Content
-  fullText       String?  @db.Text
-  keyQuotes      Json?    // Array of important quotes
-  
-  // For deduplication
-  contentHash    String   @unique
-  
-  createdAt      DateTime @default(now())
-  
-  @@index([eventId])
-  @@index([sourceUrl])
-  @@index([contentHash])
-  @@map("articles")
-}
-
-// EmailReport model - tracks sent emails
-model EmailReport {
-  id         String   @id @default(cuid())
-  monitorId  String
-  monitor    Monitor  @relation(fields: [monitorId], references: [id])
-  
-  // What was included (just tracking IDs, not relations)
-  eventIds   String[] // Array of event IDs included
-  eventCount Int      // For quick reference
-  
-  // Status
-  sentAt     DateTime @default(now())
-  status     String   @default("sent") // sent, failed, pending
-  
-  @@index([monitorId, sentAt])
-  @@map("email_reports")
+  APPLICATION_NEW
+  APPLICATION_ACCEPTED
+  APPLICATION_REJECTED
+  ANSWER_NEW
+  NEW_QUESTION
+  NEW_PROJECT
 }
