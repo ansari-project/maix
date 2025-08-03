@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Link from "next/link"
 import { Markdown } from "@/components/ui/markdown"
 import { MessageSquare } from "lucide-react"
@@ -81,6 +82,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [userApplication, setUserApplication] = useState<any>(null)
   const [projectUpdates, setProjectUpdates] = useState<ProjectUpdate[]>([])
   const [newUpdateContent, setNewUpdateContent] = useState("")
+  const [newProjectStatus, setNewProjectStatus] = useState<string | undefined>(undefined)
   const [postingUpdate, setPostingUpdate] = useState(false)
   const [showUpdateForm, setShowUpdateForm] = useState(false)
 
@@ -173,14 +175,20 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         body: JSON.stringify({
           type: "PROJECT_UPDATE",
           content: newUpdateContent,
-          projectId: projectId
+          projectId: projectId,
+          ...(newProjectStatus && { projectStatus: newProjectStatus })
         }),
       })
 
       if (response.ok) {
         setNewUpdateContent("")
+        setNewProjectStatus(undefined)
         setShowUpdateForm(false)
         fetchProjectUpdates() // Refresh updates
+        // If status was updated, refresh the project data too
+        if (newProjectStatus) {
+          fetchProject()
+        }
       }
     } catch (error) {
       console.error("Error posting update:", error)
@@ -307,6 +315,30 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                           rows={4}
                         />
                       </div>
+                      
+                      {/* Project Status (only for project owners) */}
+                      {isOwner && (
+                        <div className="space-y-2">
+                          <Label htmlFor="status">Update Project Status (Optional)</Label>
+                          <Select value={newProjectStatus} onValueChange={setNewProjectStatus}>
+                            <SelectTrigger>
+                              <SelectValue placeholder={`Current: ${formatProjectStatus(project.status).label}`} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="AWAITING_VOLUNTEERS">Awaiting Volunteers</SelectItem>
+                              <SelectItem value="PLANNING">Planning</SelectItem>
+                              <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                              <SelectItem value="ON_HOLD">On Hold</SelectItem>
+                              <SelectItem value="COMPLETED">Completed</SelectItem>
+                              <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <p className="text-sm text-muted-foreground">
+                            Update the project status along with your update post
+                          </p>
+                        </div>
+                      )}
+                      
                       <Button 
                         onClick={handlePostUpdate} 
                         disabled={postingUpdate || !newUpdateContent.trim()}
