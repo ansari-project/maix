@@ -7,6 +7,14 @@
 3. **IF PUSH FAILS** - STOP and ask the user how to proceed. DO NOT make decisions independently.
 4. **This is a COLLABORATIVE repository** - Other developers' work must be protected
 
+## ⚠️ CRITICAL DATABASE SAFETY - READ BEFORE ANY PRISMA OPERATION ⚠️
+
+1. **NEVER use `npx prisma db push` after a database restore** - This will drop and recreate tables, losing all restored data
+2. **AFTER DATABASE RESTORE**: Use `npx prisma migrate dev` for schema changes, NOT `db push`
+3. **ALWAYS check data exists** before running schema operations: `npx prisma studio` or count queries
+4. **`npx prisma db push` is DESTRUCTIVE** - Only use for development when data loss is acceptable
+5. **For production-like data**: Always use migrations (`npx prisma migrate dev`) to preserve data
+
 ## Project Overview
 
 Maix (Meaningful AI Exchange) is a Next.js 15 application that connects skilled volunteers with meaningful AI/tech projects. The platform uses modern web technologies to advance communities through collaborative innovation.
