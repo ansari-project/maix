@@ -1,110 +1,22 @@
-import pino from 'pino'
-
 // Determine if we're in a browser environment
 const isBrowser = typeof window !== 'undefined'
 
-// Create base pino configuration
-const pinoConfig = {
-  level: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'development' ? 'debug' : 'info'),
-  // Base fields included in all logs
-  base: {
-    env: process.env.NODE_ENV,
-    version: process.env.npm_package_version || '0.1.0'
-  },
-  // CRITICAL: Redact sensitive fields to prevent PII/secret leaks
-  redact: {
-    paths: [
-      // HTTP headers that might contain secrets
-      'req.headers.authorization',
-      'req.headers.cookie',
-      'req.headers["x-api-key"]',
-      'req.headers["x-auth-token"]',
-      'req.headers["x-session-id"]',
-      'req.headers["x-user-token"]',
-      'req.headers["x-access-token"]',
-      'req.headers["x-refresh-token"]',
-      'req.headers["authentication"]',
-      'req.headers["x-apikey"]',
-      'req.headers["x-csrf-token"]',
-      'res.headers["set-cookie"]',
-      'res.headers["authorization"]',
-      // Common sensitive field names anywhere in the log
-      '*.password',
-      '*.passwordHash',
-      '*.token',
-      '*.apiKey',
-      '*.secret',
-      '*.sessionId',
-      '*.refreshToken',
-      '*.accessToken',
-      // Database connection strings
-      '*.DATABASE_URL',
-      '*.connectionString',
-      // User PII
-      '*.email', // Consider if you need emails in logs
-      '*.phone',
-      '*.ssn',
-      '*.creditCard',
-      '*.cvv',
-      // Request/response bodies that might contain sensitive data
-      'body.password',
-      'body.token',
-      'body.user.password',
-      'body.user.passwordHash',
-      // Maix-specific sensitive fields
-      '*.ANTHROPIC_API_KEY',
-      '*.GEMINI_API_KEY',
-      '*.RESEND_API_KEY',
-      '*.NEXTAUTH_SECRET',
-      '*.AXIOM_TOKEN',
-      '*.MAIX_PAT'
-    ],
-    censor: '[REDACTED]',
-    remove: false // Keep the keys but censor the values
+// Import next-axiom logger for production use
+let axiomLog: any = null
+if (!isBrowser && process.env.NODE_ENV === 'production') {
+  try {
+    // Use next-axiom's logger in production to avoid 4KB console.log limits
+    axiomLog = require('next-axiom').log
+  } catch {
+    // next-axiom not available, use console as fallback
   }
 }
 
-// Create transport - in production, send to Axiom; in development, use console
-const createTransport = () => {
-  if (isBrowser) {
-    // Browser environment - use console only
-    return undefined
-  }
-
-  // Check if we're in Edge Runtime (middleware) where transport isn't available
-  const isEdgeRuntime = typeof EdgeRuntime !== 'undefined' || 
-                       process.env.NEXT_RUNTIME === 'edge' ||
-                       !pino.transport
-
-  if (isEdgeRuntime) {
-    // Edge Runtime - no transport support, use basic pino
-    return undefined
-  }
-
-  if (process.env.NODE_ENV === 'production' && process.env.AXIOM_TOKEN && process.env.AXIOM_DATASET) {
-    // Production: Send to Axiom using @axiomhq/pino transport
-    try {
-      return pino.transport({
-        target: '@axiomhq/pino',
-        options: {
-          dataset: process.env.AXIOM_DATASET,
-          token: process.env.AXIOM_TOKEN,
-        },
-      })
-    } catch (error) {
-      // If Axiom transport fails, fall back to basic logging
-      console.warn('Failed to initialize Axiom transport, falling back to console logging:', error)
-      return undefined
-    }
-  } else {
-    // Development or missing Axiom config: Don't use transport
-    return undefined
-  }
+// Base fields to include in all logs
+const baseFields = {
+  env: process.env.NODE_ENV,
+  version: process.env.npm_package_version || '0.1.0'
 }
-
-// Create pino logger with appropriate transport
-const transport = createTransport()
-const pinoLogger = transport ? pino(pinoConfig, transport) : pino(pinoConfig)
 
 // Format log for development console
 const formatDevLog = (level: string, message: string, data?: Record<string, any>) => {
@@ -128,33 +40,46 @@ const formatDevLog = (level: string, message: string, data?: Record<string, any>
 
 // Wrapper that provides convenience methods and development formatting
 class Logger {
-  private pino = pinoLogger
-
-  // Ensure logs are flushed on serverless function end
-  async flush() {
-    // In production, logs are automatically sent to Vercel/Axiom
-    // This method is kept for API compatibility
-  }
-
   // Core logging methods with structured data
   debug(message: string, data?: Record<string, any>) {
-    this.pino.debug(data, message)
-    if (process.env.NODE_ENV === 'development' && !isBrowser) {
-      formatDevLog('debug', message, data)
+    const logData = { ...baseFields, ...data }
+    
+    if (axiomLog) {
+      // Use next-axiom in production to avoid 4KB console.log limit
+      axiomLog.debug(message, logData)
+    } else if (process.env.NODE_ENV === 'development') {
+      formatDevLog('debug', message, logData)
+    } else {
+      // Fallback to console in other environments
+      console.debug(message, logData)
     }
   }
 
   info(message: string, data?: Record<string, any>) {
-    this.pino.info(data, message)
-    if (process.env.NODE_ENV === 'development' && !isBrowser) {
-      formatDevLog('info', message, data)
+    const logData = { ...baseFields, ...data }
+    
+    if (axiomLog) {
+      // Use next-axiom in production to avoid 4KB console.log limit
+      axiomLog.info(message, logData)
+    } else if (process.env.NODE_ENV === 'development') {
+      formatDevLog('info', message, logData)
+    } else {
+      // Fallback to console in other environments
+      console.info(message, logData)
     }
   }
 
   warn(message: string, data?: Record<string, any>) {
-    this.pino.warn(data, message)
-    if (process.env.NODE_ENV === 'development' && !isBrowser) {
-      formatDevLog('warn', message, data)
+    const logData = { ...baseFields, ...data }
+    
+    if (axiomLog) {
+      // Use next-axiom in production to avoid 4KB console.log limit
+      axiomLog.warn(message, logData)
+    } else if (process.env.NODE_ENV === 'development') {
+      formatDevLog('warn', message, logData)
+    } else {
+      // Fallback to console in other environments
+      console.warn(message, logData)
     }
   }
 
@@ -167,55 +92,51 @@ class Logger {
       },
       ...data
     } : data
+    
+    const logData = { ...baseFields, ...errorData }
 
-    this.pino.error(errorData, message)
-    if (process.env.NODE_ENV === 'development' && !isBrowser) {
-      formatDevLog('error', message, errorData)
+    if (axiomLog) {
+      // Use next-axiom in production to avoid 4KB console.log limit
+      axiomLog.error(message, logData)
+    } else if (process.env.NODE_ENV === 'development') {
+      formatDevLog('error', message, logData)
+    } else {
+      // Fallback to console in other environments
+      console.error(message, logData)
     }
   }
 
   // Child logger with additional context
   child(bindings: Record<string, any>) {
-    const childPino = this.pino.child(bindings)
-    const isDev = process.env.NODE_ENV === 'development' && !isBrowser
+    const mergedFields = { ...baseFields, ...bindings }
     
     return {
       debug: (message: string, data?: Record<string, any>) => {
-        childPino.debug(data, message)
-        if (isDev) {
-          formatDevLog('debug', message, { ...bindings, ...data })
-        }
+        this.debug(message, { ...mergedFields, ...data })
       },
       info: (message: string, data?: Record<string, any>) => {
-        childPino.info(data, message)
-        if (isDev) {
-          formatDevLog('info', message, { ...bindings, ...data })
-        }
+        this.info(message, { ...mergedFields, ...data })
       },
       warn: (message: string, data?: Record<string, any>) => {
-        childPino.warn(data, message)
-        if (isDev) {
-          formatDevLog('warn', message, { ...bindings, ...data })
-        }
+        this.warn(message, { ...mergedFields, ...data })
       },
       error: (message: string, error?: Error | unknown, data?: Record<string, any>) => {
-        const errorData = error instanceof Error ? {
-          error: {
-            name: error.name,
-            message: error.message,
-            stack: error.stack
-          },
-          ...data
-        } : data
-
-        childPino.error(errorData, message)
-        if (isDev) {
-          formatDevLog('error', message, { ...bindings, ...errorData })
-        }
+        this.error(message, error, { ...mergedFields, ...data })
       },
       flush: async () => {
-        // In production, logs are automatically sent to Vercel/Axiom
+        // In production, logs are automatically sent to Axiom
+        if (axiomLog && axiomLog.flush) {
+          await axiomLog.flush()
+        }
       }
+    }
+  }
+
+  // Ensure logs are flushed on serverless function end
+  async flush() {
+    // In production, logs are automatically sent to Axiom
+    if (axiomLog && axiomLog.flush) {
+      await axiomLog.flush()
     }
   }
 
@@ -258,6 +179,7 @@ class Logger {
       ...metadata 
     })
   }
+
 }
 
 // Export singleton instance
