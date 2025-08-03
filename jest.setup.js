@@ -5,6 +5,32 @@ const { TextEncoder, TextDecoder } = require('util')
 global.TextEncoder = TextEncoder
 global.TextDecoder = TextDecoder
 
+// Mock ResizeObserver (required by Radix UI components)
+global.ResizeObserver = jest.fn().mockImplementation(() => ({
+  observe: jest.fn(),
+  unobserve: jest.fn(),
+  disconnect: jest.fn(),
+}))
+
+// Mock PointerCapture methods (required by Radix UI Select)
+// Only add these if Element is defined (DOM environment)
+if (typeof Element !== 'undefined') {
+  if (!Element.prototype.hasPointerCapture) {
+    Element.prototype.hasPointerCapture = jest.fn(() => false)
+  }
+  if (!Element.prototype.setPointerCapture) {
+    Element.prototype.setPointerCapture = jest.fn()
+  }
+  if (!Element.prototype.releasePointerCapture) {
+    Element.prototype.releasePointerCapture = jest.fn()
+  }
+}
+
+// Mock scrollIntoView (required by Radix UI components)
+if (typeof Element !== 'undefined' && !Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = jest.fn()
+}
+
 // Silence React act warnings in tests
 const originalError = console.error
 beforeAll(() => {

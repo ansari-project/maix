@@ -21,7 +21,8 @@ const customJestConfig = {
   testPathIgnorePatterns: [
     '<rootDir>/node_modules/', 
     '<rootDir>/.next/',
-    '<rootDir>/src/__tests__/helpers/'
+    '<rootDir>/src/__tests__/helpers/',
+    '<rootDir>/tests/e2e/'
   ],
   transformIgnorePatterns: [
     '/node_modules/',

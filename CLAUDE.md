@@ -440,24 +440,73 @@ SENTRY_DSN="your-sentry-dsn"
 3. Update search UI components
 4. Test with various query types
 
-## Testing
+## Testing Strategy
 
-### Unit Tests
-- Use Jest + React Testing Library
-- Test components in isolation
-- Mock external dependencies
-- Test edge cases and error states
+### Pragmatic Testing Approach
 
-### Integration Tests
-- Use Playwright for E2E testing
-- Test user journeys
-- Verify authentication flows
-- Test search functionality
+**Testing Pyramid (Inverted for React Apps):**
+1. **E2E Tests** (Primary) - Use Playwright for complete user workflows
+2. **Unit Tests** (Secondary) - Focus on business logic and utilities
+3. **Integration Tests** (Minimal) - Only for complex component interactions
 
-### Database Tests
-- Test Prisma operations
-- Verify data integrity
-- Test performance with large datasets
+### When to Use Each Test Type
+
+#### E2E Tests (Playwright) - PRIMARY CHOICE
+**Use for:**
+- Complete user workflows (form submissions, navigation flows)
+- Complex component interactions (modals, dropdowns, multi-step forms)
+- Authentication flows
+- Critical business paths
+- Cross-browser compatibility
+
+**Why E2E is preferred:**
+- Tests real user experience
+- No complex mocking required
+- Catches integration issues
+- Works with real browsers and components
+
+#### Unit Tests (Jest + RTL) - SECONDARY CHOICE
+**Use for:**
+- Business logic functions (utilities, calculators, validators)
+- Simple component rendering (basic props, text display)
+- Error states and edge cases
+- Pure functions and hooks
+
+**Avoid unit tests for:**
+- Complex UI component interactions
+- Components with heavy external dependencies (Radix UI, etc.)
+- Form submission workflows
+- API integration scenarios
+
+#### Integration Tests - MINIMAL USE
+**Use sparingly for:**
+- Database operations (Prisma)
+- API route testing
+- Authentication middleware
+
+### Modern UI Component Testing Challenges
+
+**Why unit testing complex UI components is problematic:**
+- **Component Library Mocking**: Radix UI, Material-UI require extensive mocking
+- **JSDOM Limitations**: Doesn't support many browser APIs
+- **State Management Complexity**: Multiple async API calls, React state updates
+- **Mock Coordination**: Fetch mocks, router mocks, context mocks become brittle
+
+**Solution**: Use E2E tests for complex UI workflows instead of fighting mocking complexity.
+
+### Testing Standards
+
+#### Unit Test Standards
+- **Keep it simple**: Test basic rendering and simple interactions only
+- **Mock minimally**: Only mock what's absolutely necessary
+- **Focus on logic**: Extract business logic into testable functions
+- **Avoid complex scenarios**: If mocking becomes complex, use E2E instead
+
+#### E2E Test Standards
+- **Test user journeys**: Complete end-to-end workflows
+- **Use realistic data**: Test with actual API responses
+- **Focus on critical paths**: Login, core features, error scenarios
+- **Keep tests maintainable**: Use page object patterns for complex apps
 
 ## Performance Considerations
 
@@ -797,20 +846,87 @@ Conduct code health reviews to maintain quality without over-engineering. Follow
 ### Testing Philosophy
 
 #### Test Everything That Matters
-- **Business Logic**: Rules that could break user flows
-- **Data Integrity**: Ensure data stays consistent
-- **User Journeys**: Critical paths users actually follow
-- **Error Handling**: What happens when things go wrong
-- **API Contracts**: Ensure endpoints behave as documented
+- **User Journeys**: Critical paths users actually follow (use E2E tests)
+- **Business Logic**: Rules that could break user flows (use unit tests)
+- **Data Integrity**: Ensure data stays consistent (use integration tests)
+- **Error Handling**: What happens when things go wrong (use E2E for UI, unit for functions)
+- **API Contracts**: Ensure endpoints behave as documented (use integration tests)
 
 #### Skip Testing Boilerplate
 - Simple getters/setters
 - Framework-provided functionality
 - Third-party library internals
 - UI pixel perfection
+- **Complex UI component interactions** (use E2E instead)
 
 #### Test Before Refactoring
-1. Write tests for existing behavior
+1. Write tests for existing behavior (choose appropriate test type)
 2. Ensure tests pass with current code
 3. Refactor with confidence
 4. Tests still pass = successful refactor
+
+#### When Unit Testing Gets Too Complex
+**Warning signs:**
+- Mocking more than 3 external dependencies
+- Tests take longer to write than the code itself
+- Frequent test breakage due to implementation changes
+- Complex async state management in tests
+
+**Solution**: Switch to E2E tests which test the actual user experience without mocking complexity.
+
+### Practical Examples
+
+#### ❌ Complex Unit Test (Avoid)
+```typescript
+// DON'T: Complex mocking for UI components
+jest.mock('@/components/ui/select', () => ({
+  Select: ({ children, value, onValueChange }) => {
+    // 50+ lines of complex mocking...
+  }
+}))
+
+it('should submit form with all data', async () => {
+  // 100+ lines of setup, mocking, and assertions
+  // Brittle, hard to maintain, doesn't test real user experience
+})
+```
+
+#### ✅ Simple Unit Test (Good)
+```typescript
+// DO: Test business logic and simple rendering
+describe('ProjectForm validation', () => {
+  it('should validate required fields', () => {
+    const result = validateProjectData({})
+    expect(result.errors).toContain('Name is required')
+  })
+  
+  it('should render form title', () => {
+    render(<ProjectForm />)
+    expect(screen.getByText('Create New Project')).toBeInTheDocument()
+  })
+})
+```
+
+#### ✅ E2E Test (Best for complex workflows)
+```typescript
+// DO: Test complete user workflows with real browser
+test('user can create a new project', async ({ page }) => {
+  await page.goto('/projects/new')
+  
+  await page.fill('[name="name"]', 'AI Assistant Project')
+  await page.fill('[name="goal"]', 'Build educational AI tool')
+  await page.selectOption('[name="helpType"]', 'MVP')
+  await page.click('button[type="submit"]')
+  
+  await expect(page).toHaveURL(/\/projects\/.*/)
+  await expect(page.getByText('Project created successfully')).toBeVisible()
+})
+```
+
+### Migration Strategy
+
+**For existing complex unit tests:**
+1. **Simplify**: Remove complex mocking, test only basic rendering
+2. **Extract logic**: Move business logic to pure functions and test those
+3. **Create E2E equivalent**: Write Playwright test for the full workflow
+4. **Remove brittle tests**: Delete tests that break frequently due to implementation changes
