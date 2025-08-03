@@ -71,6 +71,14 @@ const createTransport = () => {
     return undefined
   }
 
+  // Check if we're in Edge Runtime (middleware environment)
+  const isEdgeRuntime = typeof EdgeRuntime !== 'undefined' || process.env.NEXT_RUNTIME === 'edge'
+  
+  if (isEdgeRuntime) {
+    // Edge Runtime doesn't support pino transports - use basic pino
+    return undefined
+  }
+
   if (process.env.NODE_ENV === 'production' && process.env.AXIOM_TOKEN && process.env.AXIOM_DATASET) {
     // Production: Send to Axiom using @axiomhq/pino transport
     return pino.transport({
@@ -81,15 +89,8 @@ const createTransport = () => {
       },
     })
   } else {
-    // Development: Use pretty printing for console
-    return pino.transport({
-      target: 'pino-pretty',
-      options: {
-        colorize: true,
-        translateTime: 'SYS:standard',
-        ignore: 'pid,hostname'
-      }
-    })
+    // Development: Don't use transport to avoid worker thread issues
+    return undefined
   }
 }
 
