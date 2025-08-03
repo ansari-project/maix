@@ -54,8 +54,8 @@ let geminiLogger: GeminiLogger | null = null;
 
 export function getGeminiLogger(): GeminiLogger {
   if (!geminiLogger) {
-    // Enable logging based on environment variable
-    const enabled = process.env.GEMINI_DEBUG === 'true' || process.env.NODE_ENV === 'development';
+    // Enable logging by default (can be disabled with GEMINI_DEBUG=false)
+    const enabled = process.env.GEMINI_DEBUG !== 'false';
     geminiLogger = new GeminiLogger(enabled);
   }
   return geminiLogger;
