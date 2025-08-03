@@ -1,16 +1,5 @@
-// Determine if we're in a browser environment
-const isBrowser = typeof window !== 'undefined'
-
-// Import next-axiom logger for production use
-let axiomLog: any = null
-if (!isBrowser && process.env.NODE_ENV === 'production') {
-  try {
-    // Use next-axiom's logger in production to avoid 4KB console.log limits
-    axiomLog = require('next-axiom').log
-  } catch {
-    // next-axiom not available, use console as fallback
-  }
-}
+// Simple logger that uses console methods
+// Vercel automatically captures console output
 
 // Base fields to include in all logs
 const baseFields = {
@@ -18,69 +7,19 @@ const baseFields = {
   version: process.env.npm_package_version || '0.1.0'
 }
 
-// Format log for development console
-const formatDevLog = (level: string, message: string, data?: Record<string, any>) => {
-  if (process.env.NODE_ENV === 'development' && !isBrowser) {
-    const colors = {
-      debug: '\x1b[90m', // gray
-      info: '\x1b[36m',  // cyan
-      warn: '\x1b[33m',  // yellow
-      error: '\x1b[31m'  // red
-    }
-    const color = colors[level as keyof typeof colors] || ''
-    const reset = '\x1b[0m'
-    const timestamp = new Date().toISOString().split('T')[1].slice(0, 8)
-    
-    console.log(`${color}[${timestamp}] ${level.toUpperCase()} ${message}${reset}`)
-    if (data && Object.keys(data).length > 0) {
-      console.log('  Data:', JSON.stringify(data, null, 2))
-    }
-  }
-}
-
-// Wrapper that provides convenience methods and development formatting
+// Simple logger wrapper around console
 class Logger {
   // Core logging methods with structured data
   debug(message: string, data?: Record<string, any>) {
-    const logData = { ...baseFields, ...data }
-    
-    if (axiomLog) {
-      // Use next-axiom in production to avoid 4KB console.log limit
-      axiomLog.debug(message, logData)
-    } else if (process.env.NODE_ENV === 'development') {
-      formatDevLog('debug', message, logData)
-    } else {
-      // Fallback to console in other environments
-      console.debug(message, logData)
-    }
+    console.debug(message, { ...baseFields, ...data })
   }
 
   info(message: string, data?: Record<string, any>) {
-    const logData = { ...baseFields, ...data }
-    
-    if (axiomLog) {
-      // Use next-axiom in production to avoid 4KB console.log limit
-      axiomLog.info(message, logData)
-    } else if (process.env.NODE_ENV === 'development') {
-      formatDevLog('info', message, logData)
-    } else {
-      // Fallback to console in other environments
-      console.info(message, logData)
-    }
+    console.info(message, { ...baseFields, ...data })
   }
 
   warn(message: string, data?: Record<string, any>) {
-    const logData = { ...baseFields, ...data }
-    
-    if (axiomLog) {
-      // Use next-axiom in production to avoid 4KB console.log limit
-      axiomLog.warn(message, logData)
-    } else if (process.env.NODE_ENV === 'development') {
-      formatDevLog('warn', message, logData)
-    } else {
-      // Fallback to console in other environments
-      console.warn(message, logData)
-    }
+    console.warn(message, { ...baseFields, ...data })
   }
 
   error(message: string, error?: Error | unknown, data?: Record<string, any>) {
@@ -93,17 +32,7 @@ class Logger {
       ...data
     } : data
     
-    const logData = { ...baseFields, ...errorData }
-
-    if (axiomLog) {
-      // Use next-axiom in production to avoid 4KB console.log limit
-      axiomLog.error(message, logData)
-    } else if (process.env.NODE_ENV === 'development') {
-      formatDevLog('error', message, logData)
-    } else {
-      // Fallback to console in other environments
-      console.error(message, logData)
-    }
+    console.error(message, { ...baseFields, ...errorData })
   }
 
   // Child logger with additional context
@@ -112,32 +41,34 @@ class Logger {
     
     return {
       debug: (message: string, data?: Record<string, any>) => {
-        this.debug(message, { ...mergedFields, ...data })
+        console.debug(message, { ...mergedFields, ...data })
       },
       info: (message: string, data?: Record<string, any>) => {
-        this.info(message, { ...mergedFields, ...data })
+        console.info(message, { ...mergedFields, ...data })
       },
       warn: (message: string, data?: Record<string, any>) => {
-        this.warn(message, { ...mergedFields, ...data })
+        console.warn(message, { ...mergedFields, ...data })
       },
       error: (message: string, error?: Error | unknown, data?: Record<string, any>) => {
-        this.error(message, error, { ...mergedFields, ...data })
+        const errorData = error instanceof Error ? {
+          error: {
+            name: error.name,
+            message: error.message,
+            stack: error.stack
+          },
+          ...data
+        } : data
+        console.error(message, { ...mergedFields, ...errorData })
       },
       flush: async () => {
-        // In production, logs are automatically sent to Axiom
-        if (axiomLog && axiomLog.flush) {
-          await axiomLog.flush()
-        }
+        // No-op for console logging
       }
     }
   }
 
-  // Ensure logs are flushed on serverless function end
+  // No-op flush for console logging
   async flush() {
-    // In production, logs are automatically sent to Axiom
-    if (axiomLog && axiomLog.flush) {
-      await axiomLog.flush()
-    }
+    // Console logs are automatically captured by Vercel
   }
 
   // Convenience methods for common scenarios
@@ -179,7 +110,6 @@ class Logger {
       ...metadata 
     })
   }
-
 }
 
 // Export singleton instance
