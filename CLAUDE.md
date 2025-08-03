@@ -499,6 +499,118 @@ SENTRY_DSN="your-sentry-dsn"
 - Implement proper CORS settings
 - Log security events
 
+## Logging and Observability
+
+### Hybrid Logging Approach
+
+Maix uses a **hybrid logging approach** combining custom Pino logger with next-axiom integration for comprehensive observability:
+
+#### Custom Pino Logger (`src/lib/logger.ts`)
+- **Purpose**: Application-level structured logging with security focus
+- **Features**:
+  - Comprehensive PII/secret redaction (passwords, tokens, API keys, etc.)
+  - Structured logging with consistent metadata
+  - Environment-specific transports (Axiom in production, pretty console in development)
+  - Security-focused field filtering to prevent credential leaks
+- **Usage**: Import `{ logger }` for server-side application logging
+
+#### next-axiom Integration
+- **Purpose**: Platform-level observability and client-side logging
+- **Features**:
+  - Automatic Vercel function logs and performance metrics
+  - Client-side Web Vitals collection (LCP, INP, CLS)
+  - Browser-based logging via `useLogger()` hook
+  - Seamless integration with Vercel deployment pipeline
+
+### Environment Configuration
+
+Required environment variables for logging:
+
+```bash
+# Server-side logging (custom Pino logger)
+AXIOM_DATASET="maix"
+AXIOM_TOKEN="xaat-your-axiom-api-token"
+
+# Client-side logging and web vitals (next-axiom)
+NEXT_PUBLIC_AXIOM_DATASET="maix" 
+NEXT_PUBLIC_AXIOM_TOKEN="xaat-your-axiom-api-token"
+```
+
+### Implementation Guidelines
+
+#### Server-Side Logging
+```typescript
+import { logger } from '@/lib/logger'
+
+// Structured application logging
+logger.info('User action completed', { 
+  userId, 
+  action: 'profile_update',
+  timestamp: new Date().toISOString()
+})
+
+// Error logging with full context
+logger.error('Database operation failed', error, { 
+  operation: 'user.update',
+  userId 
+})
+```
+
+#### Client-Side Logging
+```typescript
+'use client'
+import { useLogger } from 'next-axiom'
+
+export function ClientComponent() {
+  const log = useLogger()
+  
+  const handleAction = () => {
+    log.info('User interaction', { component: 'button', action: 'click' })
+  }
+}
+```
+
+#### API Route Logging
+API routes automatically benefit from both logging systems:
+- Custom Pino logger captures application events
+- next-axiom captures platform metrics (duration, memory, etc.)
+
+### Security Features
+
+The custom Pino logger includes comprehensive redaction for:
+- **Authentication**: Authorization headers, session tokens, API keys
+- **User Data**: Passwords, PII fields, sensitive form data
+- **Infrastructure**: Database URLs, connection strings, secrets
+- **Maix-specific**: All API keys (Anthropic, Gemini, Resend, etc.)
+
+### Testing Logging
+
+Use the provided test script to verify logging works:
+```bash
+# Load environment and test both logging systems
+set -a && source .env && set +a && node scripts/test-axiom-logging.js
+```
+
+This will:
+1. Test custom Pino logger → Axiom transport
+2. Test next-axiom integration  
+3. Verify logs appear in Axiom dashboard
+4. Provide troubleshooting guidance
+
+### Log Analysis
+
+In Axiom dashboard:
+- **Application logs**: Search by `test: "axiom-integration"` for test logs
+- **Platform logs**: Automatic Vercel function metrics
+- **Web Vitals**: Real user performance data from production
+- **Error tracking**: Full stack traces with redacted sensitive data
+
+This hybrid approach provides:
+- **Security**: Comprehensive redaction prevents credential leaks
+- **Observability**: Full application and platform visibility  
+- **Performance**: Real user metrics and server performance data
+- **Debugging**: Structured logs with complete context
+
 ## Deployment
 
 ### Environment Setup
