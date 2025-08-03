@@ -10,12 +10,13 @@ import { NotificationService } from '@/services/notification.service'
 // Note: PROJECT_DISCUSSION and PRODUCT_DISCUSSION posts are created automatically
 // when projects/products are created, not through this endpoint
 
-// Authorization helper function
+// Authorization helper function - returns the entity if authorized, null otherwise
 async function checkPostCreatePermission(type: string, userId: string, projectId?: string, productId?: string) {
   switch (type) {
     case 'PROJECT_UPDATE':
-      if (!projectId) return false
+      if (!projectId) return null
       // Check if user is project owner or accepted volunteer
+      // Note: Only owners can update project status, but volunteers can post updates
       const project = await prisma.project.findFirst({
         where: {
           id: projectId,
@@ -25,22 +26,22 @@ async function checkPostCreatePermission(type: string, userId: string, projectId
           ]
         }
       })
-      return !!project
+      return project
     
     case 'PRODUCT_UPDATE':
-      if (!productId) return false
+      if (!productId) return null
       // Check if user is product owner
       const product = await prisma.product.findFirst({
         where: { id: productId, ownerId: userId }
       })
-      return !!product
+      return product
     
     case 'QUESTION':
     case 'ANSWER':
-      return true // Anyone can ask questions or answer
+      return {} // Return truthy value for questions/answers
     
     default:
-      return false
+      return null
   }
 }
 
@@ -55,12 +56,12 @@ export async function POST(request: Request) {
     projectId = validationData.projectId;
     productId = validationData.productId;
     parentId = validationData.parentId;
-    const { content } = validationData;
+    const { content, projectStatus } = validationData;
     const userId = user.id
 
-    // Check authorization
-    const hasPermission = await checkPostCreatePermission(type, userId, projectId, productId)
-    if (!hasPermission) {
+    // Check authorization and get the entity
+    const authorizedEntity = await checkPostCreatePermission(type, userId, projectId, productId)
+    if (!authorizedEntity) {
       throw new AuthorizationError('Insufficient permissions')
     }
 
@@ -75,32 +76,63 @@ export async function POST(request: Request) {
       }
     }
 
-    const post = await prisma.post.create({
-      data: {
-        type,
-        content,
-        authorId: userId,
-        projectId,
-        productId,
-        parentId,
-      },
-      include: {
-        author: {
-          select: { id: true, name: true, image: true }
+    // If updating project status, verify user is project owner
+    if (type === 'PROJECT_UPDATE' && projectStatus && projectId) {
+      // We already have the project from checkPostCreatePermission
+      const project = authorizedEntity as any
+      
+      if (!project.ownerId || project.ownerId !== userId) {
+        throw new AuthorizationError('Only project owners can update project status')
+      }
+    }
+
+    // Create post and optionally update project status in a transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // Create the post
+      const post = await tx.post.create({
+        data: {
+          type,
+          content,
+          authorId: userId,
+          projectId,
+          productId,
+          parentId,
         },
-        project: {
-          select: { id: true, name: true }
-        },
-        product: {
-          select: { id: true, name: true }
-        },
-        _count: {
-          select: { 
-            replies: true,
-            comments: true 
+        include: {
+          author: {
+            select: { id: true, name: true, image: true }
+          },
+          project: {
+            select: { id: true, name: true, status: true }
+          },
+          product: {
+            select: { id: true, name: true }
+          },
+          _count: {
+            select: { 
+              replies: true,
+              comments: true 
+            }
           }
         }
+      })
+
+      // Update project status if requested
+      if (type === 'PROJECT_UPDATE' && projectStatus && projectId) {
+        await tx.project.update({
+          where: { id: projectId },
+          data: { 
+            status: projectStatus,
+            // If project is completed or cancelled, it should no longer be active
+            isActive: !['COMPLETED', 'CANCELLED'].includes(projectStatus)
+          }
+        })
+        
+        // Update the post to reflect the new status
+        post.project!.status = projectStatus
       }
+
+      return post
     })
 
     // Send notification for new answer
@@ -116,7 +148,7 @@ export async function POST(request: Request) {
           answererName: user.name || 'Someone',
           questionTitle: question.content.substring(0, 100),
           questionId: parentId,
-          answerId: post.id
+          answerId: result.id
         })
       }
     }
@@ -137,12 +169,12 @@ export async function POST(request: Request) {
           userId: activeUser.id,
           questionTitle: content.substring(0, 100),
           authorName: user.name || 'Someone',
-          questionId: post.id
+          questionId: result.id
         })
       }
     }
 
-    return successResponse(post, 201)
+    return successResponse(result, 201)
   } catch (error) {
     // Log the error with structured logging
     logger.dbError('post creation', error as Error, { type, projectId, productId, parentId })

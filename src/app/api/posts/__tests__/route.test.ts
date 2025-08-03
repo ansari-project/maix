@@ -17,11 +17,13 @@ jest.mock('@/lib/prisma', () => ({
     project: {
       findFirst: jest.fn(),
       findUnique: jest.fn(),
+      update: jest.fn(),
     },
     product: {
       findFirst: jest.fn(),
       findUnique: jest.fn(),
     },
+    $transaction: jest.fn(),
   },
 }))
 jest.mock('@/lib/logger')
@@ -295,6 +297,114 @@ describe('/api/posts', () => {
       const response = await POST(request)
 
       expect(response.status).toBe(400)
+    })
+
+    it('should allow project owner to update project status', async () => {
+      const mockProject = {
+        id: 'proj-123',
+        name: 'Test Project',
+        ownerId: mockUser.id,
+        status: 'IN_PROGRESS'
+      }
+
+      const mockProjectUpdate = {
+        id: 'post-123',
+        type: 'PROJECT_UPDATE',
+        content: 'Major milestone completed',
+        projectId: 'proj-123',
+        authorId: mockUser.id,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        author: mockUser,
+        project: { ...mockProject, status: 'COMPLETED' },
+        _count: { replies: 0, comments: 0 }
+      }
+
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      mockParseRequestBody.mockResolvedValue({
+        type: 'PROJECT_UPDATE',
+        content: 'Major milestone completed',
+        projectId: 'proj-123',
+        projectStatus: 'COMPLETED'
+      })
+      mockPrisma.project.findFirst.mockResolvedValue(mockProject)
+      
+      // Mock the transaction
+      mockPrisma.$transaction.mockImplementation(async (callback) => {
+        const txMock = {
+          post: {
+            create: jest.fn().mockResolvedValue(mockProjectUpdate)
+          },
+          project: {
+            update: jest.fn().mockResolvedValue({ ...mockProject, status: 'COMPLETED' })
+          }
+        }
+        return callback(txMock)
+      })
+      
+      mockSuccessResponse.mockReturnValue(
+        mockApiSuccessResponse(mockProjectUpdate, 201) as any
+      )
+
+      const request = new NextRequest('http://localhost:3000/api/posts', {
+        method: 'POST',
+        body: JSON.stringify({
+          type: 'PROJECT_UPDATE',
+          content: 'Major milestone completed',
+          projectId: 'proj-123',
+          projectStatus: 'COMPLETED'
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      const response = await POST(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(201)
+      expect(data.type).toBe('PROJECT_UPDATE')
+      expect(data.project.status).toBe('COMPLETED')
+      expect(mockPrisma.$transaction).toHaveBeenCalled()
+    })
+
+    it('should reject project status update from non-owner', async () => {
+      const mockProject = {
+        id: 'proj-123',
+        name: 'Test Project',
+        ownerId: 'different-user-id',
+        status: 'IN_PROGRESS'
+      }
+
+      mockRequireAuth.mockResolvedValue(mockUser as any)
+      mockParseRequestBody.mockResolvedValue({
+        type: 'PROJECT_UPDATE',
+        content: 'Trying to update status',
+        projectId: 'proj-123',
+        projectStatus: 'COMPLETED'
+      })
+      mockPrisma.project.findFirst.mockResolvedValue(mockProject)
+      mockHandleApiError.mockReturnValue(
+        mockApiErrorResponse('Only project owners can update project status', 403) as any
+      )
+
+      const request = new NextRequest('http://localhost:3000/api/posts', {
+        method: 'POST',
+        body: JSON.stringify({
+          type: 'PROJECT_UPDATE',
+          content: 'Trying to update status',
+          projectId: 'proj-123',
+          projectStatus: 'COMPLETED'
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      const response = await POST(request)
+
+      expect(response.status).toBe(403)
+      expect(mockPrisma.$transaction).not.toHaveBeenCalled()
     })
 
     it('should require authentication', async () => {

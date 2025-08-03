@@ -58,6 +58,8 @@ interface Post {
 interface Project {
   id: string
   name: string
+  status?: string
+  ownerId?: string
 }
 
 interface Product {
@@ -207,6 +209,7 @@ export function PostsFeed({
               <CreatePostForm
                 projects={projects}
                 products={products}
+                currentUserId={session?.user?.id}
                 onSuccess={handlePostCreated}
                 onCancel={() => setShowCreateForm(false)}
               />

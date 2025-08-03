@@ -11,8 +11,8 @@ jest.mock('next/navigation', () => ({
 
 describe('CreatePostForm', () => {
   const mockProjects = [
-    { id: 'proj-1', name: 'AI Assistant' },
-    { id: 'proj-2', name: 'ML Platform' }
+    { id: 'proj-1', name: 'AI Assistant', ownerId: 'user-123', status: 'IN_PROGRESS' },
+    { id: 'proj-2', name: 'ML Platform', ownerId: 'user-456', status: 'PLANNING' }
   ]
   
   const mockProducts = [
@@ -151,6 +151,56 @@ describe('CreatePostForm', () => {
       )
       
       expect(screen.getByText('Get help from the community')).toBeInTheDocument()
+    })
+  })
+
+  describe('Project Status Update', () => {
+    it('should show project status dropdown for project owner', () => {
+      render(
+        <CreatePostForm 
+          projects={mockProjects} 
+          products={mockProducts} 
+          currentUserId="user-123"
+          defaultType="PROJECT_UPDATE"
+          defaultProjectId="proj-1"
+          onSuccess={jest.fn()}
+        />
+      )
+      
+      // Should show the status dropdown since user owns proj-1
+      expect(screen.getByText('Update Project Status (Optional)')).toBeInTheDocument()
+      expect(screen.getByText('Update the project status along with your update post')).toBeInTheDocument()
+    })
+
+    it('should not show project status dropdown for non-owner', () => {
+      render(
+        <CreatePostForm 
+          projects={mockProjects} 
+          products={mockProducts} 
+          currentUserId="user-999" // Different user
+          defaultType="PROJECT_UPDATE"
+          defaultProjectId="proj-1"
+          onSuccess={jest.fn()}
+        />
+      )
+      
+      // Should not show the status dropdown since user doesn't own proj-1
+      expect(screen.queryByText('Update Project Status (Optional)')).not.toBeInTheDocument()
+    })
+
+    it('should not show project status dropdown without currentUserId', () => {
+      render(
+        <CreatePostForm 
+          projects={mockProjects} 
+          products={mockProducts} 
+          defaultType="PROJECT_UPDATE"
+          defaultProjectId="proj-1"
+          onSuccess={jest.fn()}
+        />
+      )
+      
+      // Should not show the status dropdown when currentUserId is not provided
+      expect(screen.queryByText('Update Project Status (Optional)')).not.toBeInTheDocument()
     })
   })
 })

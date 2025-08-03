@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
+import { postCreateSchema } from "@/lib/validations"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { 
@@ -31,25 +32,14 @@ import {
   Send
 } from "lucide-react"
 
-// Form schema matching our API
-const createPostSchema = z.object({
-  type: z.enum(['QUESTION', 'PROJECT_UPDATE', 'PRODUCT_UPDATE']),
-  content: z.string().min(10, 'Content must be at least 10 characters'),
-  projectId: z.string().optional(),
-  productId: z.string().optional()
-}).refine(data => !(data.type === 'PROJECT_UPDATE' && !data.projectId), {
-  message: "Project is required for project updates",
-  path: ["projectId"],
-}).refine(data => !(data.type === 'PRODUCT_UPDATE' && !data.productId), {
-  message: "Product is required for product updates", 
-  path: ["productId"],
-})
-
-type CreatePostForm = z.infer<typeof createPostSchema>
+// Use the shared validation schema for consistency
+type CreatePostForm = z.infer<typeof postCreateSchema>
 
 interface Project {
   id: string
   name: string
+  status?: string
+  ownerId?: string
 }
 
 interface Product {
@@ -63,6 +53,7 @@ interface CreatePostFormProps {
   defaultType?: 'QUESTION' | 'PROJECT_UPDATE' | 'PRODUCT_UPDATE'
   defaultProjectId?: string
   defaultProductId?: string
+  currentUserId?: string
   onSuccess?: (post: any) => void
   onCancel?: () => void
 }
@@ -73,13 +64,14 @@ export function CreatePostForm({
   defaultType = 'QUESTION',
   defaultProjectId,
   defaultProductId,
+  currentUserId,
   onSuccess,
   onCancel
 }: CreatePostFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const form = useForm<CreatePostForm>({
-    resolver: zodResolver(createPostSchema),
+    resolver: zodResolver(postCreateSchema),
     defaultValues: {
       type: defaultType,
       content: '',
@@ -89,6 +81,7 @@ export function CreatePostForm({
   })
 
   const watchedType = form.watch('type')
+  const watchedProjectId = form.watch('projectId')
 
   const getPostTypeInfo = (type: CreatePostForm['type']) => {
     switch (type) {
@@ -115,6 +108,14 @@ export function CreatePostForm({
           icon: FileText,
           color: 'text-orange-600',
           placeholder: 'Describe new features, improvements, bug fixes, or important product announcements.'
+        }
+      default:
+        return {
+          title: 'Create Post',
+          description: 'Share with the community',
+          icon: MessageSquare,
+          color: 'text-gray-600',
+          placeholder: 'Share your thoughts with the community.'
         }
     }
   }
@@ -215,30 +216,71 @@ export function CreatePostForm({
 
             {/* Project Selection (for PROJECT_UPDATE) */}
             {watchedType === 'PROJECT_UPDATE' && (
-              <FormField
-                control={form.control}
-                name="projectId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Project</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a project" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {projects.map((project) => (
-                          <SelectItem key={project.id} value={project.id}>
-                            {project.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <>
+                <FormField
+                  control={form.control}
+                  name="projectId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Project</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a project" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {projects.map((project) => (
+                            <SelectItem key={project.id} value={project.id}>
+                              {project.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Project Status (only for project owners) */}
+                {(() => {
+                  const selectedProject = projects.find(p => p.id === watchedProjectId)
+                  const isProjectOwner = selectedProject && currentUserId && selectedProject.ownerId === currentUserId
+                  
+                  if (!isProjectOwner) return null
+
+                  return (
+                    <FormField
+                      control={form.control}
+                      name="projectStatus"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Update Project Status (Optional)</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder={`Current: ${selectedProject.status || 'Unknown'}`} />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="AWAITING_VOLUNTEERS">Awaiting Volunteers</SelectItem>
+                              <SelectItem value="PLANNING">Planning</SelectItem>
+                              <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                              <SelectItem value="ON_HOLD">On Hold</SelectItem>
+                              <SelectItem value="COMPLETED">Completed</SelectItem>
+                              <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Update the project status along with your update post
+                          </p>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )
+                })()}
+              </>
             )}
 
             {/* Product Selection (for PRODUCT_UPDATE) */}

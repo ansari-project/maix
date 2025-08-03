@@ -121,6 +121,8 @@ export const postCreateSchema = z.object({
   projectId: z.string().cuid().optional(),
   productId: z.string().cuid().optional(),
   parentId: z.string().cuid().optional(),
+  // Optional project status update for PROJECT_UPDATE posts
+  projectStatus: z.enum(['AWAITING_VOLUNTEERS', 'PLANNING', 'IN_PROGRESS', 'ON_HOLD', 'COMPLETED', 'CANCELLED']).optional(),
 })
 .refine(data => !(data.type === 'PROJECT_UPDATE' && !data.projectId), {
   message: "projectId is required for PROJECT_UPDATE",
@@ -133,6 +135,10 @@ export const postCreateSchema = z.object({
 .refine(data => !(data.type === 'ANSWER' && !data.parentId), {
   message: "parentId is required for ANSWER",
   path: ["parentId"],
+})
+.refine(data => !(data.projectStatus && data.type !== 'PROJECT_UPDATE'), {
+  message: "projectStatus can only be used with PROJECT_UPDATE type",
+  path: ["projectStatus"],
 })
 
 // Application validation schemas
