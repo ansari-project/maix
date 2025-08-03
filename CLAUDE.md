@@ -241,7 +241,8 @@ To ensure code quality and prevent deployment failures, always perform the follo
 
 2. **Local Validation:**
    - Run `npm run build` to ensure no TypeScript or build errors
-   - Run `npm run test` to ensure all tests pass
+   - Run `npm run test` to ensure all unit tests pass
+   - Run `npm run test:e2e` to ensure E2E tests pass (requires dev server running)
    - Fix any errors found during build or test
 
 3. **Code Review (for non-trivial changes):**
@@ -260,8 +261,10 @@ To ensure code quality and prevent deployment failures, always perform the follo
    - Pre-commit hooks exist to maintain code quality and prevent regressions
 
 **Enforcement**: 
-- A git pre-commit hook (`.husky/pre-commit`) automatically runs build and test checks
-- Commits will be blocked if build or tests fail
+- A git pre-commit hook (`.husky/pre-commit`) automatically runs build, unit tests, and E2E tests
+- Build failures and unit test failures will block commits
+- E2E tests run automatically if dev server is running at http://localhost:3000
+- E2E tests can be skipped with `SKIP_E2E=1 git commit ...` if needed (e.g., quick fixes)
 - This ensures the checklist is followed reliably and prevents manual oversight
 - **NOTE**: Pre-commit hooks only check staged files, so missing dependencies won't be caught unless package files are staged
 
@@ -541,6 +544,43 @@ SENTRY_DSN="your-sentry-dsn"
 
 **Solution**: Use E2E tests for complex UI workflows instead of fighting mocking complexity.
 
+### E2E Testing Implementation
+
+#### Playwright Configuration
+- **Single Browser Testing**: Use Chromium only for faster feedback during development
+- **Parallel Execution**: Tests run in parallel by default for speed
+- **Fixtures**: Use custom fixtures for auth helpers and database setup
+- **Global Setup/Teardown**: Clean database before and after test runs
+
+#### Writing E2E Tests
+```typescript
+// Use page objects and helpers for common workflows
+await authHelper.signUp(userData)
+await authHelper.signIn(email, password)
+
+// Test actual user behavior, not implementation details
+await page.fill('input#email', 'user@example.com')
+await page.click('button[type="submit"]')
+await expect(page).toHaveURL(/.*\/dashboard.*/)
+
+// Use specific selectors, avoid data-testid when possible
+await page.locator('button:has-text("Sign Out")').click()
+```
+
+#### Common E2E Patterns
+- **Authentication**: Test signup → signin → signout flow
+- **Form Submission**: Fill forms, submit, verify redirect/success
+- **Navigation**: Click links, verify URL changes and content
+- **Error Handling**: Submit invalid data, verify error messages
+- **Persistence**: Reload page, verify state is maintained
+
+#### Debugging E2E Tests
+```bash
+npx playwright test --headed     # Run with visible browser
+npx playwright test --debug      # Step through test execution
+npx playwright test --ui         # Interactive test runner
+```
+
 ### Testing Standards
 
 #### Unit Test Standards
@@ -775,9 +815,11 @@ npx prisma db seed       # Seed database
 
 ### Testing
 ```bash
-npm run test            # Run unit tests
-npm run test:watch      # Watch mode
-npm run test:e2e        # End-to-end tests
+npm run test                     # Run unit tests
+npm run test:watch               # Watch mode
+npx playwright test              # Run all E2E tests
+npx playwright test --ui         # Run E2E tests with UI
+npx playwright test auth.spec.ts # Run specific E2E test file
 ```
 
 ## Troubleshooting

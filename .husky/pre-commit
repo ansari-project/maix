@@ -8,14 +8,32 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-# Step 2: Test check (warning only for now due to existing test issues)
-echo "🧪 Running tests..."
+# Step 2: Unit tests
+echo "🧪 Running unit tests..."
 npm run test -- --silent
 if [ $? -ne 0 ]; then
-  echo "⚠️  Tests failed. This should be fixed but allowing commit for now."
-  echo "   Please fix failing tests as soon as possible."
-else
-  echo "✅ Tests passed!"
+  echo "❌ Unit tests failed. Please fix failing tests before committing."
+  exit 1
 fi
 
-echo "✅ Build check passed - commit allowed!"
+# Step 3: E2E tests (optional - can be skipped with SKIP_E2E=1)
+if [ "$SKIP_E2E" != "1" ]; then
+  echo "🎭 Running E2E tests..."
+  # Check if dev server is running
+  curl -s http://localhost:3000 > /dev/null 2>&1
+  if [ $? -ne 0 ]; then
+    echo "⚠️  Dev server not running at http://localhost:3000"
+    echo "   Skipping E2E tests. Run 'npm run dev' in another terminal to enable E2E testing."
+  else
+    npm run test:e2e
+    if [ $? -ne 0 ]; then
+      echo "❌ E2E tests failed. Please fix failing tests before committing."
+      echo "   You can skip E2E tests with: SKIP_E2E=1 git commit ..."
+      exit 1
+    fi
+  fi
+else
+  echo "⏭️  Skipping E2E tests (SKIP_E2E=1)"
+fi
+
+echo "✅ All pre-commit checks passed!"
