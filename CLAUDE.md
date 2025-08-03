@@ -261,10 +261,10 @@ To ensure code quality and prevent deployment failures, always perform the follo
    - Pre-commit hooks exist to maintain code quality and prevent regressions
 
 **Enforcement**: 
-- A git pre-commit hook (`.husky/pre-commit`) automatically runs build, unit tests, and E2E tests
+- A git pre-commit hook (`.husky/pre-commit`) automatically runs build and unit tests
 - Build failures and unit test failures will block commits
-- E2E tests run automatically if dev server is running at http://localhost:3000
-- E2E tests can be skipped with `SKIP_E2E=1 git commit ...` if needed (e.g., quick fixes)
+- E2E tests are disabled by default to avoid database pollution
+- E2E tests can be enabled with `RUN_E2E=1 git commit ...` if needed (requires dev server running)
 - This ensures the checklist is followed reliably and prevents manual oversight
 - **NOTE**: Pre-commit hooks only check staged files, so missing dependencies won't be caught unless package files are staged
 

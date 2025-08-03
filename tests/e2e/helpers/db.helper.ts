@@ -57,11 +57,13 @@ export class DatabaseHelper {
    * Create a test organization
    */
   static async createTestOrganization(ownerId: string, orgData?: Partial<any>) {
+    // Extract only valid fields for Organization model
+    const { name, slug } = orgData || {}
+    
     const org = await prisma.organization.create({
       data: {
-        name: orgData?.name || 'Test Organization',
-        slug: orgData?.slug || `test-org-${Date.now()}`,
-        ...orgData
+        name: name || 'Test Organization',
+        slug: slug || `test-org-${Date.now()}`
       }
     })
     

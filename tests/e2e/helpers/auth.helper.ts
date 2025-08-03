@@ -12,12 +12,9 @@ export class AuthHelper {
   async signIn(email: string, password: string) {
     await this.page.goto('/auth/signin')
     
-    // Wait for page to be fully loaded
-    await this.page.waitForLoadState('networkidle')
-    
-    // Wait for form elements to be visible
-    await this.page.waitForSelector('input#email', { state: 'visible' })
-    await this.page.waitForSelector('input#password', { state: 'visible' })
+    // Wait for form elements to be visible (more reliable than networkidle)
+    await this.page.waitForSelector('input#email', { state: 'visible', timeout: 10000 })
+    await this.page.waitForSelector('input#password', { state: 'visible', timeout: 10000 })
     
     // Fill in the sign-in form using id selectors
     await this.page.fill('input#email', email)
@@ -27,10 +24,10 @@ export class AuthHelper {
     await this.page.click('button[type="submit"]')
     
     // Wait for navigation to dashboard
-    await this.page.waitForURL('**/dashboard/**')
+    await this.page.waitForURL('**/dashboard/**', { timeout: 10000 })
     
     // Verify we're logged in by checking for Sign Out button
-    await expect(this.page.locator('button:has-text("Sign Out")')).toBeVisible()
+    await expect(this.page.locator('button:has-text("Sign Out")')).toBeVisible({ timeout: 10000 })
   }
 
   async signUp(user: TestUser) {
@@ -63,7 +60,7 @@ export class AuthHelper {
     await this.page.click('button:has-text("Sign Out")')
     
     // Wait for redirect to home page
-    await this.page.waitForURL('/')
+    await this.page.waitForURL('/', { timeout: 10000 })
   }
 
   async isSignedIn(): Promise<boolean> {
