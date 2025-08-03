@@ -75,7 +75,7 @@ export function NotificationDropdown() {
     // Navigate based on type and entity
     switch (notification.type) {
       case 'APPLICATION_NEW':
-        router.push(`/dashboard/projects/${notification.projectId}/applications`)
+        router.push(`/projects/${notification.projectId}/volunteers`)
         break
       case 'APPLICATION_ACCEPTED':
       case 'APPLICATION_REJECTED':
