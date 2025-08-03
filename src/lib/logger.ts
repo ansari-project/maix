@@ -64,8 +64,38 @@ const pinoConfig = {
   }
 }
 
-// Create pino logger
-const pinoLogger = pino(pinoConfig)
+// Create transport - in production, send to Axiom; in development, use console
+const createTransport = () => {
+  if (isBrowser) {
+    // Browser environment - use console only
+    return undefined
+  }
+
+  if (process.env.NODE_ENV === 'production' && process.env.AXIOM_TOKEN && process.env.AXIOM_DATASET) {
+    // Production: Send to Axiom using @axiomhq/pino transport
+    return pino.transport({
+      target: '@axiomhq/pino',
+      options: {
+        dataset: process.env.AXIOM_DATASET,
+        token: process.env.AXIOM_TOKEN,
+      },
+    })
+  } else {
+    // Development: Use pretty printing for console
+    return pino.transport({
+      target: 'pino-pretty',
+      options: {
+        colorize: true,
+        translateTime: 'SYS:standard',
+        ignore: 'pid,hostname'
+      }
+    })
+  }
+}
+
+// Create pino logger with appropriate transport
+const transport = createTransport()
+const pinoLogger = transport ? pino(pinoConfig, transport) : pino(pinoConfig)
 
 // Format log for development console
 const formatDevLog = (level: string, message: string, data?: Record<string, any>) => {
