@@ -95,9 +95,17 @@ export async function PUT(
     const body = await request.json()
     const validatedData = updateOrganizationSchema.parse(body)
 
+    // Transform empty strings to null for optional fields
+    const updateData: any = {}
+    if ('name' in validatedData) updateData.name = validatedData.name
+    if ('mission' in validatedData) updateData.mission = validatedData.mission || null
+    if ('description' in validatedData) updateData.description = validatedData.description || null
+    if ('url' in validatedData) updateData.url = validatedData.url || null
+    if ('aiEngagement' in validatedData) updateData.aiEngagement = validatedData.aiEngagement || null
+
     const organization = await prisma.organization.update({
       where: { id },
-      data: validatedData,
+      data: updateData,
       include: {
         _count: {
           select: {

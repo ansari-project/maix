@@ -8,6 +8,10 @@ import type { MaixMcpContext, MaixMcpResponse } from '../types';
 const organizationFieldsSchema = {
   name: z.string().min(3).max(255).describe("The organization name"),
   slug: z.string().min(3).max(50).regex(/^[a-z0-9-]+$/, "Slug must contain only lowercase letters, numbers, and hyphens").describe("Organization URL slug (immutable after creation)"),
+  mission: z.string().min(10).max(500).optional().describe("Organization mission statement"),
+  description: z.string().min(10).max(5000).optional().describe("Detailed organization description (supports Markdown)"),
+  url: z.string().url().optional().or(z.literal('')).describe("Organization website URL"),
+  aiEngagement: z.string().min(10).max(2000).optional().describe("Description of how the organization engages with AI technology"),
 };
 
 /**
@@ -16,13 +20,21 @@ const organizationFieldsSchema = {
 const createOrganizationSchema = z.object({
   name: organizationFieldsSchema.name,
   slug: organizationFieldsSchema.slug,
+  mission: organizationFieldsSchema.mission,
+  description: organizationFieldsSchema.description,
+  url: organizationFieldsSchema.url,
+  aiEngagement: organizationFieldsSchema.aiEngagement,
 });
 
 /**
- * Schema for update action (only name can be updated)
+ * Schema for update action
  */
 const updateOrganizationSchema = z.object({
   name: organizationFieldsSchema.name.optional(),
+  mission: organizationFieldsSchema.mission,
+  description: organizationFieldsSchema.description,
+  url: organizationFieldsSchema.url,
+  aiEngagement: organizationFieldsSchema.aiEngagement,
 });
 
 /**
@@ -33,6 +45,10 @@ const manageOrganizationBaseSchema = z.object({
   organizationId: z.string().optional().describe("The ID of the organization (required for update, delete, get actions)"),
   name: z.string().min(3).max(255).optional().describe("The organization name"),
   slug: z.string().min(3).max(50).optional().describe("Organization URL slug (immutable after creation)"),
+  mission: z.string().min(10).max(500).optional().describe("Organization mission statement"),
+  description: z.string().min(10).max(5000).optional().describe("Detailed organization description (supports Markdown)"),
+  url: z.string().url().optional().or(z.literal('')).describe("Organization website URL"),
+  aiEngagement: z.string().min(10).max(2000).optional().describe("Description of how the organization engages with AI technology"),
 });
 
 /**
@@ -137,6 +153,10 @@ async function createOrganization(
     data: {
       name: validatedData.name,
       slug: validatedData.slug,
+      mission: validatedData.mission,
+      description: validatedData.description,
+      url: validatedData.url,
+      aiEngagement: validatedData.aiEngagement,
       members: {
         create: {
           userId: context.user.id,
