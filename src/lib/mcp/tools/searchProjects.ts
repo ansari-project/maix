@@ -63,8 +63,10 @@ function formatSearchResult(project: any): string {
   // Basic info
   lines.push(`Project: ${project.name} (${project.id})`);
   lines.push(`Owner: ${project.owner?.name || 'Unknown'}`);
+  lines.push(`OwnerId: ${project.ownerId || 'Not set'}`);
   lines.push(`Goal: ${project.goal}`);
   lines.push(`Help Type: ${project.helpType}`);
+  lines.push(`Status: ${project.status || 'AWAITING_VOLUNTEERS'}`);
   lines.push(`Created: ${project.createdAt.toISOString().split('T')[0]}`);
   
   // Description preview (first 200 chars)

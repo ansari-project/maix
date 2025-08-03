@@ -39,7 +39,7 @@ interface Project {
   id: string
   name: string
   status?: string
-  ownerId?: string
+  ownerId?: string | null
 }
 
 interface Product {
@@ -245,7 +245,7 @@ export function CreatePostForm({
                 {/* Project Status (only for project owners) */}
                 {(() => {
                   const selectedProject = projects.find(p => p.id === watchedProjectId)
-                  const isProjectOwner = selectedProject && currentUserId && selectedProject.ownerId === currentUserId
+                  const isProjectOwner = selectedProject && currentUserId && selectedProject.ownerId && selectedProject.ownerId === currentUserId
                   
                   if (!isProjectOwner) return null
 

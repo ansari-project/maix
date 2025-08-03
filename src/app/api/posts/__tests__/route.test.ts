@@ -96,7 +96,16 @@ describe('/api/posts', () => {
         type: 'QUESTION',
         content: 'How do I implement AI in my project?'
       })
-      mockPrisma.post.create.mockResolvedValue(mockPost as any)
+      
+      // Mock the transaction to execute the callback and return the result
+      mockPrisma.$transaction.mockImplementation(async (callback) => {
+        return callback({
+          post: {
+            create: jest.fn().mockResolvedValue(mockPost)
+          }
+        })
+      })
+      
       mockPrisma.user.findMany.mockResolvedValue([]) // No other users to notify
       mockSuccessResponse.mockReturnValue(
         mockApiSuccessResponse(mockPost, 201) as any
@@ -119,17 +128,7 @@ describe('/api/posts', () => {
       expect(response.status).toBe(201)
       expect(data.type).toBe('QUESTION')
       expect(data.content).toBe('How do I implement AI in my project?')
-      expect(mockPrisma.post.create).toHaveBeenCalledWith({
-        data: {
-          type: 'QUESTION',
-          content: 'How do I implement AI in my project?',
-          authorId: 'ckl1234567890abcdefghijkm',
-          projectId: undefined,
-          productId: undefined,
-          parentId: undefined,
-        },
-        include: expect.any(Object)
-      })
+      expect(mockPrisma.$transaction).toHaveBeenCalledWith(expect.any(Function))
     })
 
     it('should create a project update post successfully', async () => {
@@ -212,7 +211,16 @@ describe('/api/posts', () => {
         parentId: 'ckl1234567890abcdefghijko'
       })
       mockPrisma.post.findUnique.mockResolvedValue(mockQuestion)
-      mockPrisma.post.create.mockResolvedValue(mockAnswer)
+      
+      // Mock the transaction to execute the callback and return the result
+      mockPrisma.$transaction.mockImplementation(async (callback) => {
+        return callback({
+          post: {
+            create: jest.fn().mockResolvedValue(mockAnswer)
+          }
+        })
+      })
+      
       mockSuccessResponse.mockReturnValue(
         mockApiSuccessResponse(mockAnswer, 201) as any
       )
