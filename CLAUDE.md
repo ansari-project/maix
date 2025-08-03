@@ -39,12 +39,18 @@
    # 3. Deploy the migration
    npx prisma migrate deploy
    ```
+   
+   **Note**: Baseline migrations are typically used with empty databases or after dropping all data.
+   No backup is needed for true baseline scenarios since there's no data to preserve.
 
-5. **Data Backup Before Schema Changes**:
-   ```bash
-   # Use matching PostgreSQL version for pg_dump
-   pg_dump $DATABASE_URL --data-only --no-owner > backup.sql
-   ```
+5. **Data Backup Guidelines**:
+   - **Before regular migrations in production**: ALWAYS backup
+     ```bash
+     # Use matching PostgreSQL version for pg_dump
+     pg_dump $DATABASE_URL --data-only --no-owner > backup_$(date +%Y%m%d_%H%M%S).sql
+     ```
+   - **Before baseline migrations**: Usually NOT needed (baseline implies starting fresh)
+   - **Special case**: If preserving data while resetting migrations (like we just did), backup first
 
 This warning exists because `db push` destroyed production data multiple times in July 2025.
 
