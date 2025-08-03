@@ -9,11 +9,44 @@
 
 ## ⚠️ CRITICAL DATABASE SAFETY - READ BEFORE ANY PRISMA OPERATION ⚠️
 
-1. **NEVER use `npx prisma db push` after a database restore** - This will drop and recreate tables, losing all restored data
-2. **AFTER DATABASE RESTORE**: Use `npx prisma migrate dev` for schema changes, NOT `db push`
-3. **ALWAYS check data exists** before running schema operations: `npx prisma studio` or count queries
-4. **`npx prisma db push` is DESTRUCTIVE** - Only use for development when data loss is acceptable
-5. **For production-like data**: Always use migrations (`npx prisma migrate dev`) to preserve data
+### Migration Best Practices (Updated August 3, 2025)
+
+1. **NEVER use `npx prisma db push`** - This command is destructive and will drop/recreate tables
+   - ❌ `npx prisma db push` - NEVER USE THIS
+   - ✅ `npx prisma migrate dev` - Use for development
+   - ✅ `npx prisma migrate deploy` - Use for production
+
+2. **After Database Restore or Clone**:
+   - DO NOT run any schema commands immediately
+   - First check migration status: `npx prisma migrate status`
+   - If there are migration conflicts, create a new baseline migration
+   - See "Creating a Baseline Migration" section below
+
+3. **Migration Workflow**:
+   - Development: `npx prisma migrate dev --name descriptive_name`
+   - Production: `npx prisma migrate deploy`
+   - Always commit migration files to git
+   - Never edit or delete migration files after they're applied
+
+4. **Creating a Baseline Migration** (when starting fresh or after conflicts):
+   ```bash
+   # 1. Remove old migrations (if any)
+   rm -rf prisma/migrations
+   
+   # 2. Create new migration without applying
+   npx prisma migrate dev --name initial_baseline --create-only
+   
+   # 3. Deploy the migration
+   npx prisma migrate deploy
+   ```
+
+5. **Data Backup Before Schema Changes**:
+   ```bash
+   # Use matching PostgreSQL version for pg_dump
+   pg_dump $DATABASE_URL --data-only --no-owner > backup.sql
+   ```
+
+This warning exists because `db push` destroyed production data multiple times in July 2025.
 
 ## Project Overview
 
@@ -729,7 +762,7 @@ npm run lint         # ESLint checking
 ### Database
 ```bash
 npx prisma migrate dev    # Create and apply migration
-npx prisma db push       # Push schema changes
+npx prisma migrate deploy # Deploy migrations in production
 npx prisma studio        # Open database GUI
 npx prisma db seed       # Seed database
 ```
