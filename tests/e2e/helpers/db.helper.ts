@@ -110,24 +110,41 @@ export class DatabaseHelper {
    * Clean up test data
    */
   static async cleanup() {
-    // Delete in order to respect foreign key constraints
-    await prisma.notification.deleteMany({})
-    await prisma.comment.deleteMany({})
-    await prisma.post.deleteMany({})
-    await prisma.application.deleteMany({})
-    await prisma.project.deleteMany({})
-    await prisma.product.deleteMany({})
-    await prisma.organizationMember.deleteMany({})
-    await prisma.organization.deleteMany({})
-    await prisma.notificationPreference.deleteMany({})
-    await prisma.personalAccessToken.deleteMany({})
-    await prisma.user.deleteMany({
-      where: {
-        email: {
-          contains: '@test.com'
+    try {
+      // Delete in order to respect foreign key constraints
+      // Use try-catch for each deletion in case tables don't exist
+      
+      const deleteTables = [
+        () => prisma.notification.deleteMany({}),
+        () => prisma.comment.deleteMany({}),
+        () => prisma.post.deleteMany({}),
+        () => prisma.application.deleteMany({}),
+        () => prisma.project.deleteMany({}),
+        () => prisma.product.deleteMany({}),
+        () => prisma.organizationMember.deleteMany({}),
+        () => prisma.organization.deleteMany({}),
+        () => prisma.notificationPreference.deleteMany({}),
+        () => prisma.personalAccessToken.deleteMany({}),
+        () => prisma.user.deleteMany({
+          where: {
+            email: {
+              contains: '@test.com'
+            }
+          }
+        })
+      ]
+
+      for (const deleteOperation of deleteTables) {
+        try {
+          await deleteOperation()
+        } catch (error) {
+          // Ignore errors for non-existent tables
+          console.log(`Skipping table cleanup: ${error instanceof Error ? error.message : String(error)}`)
         }
       }
-    })
+    } catch (error) {
+      console.error('Error during cleanup:', error)
+    }
   }
 
   /**

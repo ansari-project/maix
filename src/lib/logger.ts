@@ -71,11 +71,13 @@ const createTransport = () => {
     return undefined
   }
 
-  // Check if we're in Edge Runtime (middleware environment)
-  const isEdgeRuntime = typeof EdgeRuntime !== 'undefined' || process.env.NEXT_RUNTIME === 'edge'
-  
+  // Check if we're in Edge Runtime (middleware) where transport isn't available
+  const isEdgeRuntime = typeof EdgeRuntime !== 'undefined' || 
+                       process.env.NEXT_RUNTIME === 'edge' ||
+                       !pino.transport
+
   if (isEdgeRuntime) {
-    // Edge Runtime doesn't support pino transports - use basic pino
+    // Edge Runtime - no transport support, use basic pino
     return undefined
   }
 
