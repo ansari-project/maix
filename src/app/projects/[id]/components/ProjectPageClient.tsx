@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import Link from "next/link"
 import { Markdown } from "@/components/ui/markdown"
 import { MessageSquare } from "lucide-react"
+import { TodoSection } from "@/components/todos/todo-section"
 
 function formatProjectStatus(status: string): { label: string; color: string } {
   switch (status) {
@@ -331,6 +332,18 @@ export default function ProjectPageClient({
                         ))}
                       </div>
                     )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Todo Section - only for project owners and accepted volunteers */}
+              {isAuthenticated && (isOwner || isAcceptedVolunteer) && (
+                <Card>
+                  <CardContent className="pt-6">
+                    <TodoSection 
+                      projectId={project.id} 
+                      canManage={isOwner || isAcceptedVolunteer}
+                    />
                   </CardContent>
                 </Card>
               )}
