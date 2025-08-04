@@ -13,6 +13,8 @@ import { handleManageProduct, manageProductParameters } from "@/lib/mcp/tools/ma
 import { handleSearchProducts, SearchProductsSchema } from "@/lib/mcp/tools/searchProducts";
 import { manageOrganizationTool } from "@/lib/mcp/tools/manageOrganization";
 import { manageOrganizationMemberTool } from "@/lib/mcp/tools/manageOrganizationMember";
+import { handleManageTodo, ManageTodoSchema } from "@/lib/mcp/tools/manageTodo";
+import { handleSearchTodos, SearchTodosSchema } from "@/lib/mcp/tools/searchTodos";
 
 // Type definitions for type safety
 type MaixAuthInfo = {
@@ -480,6 +482,50 @@ const mcpHandler = createMcpHandler(
           console.error("Failed to manage organization member:", error);
           return {
             content: [{ type: "text", text: error instanceof Error ? error.message : "An error occurred while managing organization members." }],
+          };
+        }
+      }
+    );
+
+    // Tool: Manage todos
+    server.tool(
+      "maix_manage_todo",
+      "Create, read, update, or delete todos for projects",
+      ManageTodoSchema.shape,
+      async (params, extra) => {
+        try {
+          const user = (extra.authInfo as MaixAuthInfo).extra.user;
+          const context = { user };
+          const result = await handleManageTodo(params, context);
+          return {
+            content: [{ type: "text", text: result }],
+          };
+        } catch (error) {
+          console.error("Failed to manage todo:", error);
+          return {
+            content: [{ type: "text", text: error instanceof Error ? error.message : "An error occurred while managing the todo." }],
+          };
+        }
+      }
+    );
+
+    // Tool: Search todos
+    server.tool(
+      "maix_search_todos",
+      "Search and list todos with filters across projects",
+      SearchTodosSchema.shape,
+      async (params, extra) => {
+        try {
+          const user = (extra.authInfo as MaixAuthInfo).extra.user;
+          const context = { user };
+          const result = await handleSearchTodos(params, context);
+          return {
+            content: [{ type: "text", text: result }],
+          };
+        } catch (error) {
+          console.error("Failed to search todos:", error);
+          return {
+            content: [{ type: "text", text: error instanceof Error ? error.message : "An error occurred while searching todos." }],
           };
         }
       }

@@ -111,11 +111,11 @@ describe('Dual Ownership Tests', () => {
         helpType: 'MVP'
       }
       
-      const req = createMockRequest(
-        'POST',
-        'http://localhost:3000/api/projects',
-        requestBody
-      )
+      const req = createMockRequest({
+        method: 'POST',
+        url: 'http://localhost:3000/api/projects',
+        body: requestBody
+      })
 
       const response = await createProject(req)
       const data = await response.json()
@@ -166,11 +166,11 @@ describe('Dual Ownership Tests', () => {
         organizationId: mockOrg.id
       }
       
-      const req = createMockRequest(
-        'POST',
-        'http://localhost:3000/api/projects',
-        requestBody
-      )
+      const req = createMockRequest({
+        method: 'POST',
+        url: 'http://localhost:3000/api/projects',
+        body: requestBody
+      })
 
       const response = await createProject(req)
       const data = await response.json()
@@ -199,11 +199,11 @@ describe('Dual Ownership Tests', () => {
         organizationId: mockOrg.id
       }
       
-      const req = createMockRequest(
-        'POST',
-        'http://localhost:3000/api/projects',
-        requestBody
-      )
+      const req = createMockRequest({
+        method: 'POST',
+        url: 'http://localhost:3000/api/projects',
+        body: requestBody
+      })
 
       const response = await createProject(req)
       const data = await response.json()
@@ -252,11 +252,11 @@ describe('Dual Ownership Tests', () => {
         organizationId: mockOrg.id
       }
       
-      const req = createMockRequest(
-        'POST',
-        'http://localhost:3000/api/products',
-        requestBody
-      )
+      const req = createMockRequest({
+        method: 'POST',
+        url: 'http://localhost:3000/api/products',
+        body: requestBody
+      })
 
       const response = await createProduct(req)
       const data = await response.json()

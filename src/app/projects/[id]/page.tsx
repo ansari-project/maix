@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import Link from "next/link"
 import { Markdown } from "@/components/ui/markdown"
 import { MessageSquare } from "lucide-react"
+import { TodoSection } from "@/components/todos/todo-section"
 
 function formatProjectStatus(status: string): { label: string; color: string } {
   switch (status) {
@@ -379,6 +380,11 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                   )}
                 </CardContent>
               </Card>
+
+              {/* Todo Section */}
+              {(isOwner || isAcceptedVolunteer) && (
+                <TodoSection projectId={project.id} />
+              )}
 
               {/* Application Section */}
               {!isOwner && !hasApplied && (

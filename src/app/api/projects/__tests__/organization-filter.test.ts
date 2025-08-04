@@ -4,6 +4,32 @@ import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
 import { createMockRequest, mockSession, createTestUser } from '@/__tests__/helpers/api-test-utils.helper'
 
+// Mock Prisma constructor and errors
+jest.mock('@prisma/client', () => ({
+  Prisma: {
+    PrismaClientKnownRequestError: class PrismaClientKnownRequestError extends Error {
+      code: string
+      constructor(message: string, code: string) {
+        super(message)
+        this.code = code
+        this.name = 'PrismaClientKnownRequestError'
+      }
+    },
+    PrismaClientUnknownRequestError: class PrismaClientUnknownRequestError extends Error {
+      constructor(message: string) {
+        super(message)
+        this.name = 'PrismaClientUnknownRequestError'
+      }
+    },
+    PrismaClientValidationError: class PrismaClientValidationError extends Error {
+      constructor(message: string) {
+        super(message)
+        this.name = 'PrismaClientValidationError'
+      }
+    },
+  },
+}))
+
 // Mock dependencies
 jest.mock('next-auth/next')
 jest.mock('@/lib/prisma', () => ({
@@ -133,7 +159,7 @@ describe('Project Organization Filtering', () => {
       const orgAProjects = mockProjects.filter(p => p.organizationId === 'org-a')
       mockPrisma.project.findMany.mockResolvedValueOnce(orgAProjects as any)
 
-      const request = createMockRequest('GET', 'http://localhost:3000/api/projects?organizationId=org-a')
+      const request = createMockRequest({ method: 'GET', url: 'http://localhost:3000/api/projects?organizationId=org-a' })
       const response = await GET(request)
       const data = await response.json()
 
@@ -159,7 +185,7 @@ describe('Project Organization Filtering', () => {
 
       mockPrisma.project.findMany.mockResolvedValueOnce(mockProjects as any)
 
-      const request = createMockRequest('GET', 'http://localhost:3000/api/projects')
+      const request = createMockRequest({ method: 'GET', url: 'http://localhost:3000/api/projects' })
       const response = await GET(request)
       const data = await response.json()
 
@@ -181,7 +207,7 @@ describe('Project Organization Filtering', () => {
 
       mockPrisma.project.findMany.mockResolvedValueOnce([])
 
-      const request = createMockRequest('GET', 'http://localhost:3000/api/projects?organizationId=non-existent')
+      const request = createMockRequest({ method: 'GET', url: 'http://localhost:3000/api/projects?organizationId=non-existent' })
       const response = await GET(request)
       const data = await response.json()
 
@@ -195,7 +221,7 @@ describe('Project Organization Filtering', () => {
       const orgBProjects = mockProjects.filter(p => p.organizationId === 'org-b')
       mockPrisma.project.findMany.mockResolvedValueOnce(orgBProjects as any)
 
-      const request = createMockRequest('GET', 'http://localhost:3000/api/projects?organizationId=org-b')
+      const request = createMockRequest({ method: 'GET', url: 'http://localhost:3000/api/projects?organizationId=org-b' })
       const response = await GET(request)
       const data = await response.json()
 
@@ -247,7 +273,7 @@ describe('Project Organization Filtering', () => {
       )
       mockPrisma.project.findMany.mockResolvedValueOnce(publicOrgAProjects as any)
 
-      const request = createMockRequest('GET', 'http://localhost:3000/api/projects?organizationId=org-a')
+      const request = createMockRequest({ method: 'GET', url: 'http://localhost:3000/api/projects?organizationId=org-a' })
       const response = await GET(request)
       const data = await response.json()
 
@@ -271,10 +297,10 @@ describe('Project Organization Filtering', () => {
       mockSession(mockUser)
 
       // Assuming there might be other query parameters in the future
-      const request = createMockRequest(
-        'GET', 
-        'http://localhost:3000/api/projects?organizationId=org-a&status=ACTIVE&sort=newest'
-      )
+      const request = createMockRequest({ 
+        method: 'GET', 
+        url: 'http://localhost:3000/api/projects?organizationId=org-a&status=ACTIVE&sort=newest'
+      })
       const response = await GET(request)
 
       expect(response.status).toBe(200)

@@ -164,10 +164,10 @@ describe('/api/organizations', () => {
     it('should return 401 if not authenticated', async () => {
       mockSession(null)
 
-      const request = createMockRequest('POST', 'http://localhost:3000/api/organizations', {
+      const request = createMockRequest({ method: 'POST', url: 'http://localhost:3000/api/organizations', body: {
         name: 'New Org',
         slug: 'new-org'
-      })
+      } })
 
       const response = await POST(request)
       const data = await response.json()
@@ -198,7 +198,7 @@ describe('/api/organizations', () => {
         _count: { members: 1, projects: 0, products: 0 }
       } as any)
 
-      const request = createMockRequest('POST', 'http://localhost:3000/api/organizations', newOrgData)
+      const request = createMockRequest({ method: 'POST', url: 'http://localhost:3000/api/organizations', body: newOrgData })
 
       const response = await POST(request)
       const data = await response.json()
@@ -222,7 +222,7 @@ describe('/api/organizations', () => {
         slug: 'existing-slug',
       } as any)
 
-      const request = createMockRequest('POST', 'http://localhost:3000/api/organizations', newOrgData)
+      const request = createMockRequest({ method: 'POST', url: 'http://localhost:3000/api/organizations', body: newOrgData })
 
       const response = await POST(request)
       const data = await response.json()
@@ -239,7 +239,7 @@ describe('/api/organizations', () => {
         slug: 'invalid slug with spaces', // Invalid format
       }
 
-      const request = createMockRequest('POST', 'http://localhost:3000/api/organizations', invalidData)
+      const request = createMockRequest({ method: 'POST', url: 'http://localhost:3000/api/organizations', body: invalidData })
 
       const response = await POST(request)
       const data = await response.json()

@@ -11,6 +11,8 @@ const customJestConfig = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@/components/ui/markdown$': '<rootDir>/src/components/ui/__mocks__/markdown.tsx',
+    '^react-markdown$': '<rootDir>/src/__mocks__/react-markdown.tsx',
+    '^rehype-sanitize$': '<rootDir>/src/__mocks__/rehype-sanitize.js',
   },
   testEnvironment: 'jest-environment-jsdom',
   collectCoverageFrom: [

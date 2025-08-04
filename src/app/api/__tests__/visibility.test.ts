@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 
 // Mock all dependencies first before importing anything
 jest.mock('@/lib/auth-utils', () => ({
-  requireAuth: jest.fn()
+  requireAuth: jest.fn(),
+  can: jest.fn()
 }))
 jest.mock('@/lib/api-utils', () => ({
   handleApiError: jest.fn(),
@@ -26,6 +27,9 @@ jest.mock('@/lib/prisma', () => ({
     project: {
       findMany: jest.fn(),
       findUnique: jest.fn(),
+      create: jest.fn()
+    },
+    projectMember: {
       create: jest.fn()
     },
     product: {
@@ -200,6 +204,17 @@ describe('Visibility Security Tests', () => {
         user: { id: 'user123', email: 'user@example.com' }
       })
       
+      // Mock user lookup for auth-utils
+      ;(prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: 'user123',
+        email: 'user@example.com',
+        name: 'Test User'
+      })
+      
+      // Mock can function to return true for owner access
+      const { can } = require('@/lib/auth-utils')
+      ;(can as jest.Mock).mockResolvedValue(true)
+      
       const mockProject = {
         id: 'project1',
         name: 'My Private Project',
@@ -264,6 +279,9 @@ describe('Visibility Security Tests', () => {
           project: {
             create: jest.fn().mockResolvedValue(mockCreatedProject),
             findUnique: jest.fn().mockResolvedValue(mockCreatedProject),
+          },
+          projectMember: {
+            create: jest.fn(),
           },
           post: {
             create: jest.fn(),

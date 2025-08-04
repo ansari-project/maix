@@ -35,6 +35,37 @@ export async function canManageTodos(userId: string, projectId: string): Promise
 }
 
 /**
+ * Check if a user can view todos in a project
+ * Must be project member or accepted volunteer
+ */
+export async function canViewTodos(userId: string, projectId: string): Promise<boolean> {
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    include: {
+      members: {
+        where: { userId }
+      },
+      applications: {
+        where: {
+          userId,
+          status: 'ACCEPTED'
+        }
+      }
+    }
+  })
+
+  if (!project) return false
+
+  // Check if user has project membership
+  if (project.members.length > 0) return true
+
+  // Check if user is an accepted volunteer (legacy support)
+  if (project.applications.length > 0) return true
+
+  return false
+}
+
+/**
  * Check if a user can update a specific todo
  * Must be creator, assignee, or project member with ADMIN/MEMBER role
  */

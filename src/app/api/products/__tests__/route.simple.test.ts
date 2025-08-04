@@ -4,11 +4,41 @@ import { createMockRequest, mockSession, createTestUser } from '@/__tests__/help
 
 // Mock all dependencies at the top
 jest.mock('next-auth/next')
+jest.mock('@prisma/client', () => ({
+  Prisma: {
+    PrismaClientKnownRequestError: class PrismaClientKnownRequestError extends Error {
+      code: string
+      constructor(message: string, code: string) {
+        super(message)
+        this.code = code
+        this.name = 'PrismaClientKnownRequestError'
+      }
+    },
+    PrismaClientUnknownRequestError: class PrismaClientUnknownRequestError extends Error {
+      constructor(message: string) {
+        super(message)
+        this.name = 'PrismaClientUnknownRequestError'
+      }
+    },
+    PrismaClientValidationError: class PrismaClientValidationError extends Error {
+      constructor(message: string) {
+        super(message)
+        this.name = 'PrismaClientValidationError'
+      }
+    }
+  }
+}))
 jest.mock('@/lib/prisma', () => ({
   prisma: {
     product: {
       findMany: jest.fn(),
       create: jest.fn(),
+      findUnique: jest.fn(),
+    },
+    productMember: {
+      create: jest.fn(),
+    },
+    organizationMember: {
       findUnique: jest.fn(),
     },
     user: {
@@ -51,7 +81,7 @@ describe('/api/products - Simplified Tests', () => {
 
       mockPrisma.product.findMany.mockResolvedValueOnce(mockProducts as any)
 
-      const request = createMockRequest('GET', 'http://localhost:3000/api/products')
+      const request = createMockRequest({ method: 'GET', url: 'http://localhost:3000/api/products' })
       const response = await GET(request)
       const data = await response.json()
 
@@ -78,7 +108,7 @@ describe('/api/products - Simplified Tests', () => {
 
       mockPrisma.product.findMany.mockResolvedValueOnce(mockProducts as any)
 
-      const request = createMockRequest('GET', 'http://localhost:3000/api/products')
+      const request = createMockRequest({ method: 'GET', url: 'http://localhost:3000/api/products' })
       const response = await GET(request)
       const data = await response.json()
 
@@ -89,7 +119,7 @@ describe('/api/products - Simplified Tests', () => {
       const queryCall = mockPrisma.product.findMany.mock.calls[0][0]
       expect(queryCall.where.OR).toBeDefined()
       expect(queryCall.where.OR).toContainEqual({ visibility: 'PUBLIC' })
-      expect(queryCall.where.OR).toContainEqual({ ownerId: mockUser.id })
+      expect(queryCall.where.OR).toContainEqual({ members: { some: { userId: mockUser.id } } })
     })
   })
 
@@ -116,6 +146,9 @@ describe('/api/products - Simplified Tests', () => {
             create: jest.fn().mockResolvedValueOnce(createdProduct),
             findUnique: jest.fn().mockResolvedValueOnce(createdProduct),
           },
+          productMember: {
+            create: jest.fn(),
+          },
           post: {
             create: jest.fn().mockResolvedValueOnce({}),
           },
@@ -123,11 +156,11 @@ describe('/api/products - Simplified Tests', () => {
         return callback(tx as any)
       })
 
-      const request = createMockRequest(
-        'POST',
-        'http://localhost:3000/api/products',
-        productData
-      )
+      const request = createMockRequest({
+        method: 'POST',
+        url: 'http://localhost:3000/api/products',
+        body: productData
+      })
 
       const response = await POST(request)
       const data = await response.json()
@@ -145,11 +178,11 @@ describe('/api/products - Simplified Tests', () => {
         description: 'Test',
       }
 
-      const request = createMockRequest(
-        'POST',
-        'http://localhost:3000/api/products',
-        invalidData
-      )
+      const request = createMockRequest({
+        method: 'POST',
+        url: 'http://localhost:3000/api/products',
+        body: invalidData
+      })
 
       const response = await POST(request)
       const data = await response.json()

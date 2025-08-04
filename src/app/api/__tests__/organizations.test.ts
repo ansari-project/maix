@@ -75,7 +75,10 @@ describe('Organizations API', () => {
         },
       ])
 
-      const request = createMockRequest('GET', 'http://localhost:3000/api/organizations')
+      const request = createMockRequest({
+        method: 'GET',
+        url: 'http://localhost:3000/api/organizations'
+      })
       const response = await GET(request)
       const data = await response.json()
 
@@ -88,7 +91,10 @@ describe('Organizations API', () => {
     it('should return 401 if not authenticated', async () => {
       mockSession(null)
 
-      const request = createMockRequest('GET', 'http://localhost:3000/api/organizations')
+      const request = createMockRequest({
+        method: 'GET',
+        url: 'http://localhost:3000/api/organizations'
+      })
       const response = await GET(request)
       const data = await response.json()
 
@@ -112,11 +118,11 @@ describe('Organizations API', () => {
       })
 
       const requestBody = { name: 'New Org', slug: 'new-org' }
-      const request = createMockRequest(
-        'POST',
-        'http://localhost:3000/api/organizations',
-        requestBody
-      )
+      const request = createMockRequest({
+        method: 'POST',
+        url: 'http://localhost:3000/api/organizations',
+        body: requestBody
+      })
 
       const response = await POST(request)
       const data = await response.json()
@@ -135,11 +141,11 @@ describe('Organizations API', () => {
       })
 
       const requestBody = { name: 'New Org', slug: 'new-org' }
-      const request = createMockRequest(
-        'POST',
-        'http://localhost:3000/api/organizations',
-        requestBody
-      )
+      const request = createMockRequest({
+        method: 'POST',
+        url: 'http://localhost:3000/api/organizations',
+        body: requestBody
+      })
 
       const response = await POST(request)
       const data = await response.json()
