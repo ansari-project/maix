@@ -125,11 +125,13 @@ PATCH  /api/posts/[postId]               # Update post (can change todoId)
 
 ## Implementation Priority
 
-### Phase 1 (MVP)
+### Phase 1 (MVP) ✅ COMPLETED
 - Basic CRUD operations
 - Simple list view with status filtering
 - Project participant assignment only
 - No notifications (keep it simple)
+
+**Phase 1 Status**: Database schema, types, and migration completed and deployed (August 3, 2025)
 
 ### Phase 2 (Future Enhancements)
 - User dashboard "My Todos" view across all projects
