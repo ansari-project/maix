@@ -12,28 +12,6 @@ import {
 } from '../invitation-utils';
 import { prisma } from '../prisma';
 
-// Mock Prisma
-jest.mock('../prisma', () => ({
-  prisma: {
-    invitation: {
-      findFirst: jest.fn(),
-      findUnique: jest.fn(),
-      updateMany: jest.fn(),
-      deleteMany: jest.fn(),
-    },
-    organizationMember: {
-      create: jest.fn(),
-    },
-    productMember: {
-      create: jest.fn(),
-    },
-    projectMember: {
-      create: jest.fn(),
-    },
-    $transaction: jest.fn(),
-  },
-}));
-
 const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 
 describe('invitation-utils', () => {

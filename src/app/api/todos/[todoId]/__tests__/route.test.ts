@@ -118,7 +118,7 @@ describe('/api/todos/[todoId]', () => {
     })
 
     it('should require authentication', async () => {
-      mockGetServerSession.mockResolvedValue(null)
+      mockSession(null)
 
       const req = createMockRequest({
         method: 'GET',
@@ -144,10 +144,7 @@ describe('/api/todos/[todoId]', () => {
     })
 
     it('should update todo for creator', async () => {
-      mockGetServerSession.mockResolvedValue({
-        user: mockCreator,
-        expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      })
+      mockSession(mockCreator)
       mockCanUpdateTodo.mockResolvedValue(true)
       
       mockPrisma.todo.findUnique.mockResolvedValue({ projectId: mockProject.id })
@@ -216,8 +213,12 @@ describe('/api/todos/[todoId]', () => {
       
       mockPrisma.todo.findUnique.mockResolvedValue({ projectId: mockProject.id })
       
-      const req = createMockRequest('PATCH', `/api/todos/${mockTodo.id}`, {
-        assigneeId: 'non-participant-id'
+      const req = createMockRequest({
+        method: 'PATCH',
+        url: `/api/todos/${mockTodo.id}`,
+        body: {
+          assigneeId: 'non-participant-id'
+        }
       })
 
       const response = await PATCH(req, { params: Promise.resolve({ todoId: mockTodo.id }) })
