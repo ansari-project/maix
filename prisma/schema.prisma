@@ -20,6 +20,7 @@ model Organization {
   members      OrganizationMember[]
   products     Product[]
   projects     Project[]
+  invitations  Invitation[]
 
   @@map("organizations")
 }
@@ -33,6 +34,7 @@ model OrganizationMember {
   invitationId   String?
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invitation     Invitation?  @relation(fields: [invitationId], references: [id])
 
   @@unique([organizationId, userId])
   @@index([userId])
@@ -48,8 +50,9 @@ model ProductMember {
   productId    String
   userId       String
   invitationId String?
-  product      Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product      Product     @relation(fields: [productId], references: [id], onDelete: Cascade)  
   user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invitation   Invitation? @relation(fields: [invitationId], references: [id])
 
   @@unique([productId, userId])
   @@index([userId])
@@ -66,6 +69,7 @@ model ProjectMember {
   invitationId String?
   project      Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
   user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invitation   Invitation? @relation(fields: [invitationId], references: [id])
 
   @@unique([projectId, userId])
   @@index([userId])
@@ -108,6 +112,7 @@ model User {
   projects                Project[]
   todosAssigned           Todo[]                  @relation("TodosAssigned")
   todosCreated            Todo[]                  @relation("TodosCreated")
+  invitationsSent         Invitation[]            @relation("InvitationsSent")
 
   @@index([skills], type: Gin)
   @@map("users")
@@ -138,6 +143,7 @@ model Project {
   owner                User?           @relation(fields: [ownerId], references: [id])
   product              Product?        @relation(fields: [productId], references: [id])
   todos                Todo[]
+  invitations          Invitation[]
 
   @@index([isActive, createdAt])
   @@index([status])
@@ -160,6 +166,7 @@ model Product {
   organization   Organization?   @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   owner          User?           @relation(fields: [ownerId], references: [id], onDelete: Restrict)
   projects       Project[]
+  invitations    Invitation[]
 
   @@map("products")
 }
@@ -422,6 +429,55 @@ model Todo {
   @@index([projectId, status])
   @@index([assigneeId, status])
   @@map("todos")
+}
+
+model Invitation {
+  id             String           @id @default(cuid())
+  token          String           @unique @db.VarChar(64) // Secure token for invitation URL
+  email          String           @db.VarChar(255)
+  status         InvitationStatus @default(PENDING)
+  role           UnifiedRole      @default(MEMBER)
+  message        String?          @db.Text // Personal message from inviter
+  expiresAt      DateTime
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  acceptedAt     DateTime?
+  
+  // Inviter information
+  inviterId      String
+  inviter        User             @relation("InvitationsSent", fields: [inviterId], references: [id])
+  
+  // Entity being invited to (one of these will be set)
+  organizationId String?
+  productId      String?
+  projectId      String?
+  
+  // Entity relations
+  organization   Organization?    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  product        Product?         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  project        Project?         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  // Membership relations (created when invitation is accepted)
+  organizationMember OrganizationMember[]
+  productMember      ProductMember[]
+  projectMember      ProjectMember[]
+
+  @@index([token]) // Fast token lookup
+  @@index([email, status]) // Find pending invitations for email
+  @@index([organizationId, status]) // Org invitation management
+  @@index([productId, status]) // Product invitation management  
+  @@index([projectId, status]) // Project invitation management
+  @@index([inviterId]) // Inviter's sent invitations
+  @@index([expiresAt, status]) // Cleanup expired invitations
+  @@map("invitations")
+}
+
+enum InvitationStatus {
+  PENDING   // Invitation sent, awaiting response
+  ACCEPTED  // Invitation accepted, membership created
+  DECLINED  // Invitation declined by recipient
+  EXPIRED   // Invitation expired
+  CANCELLED // Invitation cancelled by inviter
 }
 
 enum Visibility {
