@@ -55,7 +55,13 @@ const handleGet = async (request: Request) => {
     where: {
       OR: [
         { visibility: 'PUBLIC' },
-        { ownerId: userId },
+        // Check membership in product directly
+        {
+          members: {
+            some: { userId }
+          }
+        },
+        // Check membership in parent organization
         { 
           organization: { 
             members: { 
@@ -101,11 +107,7 @@ const handlePost = withAuth(async (request: AuthenticatedRequest) => {
 
   // Create product with associated discussion post
   const product = await prisma.$transaction(async (tx) => {
-    // Prepare ownership data
-    let ownerId: string | null = request.user.id
-    let organizationId: string | null = null
-
-    // If organizationId is provided, validate membership and set ownership
+    // If organizationId is provided, validate membership
     if (validatedData.organizationId) {
       const isMember = await tx.organizationMember.findUnique({
         where: {
@@ -119,14 +121,7 @@ const handlePost = withAuth(async (request: AuthenticatedRequest) => {
       if (!isMember) {
         throw new Error('You must be a member of the organization to create products under it')
       }
-
-      // Set organization ownership
-      ownerId = null
-      organizationId = validatedData.organizationId
     }
-
-    // Validate ownership constraint
-    validateOwnership({ ownerId, organizationId })
 
     // 1. Create the product first
     const newProduct = await tx.product.create({
@@ -135,8 +130,16 @@ const handlePost = withAuth(async (request: AuthenticatedRequest) => {
         description: validatedData.description,
         url: validatedData.url || null,
         visibility: validatedData.visibility || 'PUBLIC',
-        ownerId,
-        organizationId
+        organizationId: validatedData.organizationId
+      }
+    })
+
+    // Create membership for the creator as ADMIN
+    await tx.productMember.create({
+      data: {
+        productId: newProduct.id,
+        userId: request.user.id,
+        role: 'ADMIN'
       }
     })
 

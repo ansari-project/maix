@@ -135,29 +135,44 @@ async function createProduct(
     }
   }
   
-  const newProduct = await prisma.product.create({
-    data: {
-      name: productData.name,
-      description: productData.description,
-      url: productData.url || null,
-      // Dual ownership: Either user OR organization owns it, never both
-      ownerId: productData.organizationId ? null : context.user.id,
-      organizationId: productData.organizationId,
-    },
-    include: {
-      owner: {
-        select: { id: true, name: true, email: true }
-      },
-      organization: {
-        select: { id: true, name: true, slug: true }
+  // Create product and membership in a transaction
+  const newProduct = await prisma.$transaction(async (tx) => {
+    const product = await tx.product.create({
+      data: {
+        name: productData.name,
+        description: productData.description,
+        url: productData.url || null,
+        organizationId: productData.organizationId,
       }
-    }
+    });
+
+    // Create membership for the creator as ADMIN
+    await tx.productMember.create({
+      data: {
+        productId: product.id,
+        userId: context.user.id,
+        role: 'ADMIN'
+      }
+    });
+
+    // Return the product with includes
+    return tx.product.findUnique({
+      where: { id: product.id },
+      include: {
+        owner: {
+          select: { id: true, name: true, email: true }
+        },
+        organization: {
+          select: { id: true, name: true, slug: true }
+        }
+      }
+    });
   });
   
   return {
     success: true,
     data: newProduct,
-    message: `Product "${newProduct.name}" created successfully`,
+    message: `Product "${newProduct?.name}" created successfully`,
   };
 }
 
@@ -208,21 +223,24 @@ async function updateProduct(
   }
   
   try {
+    // First check if user has permission to update
+    const productMember = await prisma.productMember.findFirst({
+      where: {
+        productId,
+        userId: context.user.id,
+        role: { in: ['ADMIN', 'MEMBER'] }
+      }
+    });
+
+    if (!productMember) {
+      return {
+        success: false,
+        error: "You don't have permission to update this product",
+      };
+    }
+
     const updatedProduct = await prisma.product.update({
-      where: { 
-        id: productId,
-        OR: [
-          { ownerId: context.user.id }, // User-owned product
-          { 
-            organizationId: { not: null },
-            organization: {
-              members: {
-                some: { userId: context.user.id }
-              }
-            }
-          } // Organization-owned product where user is member
-        ]
-      },
+      where: { id: productId },
       data: updateData,
       include: {
         owner: {
@@ -262,21 +280,24 @@ async function deleteProduct(
   }
   
   try {
+    // First check if user has permission to delete
+    const productMember = await prisma.productMember.findFirst({
+      where: {
+        productId,
+        userId: context.user.id,
+        role: 'ADMIN'
+      }
+    });
+
+    if (!productMember) {
+      return {
+        success: false,
+        error: "You don't have permission to delete this product",
+      };
+    }
+
     await prisma.product.delete({
-      where: { 
-        id: productId,
-        OR: [
-          { ownerId: context.user.id }, // User-owned product
-          { 
-            organizationId: { not: null },
-            organization: {
-              members: {
-                some: { userId: context.user.id }
-              }
-            }
-          } // Organization-owned product where user is member
-        ]
-      },
+      where: { id: productId }
     });
     
     return {

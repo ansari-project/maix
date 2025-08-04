@@ -35,7 +35,21 @@ export function withProjectAuth(handler: ResourceHandler<Project>) {
       where: {
         id: projectId,
         OR: [
-          { ownerId: request.user.id },
+          // Direct project membership
+          {
+            members: {
+              some: { userId: request.user.id }
+            }
+          },
+          // Product membership
+          {
+            product: {
+              members: {
+                some: { userId: request.user.id }
+              }
+            }
+          },
+          // Organization membership
           { 
             organization: {
               members: {
@@ -88,7 +102,13 @@ export function withProductAuth(handler: ResourceHandler<Product>) {
       where: {
         id: productId,
         OR: [
-          { ownerId: request.user.id },
+          // Direct product membership
+          {
+            members: {
+              some: { userId: request.user.id }
+            }
+          },
+          // Organization membership
           { 
             organization: {
               members: {

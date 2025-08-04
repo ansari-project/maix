@@ -15,24 +15,41 @@ async function checkPostCreatePermission(type: string, userId: string, projectId
   switch (type) {
     case 'PROJECT_UPDATE':
       if (!projectId) return null
-      // Check if user is project owner or accepted volunteer
-      // Note: Only owners can update project status, but volunteers can post updates
+      // Check if user has project membership or is accepted volunteer
       const project = await prisma.project.findFirst({
         where: {
           id: projectId,
           OR: [
-            { ownerId: userId },
+            { members: { some: { userId, role: { in: ['ADMIN', 'MEMBER'] } } } },
             { applications: { some: { userId, status: 'ACCEPTED' } } }
           ]
+        },
+        include: {
+          members: {
+            where: { userId }
+          }
         }
       })
       return project
     
     case 'PRODUCT_UPDATE':
       if (!productId) return null
-      // Check if user is product owner
+      // Check if user has product membership
       const product = await prisma.product.findFirst({
-        where: { id: productId, ownerId: userId }
+        where: { 
+          id: productId, 
+          members: { 
+            some: { 
+              userId, 
+              role: { in: ['ADMIN', 'MEMBER'] } 
+            } 
+          } 
+        },
+        include: {
+          members: {
+            where: { userId }
+          }
+        }
       })
       return product
     
@@ -76,13 +93,13 @@ export async function POST(request: Request) {
       }
     }
 
-    // If updating project status, verify user is project owner
+    // If updating project status, verify user is project admin
     if (type === 'PROJECT_UPDATE' && projectStatus && projectId) {
       // We already have the project from checkPostCreatePermission
       const project = authorizedEntity as any
       
-      if (!project.ownerId || project.ownerId !== userId) {
-        throw new AuthorizationError('Only project owners can update project status')
+      if (!project.members || project.members.length === 0 || project.members[0].role !== 'ADMIN') {
+        throw new AuthorizationError('Only project admins can update project status')
       }
     }
 

@@ -1,8 +1,11 @@
 import { prisma } from '@/lib/prisma'
+import { can, getEffectiveRole, UnifiedRole } from './auth-utils'
+import { Visibility } from '@prisma/client'
 
 /**
  * Validates that a resource has exactly one owner (user OR organization)
  * @throws Error if validation fails
+ * @deprecated Use membership tables instead of direct ownership
  */
 export function validateOwnership(data: { ownerId?: string | null; organizationId?: string | null }) {
   const hasUser = !!data.ownerId
@@ -24,23 +27,39 @@ export function validateOwnership(data: { ownerId?: string | null; organizationI
 export async function hasResourceAccess(
   userId: string,
   resource: {
-    ownerId: string | null
-    organizationId: string | null
+    id?: string
+    ownerId?: string | null
+    organizationId?: string | null
     visibility: string
   },
-  action: 'read' | 'update' | 'delete' = 'read'
+  action: 'read' | 'update' | 'delete' = 'read',
+  resourceType: 'product' | 'project' = 'project'
 ): Promise<boolean> {
+  // If we have an ID, use the new RBAC system
+  if (resource.id) {
+    return can(
+      { id: userId },
+      action,
+      { 
+        id: resource.id, 
+        type: resourceType, 
+        visibility: resource.visibility as Visibility 
+      }
+    )
+  }
+
+  // Legacy fallback for resources without IDs
   // Public resources can be read by anyone
   if (action === 'read' && resource.visibility === 'PUBLIC') {
     return true
   }
 
-  // User-owned resource
+  // User-owned resource (legacy)
   if (resource.ownerId) {
     return resource.ownerId === userId
   }
 
-  // Organization-owned resource
+  // Organization-owned resource (legacy)
   if (resource.organizationId) {
     const member = await prisma.organizationMember.findUnique({
       where: {

@@ -52,14 +52,28 @@ async function checkPostPermissions(postId: string, userId: string): Promise<Pos
     return post;
   }
 
-  // Project owners can moderate discussions on their projects
-  if (post.type === PostType.PROJECT_DISCUSSION && post.project?.ownerId === userId) {
-    return post;
+  // Project admins can moderate discussions on their projects
+  if (post.type === PostType.PROJECT_DISCUSSION && post.projectDiscussionThreadId) {
+    const projectMember = await prisma.projectMember.findFirst({
+      where: {
+        projectId: post.projectDiscussionThreadId,
+        userId,
+        role: 'ADMIN'
+      }
+    });
+    if (projectMember) return post;
   }
 
-  // Product owners can moderate discussions on their products
-  if (post.type === PostType.PRODUCT_DISCUSSION && post.product?.ownerId === userId) {
-    return post;
+  // Product admins can moderate discussions on their products
+  if (post.type === PostType.PRODUCT_DISCUSSION && post.productDiscussionThreadId) {
+    const productMember = await prisma.productMember.findFirst({
+      where: {
+        productId: post.productDiscussionThreadId,
+        userId,
+        role: 'ADMIN'
+      }
+    });
+    if (productMember) return post;
   }
 
   throw new Error("You don't have permission to modify this post");

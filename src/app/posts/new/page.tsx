@@ -16,7 +16,16 @@ export default async function NewPostPage() {
     prisma.project.findMany({
       where: {
         OR: [
-          { ownerId: session.user.id },
+          // Direct project membership
+          {
+            members: {
+              some: { 
+                userId: session.user.id,
+                role: { in: ['ADMIN', 'MEMBER'] }
+              }
+            }
+          },
+          // Organization membership
           {
             organization: {
               members: {
@@ -31,14 +40,26 @@ export default async function NewPostPage() {
         id: true,
         name: true,
         status: true,
-        ownerId: true
+        members: {
+          where: { userId: session.user.id },
+          select: { role: true }
+        }
       },
       orderBy: { createdAt: 'desc' }
     }),
     prisma.product.findMany({
       where: {
         OR: [
-          { ownerId: session.user.id },
+          // Direct product membership
+          {
+            members: {
+              some: { 
+                userId: session.user.id,
+                role: { in: ['ADMIN', 'MEMBER'] }
+              }
+            }
+          },
+          // Organization membership
           {
             organization: {
               members: {

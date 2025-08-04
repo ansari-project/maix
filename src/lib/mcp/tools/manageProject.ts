@@ -200,34 +200,49 @@ async function createProject(
     }
   }
   
-  const newProject = await prisma.project.create({
-    data: {
-      name: validatedData.name,
-      goal: validatedData.goal,
-      description: validatedData.description,
-      helpType: validatedData.helpType,
-      contactEmail: validatedData.contactEmail,
-      targetCompletionDate: validatedData.targetCompletionDate ? new Date(validatedData.targetCompletionDate) : null,
-      isActive: validatedData.isActive ?? true,
-      productId: validatedData.productId,
-      // Dual ownership: Either user OR organization owns it, never both
-      ownerId: validatedData.organizationId ? null : context.user.id,
-      organizationId: validatedData.organizationId,
-    },
-    include: {
-      owner: {
-        select: { id: true, name: true, email: true }
-      },
-      organization: {
-        select: { id: true, name: true, slug: true }
+  // Create project and membership in a transaction
+  const newProject = await prisma.$transaction(async (tx) => {
+    const project = await tx.project.create({
+      data: {
+        name: validatedData.name,
+        goal: validatedData.goal,
+        description: validatedData.description,
+        helpType: validatedData.helpType,
+        contactEmail: validatedData.contactEmail,
+        targetCompletionDate: validatedData.targetCompletionDate ? new Date(validatedData.targetCompletionDate) : null,
+        isActive: validatedData.isActive ?? true,
+        productId: validatedData.productId,
+        organizationId: validatedData.organizationId,
       }
-    }
+    });
+
+    // Create membership for the creator as ADMIN
+    await tx.projectMember.create({
+      data: {
+        projectId: project.id,
+        userId: context.user.id,
+        role: 'ADMIN'
+      }
+    });
+
+    // Return the project with includes
+    return tx.project.findUnique({
+      where: { id: project.id },
+      include: {
+        owner: {
+          select: { id: true, name: true, email: true }
+        },
+        organization: {
+          select: { id: true, name: true, slug: true }
+        }
+      }
+    });
   });
   
   return {
     success: true,
     data: newProject,
-    message: `Project "${newProject.name}" created successfully`,
+    message: `Project "${newProject?.name}" created successfully`,
   };
 }
 
@@ -290,28 +305,30 @@ async function updateProject(
   if (validatedData.isActive !== undefined) updateData.isActive = validatedData.isActive;
   if (validatedData.productId !== undefined) updateData.productId = validatedData.productId;
   
-  // Handle dual ownership change
+  // Handle organization change
   if (validatedData.organizationId !== undefined) {
     updateData.organizationId = validatedData.organizationId;
-    updateData.ownerId = validatedData.organizationId ? null : context.user.id;
   }
   
   try {
+    // First check if user has permission to update
+    const projectMember = await prisma.projectMember.findFirst({
+      where: {
+        projectId,
+        userId: context.user.id,
+        role: { in: ['ADMIN', 'MEMBER'] }
+      }
+    });
+
+    if (!projectMember) {
+      return {
+        success: false,
+        error: "You don't have permission to update this project",
+      };
+    }
+
     const updatedProject = await prisma.project.update({
-      where: { 
-        id: projectId,
-        OR: [
-          { ownerId: context.user.id }, // User-owned project
-          { 
-            organizationId: { not: null },
-            organization: {
-              members: {
-                some: { userId: context.user.id }
-              }
-            }
-          } // Organization-owned project where user is member
-        ]
-      },
+      where: { id: projectId },
       data: updateData,
       include: {
         owner: {
@@ -351,21 +368,24 @@ async function deleteProject(
   }
   
   try {
+    // First check if user has permission to delete
+    const projectMember = await prisma.projectMember.findFirst({
+      where: {
+        projectId,
+        userId: context.user.id,
+        role: 'ADMIN'
+      }
+    });
+
+    if (!projectMember) {
+      return {
+        success: false,
+        error: "You don't have permission to delete this project",
+      };
+    }
+
     await prisma.project.delete({
-      where: { 
-        id: projectId,
-        OR: [
-          { ownerId: context.user.id }, // User-owned project
-          { 
-            organizationId: { not: null },
-            organization: {
-              members: {
-                some: { userId: context.user.id }
-              }
-            }
-          } // Organization-owned project where user is member
-        ]
-      },
+      where: { id: projectId }
     });
     
     return {
@@ -398,15 +418,28 @@ async function getProject(
     where: { 
       id: projectId,
       OR: [
-        { ownerId: context.user.id }, // User-owned project
+        // Direct project membership
+        {
+          members: {
+            some: { userId: context.user.id }
+          }
+        },
+        // Product membership
+        {
+          product: {
+            members: {
+              some: { userId: context.user.id }
+            }
+          }
+        },
+        // Organization membership
         { 
-          organizationId: { not: null },
           organization: {
             members: {
               some: { userId: context.user.id }
             }
           }
-        } // Organization-owned project where user is member
+        }
       ]
     },
     include: {
@@ -448,15 +481,28 @@ async function listProjects(context: MaixMcpContext): Promise<MaixMcpResponse> {
   const projects = await prisma.project.findMany({
     where: {
       OR: [
-        { ownerId: context.user.id }, // User-owned projects
+        // Direct project membership
+        {
+          members: {
+            some: { userId: context.user.id }
+          }
+        },
+        // Product membership
+        {
+          product: {
+            members: {
+              some: { userId: context.user.id }
+            }
+          }
+        },
+        // Organization membership
         { 
-          organizationId: { not: null },
           organization: {
             members: {
               some: { userId: context.user.id }
             }
           }
-        } // Organization-owned projects where user is member
+        }
       ]
     },
     include: {

@@ -43,14 +43,28 @@ async function checkCommentPermissions(commentId: string, userId: string): Promi
     return comment;
   }
 
-  // Project owners can moderate comments on project-related posts
-  if (comment.post.project?.ownerId === userId) {
-    return comment;
+  // Project admins can moderate comments on project-related posts
+  if (comment.post.projectId) {
+    const projectMember = await prisma.projectMember.findFirst({
+      where: {
+        projectId: comment.post.projectId,
+        userId,
+        role: 'ADMIN'
+      }
+    });
+    if (projectMember) return comment;
   }
 
-  // Product owners can moderate comments on product-related posts  
-  if (comment.post.product?.ownerId === userId) {
-    return comment;
+  // Product admins can moderate comments on product-related posts  
+  if (comment.post.productId) {
+    const productMember = await prisma.productMember.findFirst({
+      where: {
+        productId: comment.post.productId,
+        userId,
+        role: 'ADMIN'
+      }
+    });
+    if (productMember) return comment;
   }
 
   throw new Error("You don't have permission to modify this comment");

@@ -74,7 +74,21 @@ const handleGet = async (request: Request) => {
       ...(organizationId && { organizationId }),
       OR: [
         { visibility: 'PUBLIC' },
-        { ownerId: userId },
+        // Check membership in project directly
+        {
+          members: {
+            some: { userId }
+          }
+        },
+        // Check membership in parent product
+        {
+          product: {
+            members: {
+              some: { userId }
+            }
+          }
+        },
+        // Check membership in parent organization
         { 
           organization: { 
             members: { 
@@ -126,11 +140,7 @@ const handlePost = withAuth(async (request: AuthenticatedRequest) => {
 
   // Create project with associated discussion post
   const project = await prisma.$transaction(async (tx) => {
-    // Prepare ownership data
-    let ownerId: string | null = request.user.id
-    let organizationId: string | null = null
-
-    // If organizationId is provided, validate membership and set ownership
+    // If organizationId is provided, validate membership
     if (validatedData.organizationId) {
       const isMember = await tx.organizationMember.findUnique({
         where: {
@@ -144,28 +154,29 @@ const handlePost = withAuth(async (request: AuthenticatedRequest) => {
       if (!isMember) {
         throw new ValidationError('You must be a member of the organization to create projects under it')
       }
-
-      // Set organization ownership
-      ownerId = null
-      organizationId = validatedData.organizationId
     }
 
-    // Validate ownership constraint
-    validateOwnership({ ownerId, organizationId })
-
-    // If productId is provided, validate ownership
+    // If productId is provided, validate membership
     if (validatedData.productId) {
       const product = await tx.product.findUnique({
-        where: { id: validatedData.productId }
+        where: { id: validatedData.productId },
+        include: {
+          members: {
+            where: { userId: request.user.id }
+          }
+        }
       })
 
       if (!product) {
         throw new Error("Product not found")
       }
 
-      // Check if the product has the same ownership
-      if ((product.ownerId !== ownerId) || (product.organizationId !== organizationId)) {
-        throw new Error("You can only associate projects with products that have the same ownership")
+      // Check if user has access to the product
+      const hasProductAccess = product.members.length > 0
+      const hasOrgAccess = product.organizationId && validatedData.organizationId === product.organizationId
+
+      if (!hasProductAccess && !hasOrgAccess) {
+        throw new Error("You must be a member of the product or its organization to create projects under it")
       }
     }
 
@@ -181,8 +192,16 @@ const handlePost = withAuth(async (request: AuthenticatedRequest) => {
         visibility: validatedData.visibility || 'PUBLIC',
         productId: validatedData.productId,
         targetCompletionDate: validatedData.targetCompletionDate ? new Date(validatedData.targetCompletionDate) : null,
-        ownerId,
-        organizationId
+        organizationId: validatedData.organizationId
+      }
+    })
+
+    // Create membership for the creator as ADMIN
+    await tx.projectMember.create({
+      data: {
+        projectId: newProject.id,
+        userId: request.user.id,
+        role: 'ADMIN'
       }
     })
 

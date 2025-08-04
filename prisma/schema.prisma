@@ -26,17 +26,51 @@ model Organization {
 
 model OrganizationMember {
   id             String       @id @default(cuid())
-  role           OrgRole
+  role           OrgRole      // Will be migrated to UnifiedRole
   joinedAt       DateTime     @default(now())
   organizationId String
   userId         String
+  invitationId   String?      // Track invitation source
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([organizationId, userId])
   @@index([userId])
   @@index([organizationId])
+  @@index([role])
   @@map("organization_members")
+}
+
+model ProductMember {
+  id           String      @id @default(cuid())
+  role         UnifiedRole @default(MEMBER)
+  joinedAt     DateTime    @default(now())
+  productId    String
+  userId       String
+  invitationId String?     // Track invitation source
+  product      Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, userId])
+  @@index([userId])
+  @@index([role])
+  @@map("product_members")
+}
+
+model ProjectMember {
+  id           String      @id @default(cuid())
+  role         UnifiedRole @default(MEMBER)
+  joinedAt     DateTime    @default(now())
+  projectId    String
+  userId       String
+  invitationId String?     // Track invitation source
+  project      Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([userId])
+  @@index([role])
+  @@map("project_members")
 }
 
 model User {
@@ -66,10 +100,12 @@ model User {
   notificationPreference  NotificationPreference?
   notifications           Notification[]
   organizationMemberships OrganizationMember[]
+  productMemberships      ProductMember[]
+  projectMemberships      ProjectMember[]
   personalAccessTokens    PersonalAccessToken[]
   posts                   Post[]
-  products                Product[]
-  projects                Project[]
+  products                Product[]               // Legacy - to be removed after migration
+  projects                Project[]               // Legacy - to be removed after migration
   todosCreated            Todo[]                  @relation("TodosCreated")
   todosAssigned           Todo[]                  @relation("TodosAssigned")
 
@@ -78,28 +114,29 @@ model User {
 }
 
 model Project {
-  id                   String         @id @default(cuid())
+  id                   String          @id @default(cuid())
   name                 String
   goal                 String
   description          String
   contactEmail         String
   helpType             HelpType
-  status               ProjectStatus  @default(AWAITING_VOLUNTEERS)
+  status               ProjectStatus   @default(AWAITING_VOLUNTEERS)
   targetCompletionDate DateTime?
-  isActive             Boolean        @default(true)
-  createdAt            DateTime       @default(now())
-  updatedAt            DateTime       @updatedAt
-  ownerId              String?
+  isActive             Boolean         @default(true)
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  ownerId              String?         // Legacy - to be removed after migration
   productId            String?
   organizationId       String?
-  visibility           Visibility     @default(PUBLIC)
+  visibility           Visibility      @default(PUBLIC)
   applications         Application[]
   notifications        Notification[]
-  discussionPost       Post?          @relation("ProjectDiscussionThread")
-  updates              Post[]         @relation("ProjectUpdates")
-  organization         Organization?  @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  owner                User?          @relation(fields: [ownerId], references: [id])
-  product              Product?       @relation(fields: [productId], references: [id])
+  discussionPost       Post?           @relation("ProjectDiscussionThread")
+  updates              Post[]          @relation("ProjectUpdates")
+  members              ProjectMember[]
+  organization         Organization?   @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  owner                User?           @relation(fields: [ownerId], references: [id])
+  product              Product?        @relation(fields: [productId], references: [id])
   todos                Todo[]
 
   @@index([isActive, createdAt])
@@ -108,19 +145,20 @@ model Project {
 }
 
 model Product {
-  id             String        @id @default(cuid())
+  id             String          @id @default(cuid())
   name           String
   description    String
   url            String?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  ownerId        String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  ownerId        String?         // Legacy - to be removed after migration
   organizationId String?
-  visibility     Visibility    @default(PUBLIC)
-  discussionPost Post?         @relation("ProductDiscussionThread")
-  updates        Post[]        @relation("ProductUpdates")
-  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  owner          User?         @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  visibility     Visibility      @default(PUBLIC)
+  discussionPost Post?           @relation("ProductDiscussionThread")
+  updates        Post[]          @relation("ProductUpdates")
+  members        ProductMember[]
+  organization   Organization?   @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  owner          User?           @relation(fields: [ownerId], references: [id], onDelete: Restrict)
   projects       Project[]
 
   @@map("products")
@@ -367,8 +405,17 @@ model EmailReport {
 enum Visibility {
   PUBLIC
   PRIVATE
+  DRAFT
 }
 
+enum UnifiedRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+// Legacy enum - to be removed after migration
 enum OrgRole {
   OWNER
   MEMBER

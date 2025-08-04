@@ -1,12 +1,15 @@
 import { prisma } from "@/lib/prisma"
+import { can } from "@/lib/auth-utils"
 
 export async function verifyProductOwnership(productId: string, userId: string): Promise<boolean> {
   const product = await prisma.product.findUnique({
     where: { id: productId },
-    select: { ownerId: true }
+    select: { id: true, visibility: true }
   })
   
-  return product?.ownerId === userId || false
+  if (!product) return false
+  
+  return can({ id: userId }, 'update', { ...product, type: 'product' as const })
 }
 
 export async function getProductWithProjects(productId: string) {
@@ -48,6 +51,9 @@ export async function deleteProductIfNoProjects(productId: string, userId: strin
     include: {
       _count: {
         select: { projects: true }
+      },
+      members: {
+        where: { userId, role: 'ADMIN' }
       }
     }
   })
@@ -56,7 +62,7 @@ export async function deleteProductIfNoProjects(productId: string, userId: strin
     throw new Error("Product not found")
   }
 
-  if (product.ownerId !== userId) {
+  if (product.members.length === 0) {
     throw new Error("Unauthorized")
   }
 
