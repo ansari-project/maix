@@ -70,7 +70,39 @@ export const manageOrganizationParameters = manageOrganizationBaseSchema.refine(
  */
 export const manageOrganizationTool = {
   name: 'maix_manage_organization',
-  description: 'Create, read, update, or delete organizations',
+  description: `Create, read, update, or delete organizations.
+
+Examples:
+- Create organization:
+  {
+    "action": "create",
+    "name": "Tech for Good Foundation",
+    "slug": "tech-for-good",
+    "mission": "Leveraging technology to solve social challenges in underserved communities",
+    "description": "We are a non-profit organization focused on using AI and technology to address education, healthcare, and economic challenges...",
+    "url": "https://techforgood.org",
+    "aiEngagement": "We use AI to personalize education content, predict healthcare needs, and match job seekers with opportunities"
+  }
+
+- Update organization:
+  {
+    "action": "update",
+    "organizationId": "org123",
+    "mission": "Updated mission statement focusing on AI ethics and responsible innovation",
+    "aiEngagement": "Expanded description of our AI initiatives..."
+  }
+
+- List user's organizations: { "action": "list" }
+- Get organization details: { "action": "get", "organizationId": "org123" }
+- Delete organization: { "action": "delete", "organizationId": "org123" }
+
+Notes:
+- Slug is permanent after creation (used in URLs like maix.com/org/tech-for-good)
+- Only organization owners can update or delete
+- Organizations can own products and projects
+- Mission statement should be concise (10-500 chars)
+- Description supports Markdown formatting
+- aiEngagement explains how the org uses/relates to AI`,
   parameters: manageOrganizationParameters,
   parametersShape: manageOrganizationBaseSchema.shape,
   

@@ -27,7 +27,35 @@ export const manageProductParameters = z.object({
  */
 export const manageProductTool = {
   name: 'maix_manage_product',
-  description: 'Manages user products with CRUD operations: create, update, delete, get, and list products',
+  description: `Create, read, update, or delete products.
+
+Examples:
+- Create product:
+  {
+    "action": "create",
+    "name": "TaskFlow Pro",
+    "description": "A collaborative task management tool designed for distributed teams",
+    "url": "https://taskflow.example.com"
+  }
+
+- Update product:
+  {
+    "action": "update",
+    "productId": "prod123",
+    "description": "Updated description with new features...",
+    "url": "https://new-url.example.com"
+  }
+
+- List all products: { "action": "list" }
+- Get specific product: { "action": "get", "productId": "prod123" }
+- Delete product: { "action": "delete", "productId": "prod123" }
+
+Notes:
+- Products can belong to users OR organizations (not both)
+- Description must be at least 10 characters
+- URL is optional but must be valid if provided (include https://)
+- Products are containers for related projects
+- Only product owners/admins can update or delete`,
   parameters: manageProductParameters,
   
   handler: async (

@@ -30,7 +30,41 @@ export const manageOrganizationMemberParameters = manageOrganizationMemberBaseSc
  */
 export const manageOrganizationMemberTool = {
   name: 'maix_manage_organization_member',
-  description: 'Manage organization members: list, invite, remove, or leave',
+  description: `Manage organization members: list, invite, remove, or leave.
+
+Examples:
+- List organization members:
+  {
+    "action": "list",
+    "organizationId": "org123"
+  }
+
+- Invite user to organization:
+  {
+    "action": "invite",
+    "organizationId": "org123",
+    "userId": "user456"
+  }
+
+- Remove member from organization:
+  {
+    "action": "remove",
+    "organizationId": "org123",
+    "userId": "user456"
+  }
+
+- Leave organization (current user):
+  {
+    "action": "leave",
+    "organizationId": "org123"
+  }
+
+Notes:
+- Only organization OWNERS can invite or remove members
+- Members have MEMBER role by default (not OWNER)
+- Removing a member also removes them from all org products/projects
+- Users can leave organizations themselves using 'leave' action
+- The authenticated user cannot remove themselves (use 'leave' instead)`,
   parameters: manageOrganizationMemberParameters,
   parametersShape: manageOrganizationMemberBaseSchema.shape,
   

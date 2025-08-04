@@ -23,7 +23,21 @@ export const updateProfileParameters = z.object({
  */
 export const updateProfileTool = {
   name: 'maix_update_profile',
-  description: "Updates the authenticated user's profile information including name, bio, skills, and other details",
+  description: `Updates the authenticated user's profile information.
+
+Examples:
+- Update name: { "name": "Sarah Chen" }
+- Update bio and skills: { "bio": "Full-stack developer passionate about AI", "skills": ["Python", "React", "Machine Learning"] }
+- Set availability: { "availability": "20 hours/week", "experienceLevel": "SENIOR" }
+- Add portfolio links: { "githubUrl": "https://github.com/username", "linkedinUrl": "https://linkedin.com/in/username" }
+
+Notes:
+- All fields are optional - only include what you want to update
+- Skills array can have up to 20 items
+- Specialty options: AI, FULL_STACK, PROGRAM_MANAGER
+- Experience levels: HOBBYIST, INTERN, NEW_GRAD, SENIOR
+- URLs must be valid (include https://)
+- This updates the profile of the currently authenticated user only`,
   parameters: updateProfileParameters,
   
   handler: async (

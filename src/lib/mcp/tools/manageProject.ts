@@ -84,7 +84,38 @@ export const manageProjectParameters = manageProjectBaseSchema.refine((data) => 
  */
 export const manageProjectTool = {
   name: 'maix_manage_project',
-  description: 'Manages user projects with CRUD operations: create, update, delete, get, and list projects',
+  description: `Manages user projects with CRUD operations: create, update, delete, get, and list projects.
+
+Examples:
+- Create project: 
+  { 
+    "action": "create",
+    "name": "AI Study Assistant",
+    "goal": "Build an AI tutor that helps students learn math concepts",
+    "description": "We're creating an intelligent tutoring system that adapts to each student's learning style...",
+    "helpType": "MVP",
+    "contactEmail": "team@example.com"
+  }
+
+- Update project status: 
+  { 
+    "action": "update", 
+    "projectId": "abc123",
+    "status": "IN_PROGRESS",
+    "isActive": false
+  }
+
+- List all projects: { "action": "list" }
+- Get specific project: { "action": "get", "projectId": "abc123" }
+- Delete project: { "action": "delete", "projectId": "abc123" }
+
+Notes:
+- Projects can belong to users OR organizations (use either ownerId or organizationId, not both)
+- helpType options: ADVICE (guidance only), PROTOTYPE (proof of concept), MVP (basic version), FULL_PRODUCT (complete)
+- Status options: AWAITING_VOLUNTEERS, PLANNING, IN_PROGRESS, ON_HOLD, COMPLETED, CANCELLED
+- Use isActive to control whether project is accepting new volunteers
+- Description must be at least 50 characters
+- Goal must be a single line (no line breaks)`,
   parameters: manageProjectParameters,
   parametersShape: manageProjectBaseSchema.shape, // Export the base schema shape for MCP registration
   
