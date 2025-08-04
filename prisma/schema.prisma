@@ -433,7 +433,7 @@ model Todo {
 
 model Invitation {
   id             String           @id @default(cuid())
-  token          String           @unique @db.VarChar(64) // Secure token for invitation URL
+  hashedToken    String           @unique @db.VarChar(64) // SHA-256 hash of invitation token
   email          String           @db.VarChar(255)
   status         InvitationStatus @default(PENDING)
   role           UnifiedRole      @default(MEMBER)
@@ -462,7 +462,7 @@ model Invitation {
   productMember      ProductMember[]
   projectMember      ProjectMember[]
 
-  @@index([token]) // Fast token lookup
+  @@index([hashedToken]) // Fast hashed token lookup
   @@index([email, status]) // Find pending invitations for email
   @@index([organizationId, status]) // Org invitation management
   @@index([productId, status]) // Product invitation management  
