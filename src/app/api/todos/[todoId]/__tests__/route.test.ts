@@ -169,7 +169,7 @@ describe('/api/todos/[todoId]', () => {
     })
 
     it('should update todo for assignee', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession(mockAssignee))
+      mockSession(mockAssignee)
       mockCanUpdateTodo.mockResolvedValue(true)
       
       mockPrisma.todo.findUnique.mockResolvedValue({ projectId: mockProject.id })
@@ -191,7 +191,7 @@ describe('/api/todos/[todoId]', () => {
 
     it('should reject update from non-participant', async () => {
       const otherUser = createTestUser({ id: 'other-user' })
-      mockGetServerSession.mockResolvedValue(mockSession(otherUser))
+      mockSession(otherUser)
       mockCanUpdateTodo.mockResolvedValue(false)
 
       const req = createMockRequest({
@@ -208,31 +208,28 @@ describe('/api/todos/[todoId]', () => {
     })
 
     it('should validate assignee is project participant', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession(mockCreator))
+      mockSession(mockCreator)
       mockCanUpdateTodo.mockResolvedValue(true)
       mockIsValidAssignee.mockResolvedValue(false)
       
       mockPrisma.todo.findUnique.mockResolvedValue({ projectId: mockProject.id })
-
-      const req = createMockRequest({
-        method: 'PATCH',
-        url: `/api/todos/${mockTodo.id}`,
-        body: {
-          assigneeId: 'non-participant-id'
-        }
-      }) as NextRequest
+      
+      const req = createMockRequest('PATCH', `/api/todos/${mockTodo.id}`, {
+        assigneeId: 'non-participant-id'
+      })
 
       const response = await PATCH(req, { params: Promise.resolve({ todoId: mockTodo.id }) })
       const data = await response.json()
 
       expect(response.status).toBe(400)
       expect(data.error).toBe('Assignee must be a project participant')
+      expect(mockIsValidAssignee).toHaveBeenCalledWith('non-participant-id', mockProject.id)
     })
   })
 
   describe('DELETE', () => {
     it('should delete todo for creator', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession(mockCreator))
+      mockSession(mockCreator)
       mockCanDeleteTodo.mockResolvedValue(true)
 
       const req = createMockRequest({
@@ -252,7 +249,7 @@ describe('/api/todos/[todoId]', () => {
 
     it('should delete todo for project owner', async () => {
       const projectOwner = createTestUser({ id: mockProject.ownerId })
-      mockGetServerSession.mockResolvedValue(mockSession(projectOwner))
+      mockSession(projectOwner)
       mockCanDeleteTodo.mockResolvedValue(true)
 
       const req = createMockRequest({
@@ -268,7 +265,7 @@ describe('/api/todos/[todoId]', () => {
 
     it('should reject delete from non-authorized user', async () => {
       const otherUser = createTestUser({ id: 'other-user' })
-      mockGetServerSession.mockResolvedValue(mockSession(otherUser))
+      mockSession(otherUser)
       mockCanDeleteTodo.mockResolvedValue(false)
 
       const req = createMockRequest({

@@ -4,12 +4,29 @@ import { createMockRequest, mockSession, createTestUser } from '@/__tests__/help
 
 // Mock all dependencies at the top
 jest.mock('next-auth/next')
+jest.mock('@prisma/client', () => ({
+  Prisma: {
+    PrismaClientKnownRequestError: class PrismaClientKnownRequestError extends Error {
+      constructor(message: string, { code, clientVersion }: any) {
+        super(message)
+        this.name = 'PrismaClientKnownRequestError'
+        this.code = code
+        this.clientVersion = clientVersion
+      }
+      code: string
+      clientVersion: string
+    }
+  }
+}))
 jest.mock('@/lib/prisma', () => ({
   prisma: {
     product: {
       findMany: jest.fn(),
       create: jest.fn(),
       findUnique: jest.fn(),
+    },
+    productMember: {
+      create: jest.fn(),
     },
     user: {
       findUnique: jest.fn(),
@@ -73,7 +90,7 @@ describe('/api/products - Simplified Tests', () => {
 
       const mockProducts = [
         { id: 'product-1', visibility: 'PUBLIC' },
-        { id: 'product-2', visibility: 'PRIVATE', ownerId: mockUser.id },
+        { id: 'product-2', visibility: 'PRIVATE' },
       ]
 
       mockPrisma.product.findMany.mockResolvedValueOnce(mockProducts as any)
@@ -85,11 +102,16 @@ describe('/api/products - Simplified Tests', () => {
       expect(response.status).toBe(200)
       expect(data).toHaveLength(2)
       
-      // Verify query included user's products
+      // Verify query uses membership-based access control
       const queryCall = mockPrisma.product.findMany.mock.calls[0][0]
       expect(queryCall.where.OR).toBeDefined()
       expect(queryCall.where.OR).toContainEqual({ visibility: 'PUBLIC' })
-      expect(queryCall.where.OR).toContainEqual({ ownerId: mockUser.id })
+      expect(queryCall.where.OR).toContainEqual({ 
+        members: { some: { userId: mockUser.id } }
+      })
+      expect(queryCall.where.OR).toContainEqual({ 
+        organization: { members: { some: { userId: mockUser.id } } }
+      })
     })
   })
 
@@ -105,8 +127,9 @@ describe('/api/products - Simplified Tests', () => {
       const createdProduct = {
         id: 'new-product-id',
         ...productData,
-        ownerId: mockUser.id,
         organizationId: null,
+        owner: null,
+        organization: null,
       }
 
       mockPrisma.$transaction.mockImplementationOnce(async (callback) => {
@@ -115,6 +138,9 @@ describe('/api/products - Simplified Tests', () => {
           product: {
             create: jest.fn().mockResolvedValueOnce(createdProduct),
             findUnique: jest.fn().mockResolvedValueOnce(createdProduct),
+          },
+          productMember: {
+            create: jest.fn().mockResolvedValueOnce({}),
           },
           post: {
             create: jest.fn().mockResolvedValueOnce({}),
@@ -134,7 +160,7 @@ describe('/api/products - Simplified Tests', () => {
 
       expect(response.status).toBe(201)
       expect(data.name).toBe(productData.name)
-      expect(data.ownerId).toBe(mockUser.id)
+      expect(data.id).toBe('new-product-id')
     })
 
     it('should validate required fields', async () => {
