@@ -487,6 +487,57 @@ SENTRY_DSN="your-sentry-dsn"
 3. Update search UI components
 4. Test with various query types
 
+## Feature Development Documentation
+
+When designing new features or architectural changes, follow these documentation standards:
+
+### Directory Structure
+Feature designs live in `docs/designs/` organized by lifecycle stage:
+- **experimental/**: Early design explorations, rough concepts
+- **planned/**: Approved designs ready for implementation
+- **active/**: Designs currently being built
+- **shipped/**: Completed feature designs
+- **archived/**: Deprecated or abandoned designs
+
+### Creating Feature Designs
+1. **Always use the template**: Copy `FEATURE-DESIGN-TEMPLATE.md` as starting point
+2. **Focus on architecture**: Emphasize high-level design, key libraries, and critical patterns
+3. **Avoid implementation details**: Don't include complete code implementations
+4. **Use phases, not dates**: "Phase 1: Core functionality" not "Week 1"
+5. **Apply DRS process**: For complex features, use Design-Review-Simplify workflow
+
+### File Naming
+- Use descriptive names without lifecycle prefixes
+- Correct: `docs/designs/planned/invitation-system.md`
+- Wrong: `docs/designs/todo-invitation-system.md`
+
+### When Asked to Design a Feature
+Claude Code should:
+1. Create a new design document in `docs/designs/planned/`
+2. Follow the FEATURE-DESIGN-TEMPLATE.md structure
+3. Focus on architecture and integration points
+4. Include MCP tool definitions if applicable
+5. Define clear implementation phases without timelines
+6. Run DRS process using mcp__zen__thinkdeep for complex designs
+
+### Example Workflow
+```
+User: "Design a notification system"
+Claude: 
+1. Creates `docs/designs/planned/notification-system.md`
+2. Fills out template with requirements, architecture, phases
+3. Runs design review with mcp__zen__thinkdeep
+4. Simplifies based on feedback
+5. Presents final design document
+```
+
+### Moving Through Lifecycle
+- When implementation begins: `git mv planned/feature.md active/feature.md`
+- When shipped: `git mv active/feature.md shipped/feature.md`
+- If abandoned: `git mv active/feature.md archived/feature.md` with explanation
+
+This ensures consistent, high-quality feature documentation focused on sustainable architectural decisions rather than implementation details.
+
 ## Testing Strategy
 
 ### Pragmatic Testing Approach
