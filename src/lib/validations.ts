@@ -121,6 +121,7 @@ export const postCreateSchema = z.object({
   projectId: z.string().cuid().optional(),
   productId: z.string().cuid().optional(),
   parentId: z.string().cuid().optional(),
+  todoId: z.string().cuid().optional(),
   // Optional project status update for PROJECT_UPDATE posts
   projectStatus: z.enum(['AWAITING_VOLUNTEERS', 'PLANNING', 'IN_PROGRESS', 'ON_HOLD', 'COMPLETED', 'CANCELLED']).optional(),
 })

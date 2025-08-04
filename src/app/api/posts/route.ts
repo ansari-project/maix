@@ -56,7 +56,7 @@ export async function POST(request: Request) {
     projectId = validationData.projectId;
     productId = validationData.productId;
     parentId = validationData.parentId;
-    const { content, projectStatus } = validationData;
+    const { content, projectStatus, todoId } = validationData;
     const userId = user.id
 
     // Check authorization and get the entity
@@ -88,6 +88,18 @@ export async function POST(request: Request) {
 
     // Create post and optionally update project status in a transaction
     const result = await prisma.$transaction(async (tx) => {
+      // If todoId is provided, validate it belongs to the same project
+      if (todoId && projectId) {
+        const todo = await tx.todo.findUnique({
+          where: { id: todoId },
+          select: { projectId: true }
+        })
+        
+        if (!todo || todo.projectId !== projectId) {
+          throw new Error('Todo must belong to the same project as the post')
+        }
+      }
+
       // Create the post
       const post = await tx.post.create({
         data: {
@@ -97,6 +109,7 @@ export async function POST(request: Request) {
           projectId,
           productId,
           parentId,
+          todoId,
         },
         include: {
           author: {
