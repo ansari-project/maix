@@ -312,7 +312,10 @@ describe('/api/posts', () => {
         id: 'proj-123',
         name: 'Test Project',
         ownerId: mockUser.id,
-        status: 'IN_PROGRESS'
+        status: 'IN_PROGRESS',
+        members: [
+          { userId: mockUser.id, role: 'ADMIN' }
+        ]
       }
 
       const mockProjectUpdate = {
@@ -381,7 +384,8 @@ describe('/api/posts', () => {
         id: 'proj-123',
         name: 'Test Project',
         ownerId: 'different-user-id',
-        status: 'IN_PROGRESS'
+        status: 'IN_PROGRESS',
+        members: []  // User is not a member
       }
 
       mockRequireAuth.mockResolvedValue(mockUser as any)
@@ -393,7 +397,7 @@ describe('/api/posts', () => {
       })
       mockPrisma.project.findFirst.mockResolvedValue(mockProject)
       mockHandleApiError.mockReturnValue(
-        mockApiErrorResponse('Only project owners can update project status', 403) as any
+        mockApiErrorResponse('Only project admins can update project status', 403) as any
       )
 
       const request = new NextRequest('http://localhost:3000/api/posts', {

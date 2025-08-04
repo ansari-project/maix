@@ -1,10 +1,20 @@
 import { GET } from '../route'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
+import { hasResourceAccess } from '@/lib/ownership-utils'
 
 jest.mock('@/lib/prisma', () => ({
   prisma: {
     project: {
+      findUnique: jest.fn()
+    },
+    projectMember: {
+      findUnique: jest.fn()
+    },
+    productMember: {
+      findUnique: jest.fn()
+    },
+    organizationMember: {
       findUnique: jest.fn()
     }
   }
@@ -12,6 +22,10 @@ jest.mock('@/lib/prisma', () => ({
 
 jest.mock('next-auth/next', () => ({
   getServerSession: jest.fn()
+}))
+
+jest.mock('@/lib/ownership-utils', () => ({
+  hasResourceAccess: jest.fn()
 }))
 
 describe('GET /api/projects/[id]', () => {
@@ -33,6 +47,7 @@ describe('GET /api/projects/[id]', () => {
 
     ;(prisma.project.findUnique as jest.Mock).mockResolvedValueOnce(mockProject)
     ;(getServerSession as jest.Mock).mockResolvedValueOnce(null)
+    // Public project, no session - should be accessible
 
     const params = Promise.resolve({ id: 'proj1' })
     const response = await GET(new Request('http://localhost'), { params })
@@ -75,6 +90,7 @@ describe('GET /api/projects/[id]', () => {
 
     ;(prisma.project.findUnique as jest.Mock).mockResolvedValueOnce(mockProject)
     ;(getServerSession as jest.Mock).mockResolvedValueOnce({ user: { id: 'user1' } })
+    ;(hasResourceAccess as jest.Mock).mockResolvedValueOnce(false)
 
     const params = Promise.resolve({ id: 'proj1' })
     const response = await GET(new Request('http://localhost'), { params })

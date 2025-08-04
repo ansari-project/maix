@@ -1,35 +1,55 @@
 import { getEffectiveRole, requirePermission, hasPermission, can, ROLE_HIERARCHY } from '../auth-utils'
-import { prisma } from '../prisma'
 import { AuthError } from '../errors'
 import { UnifiedRole, Visibility } from '@prisma/client'
 
-// Mock dependencies
-jest.mock('../prisma', () => ({
-  prisma: {
-    projectMember: {
-      findUnique: jest.fn()
-    },
-    productMember: {
-      findUnique: jest.fn()
-    },
-    organizationMember: {
-      findUnique: jest.fn()
-    },
-    project: {
-      findUnique: jest.fn()
-    },
-    product: {
-      findUnique: jest.fn()
-    },
-    user: {
-      findUnique: jest.fn()
+// Mock prisma
+jest.mock('../prisma', () => {
+  const mockProjectMember = {
+    findUnique: jest.fn(),
+    findFirst: jest.fn(),
+  }
+  const mockProductMember = {
+    findUnique: jest.fn(),
+    findFirst: jest.fn(),
+  }
+  const mockOrganizationMember = {
+    findUnique: jest.fn(),
+    findFirst: jest.fn(),
+  }
+  const mockProject = {
+    findUnique: jest.fn(),
+    findFirst: jest.fn(),
+  }
+  const mockProduct = {
+    findUnique: jest.fn(),
+    findFirst: jest.fn(),
+  }
+  const mockUser = {
+    findUnique: jest.fn(),
+    findFirst: jest.fn(),
+  }
+
+  return {
+    prisma: {
+      projectMember: mockProjectMember,
+      productMember: mockProductMember,
+      organizationMember: mockOrganizationMember,
+      project: mockProject,
+      product: mockProduct,
+      user: mockUser,
     }
   }
-}))
+})
 
+// Import prisma after mocking
+import { prisma } from '../prisma'
+
+// Mock next-auth
 jest.mock('next-auth/next', () => ({
   getServerSession: jest.fn()
 }))
+
+import { getServerSession } from 'next-auth/next'
 
 describe('RBAC System', () => {
   beforeEach(() => {
@@ -68,7 +88,7 @@ describe('RBAC System', () => {
 
     describe('for projects', () => {
       it('should return direct project membership role', async () => {
-        (prisma.projectMember.findUnique).mockResolvedValue({
+        (prisma.projectMember.findUnique as jest.Mock).mockResolvedValue({
           id: 'pm123',
           projectId: 'proj123',
           userId,
@@ -82,13 +102,13 @@ describe('RBAC System', () => {
       })
 
       it('should inherit from product membership', async () => {
-        (prisma.projectMember.findUnique).mockResolvedValue(null)
-        (prisma.project.findUnique).mockResolvedValue({
+        (prisma.projectMember.findUnique as jest.Mock).mockResolvedValue(null)
+        ;(prisma.project.findUnique as jest.Mock).mockResolvedValue({
           id: 'proj123',
           productId: 'prod123',
           organizationId: null
         } as any)
-        (prisma.productMember.findUnique).mockResolvedValue({
+        ;(prisma.productMember.findUnique as jest.Mock).mockResolvedValue({
           id: 'pm123',
           productId: 'prod123',
           userId,
@@ -102,13 +122,13 @@ describe('RBAC System', () => {
       })
 
       it('should inherit from organization membership', async () => {
-        (prisma.projectMember.findUnique).mockResolvedValue(null)
-        (prisma.project.findUnique).mockResolvedValue({
+        (prisma.projectMember.findUnique as jest.Mock).mockResolvedValue(null)
+        ;(prisma.project.findUnique as jest.Mock).mockResolvedValue({
           id: 'proj123',
           productId: null,
           organizationId: 'org123'
         } as any)
-        (prisma.organizationMember.findUnique).mockResolvedValue({
+        ;(prisma.organizationMember.findUnique as jest.Mock).mockResolvedValue({
           id: 'om123',
           organizationId: 'org123',
           userId,
@@ -122,8 +142,8 @@ describe('RBAC System', () => {
       })
 
       it('should return null when no membership exists', async () => {
-        (prisma.projectMember.findUnique).mockResolvedValue(null)
-        (prisma.project.findUnique).mockResolvedValue({
+        (prisma.projectMember.findUnique as jest.Mock).mockResolvedValue(null)
+        ;(prisma.project.findUnique as jest.Mock).mockResolvedValue({
           id: 'proj123',
           productId: null,
           organizationId: null
@@ -136,7 +156,7 @@ describe('RBAC System', () => {
 
     describe('for products', () => {
       it('should return direct product membership role', async () => {
-        (prisma.productMember.findUnique).mockResolvedValue({
+        (prisma.productMember.findUnique as jest.Mock).mockResolvedValue({
           id: 'pm123',
           productId: 'prod123',
           userId,
@@ -150,12 +170,12 @@ describe('RBAC System', () => {
       })
 
       it('should inherit ADMIN from organization OWNER', async () => {
-        (prisma.productMember.findUnique).mockResolvedValue(null)
-        (prisma.product.findUnique).mockResolvedValue({
+        (prisma.productMember.findUnique as jest.Mock).mockResolvedValue(null)
+        ;(prisma.product.findUnique as jest.Mock).mockResolvedValue({
           id: 'prod123',
           organizationId: 'org123'
         } as any)
-        (prisma.organizationMember.findUnique).mockResolvedValue({
+        ;(prisma.organizationMember.findUnique as jest.Mock).mockResolvedValue({
           id: 'om123',
           organizationId: 'org123',
           userId,
@@ -169,12 +189,12 @@ describe('RBAC System', () => {
       })
 
       it('should inherit VIEWER from organization MEMBER', async () => {
-        (prisma.productMember.findUnique).mockResolvedValue(null)
-        (prisma.product.findUnique).mockResolvedValue({
+        (prisma.productMember.findUnique as jest.Mock).mockResolvedValue(null)
+        ;(prisma.product.findUnique as jest.Mock).mockResolvedValue({
           id: 'prod123',
           organizationId: 'org123'
         } as any)
-        (prisma.organizationMember.findUnique).mockResolvedValue({
+        ;(prisma.organizationMember.findUnique as jest.Mock).mockResolvedValue({
           id: 'om123',
           organizationId: 'org123',
           userId,
@@ -190,7 +210,7 @@ describe('RBAC System', () => {
 
     describe('for organizations', () => {
       it('should return organization membership role', async () => {
-        (prisma.organizationMember.findUnique).mockResolvedValue({
+        (prisma.organizationMember.findUnique as jest.Mock).mockResolvedValue({
           id: 'om123',
           organizationId: 'org123',
           userId,
@@ -204,7 +224,7 @@ describe('RBAC System', () => {
       })
 
       it('should return null when no membership exists', async () => {
-        (prisma.organizationMember.findUnique).mockResolvedValue(null)
+        (prisma.organizationMember.findUnique as jest.Mock).mockResolvedValue(null)
 
         const role = await getEffectiveRole(userId, 'organization', 'org123')
         expect(role).toBeNull()
@@ -234,7 +254,7 @@ describe('RBAC System', () => {
     })
 
     it('should check role requirements for authenticated users', async () => {
-      (prisma.projectMember.findUnique).mockResolvedValue({
+      (prisma.projectMember.findUnique as jest.Mock).mockResolvedValue({
         id: 'pm123',
         projectId: 'proj123',
         userId,
@@ -261,7 +281,7 @@ describe('RBAC System', () => {
     })
 
     it('should require OWNER role for organization invites', async () => {
-      (prisma.organizationMember.findUnique).mockResolvedValue({
+      (prisma.organizationMember.findUnique as jest.Mock).mockResolvedValue({
         id: 'om123',
         organizationId: 'org123',
         userId,
@@ -279,7 +299,7 @@ describe('RBAC System', () => {
     })
 
     it('should allow ADMIN role for product/project invites', async () => {
-      (prisma.productMember.findUnique).mockResolvedValue({
+      (prisma.productMember.findUnique as jest.Mock).mockResolvedValue({
         id: 'pm123',
         productId: 'prod123',
         userId,
@@ -299,19 +319,22 @@ describe('RBAC System', () => {
 
   describe('requirePermission', () => {
     beforeEach(() => {
-      // Mock requireAuth to return a user
-      jest.doMock('../auth-utils', () => {
-        const actual = jest.requireActual('../auth-utils')
-        return {
-          ...actual,
-          requireAuth: jest.fn().mockResolvedValue({ id: 'user123', email: 'user@test.com' })
-        }
+      // Mock getServerSession to return a valid session
+      (getServerSession as jest.Mock).mockResolvedValue({
+        user: { email: 'user@test.com' }
+      })
+      
+      // Mock user lookup
+      ;(prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: 'user123',
+        email: 'user@test.com',
+        username: 'testuser'
       })
     })
 
     it('should throw AuthError when user lacks permission', async () => {
-      (prisma.projectMember.findUnique).mockResolvedValue(null)
-      (prisma.project.findUnique).mockResolvedValue({
+      (prisma.projectMember.findUnique as jest.Mock).mockResolvedValue(null)
+      ;(prisma.project.findUnique as jest.Mock).mockResolvedValue({
         id: 'proj123',
         productId: null,
         organizationId: null
@@ -323,7 +346,7 @@ describe('RBAC System', () => {
     })
 
     it('should return user and role when permission is granted', async () => {
-      (prisma.projectMember.findUnique).mockResolvedValue({
+      (prisma.projectMember.findUnique as jest.Mock).mockResolvedValue({
         id: 'pm123',
         projectId: 'proj123',
         userId: 'user123',

@@ -3,6 +3,7 @@ import { GET, POST } from '../route'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
 import { createMockRequest, mockSession, createTestUser, createTestProject } from '@/__tests__/helpers/api-test-utils.helper'
+import { canManageTodos, isValidAssignee } from '@/lib/permissions/todo-permissions'
 
 // Mock dependencies
 jest.mock('next-auth/next')
@@ -21,9 +22,15 @@ jest.mock('@/lib/prisma', () => ({
     }
   }
 }))
+jest.mock('@/lib/permissions/todo-permissions', () => ({
+  canManageTodos: jest.fn(),
+  isValidAssignee: jest.fn()
+}))
 
 const mockPrisma = prisma as jest.Mocked<typeof prisma>
 const mockGetServerSession = getServerSession as jest.Mock
+const mockCanManageTodos = canManageTodos as jest.Mock
+const mockIsValidAssignee = isValidAssignee as jest.Mock
 
 describe('/api/projects/[id]/todos', () => {
   const mockUser = createTestUser({
@@ -59,6 +66,8 @@ describe('/api/projects/[id]/todos', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockGetServerSession.mockResolvedValue(mockSession(mockUser))
+    mockCanManageTodos.mockResolvedValue(true)
+    mockIsValidAssignee.mockResolvedValue(true)
   })
 
   describe('GET', () => {

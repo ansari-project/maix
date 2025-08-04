@@ -211,7 +211,21 @@ describe('Project Organization Filtering', () => {
             organizationId: 'org-b',
             OR: expect.arrayContaining([
               { visibility: 'PUBLIC' },
-              { ownerId: mockUser.id },
+              // Check membership in project directly
+              {
+                members: {
+                  some: { userId: mockUser.id }
+                }
+              },
+              // Check membership in parent product
+              {
+                product: {
+                  members: {
+                    some: { userId: mockUser.id }
+                  }
+                }
+              },
+              // Check membership in parent organization
               expect.objectContaining({
                 organization: expect.objectContaining({
                   members: expect.objectContaining({

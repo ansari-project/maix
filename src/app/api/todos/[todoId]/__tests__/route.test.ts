@@ -3,6 +3,7 @@ import { GET, PATCH, DELETE } from '../route'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
 import { createMockRequest, mockSession, createTestUser, createTestProject } from '@/__tests__/helpers/api-test-utils.helper'
+import { canUpdateTodo, canDeleteTodo, isValidAssignee } from '@/lib/permissions/todo-permissions'
 
 // Mock dependencies
 jest.mock('next-auth/next')
@@ -21,9 +22,17 @@ jest.mock('@/lib/prisma', () => ({
     }
   }
 }))
+jest.mock('@/lib/permissions/todo-permissions', () => ({
+  canUpdateTodo: jest.fn(),
+  canDeleteTodo: jest.fn(),
+  isValidAssignee: jest.fn()
+}))
 
 const mockPrisma = prisma as jest.Mocked<typeof prisma>
 const mockGetServerSession = getServerSession as jest.Mock
+const mockCanUpdateTodo = canUpdateTodo as jest.Mock
+const mockCanDeleteTodo = canDeleteTodo as jest.Mock
+const mockIsValidAssignee = isValidAssignee as jest.Mock
 
 describe('/api/todos/[todoId]', () => {
   const mockUser = createTestUser({
@@ -70,11 +79,15 @@ describe('/api/todos/[todoId]', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
-    mockGetServerSession.mockResolvedValue(mockSession(mockUser))
+    mockSession(mockUser)
+    mockCanUpdateTodo.mockResolvedValue(true)
+    mockCanDeleteTodo.mockResolvedValue(true)
+    mockIsValidAssignee.mockResolvedValue(true)
   })
 
   describe('GET', () => {
     it('should return todo details', async () => {
+      mockSession(mockUser)
       mockPrisma.todo.findUnique.mockResolvedValue(mockTodo)
 
       const req = createMockRequest({
@@ -132,21 +145,10 @@ describe('/api/todos/[todoId]', () => {
     })
 
     it('should update todo for creator', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession(mockCreator))
+      mockSession(mockCreator)
+      mockCanUpdateTodo.mockResolvedValue(true)
       
-      const todoWithProjectOwner = {
-        ...mockTodo,
-        project: {
-          ...mockProject,
-          owner: { id: 'owner-1' },
-          organization: null
-        }
-      }
-      
-      mockPrisma.todo.findUnique
-        .mockResolvedValueOnce(todoWithProjectOwner) // canUpdateTodo check
-        .mockResolvedValueOnce({ projectId: mockProject.id }) // existing todo check
-      
+      mockPrisma.todo.findUnique.mockResolvedValue({ projectId: mockProject.id })
       mockPrisma.todo.update.mockResolvedValue({
         ...mockTodo,
         ...updateData
@@ -168,20 +170,9 @@ describe('/api/todos/[todoId]', () => {
 
     it('should update todo for assignee', async () => {
       mockGetServerSession.mockResolvedValue(mockSession(mockAssignee))
+      mockCanUpdateTodo.mockResolvedValue(true)
       
-      const todoWithProjectOwner = {
-        ...mockTodo,
-        project: {
-          ...mockProject,
-          owner: { id: 'owner-1' },
-          organization: null
-        }
-      }
-      
-      mockPrisma.todo.findUnique
-        .mockResolvedValueOnce(todoWithProjectOwner) // canUpdateTodo check
-        .mockResolvedValueOnce({ projectId: mockProject.id }) // existing todo check
-      
+      mockPrisma.todo.findUnique.mockResolvedValue({ projectId: mockProject.id })
       mockPrisma.todo.update.mockResolvedValue({
         ...mockTodo,
         ...updateData
@@ -201,20 +192,7 @@ describe('/api/todos/[todoId]', () => {
     it('should reject update from non-participant', async () => {
       const otherUser = createTestUser({ id: 'other-user' })
       mockGetServerSession.mockResolvedValue(mockSession(otherUser))
-      
-      const todoWithProjectOwner = {
-        ...mockTodo,
-        creatorId: 'different-creator',
-        assigneeId: 'different-assignee',
-        project: {
-          ...mockProject,
-          ownerId: 'different-owner',
-          owner: { id: 'different-owner' },
-          organization: null
-        }
-      }
-      
-      mockPrisma.todo.findUnique.mockResolvedValue(todoWithProjectOwner)
+      mockCanUpdateTodo.mockResolvedValue(false)
 
       const req = createMockRequest({
         method: 'PATCH',
@@ -231,22 +209,10 @@ describe('/api/todos/[todoId]', () => {
 
     it('should validate assignee is project participant', async () => {
       mockGetServerSession.mockResolvedValue(mockSession(mockCreator))
+      mockCanUpdateTodo.mockResolvedValue(true)
+      mockIsValidAssignee.mockResolvedValue(false)
       
-      const todoWithProjectOwner = {
-        ...mockTodo,
-        project: {
-          ...mockProject,
-          owner: { id: 'owner-1' },
-          organization: null
-        }
-      }
-      
-      mockPrisma.todo.findUnique
-        .mockResolvedValueOnce(todoWithProjectOwner) // canUpdateTodo check
-        .mockResolvedValueOnce({ projectId: mockProject.id }) // existing todo check
-      
-      mockPrisma.project.findUnique.mockResolvedValue(mockProject)
-      mockPrisma.application.findUnique.mockResolvedValue(null)
+      mockPrisma.todo.findUnique.mockResolvedValue({ projectId: mockProject.id })
 
       const req = createMockRequest({
         method: 'PATCH',
@@ -267,17 +233,7 @@ describe('/api/todos/[todoId]', () => {
   describe('DELETE', () => {
     it('should delete todo for creator', async () => {
       mockGetServerSession.mockResolvedValue(mockSession(mockCreator))
-      
-      const todoWithProjectOwner = {
-        ...mockTodo,
-        project: {
-          ...mockProject,
-          owner: { id: 'owner-1' },
-          organization: null
-        }
-      }
-      
-      mockPrisma.todo.findUnique.mockResolvedValue(todoWithProjectOwner)
+      mockCanDeleteTodo.mockResolvedValue(true)
 
       const req = createMockRequest({
         method: 'DELETE',
@@ -297,18 +253,7 @@ describe('/api/todos/[todoId]', () => {
     it('should delete todo for project owner', async () => {
       const projectOwner = createTestUser({ id: mockProject.ownerId })
       mockGetServerSession.mockResolvedValue(mockSession(projectOwner))
-      
-      const todoWithProjectOwner = {
-        ...mockTodo,
-        creatorId: 'different-creator',
-        project: {
-          ...mockProject,
-          owner: { id: mockProject.ownerId },
-          organization: null
-        }
-      }
-      
-      mockPrisma.todo.findUnique.mockResolvedValue(todoWithProjectOwner)
+      mockCanDeleteTodo.mockResolvedValue(true)
 
       const req = createMockRequest({
         method: 'DELETE',
@@ -324,19 +269,7 @@ describe('/api/todos/[todoId]', () => {
     it('should reject delete from non-authorized user', async () => {
       const otherUser = createTestUser({ id: 'other-user' })
       mockGetServerSession.mockResolvedValue(mockSession(otherUser))
-      
-      const todoWithProjectOwner = {
-        ...mockTodo,
-        creatorId: 'different-creator',
-        project: {
-          ...mockProject,
-          ownerId: 'different-owner',
-          owner: { id: 'different-owner' },
-          organization: null
-        }
-      }
-      
-      mockPrisma.todo.findUnique.mockResolvedValue(todoWithProjectOwner)
+      mockCanDeleteTodo.mockResolvedValue(false)
 
       const req = createMockRequest({
         method: 'DELETE',

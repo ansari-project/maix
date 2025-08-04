@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 
 // Mock all dependencies first before importing anything
 jest.mock('@/lib/auth-utils')
+jest.mock('@/lib/ownership-utils')
 jest.mock('@/lib/api-utils')
 jest.mock('@/lib/prisma', () => ({
   prisma: {
@@ -21,15 +22,19 @@ import {
   mockApiSuccessResponse
 } from '@/lib/test-utils'
 import { handleApiError, successResponse, parseRequestBody } from '@/lib/api-utils'
+import { hasResourceAccess } from '@/lib/ownership-utils'
 
 const mockPrisma = prisma as jest.Mocked<typeof prisma>
 const mockHandleApiError = handleApiError as jest.MockedFunction<typeof handleApiError>
 const mockSuccessResponse = successResponse as jest.MockedFunction<typeof successResponse>
 const mockParseRequestBody = parseRequestBody as jest.MockedFunction<typeof parseRequestBody>
+const mockHasResourceAccess = hasResourceAccess as jest.MockedFunction<typeof hasResourceAccess>
 
 describe('/api/applications/[id]', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    // Default mocks for most tests
+    mockHasResourceAccess.mockResolvedValue(true)
   })
 
   const mockProjectOwner = {
@@ -51,6 +56,7 @@ describe('/api/applications/[id]', () => {
       ownerId: 'owner-123',
       organization: null,
       organizationId: null,
+      visibility: 'PUBLIC',
     },
   }
 
@@ -66,9 +72,13 @@ describe('/api/applications/[id]', () => {
   }
 
   const createMockRequest = (body: any) => {
-    return {
-      json: jest.fn().mockResolvedValue(body),
-    } as unknown as NextRequest
+    return new Request('http://localhost/api/applications/123', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    })
   }
 
   const mockParams = { id: 'application-123' }
@@ -89,7 +99,7 @@ describe('/api/applications/[id]', () => {
       )
 
       const request = createMockRequest(validUpdateData)
-      const response = await PATCH(request, { params: mockParams })
+      const response = await PATCH(request, { params: Promise.resolve(mockParams) })
       const responseData = await response.json()
 
       expect(response.status).toBe(200)
@@ -122,7 +132,7 @@ describe('/api/applications/[id]', () => {
       )
 
       const request = createMockRequest(validUpdateData)
-      const response = await PATCH(request, { params: mockParams })
+      const response = await PATCH(request, { params: Promise.resolve(mockParams) })
       const responseData = await response.json()
 
       expect(response.status).toBe(401)
@@ -138,7 +148,7 @@ describe('/api/applications/[id]', () => {
       )
 
       const request = createMockRequest(validUpdateData)
-      const response = await PATCH(request, { params: mockParams })
+      const response = await PATCH(request, { params: Promise.resolve(mockParams) })
       const responseData = await response.json()
 
       expect(response.status).toBe(404)
@@ -155,12 +165,13 @@ describe('/api/applications/[id]', () => {
       mockRequireAuth.mockResolvedValue(nonOwner as any)
       mockParseRequestBody.mockResolvedValue(validUpdateData)
       mockPrisma.application.findUnique.mockResolvedValue(mockApplication as any)
+      mockHasResourceAccess.mockResolvedValue(false)  // Non-owner doesn't have access
       mockHandleApiError.mockReturnValue(
         mockApiErrorResponse('Unauthorized', 403) as any
       )
 
       const request = createMockRequest(validUpdateData)
-      const response = await PATCH(request, { params: mockParams })
+      const response = await PATCH(request, { params: Promise.resolve(mockParams) })
       const responseData = await response.json()
 
       expect(response.status).toBe(403)
@@ -182,7 +193,7 @@ describe('/api/applications/[id]', () => {
       }
 
       const request = createMockRequest(invalidData)
-      const response = await PATCH(request, { params: mockParams })
+      const response = await PATCH(request, { params: Promise.resolve(mockParams) })
       const responseData = await response.json()
 
       expect(response.status).toBe(400)
@@ -203,7 +214,7 @@ describe('/api/applications/[id]', () => {
       }
 
       const request = createMockRequest(invalidData)
-      const response = await PATCH(request, { params: mockParams })
+      const response = await PATCH(request, { params: Promise.resolve(mockParams) })
       const responseData = await response.json()
 
       expect(response.status).toBe(400)
@@ -225,7 +236,7 @@ describe('/api/applications/[id]', () => {
       }
 
       const request = createMockRequest(invalidData)
-      const response = await PATCH(request, { params: mockParams })
+      const response = await PATCH(request, { params: Promise.resolve(mockParams) })
       const responseData = await response.json()
 
       expect(response.status).toBe(400)
@@ -249,7 +260,7 @@ describe('/api/applications/[id]', () => {
         )
 
         const request = createMockRequest({ status })
-        const response = await PATCH(request, { params: mockParams })
+        const response = await PATCH(request, { params: Promise.resolve(mockParams) })
 
         expect(response.status).toBe(200)
       }
@@ -268,7 +279,7 @@ describe('/api/applications/[id]', () => {
       )
 
       const request = createMockRequest(statusOnlyData)
-      const response = await PATCH(request, { params: mockParams })
+      const response = await PATCH(request, { params: Promise.resolve(mockParams) })
 
       expect(response.status).toBe(200)
       expect(mockPrisma.application.update).toHaveBeenCalledWith({
@@ -302,7 +313,7 @@ describe('/api/applications/[id]', () => {
       )
 
       const request = createMockRequest(messageOnlyData)
-      const response = await PATCH(request, { params: mockParams })
+      const response = await PATCH(request, { params: Promise.resolve(mockParams) })
 
       expect(response.status).toBe(200)
       expect(mockPrisma.application.update).toHaveBeenCalledWith({
@@ -332,7 +343,7 @@ describe('/api/applications/[id]', () => {
       )
 
       const request = createMockRequest(validUpdateData)
-      const response = await PATCH(request, { params: mockParams })
+      const response = await PATCH(request, { params: Promise.resolve(mockParams) })
       const responseData = await response.json()
 
       expect(response.status).toBe(500)
@@ -349,7 +360,7 @@ describe('/api/applications/[id]', () => {
       )
 
       const request = createMockRequest(validUpdateData)
-      const response = await PATCH(request, { params: mockParams })
+      const response = await PATCH(request, { params: Promise.resolve(mockParams) })
       const responseData = await response.json()
 
       expect(response.status).toBe(500)
@@ -366,7 +377,7 @@ describe('/api/applications/[id]', () => {
       )
 
       const request = createMockRequest(validUpdateData)
-      const response = await PATCH(request, { params: mockParams })
+      const response = await PATCH(request, { params: Promise.resolve(mockParams) })
 
       expect(mockPrisma.application.findUnique).toHaveBeenCalledWith({
         where: { id: mockParams.id },
@@ -397,7 +408,7 @@ describe('/api/applications/[id]', () => {
       )
 
       const request = createMockRequest(emptyMessageData)
-      const response = await PATCH(request, { params: mockParams })
+      const response = await PATCH(request, { params: Promise.resolve(mockParams) })
 
       expect(response.status).toBe(200)
       expect(mockPrisma.application.update).toHaveBeenCalledWith({
@@ -431,7 +442,7 @@ describe('/api/applications/[id]', () => {
       )
 
       const request = createMockRequest(validUpdateData)
-      const response = await PATCH(request, { params: mockParams })
+      const response = await PATCH(request, { params: Promise.resolve(mockParams) })
 
       expect(response.status).toBe(200)
       expect(mockPrisma.application.update).toHaveBeenCalledWith({

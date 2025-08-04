@@ -39,6 +39,14 @@ jest.mock('@/lib/prisma', () => ({
       create: jest.fn(),
       findUnique: jest.fn(),
     },
+    projectMember: {
+      create: jest.fn(),
+      findUnique: jest.fn(),
+    },
+    productMember: {
+      create: jest.fn(),
+      findUnique: jest.fn(),
+    },
     post: {
       create: jest.fn(),
     },
@@ -80,6 +88,9 @@ describe('Dual Ownership Tests', () => {
           project: {
             create: jest.fn().mockResolvedValue(mockProject),
             findUnique: jest.fn().mockResolvedValue(mockProject)
+          },
+          projectMember: {
+            create: jest.fn()
           },
           post: {
             create: jest.fn()
@@ -128,6 +139,9 @@ describe('Dual Ownership Tests', () => {
           project: {
             create: jest.fn().mockResolvedValue(mockProject),
             findUnique: jest.fn().mockResolvedValue(mockProject)
+          },
+          projectMember: {
+            create: jest.fn()
           },
           post: {
             create: jest.fn()
@@ -214,6 +228,9 @@ describe('Dual Ownership Tests', () => {
           product: {
             create: jest.fn().mockResolvedValue(mockProduct),
             findUnique: jest.fn().mockResolvedValue(mockProduct)
+          },
+          productMember: {
+            create: jest.fn()
           },
           post: {
             create: jest.fn()

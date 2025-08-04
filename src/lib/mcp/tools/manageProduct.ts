@@ -330,7 +330,12 @@ async function getProduct(
     where: { 
       id: productId,
       OR: [
-        { ownerId: context.user.id }, // User-owned product
+        { visibility: 'PUBLIC' }, // Public products
+        {
+          members: {
+            some: { userId: context.user.id }
+          }
+        }, // Products where user is a member
         { 
           organizationId: { not: null },
           organization: {
@@ -386,7 +391,12 @@ async function listProducts(context: MaixMcpContext): Promise<MaixMcpResponse> {
   const products = await prisma.product.findMany({
     where: {
       OR: [
-        { ownerId: context.user.id }, // User-owned products
+        { visibility: 'PUBLIC' }, // Public products
+        {
+          members: {
+            some: { userId: context.user.id }
+          }
+        }, // Products where user is a member
         { 
           organizationId: { not: null },
           organization: {

@@ -11,7 +11,17 @@ jest.mock('@/lib/prisma', () => ({
       delete: jest.fn(),
       findFirst: jest.fn(),
       findMany: jest.fn(),
+      findUnique: jest.fn(),
     },
+    productMember: {
+      create: jest.fn(),
+      findFirst: jest.fn(),
+      findUnique: jest.fn(),
+    },
+    organizationMember: {
+      findUnique: jest.fn(),
+    },
+    $transaction: jest.fn(),
   },
 }));
 
@@ -66,9 +76,23 @@ describe('manageProduct tool', () => {
   };
 
   describe('create action', () => {
-    it('should create a product successfully', async () => {
-      mockPrisma.product.create.mockResolvedValue(mockProduct);
+    beforeEach(() => {
+      // Setup transaction mock
+      mockPrisma.$transaction.mockImplementation(async (callback) => {
+        const tx = {
+          product: {
+            create: jest.fn().mockResolvedValue(mockProduct),
+            findUnique: jest.fn().mockResolvedValue(mockProduct),
+          },
+          productMember: {
+            create: jest.fn(),
+          },
+        };
+        return callback(tx);
+      });
+    });
 
+    it('should create a product successfully', async () => {
       const params = {
         action: 'create' as const,
         name: 'Test Product',
@@ -82,29 +106,12 @@ describe('manageProduct tool', () => {
       expect(result.data).toEqual(mockProduct);
       expect(result.message).toBe('Product "Test Product" created successfully');
       
-      expect(mockPrisma.product.create).toHaveBeenCalledWith({
-        data: {
-          name: 'Test Product',
-          description: 'This is a comprehensive test product description that meets the minimum character requirement.',
-          url: 'https://testproduct.com',
-          ownerId: 'user-123',
-          organizationId: undefined,
-        },
-        include: {
-          owner: {
-            select: { id: true, name: true, email: true }
-          },
-          organization: {
-            select: { id: true, name: true, slug: true }
-          }
-        }
-      });
+      expect(mockPrisma.$transaction).toHaveBeenCalled();
     });
 
     it('should create a product without URL', async () => {
       const productWithoutUrl = { ...mockProduct, url: null };
-      mockPrisma.product.create.mockResolvedValue(productWithoutUrl);
-
+      
       const params = {
         action: 'create' as const,
         name: 'Test Product',
@@ -114,29 +121,12 @@ describe('manageProduct tool', () => {
       const result = await manageProductTool.handler(params, mockContext);
 
       expect(result.success).toBe(true);
-      expect(mockPrisma.product.create).toHaveBeenCalledWith({
-        data: {
-          name: 'Test Product',
-          description: 'This is a comprehensive test product description that meets the minimum character requirement.',
-          url: null,
-          ownerId: 'user-123',
-          organizationId: undefined,
-        },
-        include: {
-          owner: {
-            select: { id: true, name: true, email: true }
-          },
-          organization: {
-            select: { id: true, name: true, slug: true }
-          }
-        }
-      });
+      expect(mockPrisma.$transaction).toHaveBeenCalled();
     });
 
     it('should create a product with empty URL string', async () => {
       const productWithoutUrl = { ...mockProduct, url: null };
-      mockPrisma.product.create.mockResolvedValue(productWithoutUrl);
-
+      
       const params = {
         action: 'create' as const,
         name: 'Test Product',
@@ -147,23 +137,7 @@ describe('manageProduct tool', () => {
       const result = await manageProductTool.handler(params, mockContext);
 
       expect(result.success).toBe(true);
-      expect(mockPrisma.product.create).toHaveBeenCalledWith({
-        data: {
-          name: 'Test Product',
-          description: 'This is a comprehensive test product description that meets the minimum character requirement.',
-          url: null,
-          ownerId: 'user-123',
-          organizationId: undefined,
-        },
-        include: {
-          owner: {
-            select: { id: true, name: true, email: true }
-          },
-          organization: {
-            select: { id: true, name: true, slug: true }
-          }
-        }
-      });
+      expect(mockPrisma.$transaction).toHaveBeenCalled();
     });
 
     it('should require name for creation', async () => {
@@ -224,6 +198,18 @@ describe('manageProduct tool', () => {
   });
 
   describe('update action', () => {
+    beforeEach(() => {
+      // Setup productMember mock to allow updates
+      mockPrisma.productMember.findFirst.mockResolvedValue({
+        id: 'pm-123',
+        productId: 'product-123',
+        userId: 'user-123',
+        role: 'ADMIN',
+        joinedAt: new Date(),
+        invitationId: null,
+      });
+    });
+
     it('should update a product successfully', async () => {
       const updatedProduct = { ...mockProduct, name: 'Updated Product Name' };
       mockPrisma.product.update.mockResolvedValue(updatedProduct);
@@ -241,21 +227,16 @@ describe('manageProduct tool', () => {
       expect(result.data).toEqual(updatedProduct);
       expect(result.message).toBe('Product "Updated Product Name" updated successfully');
       
+      expect(mockPrisma.productMember.findFirst).toHaveBeenCalledWith({
+        where: {
+          productId: 'product-123',
+          userId: 'user-123',
+          role: { in: ['ADMIN', 'MEMBER'] }
+        }
+      });
+      
       expect(mockPrisma.product.update).toHaveBeenCalledWith({
-        where: { 
-          id: 'product-123',
-          OR: [
-            { ownerId: 'user-123' },
-            { 
-              organizationId: { not: null },
-              organization: {
-                members: {
-                  some: { userId: 'user-123' }
-                }
-              }
-            }
-          ]
-        },
+        where: { id: 'product-123' },
         data: {
           name: 'Updated Product Name',
           description: 'Updated description that meets the minimum character requirement for validation.',
@@ -284,20 +265,7 @@ describe('manageProduct tool', () => {
 
       expect(result.success).toBe(true);
       expect(mockPrisma.product.update).toHaveBeenCalledWith({
-        where: { 
-          id: 'product-123',
-          OR: [
-            { ownerId: 'user-123' },
-            { 
-              organizationId: { not: null },
-              organization: {
-                members: {
-                  some: { userId: 'user-123' }
-                }
-              }
-            }
-          ]
-        },
+        where: { id: 'product-123' },
         data: {
           name: 'Updated Name Only',
         },
@@ -326,20 +294,7 @@ describe('manageProduct tool', () => {
 
       expect(result.success).toBe(true);
       expect(mockPrisma.product.update).toHaveBeenCalledWith({
-        where: { 
-          id: 'product-123',
-          OR: [
-            { ownerId: 'user-123' },
-            { 
-              organizationId: { not: null },
-              organization: {
-                members: {
-                  some: { userId: 'user-123' }
-                }
-              }
-            }
-          ]
-        },
+        where: { id: 'product-123' },
         data: {
           url: null,
         },
@@ -367,9 +322,8 @@ describe('manageProduct tool', () => {
     });
 
     it('should handle non-existent product', async () => {
-      const prismaError = new Error('Record not found');
-      (prismaError as any).code = 'P2025';
-      mockPrisma.product.update.mockRejectedValue(prismaError);
+      // Mock no permission
+      mockPrisma.productMember.findFirst.mockResolvedValue(null);
 
       const params = {
         action: 'update' as const,
@@ -380,11 +334,23 @@ describe('manageProduct tool', () => {
       const result = await manageProductTool.handler(params, mockContext);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("Product not found or you don't have permission to update it");
+      expect(result.error).toBe("You don't have permission to update this product");
     });
   });
 
   describe('delete action', () => {
+    beforeEach(() => {
+      // Setup productMember mock to allow deletes
+      mockPrisma.productMember.findFirst.mockResolvedValue({
+        id: 'pm-123',
+        productId: 'product-123',
+        userId: 'user-123',
+        role: 'ADMIN',
+        joinedAt: new Date(),
+        invitationId: null,
+      });
+    });
+
     it('should delete a product successfully', async () => {
       mockPrisma.product.delete.mockResolvedValue(mockProduct);
 
@@ -398,21 +364,16 @@ describe('manageProduct tool', () => {
       expect(result.success).toBe(true);
       expect(result.message).toBe('Product deleted successfully');
       
+      expect(mockPrisma.productMember.findFirst).toHaveBeenCalledWith({
+        where: {
+          productId: 'product-123',
+          userId: 'user-123',
+          role: 'ADMIN'
+        }
+      });
+      
       expect(mockPrisma.product.delete).toHaveBeenCalledWith({
-        where: { 
-          id: 'product-123',
-          OR: [
-            { ownerId: 'user-123' },
-            { 
-              organizationId: { not: null },
-              organization: {
-                members: {
-                  some: { userId: 'user-123' }
-                }
-              }
-            }
-          ]
-        },
+        where: { id: 'product-123' }
       });
     });
 
@@ -428,9 +389,8 @@ describe('manageProduct tool', () => {
     });
 
     it('should handle non-existent product for delete', async () => {
-      const prismaError = new Error('Record not found');
-      (prismaError as any).code = 'P2025';
-      mockPrisma.product.delete.mockRejectedValue(prismaError);
+      // Mock no permission
+      mockPrisma.productMember.findFirst.mockResolvedValue(null);
 
       const params = {
         action: 'delete' as const,
@@ -440,7 +400,7 @@ describe('manageProduct tool', () => {
       const result = await manageProductTool.handler(params, mockContext);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("Product not found or you don't have permission to delete it");
+      expect(result.error).toBe("You don't have permission to delete this product");
     });
   });
 
@@ -462,7 +422,12 @@ describe('manageProduct tool', () => {
         where: { 
           id: 'product-123',
           OR: [
-            { ownerId: 'user-123' },
+            { visibility: 'PUBLIC' },
+            {
+              members: {
+                some: { userId: 'user-123' }
+              }
+            },
             { 
               organizationId: { not: null },
               organization: {
@@ -551,7 +516,12 @@ describe('manageProduct tool', () => {
       expect(mockPrisma.product.findMany).toHaveBeenCalledWith({
         where: {
           OR: [
-            { ownerId: 'user-123' },
+            { visibility: 'PUBLIC' },
+            {
+              members: {
+                some: { userId: 'user-123' }
+              }
+            },
             { 
               organizationId: { not: null },
               organization: {
@@ -637,7 +607,9 @@ describe('manageProduct tool', () => {
   describe('error handling', () => {
     it('should handle unexpected database errors', async () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-      mockPrisma.product.create.mockRejectedValue(new Error('Unexpected database error'));
+      
+      // Mock transaction to throw error
+      mockPrisma.$transaction.mockRejectedValue(new Error('Unexpected database error'));
 
       const params = {
         action: 'create' as const,

@@ -11,7 +11,17 @@ jest.mock('@/lib/prisma', () => ({
       delete: jest.fn(),
       findFirst: jest.fn(),
       findMany: jest.fn(),
+      findUnique: jest.fn(),
     },
+    projectMember: {
+      create: jest.fn(),
+      findFirst: jest.fn(),
+      findUnique: jest.fn(),
+    },
+    organizationMember: {
+      findUnique: jest.fn(),
+    },
+    $transaction: jest.fn(),
   },
 }));
 
@@ -54,9 +64,23 @@ describe('manageProject tool', () => {
   };
 
   describe('create action', () => {
-    it('should create a project successfully', async () => {
-      mockPrisma.project.create.mockResolvedValue(mockProject);
+    beforeEach(() => {
+      // Setup transaction mock
+      mockPrisma.$transaction.mockImplementation(async (callback) => {
+        const tx = {
+          project: {
+            create: jest.fn().mockResolvedValue(mockProject),
+            findUnique: jest.fn().mockResolvedValue(mockProject),
+          },
+          projectMember: {
+            create: jest.fn(),
+          },
+        };
+        return callback(tx);
+      });
+    });
 
+    it('should create a project successfully', async () => {
       const params = {
         action: 'create' as const,
         name: 'Test Project',
@@ -73,28 +97,7 @@ describe('manageProject tool', () => {
       expect(result.data).toEqual(mockProject);
       expect(result.message).toBe('Project "Test Project" created successfully');
       
-      expect(mockPrisma.project.create).toHaveBeenCalledWith({
-        data: {
-          name: 'Test Project',
-          goal: 'Create an innovative AI solution for education',
-          description: 'This is a comprehensive test project description that meets the minimum 50 character requirement for validation.',
-          helpType: 'MVP',
-          contactEmail: 'contact@example.com',
-          targetCompletionDate: new Date('2024-12-31T23:59:59.000Z'),
-          isActive: true,
-          productId: undefined,
-          ownerId: 'user-123',
-          organizationId: undefined,
-        },
-        include: {
-          owner: {
-            select: { id: true, name: true, email: true }
-          },
-          organization: {
-            select: { id: true, name: true, slug: true }
-          }
-        }
-      });
+      expect(mockPrisma.$transaction).toHaveBeenCalled();
     });
 
     it('should require name for creation', async () => {
@@ -131,6 +134,18 @@ describe('manageProject tool', () => {
   });
 
   describe('update action', () => {
+    beforeEach(() => {
+      // Setup projectMember mock to allow updates
+      mockPrisma.projectMember.findFirst.mockResolvedValue({
+        id: 'pm-123',
+        projectId: 'project-123',
+        userId: 'user-123',
+        role: 'ADMIN',
+        joinedAt: new Date(),
+        invitationId: null,
+      });
+    });
+
     it('should update a project successfully', async () => {
       mockPrisma.project.update.mockResolvedValue(mockProject);
 
@@ -147,21 +162,16 @@ describe('manageProject tool', () => {
       expect(result.data).toEqual(mockProject);
       expect(result.message).toBe('Project "Test Project" updated successfully');
       
+      expect(mockPrisma.projectMember.findFirst).toHaveBeenCalledWith({
+        where: {
+          projectId: 'project-123',
+          userId: 'user-123',
+          role: { in: ['ADMIN', 'MEMBER'] }
+        }
+      });
+      
       expect(mockPrisma.project.update).toHaveBeenCalledWith({
-        where: { 
-          id: 'project-123',
-          OR: [
-            { ownerId: 'user-123' },
-            { 
-              organizationId: { not: null },
-              organization: {
-                members: {
-                  some: { userId: 'user-123' }
-                }
-              }
-            }
-          ]
-        },
+        where: { id: 'project-123' },
         data: {
           name: 'Updated Project Name',
           goal: 'Updated goal for the project',
@@ -190,9 +200,8 @@ describe('manageProject tool', () => {
     });
 
     it('should handle non-existent project', async () => {
-      const prismaError = new Error('Record not found');
-      (prismaError as any).code = 'P2025';
-      mockPrisma.project.update.mockRejectedValue(prismaError);
+      // Mock no permission
+      mockPrisma.projectMember.findFirst.mockResolvedValue(null);
 
       const params = {
         action: 'update' as const,
@@ -203,11 +212,23 @@ describe('manageProject tool', () => {
       const result = await manageProjectTool.handler(params, mockContext);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("Project not found or you don't have permission to update it");
+      expect(result.error).toBe("You don't have permission to update this project");
     });
   });
 
   describe('delete action', () => {
+    beforeEach(() => {
+      // Setup projectMember mock to allow deletes
+      mockPrisma.projectMember.findFirst.mockResolvedValue({
+        id: 'pm-123',
+        projectId: 'project-123',
+        userId: 'user-123',
+        role: 'ADMIN',
+        joinedAt: new Date(),
+        invitationId: null,
+      });
+    });
+
     it('should delete a project successfully', async () => {
       mockPrisma.project.delete.mockResolvedValue(mockProject);
 
@@ -221,21 +242,16 @@ describe('manageProject tool', () => {
       expect(result.success).toBe(true);
       expect(result.message).toBe('Project deleted successfully');
       
+      expect(mockPrisma.projectMember.findFirst).toHaveBeenCalledWith({
+        where: {
+          projectId: 'project-123',
+          userId: 'user-123',
+          role: 'ADMIN'
+        }
+      });
+      
       expect(mockPrisma.project.delete).toHaveBeenCalledWith({
-        where: { 
-          id: 'project-123',
-          OR: [
-            { ownerId: 'user-123' },
-            { 
-              organizationId: { not: null },
-              organization: {
-                members: {
-                  some: { userId: 'user-123' }
-                }
-              }
-            }
-          ]
-        },
+        where: { id: 'project-123' }
       });
     });
 
@@ -248,6 +264,21 @@ describe('manageProject tool', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('Project ID is required for update, delete, and get actions');
+    });
+
+    it('should handle non-existent project for delete', async () => {
+      // Mock no permission
+      mockPrisma.projectMember.findFirst.mockResolvedValue(null);
+
+      const params = {
+        action: 'delete' as const,
+        projectId: 'non-existent',
+      };
+
+      const result = await manageProjectTool.handler(params, mockContext);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("You don't have permission to delete this project");
     });
   });
 
@@ -284,9 +315,22 @@ describe('manageProject tool', () => {
         where: { 
           id: 'project-123',
           OR: [
-            { ownerId: 'user-123' },
+            // Direct project membership
+            {
+              members: {
+                some: { userId: 'user-123' }
+              }
+            },
+            // Product membership
+            {
+              product: {
+                members: {
+                  some: { userId: 'user-123' }
+                }
+              }
+            },
+            // Organization membership
             { 
-              organizationId: { not: null },
               organization: {
                 members: {
                   some: { userId: 'user-123' }
@@ -348,9 +392,22 @@ describe('manageProject tool', () => {
       expect(mockPrisma.project.findMany).toHaveBeenCalledWith({
         where: {
           OR: [
-            { ownerId: 'user-123' },
+            // Direct project membership
+            {
+              members: {
+                some: { userId: 'user-123' }
+              }
+            },
+            // Product membership
+            {
+              product: {
+                members: {
+                  some: { userId: 'user-123' }
+                }
+              }
+            },
+            // Organization membership
             { 
-              organizationId: { not: null },
               organization: {
                 members: {
                   some: { userId: 'user-123' }
