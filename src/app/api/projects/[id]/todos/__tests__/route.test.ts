@@ -65,7 +65,10 @@ describe('/api/projects/[id]/todos', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
-    mockGetServerSession.mockResolvedValue(mockSession(mockUser))
+    mockGetServerSession.mockResolvedValue({
+      user: mockUser,
+      expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    })
     mockCanManageTodos.mockResolvedValue(true)
     mockIsValidAssignee.mockResolvedValue(true)
   })
@@ -168,7 +171,10 @@ describe('/api/projects/[id]/todos', () => {
 
     it('should create todo for accepted volunteer', async () => {
       const volunteerUser = createTestUser({ id: 'volunteer-1' })
-      mockGetServerSession.mockResolvedValue(mockSession(volunteerUser))
+      mockGetServerSession.mockResolvedValue({
+        user: volunteerUser,
+        expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      })
       
       mockPrisma.project.findUnique.mockResolvedValue({
         ...mockProject,
@@ -193,7 +199,11 @@ describe('/api/projects/[id]/todos', () => {
 
     it('should reject todo creation from non-participant', async () => {
       const otherUser = createTestUser({ id: 'other-user' })
-      mockGetServerSession.mockResolvedValue(mockSession(otherUser))
+      mockGetServerSession.mockResolvedValue({
+        user: otherUser,
+        expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      })
+      mockCanManageTodos.mockResolvedValue(false)
       
       mockPrisma.project.findUnique.mockResolvedValue(mockProject)
 
@@ -213,6 +223,7 @@ describe('/api/projects/[id]/todos', () => {
     it('should validate assignee is project participant', async () => {
       mockPrisma.project.findUnique.mockResolvedValue(mockProject)
       mockPrisma.application.findUnique.mockResolvedValue(null)
+      mockIsValidAssignee.mockResolvedValue(false)
 
       const req = createMockRequest({
         method: 'POST',

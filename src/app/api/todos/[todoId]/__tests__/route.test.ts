@@ -79,7 +79,10 @@ describe('/api/todos/[todoId]', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
-    mockSession(mockUser)
+    mockGetServerSession.mockResolvedValue({
+      user: mockUser,
+      expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    })
     mockCanUpdateTodo.mockResolvedValue(true)
     mockCanDeleteTodo.mockResolvedValue(true)
     mockIsValidAssignee.mockResolvedValue(true)
@@ -87,7 +90,6 @@ describe('/api/todos/[todoId]', () => {
 
   describe('GET', () => {
     it('should return todo details', async () => {
-      mockSession(mockUser)
       mockPrisma.todo.findUnique.mockResolvedValue(mockTodo)
 
       const req = createMockRequest({
@@ -145,7 +147,10 @@ describe('/api/todos/[todoId]', () => {
     })
 
     it('should update todo for creator', async () => {
-      mockSession(mockCreator)
+      mockGetServerSession.mockResolvedValue({
+        user: mockCreator,
+        expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      })
       mockCanUpdateTodo.mockResolvedValue(true)
       
       mockPrisma.todo.findUnique.mockResolvedValue({ projectId: mockProject.id })
@@ -169,7 +174,10 @@ describe('/api/todos/[todoId]', () => {
     })
 
     it('should update todo for assignee', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession(mockAssignee))
+      mockGetServerSession.mockResolvedValue({
+        user: mockAssignee,
+        expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      })
       mockCanUpdateTodo.mockResolvedValue(true)
       
       mockPrisma.todo.findUnique.mockResolvedValue({ projectId: mockProject.id })
@@ -191,7 +199,10 @@ describe('/api/todos/[todoId]', () => {
 
     it('should reject update from non-participant', async () => {
       const otherUser = createTestUser({ id: 'other-user' })
-      mockGetServerSession.mockResolvedValue(mockSession(otherUser))
+      mockGetServerSession.mockResolvedValue({
+        user: otherUser,
+        expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      })
       mockCanUpdateTodo.mockResolvedValue(false)
 
       const req = createMockRequest({
@@ -208,7 +219,10 @@ describe('/api/todos/[todoId]', () => {
     })
 
     it('should validate assignee is project participant', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession(mockCreator))
+      mockGetServerSession.mockResolvedValue({
+        user: mockCreator,
+        expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      })
       mockCanUpdateTodo.mockResolvedValue(true)
       mockIsValidAssignee.mockResolvedValue(false)
       
@@ -232,7 +246,10 @@ describe('/api/todos/[todoId]', () => {
 
   describe('DELETE', () => {
     it('should delete todo for creator', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession(mockCreator))
+      mockGetServerSession.mockResolvedValue({
+        user: mockCreator,
+        expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      })
       mockCanDeleteTodo.mockResolvedValue(true)
 
       const req = createMockRequest({
@@ -252,7 +269,10 @@ describe('/api/todos/[todoId]', () => {
 
     it('should delete todo for project owner', async () => {
       const projectOwner = createTestUser({ id: mockProject.ownerId })
-      mockGetServerSession.mockResolvedValue(mockSession(projectOwner))
+      mockGetServerSession.mockResolvedValue({
+        user: projectOwner,
+        expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      })
       mockCanDeleteTodo.mockResolvedValue(true)
 
       const req = createMockRequest({
@@ -268,7 +288,10 @@ describe('/api/todos/[todoId]', () => {
 
     it('should reject delete from non-authorized user', async () => {
       const otherUser = createTestUser({ id: 'other-user' })
-      mockGetServerSession.mockResolvedValue(mockSession(otherUser))
+      mockGetServerSession.mockResolvedValue({
+        user: otherUser,
+        expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      })
       mockCanDeleteTodo.mockResolvedValue(false)
 
       const req = createMockRequest({
