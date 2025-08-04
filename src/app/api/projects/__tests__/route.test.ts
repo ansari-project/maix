@@ -37,6 +37,8 @@ jest.mock('@/lib/prisma', () => ({
     },
     projectMember: {
       create: jest.fn(),
+      findFirst: jest.fn(),
+      findUnique: jest.fn(),
     },
     post: {
       create: jest.fn(),

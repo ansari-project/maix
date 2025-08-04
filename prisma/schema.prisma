@@ -20,19 +20,21 @@ model Organization {
   members      OrganizationMember[]
   products     Product[]
   projects     Project[]
+  invitations  Invitation[]
 
   @@map("organizations")
 }
 
 model OrganizationMember {
   id             String       @id @default(cuid())
-  role           OrgRole      // Will be migrated to UnifiedRole
+  role           OrgRole
   joinedAt       DateTime     @default(now())
   organizationId String
   userId         String
-  invitationId   String?      // Track invitation source
+  invitationId   String?
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invitation     Invitation?  @relation(fields: [invitationId], references: [id])
 
   @@unique([organizationId, userId])
   @@index([userId])
@@ -47,9 +49,10 @@ model ProductMember {
   joinedAt     DateTime    @default(now())
   productId    String
   userId       String
-  invitationId String?     // Track invitation source
-  product      Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  invitationId String?
+  product      Product     @relation(fields: [productId], references: [id], onDelete: Cascade)  
   user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invitation   Invitation? @relation(fields: [invitationId], references: [id])
 
   @@unique([productId, userId])
   @@index([userId])
@@ -63,9 +66,10 @@ model ProjectMember {
   joinedAt     DateTime    @default(now())
   projectId    String
   userId       String
-  invitationId String?     // Track invitation source
+  invitationId String?
   project      Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
   user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invitation   Invitation? @relation(fields: [invitationId], references: [id])
 
   @@unique([projectId, userId])
   @@index([userId])
@@ -100,14 +104,15 @@ model User {
   notificationPreference  NotificationPreference?
   notifications           Notification[]
   organizationMemberships OrganizationMember[]
-  productMemberships      ProductMember[]
-  projectMemberships      ProjectMember[]
   personalAccessTokens    PersonalAccessToken[]
   posts                   Post[]
-  products                Product[]               // Legacy - to be removed after migration
-  projects                Project[]               // Legacy - to be removed after migration
-  todosCreated            Todo[]                  @relation("TodosCreated")
+  productMemberships      ProductMember[]
+  products                Product[]
+  projectMemberships      ProjectMember[]
+  projects                Project[]
   todosAssigned           Todo[]                  @relation("TodosAssigned")
+  todosCreated            Todo[]                  @relation("TodosCreated")
+  invitationsSent         Invitation[]            @relation("InvitationsSent")
 
   @@index([skills], type: Gin)
   @@map("users")
@@ -125,7 +130,7 @@ model Project {
   isActive             Boolean         @default(true)
   createdAt            DateTime        @default(now())
   updatedAt            DateTime        @updatedAt
-  ownerId              String?         // Legacy - to be removed after migration
+  ownerId              String?
   productId            String?
   organizationId       String?
   visibility           Visibility      @default(PUBLIC)
@@ -138,6 +143,7 @@ model Project {
   owner                User?           @relation(fields: [ownerId], references: [id])
   product              Product?        @relation(fields: [productId], references: [id])
   todos                Todo[]
+  invitations          Invitation[]
 
   @@index([isActive, createdAt])
   @@index([status])
@@ -151,7 +157,7 @@ model Product {
   url            String?
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
-  ownerId        String?         // Legacy - to be removed after migration
+  ownerId        String?
   organizationId String?
   visibility     Visibility      @default(PUBLIC)
   discussionPost Post?           @relation("ProductDiscussionThread")
@@ -160,6 +166,7 @@ model Product {
   organization   Organization?   @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   owner          User?           @relation(fields: [ownerId], references: [id], onDelete: Restrict)
   projects       Project[]
+  invitations    Invitation[]
 
   @@map("products")
 }
@@ -211,11 +218,12 @@ model PersonalAccessToken {
 /// Implements the "Discussion Anchor Pattern" where PROJECT_DISCUSSION and PRODUCT_DISCUSSION
 /// posts serve as anchors for comments on projects/products.
 model Post {
-  id                        String    @id @default(cuid())
-  createdAt                 DateTime  @default(now())
-  updatedAt                 DateTime  @updatedAt
+  id                        String     @id @default(cuid())
+  createdAt                 DateTime   @default(now())
+  updatedAt                 DateTime   @updatedAt
   type                      PostType
   content                   String
+  visibility                Visibility @default(PUBLIC)
   authorId                  String?
   projectId                 String?
   projectDiscussionThreadId String?   @unique
@@ -235,7 +243,7 @@ model Post {
   product                   Product?  @relation("ProductUpdates", fields: [productId], references: [id], onDelete: Cascade)
   projectDiscussionThread   Project?  @relation("ProjectDiscussionThread", fields: [projectDiscussionThreadId], references: [id], onDelete: Cascade)
   project                   Project?  @relation("ProjectUpdates", fields: [projectId], references: [id], onDelete: Cascade)
-  todo                      Todo?     @relation("TodoPosts", fields: [todoId], references: [id], onDelete: SetNull)
+  todo                      Todo?     @relation("TodoPosts", fields: [todoId], references: [id])
 
   @@index([authorId])
   @@index([projectId])
@@ -402,6 +410,76 @@ model EmailReport {
   @@map("email_reports")
 }
 
+model Todo {
+  id          String     @id @default(cuid())
+  title       String     @db.VarChar(255)
+  description String?
+  status      TodoStatus @default(OPEN)
+  dueDate     DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  projectId   String
+  creatorId   String
+  assigneeId  String?
+  posts       Post[]     @relation("TodoPosts")
+  assignee    User?      @relation("TodosAssigned", fields: [assigneeId], references: [id])
+  creator     User       @relation("TodosCreated", fields: [creatorId], references: [id])
+  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, status])
+  @@index([assigneeId, status])
+  @@map("todos")
+}
+
+model Invitation {
+  id             String           @id @default(cuid())
+  token          String           @unique @db.VarChar(64) // Secure token for invitation URL
+  email          String           @db.VarChar(255)
+  status         InvitationStatus @default(PENDING)
+  role           UnifiedRole      @default(MEMBER)
+  message        String?          @db.Text // Personal message from inviter
+  expiresAt      DateTime
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  acceptedAt     DateTime?
+  
+  // Inviter information
+  inviterId      String
+  inviter        User             @relation("InvitationsSent", fields: [inviterId], references: [id])
+  
+  // Entity being invited to (one of these will be set)
+  organizationId String?
+  productId      String?
+  projectId      String?
+  
+  // Entity relations
+  organization   Organization?    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  product        Product?         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  project        Project?         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  // Membership relations (created when invitation is accepted)
+  organizationMember OrganizationMember[]
+  productMember      ProductMember[]
+  projectMember      ProjectMember[]
+
+  @@index([token]) // Fast token lookup
+  @@index([email, status]) // Find pending invitations for email
+  @@index([organizationId, status]) // Org invitation management
+  @@index([productId, status]) // Product invitation management  
+  @@index([projectId, status]) // Project invitation management
+  @@index([inviterId]) // Inviter's sent invitations
+  @@index([expiresAt, status]) // Cleanup expired invitations
+  @@map("invitations")
+}
+
+enum InvitationStatus {
+  PENDING   // Invitation sent, awaiting response
+  ACCEPTED  // Invitation accepted, membership created
+  DECLINED  // Invitation declined by recipient
+  EXPIRED   // Invitation expired
+  CANCELLED // Invitation cancelled by inviter
+}
+
 enum Visibility {
   PUBLIC
   PRIVATE
@@ -415,7 +493,6 @@ enum UnifiedRole {
   VIEWER
 }
 
-// Legacy enum - to be removed after migration
 enum OrgRole {
   OWNER
   MEMBER
@@ -473,29 +550,6 @@ enum NotificationType {
   ANSWER_NEW
   NEW_QUESTION
   NEW_PROJECT
-}
-
-model Todo {
-  id          String     @id @default(cuid())
-  title       String     @db.VarChar(255)
-  description String?    @db.Text
-  status      TodoStatus @default(OPEN)
-  dueDate     DateTime?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  
-  projectId   String
-  creatorId   String
-  assigneeId  String?
-  
-  project     Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  creator     User    @relation("TodosCreated", fields: [creatorId], references: [id])
-  assignee    User?   @relation("TodosAssigned", fields: [assigneeId], references: [id], onDelete: SetNull)
-  posts       Post[]  @relation("TodoPosts")
-  
-  @@index([projectId, status])
-  @@index([assigneeId, status])
-  @@map("todos")
 }
 
 enum TodoStatus {

@@ -159,3 +159,122 @@ export async function can(
   const requiredRole = actionRoleMap[action] || 'ADMIN'
   return hasPermission(role, requiredRole)
 }
+
+// Custom error for not found entities
+export class NotFoundError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'NotFoundError'
+  }
+}
+
+// Visibility-aware entity fetching
+export async function canViewEntity(
+  entityType: 'organization' | 'product' | 'project' | 'post',
+  entityId: string,
+  userId?: string
+): Promise<{ entity: any, user: any, role: UnifiedRole | null }> {
+  let entity
+  let user = null
+  let role: UnifiedRole | null = null
+  
+  // Get user if authenticated
+  if (userId) {
+    user = await prisma.user.findUnique({
+      where: { id: userId }
+    })
+  }
+  
+  // Fetch entity with visibility
+  switch (entityType) {
+    case 'organization':
+      entity = await prisma.organization.findUnique({
+        where: { id: entityId },
+        include: {
+          members: true,
+          products: true,
+          projects: true
+        }
+      })
+      // Organizations are always visible (they don't have visibility field yet)
+      break
+      
+    case 'product':
+      entity = await prisma.product.findUnique({
+        where: { id: entityId },
+        include: {
+          members: true,
+          projects: true,
+          organization: true
+        }
+      })
+      break
+      
+    case 'project':
+      entity = await prisma.project.findUnique({
+        where: { id: entityId },
+        include: {
+          members: true,
+          product: true,
+          organization: true
+        }
+      })
+      break
+      
+    case 'post':
+      entity = await prisma.post.findUnique({
+        where: { id: entityId },
+        include: {
+          author: true,
+          project: true,
+          product: true
+        }
+      })
+      break
+  }
+  
+  if (!entity) {
+    throw new NotFoundError(`${entityType} not found`)
+  }
+  
+  // Check visibility permissions
+  if (entityType === 'organization' || (entity as any).visibility === 'PUBLIC') {
+    // For public content, get role if user is authenticated
+    if (user && entityType !== 'post') {
+      role = await getEffectiveRole(user.id, entityType as 'organization' | 'product' | 'project', entityId)
+    }
+    return { entity, user, role }
+  }
+  
+  // Private/Draft content requires authentication and permissions
+  if (!user) {
+    throw new NotFoundError(`${entityType} not found`)
+  }
+  
+  // For posts with DRAFT visibility, only the author can see it
+  if ((entity as any).visibility === 'DRAFT' && entityType === 'post') {
+    if ((entity as any).authorId !== user.id) {
+      throw new NotFoundError(`${entityType} not found`)
+    }
+    // For draft posts, no role needed as it's author-only access
+    return { entity, user, role: null }
+  }
+  
+  // For private content, check if user has access via RBAC
+  // Get the role first since can() will need it anyway
+  if (entityType !== 'post') {
+    role = await getEffectiveRole(user.id, entityType as 'organization' | 'product' | 'project', entityId)
+  }
+  
+  const hasAccess = await can(user, 'read', {
+    id: entityId,
+    type: entityType as 'organization' | 'product' | 'project',
+    visibility: (entity as any).visibility
+  })
+  
+  if (!hasAccess) {
+    throw new NotFoundError(`${entityType} not found`)
+  }
+  
+  return { entity, user, role }
+}
