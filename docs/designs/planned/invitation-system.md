@@ -1,7 +1,14 @@
-# Invitation System Design
+# Invitation System Design with Visibility Controls
 
 ## Overview
-Design for a hierarchical invitation system that allows users to invite others to organizations, products, or projects with automatic hierarchical membership propagation.
+Design for a unified invitation and visibility system that combines hierarchical invitation capabilities with content visibility controls. This system allows users to invite others to organizations, products, or projects while managing public/private visibility of content.
+
+## Key Features
+1. **Unified Access Control**: Single system for both invitations and visibility
+2. **Content Visibility**: Projects, products, and posts can be PUBLIC, PRIVATE, or DRAFT
+3. **Same URLs**: No separate public URLs - same URLs work for all users based on permissions
+4. **Security**: Private content returns 404 for unauthorized users (not 403)
+5. **Progressive Enhancement**: Show appropriate content based on authentication and permissions
 
 ## Core Requirements
 
@@ -19,11 +26,100 @@ Design for a hierarchical invitation system that allows users to invite others t
    - Organization membership ≠ Access to all products/projects
    - Product membership ≠ Access to all projects
 
+## Visibility Controls Integration
+
+### Visibility Levels
+- **PUBLIC**: Visible to all users (including unauthenticated)
+- **PRIVATE**: Only visible to members with appropriate roles
+- **DRAFT**: Only visible to the author (for posts)
+
+### Access Control Flow
+1. **Check Visibility First**: Determine if content is public
+2. **Check Authentication**: For private content, require authentication
+3. **Check Permissions**: Use RBAC to determine access level
+4. **Return 404 for Unauthorized**: Hide existence of private content
+
+### Unified Permission System
+
+```typescript
+// Core authorization function
+export async function can(
+  user: User | null, 
+  action: 'read' | 'update' | 'delete' | 'invite' | 'manage_members',
+  entity: { id: string, type: EntityType, visibility?: Visibility }
+): Promise<boolean> {
+  // Public read access
+  if (action === 'read' && entity.visibility === 'PUBLIC') {
+    return true
+  }
+  
+  // All other actions require auth
+  if (!user) return false
+  
+  // Get effective role from RBAC
+  const role = await getEffectiveRole(user.id, entity.type, entity.id)
+  
+  // Check permission based on role and action
+  return hasPermission(role, action)
+}
+```
+
+### Page Implementation Pattern
+
+```typescript
+// Same URL works for all users
+// app/projects/[id]/page.tsx
+export default async function ProjectPage({ params }) {
+  const session = await getServerSession(authOptions)
+  
+  try {
+    const { entity: project, user } = await canViewEntity(
+      'project', 
+      params.id, 
+      session?.user?.id
+    )
+    
+    // Progressive enhancement based on permissions
+    const userRole = user 
+      ? await getEffectiveRole(user.id, 'project', params.id) 
+      : null
+    
+    return <ProjectView project={project} currentUser={user} userRole={userRole} />
+  } catch (error) {
+    if (error instanceof NotFoundError) {
+      notFound() // 404 for private content
+    }
+    throw error
+  }
+}
+```
+
 ## Final Design (After DRS Process)
 
 ### Database Schema
 
 ```typescript
+// Visibility enum
+enum Visibility {
+  PUBLIC
+  PRIVATE
+  DRAFT    // Only for posts
+}
+
+// Add visibility to entities
+model Product {
+  // ... existing fields
+  visibility Visibility @default(PUBLIC)
+}
+
+model Post {
+  // ... existing fields  
+  visibility Visibility @default(PUBLIC)
+  isDraft    Boolean    @default(false)
+}
+
+// Note: Project already has visibility field
+
 // Invitations table
 {
   id: string
@@ -408,7 +504,16 @@ async function removeFromOrganization(userId: string, organizationId: string) {
 - Update all permission checks to use new system
 - **Goal**: Solid RBAC foundation before adding invitations
 
-### Phase 1: Basic Organization Invitations
+### Phase 1: Visibility Layer
+- Add visibility field to Product and Post models
+- Implement `can()` authorization function
+- Implement `canViewEntity()` for visibility-aware fetching
+- Update all pages to handle both authenticated and unauthenticated users
+- Update API routes to return 404 for unauthorized private content
+- Remove any separate public URL patterns
+- **Goal**: Unified URLs with visibility-based access control
+
+### Phase 2: Basic Organization Invitations
 - Create invitations table with core fields
 - Implement token generation and validation
 - Build invitation API for organizations only
@@ -416,19 +521,20 @@ async function removeFromOrganization(userId: string, organizationId: string) {
 - Basic UI for creating and accepting org invitations
 - **Goal**: Prove the invitation system works at one level
 
-### Phase 2: Hierarchical Invitations
+### Phase 3: Hierarchical Invitations
 - Extend invitations to Products and Projects
 - Implement hierarchical membership propagation
 - Add transactional acceptance with role assignment
 - Handle role conflict resolution (highest wins)
 - **Goal**: Full hierarchical invitation system
 
-### Phase 3: Production Readiness
+### Phase 4: Production Readiness
 - Implement cascade deletion for membership revocation
 - Create invitation management dashboard
+- Add cache invalidation strategy (session versioning)
+- Implement timing attack prevention
 - Add metrics and monitoring
-- Performance optimization only if needed
-- **Goal**: Scalable, maintainable system
+- **Goal**: Scalable, secure, maintainable system
 
 ## User Experience Flows
 
@@ -454,17 +560,18 @@ async function removeFromOrganization(userId: string, organizationId: string) {
 4. **Performance**: Consider caching for membership checks at scale
 5. **Monitoring**: Track invitation metrics for UX improvements
 
-## Summary of Simplified Design
+## Summary of Unified Design
 
-After the DRS process, the design has been significantly simplified:
+After merging visibility controls with the invitation system, we have a comprehensive access control solution:
 
-1. **Unified Roles**: One consistent role model (OWNER, ADMIN, MEMBER, VIEWER) across all entities
-2. **Clean Migration**: One-time migration instead of long backward compatibility period
-3. **Simple Permission Checks**: Direct database queries with inheritance, no caching complexity
-4. **Clear Inheritance**: Explicit rules for permission inheritance with overrides
-5. **Revised Phases**: Start with RBAC foundation before building invitations
+1. **Unified System**: Single system handles both visibility (PUBLIC/PRIVATE/DRAFT) and permissions (RBAC)
+2. **Same URLs**: No separate public URLs - same endpoints serve different content based on auth/permissions
+3. **Security by Default**: Private content returns 404 to unauthorized users, preventing information leakage
+4. **Progressive Enhancement**: Public users see public content, authenticated users see what they have access to
+5. **Clear Architecture**: Visibility checked first, then authentication, then permissions
+6. **Simplified Implementation**: Build on RBAC foundation, add visibility layer, then invitations
 
-The key insight is that we need a solid RBAC system first (Phase 0) before we can properly implement invitations. This ensures we have the right permission infrastructure in place.
+The key insight is that visibility and permissions are complementary but separate concerns. Visibility determines what can potentially be seen, while permissions determine who can see it. This separation makes the system both secure and user-friendly.
 
 ## MCP Integration
 
