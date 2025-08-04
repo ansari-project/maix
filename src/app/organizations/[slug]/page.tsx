@@ -8,7 +8,7 @@ import { FolderOpen, Users, Settings, LogOut, Globe } from "lucide-react"
 import Link from "next/link"
 import { Markdown } from "@/components/ui/markdown"
 import OrganizationProjectsList from "./components/OrganizationProjectsList"
-import OrganizationMembersList from "./components/OrganizationMembersList"
+import OrganizationMembersWithInvites from "./components/OrganizationMembersWithInvites"
 import LeaveOrganizationButton from "./components/LeaveOrganizationButton"
 import { getOrganizationBySlug } from "@/lib/organization-service"
 
@@ -30,9 +30,10 @@ export default async function OrganizationPage({ params }: PageProps) {
     notFound()
   }
 
-  // Check if current user is owner
+  // Check if current user is owner or admin
   const currentMember = organization.members?.find((m: any) => m.userId === session.user.id)
   const isOwner = currentMember?.role === 'OWNER'
+  const isAdmin = isOwner // In organizations, only OWNER has admin rights
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -124,10 +125,12 @@ export default async function OrganizationPage({ params }: PageProps) {
         </TabsContent>
         
         <TabsContent value="members" className="mt-6">
-          <OrganizationMembersList 
+          <OrganizationMembersWithInvites 
             organizationId={organization.id}
+            organizationName={organization.name}
             members={organization.members || []}
             isOwner={isOwner}
+            isAdmin={isAdmin}
             currentUserId={session.user.id}
           />
         </TabsContent>

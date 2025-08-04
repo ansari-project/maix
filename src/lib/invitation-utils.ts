@@ -29,8 +29,9 @@ export function getDefaultExpiration(): Date {
 /**
  * Generate invitation URL for email
  */
-export function generateInvitationUrl(token: string, baseUrl: string = process.env.NEXT_PUBLIC_URL!): string {
-  return `${baseUrl}/accept-invitation?token=${token}`;
+export function generateInvitationUrl(token: string, baseUrl?: string): string {
+  const base = baseUrl || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  return `${base}/accept-invitation?token=${token}`;
 }
 
 /**

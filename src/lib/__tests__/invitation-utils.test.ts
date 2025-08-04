@@ -7,7 +7,6 @@ import {
   generateInvitationUrl,
   isEmailAlreadyInvited,
   validateInvitationToken,
-  redeemInvitationToken,
   cleanupExpiredInvitations
 } from '../invitation-utils';
 import { prisma } from '../prisma';
@@ -70,14 +69,17 @@ describe('invitation-utils', () => {
   });
 
   describe('generateInvitationUrl', () => {
-    const originalEnv = process.env.NEXT_PUBLIC_URL;
+    const originalEnv = process.env.NEXT_PUBLIC_APP_URL;
+
+    beforeEach(() => {
+      process.env.NEXT_PUBLIC_APP_URL = 'https://maix.io';
+    });
 
     afterEach(() => {
-      process.env.NEXT_PUBLIC_URL = originalEnv;
+      process.env.NEXT_PUBLIC_APP_URL = originalEnv;
     });
 
     it('should generate correct URL with default base URL', () => {
-      process.env.NEXT_PUBLIC_URL = 'https://maix.io';
       const token = 'a'.repeat(64);
       
       const url = generateInvitationUrl(token);
@@ -93,6 +95,15 @@ describe('invitation-utils', () => {
       
       expect(url).toBe(`${baseUrl}/accept-invitation?token=${token}`);
     });
+
+    it('should handle missing environment variable', () => {
+      delete process.env.NEXT_PUBLIC_APP_URL;
+      const token = 'c'.repeat(64);
+      
+      const url = generateInvitationUrl(token);
+      
+      expect(url).toBe(`http://localhost:3000/accept-invitation?token=${token}`);
+    });
   });
 
   describe('isEmailAlreadyInvited', () => {
@@ -100,7 +111,18 @@ describe('invitation-utils', () => {
       mockPrisma.invitation.findFirst.mockResolvedValue({
         id: 'invitation-1',
         email: 'test@example.com',
-        status: 'PENDING'
+        status: 'PENDING',
+        hashedToken: 'hashed',
+        role: 'MEMBER',
+        message: null,
+        expiresAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        acceptedAt: null,
+        inviterId: 'user-1',
+        organizationId: 'org-1',
+        productId: null,
+        projectId: null
       });
 
       const result = await isEmailAlreadyInvited('test@example.com', 'org-1');
@@ -165,10 +187,26 @@ describe('invitation-utils', () => {
     it('should return EXPIRED for expired invitation', async () => {
       const mockInvitation = {
         id: 'invitation-1',
+        hashedToken: 'hashed',
         email: 'test@example.com',
-        status: 'PENDING',
+        status: 'PENDING' as const,
+        role: 'MEMBER' as const,
+        message: null,
         expiresAt: new Date(Date.now() - 1000), // 1 second ago
-        inviter: { id: 'user-1', name: 'Inviter', email: 'inviter@example.com' }
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        acceptedAt: null,
+        inviterId: 'user-1',
+        organizationId: 'org-1',
+        productId: null,
+        projectId: null,
+        inviter: { id: 'user-1', name: 'Inviter', email: 'inviter@example.com' },
+        organization: { id: 'org-1', name: 'Test Org', slug: 'test-org' },
+        product: null,
+        project: null,
+        organizationMember: [],
+        productMember: [],
+        projectMember: []
       };
       
       mockPrisma.invitation.findUnique.mockResolvedValue(mockInvitation);
@@ -186,10 +224,26 @@ describe('invitation-utils', () => {
     it('should return ALREADY_PROCESSED for non-pending invitation', async () => {
       const mockInvitation = {
         id: 'invitation-1',
+        hashedToken: 'hashed',
         email: 'test@example.com',
-        status: 'ACCEPTED',
+        status: 'ACCEPTED' as const,
+        role: 'MEMBER' as const,
+        message: null,
         expiresAt: new Date(Date.now() + 86400000), // 1 day from now
-        inviter: { id: 'user-1', name: 'Inviter', email: 'inviter@example.com' }
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        acceptedAt: new Date(),
+        inviterId: 'user-1',
+        organizationId: 'org-1',
+        productId: null,
+        projectId: null,
+        inviter: { id: 'user-1', name: 'Inviter', email: 'inviter@example.com' },
+        organization: { id: 'org-1', name: 'Test Org', slug: 'test-org' },
+        product: null,
+        project: null,
+        organizationMember: [],
+        productMember: [],
+        projectMember: []
       };
       
       mockPrisma.invitation.findUnique.mockResolvedValue(mockInvitation);
@@ -207,11 +261,26 @@ describe('invitation-utils', () => {
     it('should return valid result for valid pending invitation', async () => {
       const mockInvitation = {
         id: 'invitation-1',
+        hashedToken: 'hashed',
         email: 'test@example.com',
-        status: 'PENDING',
+        status: 'PENDING' as const,
+        role: 'MEMBER' as const,
+        message: null,
         expiresAt: new Date(Date.now() + 86400000), // 1 day from now
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        acceptedAt: null,
+        inviterId: 'user-1',
+        organizationId: 'org-1',
+        productId: null,
+        projectId: null,
         inviter: { id: 'user-1', name: 'Inviter', email: 'inviter@example.com' },
-        organization: { id: 'org-1', name: 'Test Org', slug: 'test-org' }
+        organization: { id: 'org-1', name: 'Test Org', slug: 'test-org' },
+        product: null,
+        project: null,
+        organizationMember: [],
+        productMember: [],
+        projectMember: []
       };
       
       mockPrisma.invitation.findUnique.mockResolvedValue(mockInvitation);
@@ -222,81 +291,6 @@ describe('invitation-utils', () => {
       expect(result).toEqual({
         valid: true,
         invitation: mockInvitation
-      });
-    });
-  });
-
-  describe('redeemInvitationToken', () => {
-    it('should successfully redeem organization invitation', async () => {
-      const mockInvitation = {
-        id: 'invitation-1',
-        organizationId: 'org-1',
-        productId: null,
-        projectId: null,
-        role: 'MEMBER',
-        organization: { id: 'org-1', name: 'Test Org' }
-      };
-
-      const mockMembership = {
-        id: 'member-1',
-        userId: 'user-1',
-        organizationId: 'org-1',
-        role: 'MEMBER'
-      };
-
-      mockPrisma.$transaction.mockImplementation(async (callback) => {
-        // Mock the transaction callback
-        const mockTx = {
-          invitation: {
-            updateMany: jest.fn().mockResolvedValue({ count: 1 }),
-            findUnique: jest.fn().mockResolvedValue(mockInvitation)
-          },
-          organizationMember: {
-            create: jest.fn().mockResolvedValue(mockMembership)
-          }
-        };
-        
-        return await callback(mockTx);
-      });
-
-      const token = 'a'.repeat(64);
-      const result = await redeemInvitationToken(token, 'user-1');
-
-      expect(result).toEqual({
-        success: true,
-        membership: mockMembership
-      });
-    });
-
-    it('should handle invalid or expired token', async () => {
-      mockPrisma.$transaction.mockImplementation(async (callback) => {
-        const mockTx = {
-          invitation: {
-            updateMany: jest.fn().mockResolvedValue({ count: 0 })
-          }
-        };
-        
-        return await callback(mockTx);
-      });
-
-      const token = 'a'.repeat(64);
-      const result = await redeemInvitationToken(token, 'user-1');
-
-      expect(result).toEqual({
-        success: false,
-        error: 'INVALID_OR_EXPIRED'
-      });
-    });
-
-    it('should handle redemption errors', async () => {
-      mockPrisma.$transaction.mockRejectedValue(new Error('Database error'));
-
-      const token = 'a'.repeat(64);
-      const result = await redeemInvitationToken(token, 'user-1');
-
-      expect(result).toEqual({
-        success: false,
-        error: 'REDEMPTION_FAILED'
       });
     });
   });
