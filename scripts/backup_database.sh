@@ -57,6 +57,11 @@ if $PG_DUMP "$DATABASE_URL" --data-only --no-owner > "$BACKUP_FILE" 2>"$ERROR_FI
     SIZE=$(ls -lh "$BACKUP_FILE" | awk '{print $5}')
     echo "Backup size: $SIZE"
     
+    # Show table row counts from the backup file
+    echo ""
+    echo -e "${YELLOW}Table row counts from backup:${NC}"
+    awk '/^COPY/ {table=$2; count=0} /^COPY/ {next} /^\\.$/ {printf "%-40s %6d rows\n", table, count; next} {count++}' "$BACKUP_FILE" | sort -k3 -nr | head -20
+    
     # Keep only the last 20 backups to save space
     BACKUP_COUNT=$(ls -1 "$BACKUP_DIR"/maix_backup_*.sql 2>/dev/null | wc -l)
     if [ "$BACKUP_COUNT" -gt 20 ]; then

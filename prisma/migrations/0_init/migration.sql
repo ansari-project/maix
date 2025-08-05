@@ -1,5 +1,11 @@
 -- CreateEnum
-CREATE TYPE "Visibility" AS ENUM ('PUBLIC', 'PRIVATE');
+CREATE TYPE "InvitationStatus" AS ENUM ('PENDING', 'ACCEPTED', 'DECLINED', 'EXPIRED', 'CANCELLED');
+
+-- CreateEnum
+CREATE TYPE "Visibility" AS ENUM ('PUBLIC', 'PRIVATE', 'DRAFT');
+
+-- CreateEnum
+CREATE TYPE "UnifiedRole" AS ENUM ('OWNER', 'ADMIN', 'MEMBER', 'VIEWER');
 
 -- CreateEnum
 CREATE TYPE "OrgRole" AS ENUM ('OWNER', 'MEMBER');
@@ -25,11 +31,18 @@ CREATE TYPE "PostType" AS ENUM ('QUESTION', 'ANSWER', 'PROJECT_UPDATE', 'PRODUCT
 -- CreateEnum
 CREATE TYPE "NotificationType" AS ENUM ('APPLICATION_NEW', 'APPLICATION_ACCEPTED', 'APPLICATION_REJECTED', 'ANSWER_NEW', 'NEW_QUESTION', 'NEW_PROJECT');
 
+-- CreateEnum
+CREATE TYPE "TodoStatus" AS ENUM ('OPEN', 'IN_PROGRESS', 'COMPLETED');
+
 -- CreateTable
 CREATE TABLE "organizations" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
+    "mission" TEXT,
+    "description" TEXT,
+    "url" TEXT,
+    "aiEngagement" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -43,8 +56,33 @@ CREATE TABLE "organization_members" (
     "joinedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "organizationId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
+    "invitationId" TEXT,
 
     CONSTRAINT "organization_members_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "product_members" (
+    "id" TEXT NOT NULL,
+    "role" "UnifiedRole" NOT NULL DEFAULT 'MEMBER',
+    "joinedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "productId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "invitationId" TEXT,
+
+    CONSTRAINT "product_members_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "project_members" (
+    "id" TEXT NOT NULL,
+    "role" "UnifiedRole" NOT NULL DEFAULT 'MEMBER',
+    "joinedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "projectId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "invitationId" TEXT,
+
+    CONSTRAINT "project_members_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -153,6 +191,7 @@ CREATE TABLE "posts" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "type" "PostType" NOT NULL,
     "content" TEXT NOT NULL,
+    "visibility" "Visibility" NOT NULL DEFAULT 'PUBLIC',
     "authorId" TEXT,
     "projectId" TEXT,
     "projectDiscussionThreadId" TEXT,
@@ -161,6 +200,7 @@ CREATE TABLE "posts" (
     "parentId" TEXT,
     "isResolved" BOOLEAN NOT NULL DEFAULT false,
     "bestAnswerId" TEXT,
+    "todoId" TEXT,
 
     CONSTRAINT "posts_pkey" PRIMARY KEY ("id")
 );
@@ -292,6 +332,42 @@ CREATE TABLE "email_reports" (
     CONSTRAINT "email_reports_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "todos" (
+    "id" TEXT NOT NULL,
+    "title" VARCHAR(255) NOT NULL,
+    "description" TEXT,
+    "status" "TodoStatus" NOT NULL DEFAULT 'OPEN',
+    "dueDate" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "projectId" TEXT NOT NULL,
+    "creatorId" TEXT NOT NULL,
+    "assigneeId" TEXT,
+
+    CONSTRAINT "todos_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "invitations" (
+    "id" TEXT NOT NULL,
+    "hashedToken" VARCHAR(64) NOT NULL,
+    "email" VARCHAR(255) NOT NULL,
+    "status" "InvitationStatus" NOT NULL DEFAULT 'PENDING',
+    "role" "UnifiedRole" NOT NULL DEFAULT 'MEMBER',
+    "message" TEXT,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "acceptedAt" TIMESTAMP(3),
+    "inviterId" TEXT NOT NULL,
+    "organizationId" TEXT,
+    "productId" TEXT,
+    "projectId" TEXT,
+
+    CONSTRAINT "invitations_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "organizations_slug_key" ON "organizations"("slug");
 
@@ -302,7 +378,28 @@ CREATE INDEX "organization_members_userId_idx" ON "organization_members"("userId
 CREATE INDEX "organization_members_organizationId_idx" ON "organization_members"("organizationId");
 
 -- CreateIndex
+CREATE INDEX "organization_members_role_idx" ON "organization_members"("role");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "organization_members_organizationId_userId_key" ON "organization_members"("organizationId", "userId");
+
+-- CreateIndex
+CREATE INDEX "product_members_userId_idx" ON "product_members"("userId");
+
+-- CreateIndex
+CREATE INDEX "product_members_role_idx" ON "product_members"("role");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "product_members_productId_userId_key" ON "product_members"("productId", "userId");
+
+-- CreateIndex
+CREATE INDEX "project_members_userId_idx" ON "project_members"("userId");
+
+-- CreateIndex
+CREATE INDEX "project_members_role_idx" ON "project_members"("role");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "project_members_projectId_userId_key" ON "project_members"("projectId", "userId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
@@ -368,6 +465,9 @@ CREATE INDEX "posts_bestAnswerId_idx" ON "posts"("bestAnswerId");
 CREATE INDEX "posts_type_createdAt_idx" ON "posts"("type", "createdAt");
 
 -- CreateIndex
+CREATE INDEX "posts_todoId_idx" ON "posts"("todoId");
+
+-- CreateIndex
 CREATE INDEX "comments_postId_idx" ON "comments"("postId");
 
 -- CreateIndex
@@ -424,11 +524,62 @@ CREATE INDEX "articles_contentHash_idx" ON "articles"("contentHash");
 -- CreateIndex
 CREATE INDEX "email_reports_monitorId_sentAt_idx" ON "email_reports"("monitorId", "sentAt");
 
+-- CreateIndex
+CREATE INDEX "todos_projectId_status_idx" ON "todos"("projectId", "status");
+
+-- CreateIndex
+CREATE INDEX "todos_assigneeId_status_idx" ON "todos"("assigneeId", "status");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "invitations_hashedToken_key" ON "invitations"("hashedToken");
+
+-- CreateIndex
+CREATE INDEX "invitations_hashedToken_idx" ON "invitations"("hashedToken");
+
+-- CreateIndex
+CREATE INDEX "invitations_email_status_idx" ON "invitations"("email", "status");
+
+-- CreateIndex
+CREATE INDEX "invitations_organizationId_status_idx" ON "invitations"("organizationId", "status");
+
+-- CreateIndex
+CREATE INDEX "invitations_productId_status_idx" ON "invitations"("productId", "status");
+
+-- CreateIndex
+CREATE INDEX "invitations_projectId_status_idx" ON "invitations"("projectId", "status");
+
+-- CreateIndex
+CREATE INDEX "invitations_inviterId_idx" ON "invitations"("inviterId");
+
+-- CreateIndex
+CREATE INDEX "invitations_expiresAt_status_idx" ON "invitations"("expiresAt", "status");
+
 -- AddForeignKey
 ALTER TABLE "organization_members" ADD CONSTRAINT "organization_members_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "organization_members" ADD CONSTRAINT "organization_members_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "organization_members" ADD CONSTRAINT "organization_members_invitationId_fkey" FOREIGN KEY ("invitationId") REFERENCES "invitations"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "product_members" ADD CONSTRAINT "product_members_productId_fkey" FOREIGN KEY ("productId") REFERENCES "products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "product_members" ADD CONSTRAINT "product_members_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "product_members" ADD CONSTRAINT "product_members_invitationId_fkey" FOREIGN KEY ("invitationId") REFERENCES "invitations"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "project_members" ADD CONSTRAINT "project_members_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "projects"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "project_members" ADD CONSTRAINT "project_members_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "project_members" ADD CONSTRAINT "project_members_invitationId_fkey" FOREIGN KEY ("invitationId") REFERENCES "invitations"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "projects" ADD CONSTRAINT "projects_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -479,6 +630,9 @@ ALTER TABLE "posts" ADD CONSTRAINT "posts_projectDiscussionThreadId_fkey" FOREIG
 ALTER TABLE "posts" ADD CONSTRAINT "posts_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "projects"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "posts" ADD CONSTRAINT "posts_todoId_fkey" FOREIGN KEY ("todoId") REFERENCES "todos"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "comments" ADD CONSTRAINT "comments_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -516,3 +670,25 @@ ALTER TABLE "articles" ADD CONSTRAINT "articles_eventId_fkey" FOREIGN KEY ("even
 
 -- AddForeignKey
 ALTER TABLE "email_reports" ADD CONSTRAINT "email_reports_monitorId_fkey" FOREIGN KEY ("monitorId") REFERENCES "monitors"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "todos" ADD CONSTRAINT "todos_assigneeId_fkey" FOREIGN KEY ("assigneeId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "todos" ADD CONSTRAINT "todos_creatorId_fkey" FOREIGN KEY ("creatorId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "todos" ADD CONSTRAINT "todos_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "projects"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "invitations" ADD CONSTRAINT "invitations_inviterId_fkey" FOREIGN KEY ("inviterId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "invitations" ADD CONSTRAINT "invitations_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "invitations" ADD CONSTRAINT "invitations_productId_fkey" FOREIGN KEY ("productId") REFERENCES "products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "invitations" ADD CONSTRAINT "invitations_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "projects"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+

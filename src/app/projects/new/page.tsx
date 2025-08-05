@@ -189,6 +189,7 @@ function NewProjectForm() {
                   <SelectContent>
                     <SelectItem value="ADVICE">Advice & Consultation</SelectItem>
                     <SelectItem value="PROTOTYPE">Prototype Development</SelectItem>
+                    <SelectItem value="FEATURE">Feature Development</SelectItem>
                     <SelectItem value="MVP">MVP Development</SelectItem>
                     <SelectItem value="FULL_PRODUCT">Full Product Development</SelectItem>
                   </SelectContent>

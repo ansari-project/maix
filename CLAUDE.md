@@ -9,26 +9,61 @@
 
 ## ⚠️ CRITICAL DATABASE SAFETY - READ BEFORE ANY PRISMA OPERATION ⚠️
 
-### Migration Best Practices (Updated August 3, 2025)
+### Migration Best Practices (Updated August 5, 2025 - AI Agent Compatible)
 
 1. **NEVER use `npx prisma db push`** - This command is destructive and will drop/recreate tables
-   - ❌ `npx prisma db push` - NEVER USE THIS
-   - ✅ `npx prisma migrate dev` - Use for development
-   - ✅ `npx prisma migrate deploy` - Use for production
+   - ❌ `npx prisma db push` - NEVER USE THIS on any shared database
+   - ❌ `npx prisma migrate dev` - Interactive only, breaks AI agents
+   - ✅ `npm run db:migrate:new` - Safe, non-interactive migration creation
+   - ✅ `npm run db:migrate:apply` - Apply migrations safely
 
-2. **Migration Workflow**:
-   - Development: `npx prisma migrate dev --name descriptive_name`
-   - Production: `npx prisma migrate deploy`
-   - Always commit migration files to git
-   - Never edit or delete migration files after they're applied
-
-3. **Data Backup Before Production Migrations**:
+2. **AI Agent Compatible Workflow (migrate diff + deploy)**:
    ```bash
-   ./scripts/backup_database.sh
+   # Step 1: Create migration from schema changes (no prompts!)
+   npm run db:migrate:new descriptive_name
+   
+   # Step 2: Review the generated SQL
+   cat prisma/migrations/*/migration.sql
+   
+   # Step 3: Apply when ready
+   npm run db:migrate:apply
    ```
-   See `docs/guides/database-backup-procedure.md` for detailed backup instructions.
 
-This warning exists because `db push` destroyed production data multiple times in July 2025.
+3. **Environment Safety Protocol**:
+   - ALWAYS use npm scripts (they auto-load .env)
+   - Scripts show which database you're targeting
+   - Production requires explicit confirmation
+   - Use `npm run db:migrate:status` to check state
+
+4. **Available Safe Commands**:
+   ```bash
+   npm run db:migrate:new migration_name  # Create migration using migrate diff
+   npm run db:migrate:apply               # Apply pending migrations using deploy
+   npm run db:migrate:status              # Check migration status
+   npm run db:backup                      # Backup database with table counts
+   npm run db:studio                      # Open Prisma Studio (read-only recommended)
+   ```
+
+5. **How It Works Under the Hood**:
+   - `db:migrate:new` runs `./scripts/create-migration.sh` which uses `prisma migrate diff`
+   - This generates SQL by comparing your schema to the current database state
+   - `db:migrate:apply` uses `prisma migrate deploy` (production-safe, non-interactive)
+   - No TTY detection issues, no interactive prompts, works perfectly with AI agents
+
+6. **Data Backup Before ANY Migration**:
+   ```bash
+   npm run db:backup
+   ```
+
+7. **If unsure about environment - the scripts will show you!**
+
+This warning exists because:
+- `db push` destroyed production data multiple times in July 2025
+- Interactive `migrate dev` breaks AI agents and CI/CD
+- Environment variable confusion led to wrong database targeting
+- Prisma's design assumes human developers, not automation
+
+See `docs/guides/prisma.md` for comprehensive safety guidelines.
 
 ## Project Overview
 

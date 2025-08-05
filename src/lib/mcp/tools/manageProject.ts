@@ -9,7 +9,7 @@ const projectFieldsSchema = {
   name: z.string().min(3).max(255).describe("The project name"),
   goal: z.string().min(10).max(500).regex(/^[^\n\r]+$/, "Goal must be a single line").describe("One-line project goal"),
   description: z.string().min(50).max(5000).describe("The project description"),
-  helpType: z.enum(['ADVICE', 'PROTOTYPE', 'MVP', 'FULL_PRODUCT']).describe("The type of help needed"),
+  helpType: z.enum(['ADVICE', 'PROTOTYPE', 'FEATURE', 'MVP', 'FULL_PRODUCT']).describe("The type of help needed"),
   contactEmail: z.string().email().describe("Contact email for the project"),
   targetCompletionDate: z.string().datetime().optional().or(z.literal('')).describe("Target completion date (ISO 8601)"),
   isActive: z.boolean().optional().describe("Whether project is actively seeking help"),
@@ -56,7 +56,7 @@ const manageProjectBaseSchema = z.object({
   name: z.string().min(3).max(255).optional().describe("The project name"),
   goal: z.string().min(10).max(500).optional().describe("One-line project goal"),
   description: z.string().min(50).max(5000).optional().describe("The project description"),
-  helpType: z.enum(['ADVICE', 'PROTOTYPE', 'MVP', 'FULL_PRODUCT']).optional().describe("The type of help needed"),
+  helpType: z.enum(['ADVICE', 'PROTOTYPE', 'FEATURE', 'MVP', 'FULL_PRODUCT']).optional().describe("The type of help needed"),
   status: z.enum(['AWAITING_VOLUNTEERS', 'PLANNING', 'IN_PROGRESS', 'ON_HOLD', 'COMPLETED', 'CANCELLED']).optional().describe("Project lifecycle status"),
   contactEmail: z.string().email().optional().describe("Contact email for the project"),
   targetCompletionDate: z.string().datetime().optional().or(z.literal('')).describe("Target completion date (ISO 8601)"),
@@ -111,7 +111,7 @@ Examples:
 
 Notes:
 - Projects can belong to users OR organizations (use either ownerId or organizationId, not both)
-- helpType options: ADVICE (guidance only), PROTOTYPE (proof of concept), MVP (basic version), FULL_PRODUCT (complete)
+- helpType options: ADVICE (guidance only), PROTOTYPE (proof of concept), FEATURE (new feature), MVP (basic version), FULL_PRODUCT (complete)
 - Status options: AWAITING_VOLUNTEERS, PLANNING, IN_PROGRESS, ON_HOLD, COMPLETED, CANCELLED
 - Use isActive to control whether project is accepting new volunteers
 - Description must be at least 50 characters
