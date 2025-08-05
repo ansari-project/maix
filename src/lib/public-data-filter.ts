@@ -59,6 +59,12 @@ interface PublicPost {
  * Filter user data to remove sensitive information
  */
 export function filterPublicUser(user: any): PublicUser {
+  if (!user) {
+    return {
+      id: 'unknown',
+      name: 'Anonymous'
+    }
+  }
   return {
     id: user.id,
     name: user.name || 'Anonymous'

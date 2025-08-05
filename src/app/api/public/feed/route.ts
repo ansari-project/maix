@@ -152,30 +152,34 @@ export async function GET() {
           _count: p._count
         }
       })),
-      ...productUpdates.map(p => ({
-        id: p.id,
-        type: 'product_update' as const,
-        title: `Product update: ${p.product?.name || 'Unknown Product'}`,
-        timestamp: p.createdAt,
-        user: filterPublicUser(p.author),
-        data: {
+      ...productUpdates
+        .filter(p => p.author) // Filter out updates without authors
+        .map(p => ({
           id: p.id,
-          content: p.content,
-          productId: p.productId,
-          productName: p.product?.name
-        }
-      })),
-      ...questions.map(q => ({
-        id: q.id,
-        type: 'question_asked' as const,
-        title: `${filterPublicUser(q.author).name} asked: ${q.content.substring(0, 100)}${q.content.length > 100 ? '...' : ''}`,
-        timestamp: q.createdAt,
-        user: filterPublicUser(q.author),
-        data: {
+          type: 'product_update' as const,
+          title: `Product update: ${p.product?.name || 'Unknown Product'}`,
+          timestamp: p.createdAt,
+          user: filterPublicUser(p.author),
+          data: {
+            id: p.id,
+            content: p.content,
+            productId: p.productId,
+            productName: p.product?.name
+          }
+        })),
+      ...questions
+        .filter(q => q.author) // Filter out questions without authors
+        .map(q => ({
           id: q.id,
-          content: q.content
-        }
-      })),
+          type: 'question_asked' as const,
+          title: `${filterPublicUser(q.author).name} asked: ${q.content.substring(0, 100)}${q.content.length > 100 ? '...' : ''}`,
+          timestamp: q.createdAt,
+          user: filterPublicUser(q.author),
+          data: {
+            id: q.id,
+            content: q.content
+          }
+        })),
       ...answers
         .filter(a => a.author && a.parent) // Filter out incomplete answers
         .map(a => ({
