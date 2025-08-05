@@ -68,8 +68,8 @@ export async function POST(
       }
     })
 
-    // Send notification to project owner
-    if (project.ownerId) {
+    // Send notification to project owner (unless the applicant is the owner)
+    if (project.ownerId && project.ownerId !== user.id) {
       await NotificationService.createApplicationNew({
         projectOwnerId: project.ownerId,
         applicantName: user.name || user.email,

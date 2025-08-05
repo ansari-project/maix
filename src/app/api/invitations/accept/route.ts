@@ -71,8 +71,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: getSuccessMessage(invitation),
-      membership: result.membership
+      message: getSuccessMessage(invitation, result.parentMemberships),
+      membership: result.membership,
+      parentMemberships: result.parentMemberships
     });
 
   } catch (error) {
@@ -118,9 +119,12 @@ async function acceptInvitationAtomically(invitation: any, userId: string) {
       }
     });
 
-    // Create membership based on invitation type
+    // Create membership based on invitation type with hierarchical propagation
     let membership;
+    let parentMemberships: any[] = [];
+
     if (invitation.organizationId) {
+      // Organization invitation - simple case, no hierarchy
       membership = await tx.organizationMember.create({
         data: {
           organizationId: invitation.organizationId,
@@ -130,6 +134,7 @@ async function acceptInvitationAtomically(invitation: any, userId: string) {
         }
       });
     } else if (invitation.productId) {
+      // Product invitation - create product membership and ensure org membership
       membership = await tx.productMember.create({
         data: {
           productId: invitation.productId,
@@ -138,7 +143,39 @@ async function acceptInvitationAtomically(invitation: any, userId: string) {
           invitationId: invitation.id
         }
       });
+
+      // Get product with organization info
+      const product = await tx.product.findUnique({
+        where: { id: invitation.productId },
+        select: { organizationId: true }
+      });
+
+      if (product?.organizationId) {
+        // Check if user already has org membership
+        const existingOrgMember = await tx.organizationMember.findUnique({
+          where: {
+            organizationId_userId: {
+              organizationId: product.organizationId,
+              userId
+            }
+          }
+        });
+
+        if (!existingOrgMember) {
+          // Create VIEWER membership for organization
+          const orgMembership = await tx.organizationMember.create({
+            data: {
+              organizationId: product.organizationId,
+              userId,
+              role: 'MEMBER', // Use MEMBER as minimum role for orgs (no VIEWER)
+              invitationId: invitation.id
+            }
+          });
+          parentMemberships.push(orgMembership);
+        }
+      }
     } else if (invitation.projectId) {
+      // Project invitation - create project membership and ensure product/org memberships
       membership = await tx.projectMember.create({
         data: {
           projectId: invitation.projectId,
@@ -147,9 +184,70 @@ async function acceptInvitationAtomically(invitation: any, userId: string) {
           invitationId: invitation.id
         }
       });
+
+      // Get project with product and organization info
+      const project = await tx.project.findUnique({
+        where: { id: invitation.projectId },
+        select: { 
+          productId: true,
+          organizationId: true,
+          product: {
+            select: { organizationId: true }
+          }
+        }
+      });
+
+      // Create product membership if needed
+      if (project?.productId) {
+        const existingProductMember = await tx.productMember.findUnique({
+          where: {
+            productId_userId: {
+              productId: project.productId,
+              userId
+            }
+          }
+        });
+
+        if (!existingProductMember) {
+          const productMembership = await tx.productMember.create({
+            data: {
+              productId: project.productId,
+              userId,
+              role: 'VIEWER', // Minimum role for parent entities
+              invitationId: invitation.id
+            }
+          });
+          parentMemberships.push(productMembership);
+        }
+      }
+
+      // Create organization membership if needed
+      const orgId = project?.organizationId || project?.product?.organizationId;
+      if (orgId) {
+        const existingOrgMember = await tx.organizationMember.findUnique({
+          where: {
+            organizationId_userId: {
+              organizationId: orgId,
+              userId
+            }
+          }
+        });
+
+        if (!existingOrgMember) {
+          const orgMembership = await tx.organizationMember.create({
+            data: {
+              organizationId: orgId,
+              userId,
+              role: 'MEMBER', // Use MEMBER as minimum role for orgs (no VIEWER)
+              invitationId: invitation.id
+            }
+          });
+          parentMemberships.push(orgMembership);
+        }
+      }
     }
 
-    return { membership };
+    return { membership, parentMemberships };
   });
 }
 
@@ -168,8 +266,27 @@ function getValidationErrorMessage(error?: string): string {
   }
 }
 
-function getSuccessMessage(invitation: any): string {
+function getSuccessMessage(invitation: any, parentMemberships: any[]): string {
   const entityName = invitation.organization?.name || invitation.product?.name || invitation.project?.name;
   const entityType = invitation.organization ? 'organization' : invitation.product ? 'product' : 'project';
-  return `You have successfully joined ${entityName} as a ${invitation.role.toLowerCase()}.`;
+  
+  let message = `You have successfully joined ${entityName} as a ${invitation.role.toLowerCase()}.`;
+  
+  // Add information about parent memberships created
+  if (parentMemberships.length > 0) {
+    const parentInfo = parentMemberships.map(pm => {
+      if (pm.organizationId) {
+        return 'organization';
+      } else if (pm.productId) {
+        return 'product';
+      }
+      return null;
+    }).filter(Boolean);
+    
+    if (parentInfo.length > 0) {
+      message += ` You have also been granted access to the parent ${parentInfo.join(' and ')}.`;
+    }
+  }
+  
+  return message;
 }

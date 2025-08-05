@@ -156,6 +156,7 @@ backups/*.dump
 backups/*.backup
 *.dump
 *.backup
+db_backups/
 
 # But allow migration files
 !prisma/migrations/**/*.sql
