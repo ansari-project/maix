@@ -19,6 +19,9 @@ jest.mock('@/lib/prisma', () => ({
     },
     application: {
       findUnique: jest.fn()
+    },
+    user: {
+      findUnique: jest.fn()
     }
   }
 }))
@@ -65,7 +68,8 @@ describe('/api/projects/[id]/todos', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
-    mockGetServerSession.mockResolvedValue(mockSession(mockUser))
+    mockSession(mockUser)
+    mockPrisma.user.findUnique.mockResolvedValue(mockUser as any)
     mockCanManageTodos.mockResolvedValue(true)
     mockIsValidAssignee.mockResolvedValue(true)
   })
@@ -77,8 +81,8 @@ describe('/api/projects/[id]/todos', () => {
 
       const req = createMockRequest({
         method: 'GET',
-        url: `/api/projects/${mockProject.id}/todos`
-      }) as NextRequest
+        url: `http://localhost:3000/api/projects/${mockProject.id}/todos`
+      })
 
       const response = await GET(req, { params: Promise.resolve({ id: mockProject.id }) })
       const data = await response.json()
@@ -95,8 +99,8 @@ describe('/api/projects/[id]/todos', () => {
 
       const req = createMockRequest({
         method: 'GET',
-        url: `/api/projects/${mockProject.id}/todos?status=COMPLETED`
-      }) as NextRequest
+        url: `http://localhost:3000/api/projects/${mockProject.id}/todos?status=COMPLETED`
+      })
 
       await GET(req, { params: Promise.resolve({ id: mockProject.id }) })
 
@@ -111,12 +115,12 @@ describe('/api/projects/[id]/todos', () => {
     })
 
     it('should require authentication', async () => {
-      mockGetServerSession.mockResolvedValue(null)
+      mockSession(null)
 
       const req = createMockRequest({
         method: 'GET',
-        url: `/api/projects/${mockProject.id}/todos`
-      }) as NextRequest
+        url: `http://localhost:3000/api/projects/${mockProject.id}/todos`
+      })
 
       const response = await GET(req, { params: Promise.resolve({ id: mockProject.id }) })
       const data = await response.json()
@@ -145,9 +149,9 @@ describe('/api/projects/[id]/todos', () => {
 
       const req = createMockRequest({
         method: 'POST',
-        url: `/api/projects/${mockProject.id}/todos`,
+        url: `http://localhost:3000/api/projects/${mockProject.id}/todos`,
         body: validTodoData
-      }) as NextRequest
+      })
 
       const response = await POST(req, { params: Promise.resolve({ id: mockProject.id }) })
       const data = await response.json()
@@ -168,7 +172,8 @@ describe('/api/projects/[id]/todos', () => {
 
     it('should create todo for accepted volunteer', async () => {
       const volunteerUser = createTestUser({ id: 'volunteer-1' })
-      mockGetServerSession.mockResolvedValue(mockSession(volunteerUser))
+      mockSession(volunteerUser)
+      mockPrisma.user.findUnique.mockResolvedValue(volunteerUser as any)
       
       mockPrisma.project.findUnique.mockResolvedValue({
         ...mockProject,
@@ -182,9 +187,9 @@ describe('/api/projects/[id]/todos', () => {
 
       const req = createMockRequest({
         method: 'POST',
-        url: `/api/projects/${mockProject.id}/todos`,
+        url: `http://localhost:3000/api/projects/${mockProject.id}/todos`,
         body: validTodoData
-      }) as NextRequest
+      })
 
       const response = await POST(req, { params: Promise.resolve({ id: mockProject.id }) })
 
@@ -193,15 +198,17 @@ describe('/api/projects/[id]/todos', () => {
 
     it('should reject todo creation from non-participant', async () => {
       const otherUser = createTestUser({ id: 'other-user' })
-      mockGetServerSession.mockResolvedValue(mockSession(otherUser))
+      mockSession(otherUser)
+      mockPrisma.user.findUnique.mockResolvedValue(otherUser as any)
+      mockCanManageTodos.mockResolvedValue(false)
       
       mockPrisma.project.findUnique.mockResolvedValue(mockProject)
 
       const req = createMockRequest({
         method: 'POST',
-        url: `/api/projects/${mockProject.id}/todos`,
+        url: `http://localhost:3000/api/projects/${mockProject.id}/todos`,
         body: validTodoData
-      }) as NextRequest
+      })
 
       const response = await POST(req, { params: Promise.resolve({ id: mockProject.id }) })
       const data = await response.json()
@@ -213,15 +220,16 @@ describe('/api/projects/[id]/todos', () => {
     it('should validate assignee is project participant', async () => {
       mockPrisma.project.findUnique.mockResolvedValue(mockProject)
       mockPrisma.application.findUnique.mockResolvedValue(null)
+      mockIsValidAssignee.mockResolvedValue(false)
 
       const req = createMockRequest({
         method: 'POST',
-        url: `/api/projects/${mockProject.id}/todos`,
+        url: `http://localhost:3000/api/projects/${mockProject.id}/todos`,
         body: {
           ...validTodoData,
           assigneeId: 'non-participant-id'
         }
-      }) as NextRequest
+      })
 
       const response = await POST(req, { params: Promise.resolve({ id: mockProject.id }) })
       const data = await response.json()
@@ -233,9 +241,9 @@ describe('/api/projects/[id]/todos', () => {
     it('should require title', async () => {
       const req = createMockRequest({
         method: 'POST',
-        url: `/api/projects/${mockProject.id}/todos`,
+        url: `http://localhost:3000/api/projects/${mockProject.id}/todos`,
         body: { description: 'No title' }
-      }) as NextRequest
+      })
 
       const response = await POST(req, { params: Promise.resolve({ id: mockProject.id }) })
 

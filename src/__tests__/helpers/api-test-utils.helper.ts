@@ -17,12 +17,13 @@ export interface MockSession {
 /**
  * Creates a mock NextRequest with proper headers and authentication
  */
-export function createMockRequest(
-  method: string,
-  url: string,
-  body?: any,
+export function createMockRequest(options: {
+  method: string
+  url: string
+  body?: any
   headers?: Record<string, string>
-): NextRequest {
+}): NextRequest {
+  const { method, url, body, headers } = options
   const requestInit: RequestInit = {
     method,
     headers: {
@@ -35,7 +36,16 @@ export function createMockRequest(
     requestInit.body = JSON.stringify(body)
   }
 
-  return new NextRequest(url, requestInit)
+  const req = new NextRequest(url, requestInit)
+  
+  // Ensure nextUrl is properly set for tests
+  if (!req.nextUrl) {
+    const parsedUrl = new URL(url, 'http://localhost:3000')
+    // @ts-ignore - Adding nextUrl property for testing
+    req.nextUrl = parsedUrl
+  }
+
+  return req
 }
 
 /**

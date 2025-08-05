@@ -17,10 +17,16 @@ export const updateTodoSchema = z.object({
 })
 
 export const todoQuerySchema = z.object({
-  status: z.enum(['OPEN', 'IN_PROGRESS', 'COMPLETED']).optional(),
-  assigneeId: z.string().optional(),
-  limit: z.coerce.number().int().min(1).max(100).default(50),
-  offset: z.coerce.number().int().min(0).default(0)
+  status: z.enum(['OPEN', 'IN_PROGRESS', 'COMPLETED']).nullable().optional(),
+  assigneeId: z.string().nullable().optional(),
+  limit: z.preprocess(
+    (val) => val === null || val === undefined ? 50 : Number(val),
+    z.number().int().min(1).max(100)
+  ),
+  offset: z.preprocess(
+    (val) => val === null || val === undefined ? 0 : Number(val),
+    z.number().int().min(0)
+  )
 })
 
 export type CreateTodoInput = z.infer<typeof createTodoSchema>

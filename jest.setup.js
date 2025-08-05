@@ -163,6 +163,22 @@ jest.mock('./src/lib/prisma', () => ({
       create: jest.fn(),
       update: jest.fn(),
     },
+    invitation: {
+      findFirst: jest.fn(),
+      findUnique: jest.fn(),
+      updateMany: jest.fn(),
+      deleteMany: jest.fn(),
+    },
+    organizationMember: {
+      create: jest.fn(),
+    },
+    productMember: {
+      create: jest.fn(),
+    },
+    projectMember: {
+      create: jest.fn(),
+    },
+    $transaction: jest.fn(),
   },
 }))
 

@@ -86,7 +86,11 @@ describe('Organization Fields Tests', () => {
         _count: { members: 1, projects: 0, products: 0 }
       } as any)
 
-      const request = createMockRequest('POST', 'http://localhost:3000/api/organizations', newOrgData)
+      const request = createMockRequest({
+        method: 'POST',
+        url: 'http://localhost:3000/api/organizations',
+        body: newOrgData
+      })
       const response = await POST(request)
       const data = await response.json()
 
@@ -134,7 +138,11 @@ describe('Organization Fields Tests', () => {
         _count: { members: 1, projects: 0, products: 0 }
       } as any)
 
-      const request = createMockRequest('POST', 'http://localhost:3000/api/organizations', minimalOrgData)
+      const request = createMockRequest({
+        method: 'POST',
+        url: 'http://localhost:3000/api/organizations',
+        body: minimalOrgData
+      })
       const response = await POST(request)
       const data = await response.json()
 
@@ -158,7 +166,11 @@ describe('Organization Fields Tests', () => {
         aiEngagement: 'Brief', // Less than 10 characters
       }
 
-      const request = createMockRequest('POST', 'http://localhost:3000/api/organizations', invalidData)
+      const request = createMockRequest({
+        method: 'POST',
+        url: 'http://localhost:3000/api/organizations',
+        body: invalidData
+      })
       const response = await POST(request)
       const data = await response.json()
 
@@ -178,7 +190,11 @@ describe('Organization Fields Tests', () => {
         aiEngagement: 'a'.repeat(2001), // Exceeds 2000 character limit
       }
 
-      const request = createMockRequest('POST', 'http://localhost:3000/api/organizations', invalidData)
+      const request = createMockRequest({
+        method: 'POST',
+        url: 'http://localhost:3000/api/organizations',
+        body: invalidData
+      })
       const response = await POST(request)
       const data = await response.json()
 
@@ -211,7 +227,11 @@ describe('Organization Fields Tests', () => {
         ...updateData,
       } as any)
 
-      const request = createMockRequest('PUT', 'http://localhost:3000/api/organizations/org-1', updateData)
+      const request = createMockRequest({
+        method: 'PUT',
+        url: 'http://localhost:3000/api/organizations/org-1',
+        body: updateData
+      })
       const response = await PUT_BY_ID(request, { params: Promise.resolve({ id: 'org-1' }) })
       const data = await response.json()
 
@@ -247,7 +267,11 @@ describe('Organization Fields Tests', () => {
         aiEngagement: null,
       } as any)
 
-      const request = createMockRequest('PUT', 'http://localhost:3000/api/organizations/org-1', updateData)
+      const request = createMockRequest({
+        method: 'PUT',
+        url: 'http://localhost:3000/api/organizations/org-1',
+        body: updateData
+      })
       const response = await PUT_BY_ID(request, { params: Promise.resolve({ id: 'org-1' }) })
       const data = await response.json()
 
@@ -311,7 +335,10 @@ describe('Organization Fields Tests', () => {
 
       mockPrisma.organization.findMany.mockResolvedValueOnce(organizations as any)
 
-      const request = createMockRequest('GET', 'http://localhost:3000/api/organizations')
+      const request = createMockRequest({
+        method: 'GET',
+        url: 'http://localhost:3000/api/organizations'
+      })
       const response = await GET(request)
       const data = await response.json()
 
@@ -357,7 +384,10 @@ describe('Organization Fields Tests', () => {
         },
       } as any)
 
-      const request = createMockRequest('GET', 'http://localhost:3000/api/organizations/org-1')
+      const request = createMockRequest({
+        method: 'GET',
+        url: 'http://localhost:3000/api/organizations/org-1'
+      })
       const response = await GET_BY_ID(request, { params: Promise.resolve({ id: 'org-1' }) })
       const data = await response.json()
 

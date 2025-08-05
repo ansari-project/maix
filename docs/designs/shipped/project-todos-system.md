@@ -1,5 +1,7 @@
 # Project Todos System
 
+**Status**: ✅ SHIPPED (Phase 1 Complete - August 4, 2025)
+
 ## Overview
 Add a simple todo management system to projects, allowing project owners and accepted volunteers to create, assign, and track tasks within project context.
 
@@ -131,7 +133,14 @@ PATCH  /api/posts/[postId]               # Update post (can change todoId)
 - Project participant assignment only
 - No notifications (keep it simple)
 
-**Phase 1 Status**: Database schema, types, and migration completed and deployed (August 3, 2025)
+**Phase 1 Status**: 
+- Database schema, types, and migration completed and deployed (August 3, 2025)
+- Full implementation completed and deployed (August 4, 2025)
+  - Todo CRUD API endpoints implemented with proper permissions
+  - TodoSection UI component integrated into project detail page
+  - MCP tools (manageTodo, searchTodos) implemented
+  - Comprehensive test coverage (85 tests passing)
+  - Code review completed by Gemini AI - confirmed production-ready
 
 ### Phase 2 (Future Enhancements)
 - User dashboard "My Todos" view across all projects

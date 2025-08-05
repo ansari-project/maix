@@ -67,8 +67,12 @@ describe('/api/notifications/mark-read', () => {
       const notificationIds = ['notif-1', 'notif-2', 'notif-3']
       mockNotificationService.markAsRead.mockResolvedValue(notificationIds.length)
 
-      const request = createMockRequest('POST', 'http://localhost:3000/api/notifications/mark-read', {
-        notificationIds,
+      const request = createMockRequest({
+        method: 'POST',
+        url: 'http://localhost:3000/api/notifications/mark-read',
+        body: {
+          notificationIds,
+        }
       })
       const response = await POST(request)
       const data = await response.json()
@@ -83,9 +87,9 @@ describe('/api/notifications/mark-read', () => {
 
       mockNotificationService.markAsRead.mockResolvedValue(0)
 
-      const request = createMockRequest('POST', 'http://localhost:3000/api/notifications/mark-read', {
+      const request = createMockRequest({ method: 'POST', url: 'http://localhost:3000/api/notifications/mark-read', body: {
         notificationIds: [],
-      })
+      } })
       const response = await POST(request)
       const data = await response.json()
 
@@ -97,9 +101,9 @@ describe('/api/notifications/mark-read', () => {
     it('should return 401 when not authenticated', async () => {
       mockSession(null)
 
-      const request = createMockRequest('POST', 'http://localhost:3000/api/notifications/mark-read', {
+      const request = createMockRequest({ method: 'POST', url: 'http://localhost:3000/api/notifications/mark-read', body: {
         notificationIds: ['notif-1'],
-      })
+      } })
       const response = await POST(request)
       const data = await response.json()
 
@@ -110,9 +114,9 @@ describe('/api/notifications/mark-read', () => {
     it('should reject invalid notification IDs (not array)', async () => {
       mockSession(mockUser)
 
-      const request = createMockRequest('POST', 'http://localhost:3000/api/notifications/mark-read', {
+      const request = createMockRequest({ method: 'POST', url: 'http://localhost:3000/api/notifications/mark-read', body: {
         notificationIds: 'not-an-array',
-      })
+      } })
       const response = await POST(request)
       const data = await response.json()
 
@@ -123,7 +127,11 @@ describe('/api/notifications/mark-read', () => {
     it('should reject missing notification IDs field', async () => {
       mockSession(mockUser)
 
-      const request = createMockRequest('POST', 'http://localhost:3000/api/notifications/mark-read', {})
+      const request = createMockRequest({
+        method: 'POST',
+        url: 'http://localhost:3000/api/notifications/mark-read',
+        body: {}
+      })
       const response = await POST(request)
       const data = await response.json()
 
@@ -136,9 +144,9 @@ describe('/api/notifications/mark-read', () => {
 
       mockNotificationService.markAsRead.mockRejectedValue(new Error('Database error'))
 
-      const request = createMockRequest('POST', 'http://localhost:3000/api/notifications/mark-read', {
+      const request = createMockRequest({ method: 'POST', url: 'http://localhost:3000/api/notifications/mark-read', body: {
         notificationIds: ['notif-1'],
-      })
+      } })
       const response = await POST(request)
       const data = await response.json()
 
@@ -151,9 +159,9 @@ describe('/api/notifications/mark-read', () => {
 
       mockNotificationService.markAsRead.mockResolvedValue(4)
 
-      const request = createMockRequest('POST', 'http://localhost:3000/api/notifications/mark-read', {
+      const request = createMockRequest({ method: 'POST', url: 'http://localhost:3000/api/notifications/mark-read', body: {
         notificationIds: ['valid-id', 123, null, 'another-valid-id'],
-      })
+      } })
       const response = await POST(request)
       const data = await response.json()
 

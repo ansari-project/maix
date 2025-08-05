@@ -35,6 +35,11 @@ jest.mock('@/lib/prisma', () => ({
       create: jest.fn(),
       findUnique: jest.fn(),
     },
+    projectMember: {
+      create: jest.fn(),
+      findFirst: jest.fn(),
+      findUnique: jest.fn(),
+    },
     post: {
       create: jest.fn(),
     },
@@ -91,7 +96,10 @@ describe('/api/projects', () => {
       const mockProjects = [mockProject]
       mockPrisma.project.findMany.mockResolvedValue(mockProjects as any)
 
-      const request = createMockRequest('GET', 'http://localhost:3000/api/projects')
+      const request = createMockRequest({
+        method: 'GET',
+        url: 'http://localhost:3000/api/projects'
+      })
       const response = await GET(request)
       const responseData = await response.json()
 
@@ -140,7 +148,10 @@ describe('/api/projects', () => {
       mockSession(null)
       mockPrisma.project.findMany.mockRejectedValue(new Error('Database error'))
 
-      const request = createMockRequest('GET', 'http://localhost:3000/api/projects')
+      const request = createMockRequest({
+        method: 'GET',
+        url: 'http://localhost:3000/api/projects'
+      })
       const response = await GET(request)
       const responseData = await response.json()
 
@@ -167,6 +178,9 @@ describe('/api/projects', () => {
             create: jest.fn().mockResolvedValue(mockProject),
             findUnique: jest.fn().mockResolvedValue(mockProject),
           },
+          projectMember: {
+            create: jest.fn(),
+          },
           post: {
             create: jest.fn(),
           },
@@ -175,7 +189,11 @@ describe('/api/projects', () => {
       })
       mockPrisma.user.findMany.mockResolvedValue([]) // No other users to notify
 
-      const request = createMockRequest('POST', 'http://localhost:3000/api/projects', validProjectData)
+      const request = createMockRequest({
+        method: 'POST',
+        url: 'http://localhost:3000/api/projects',
+        body: validProjectData
+      })
       const response = await POST(request)
       const responseData = await response.json()
 
@@ -187,7 +205,11 @@ describe('/api/projects', () => {
     test('should return 401 for unauthenticated user', async () => {
       mockSession(null) // No authentication
 
-      const request = createMockRequest('POST', 'http://localhost:3000/api/projects', validProjectData)
+      const request = createMockRequest({
+        method: 'POST',
+        url: 'http://localhost:3000/api/projects',
+        body: validProjectData
+      })
       const response = await POST(request)
       const responseData = await response.json()
 
@@ -199,7 +221,11 @@ describe('/api/projects', () => {
       mockSession(mockUser)
       mockPrisma.user.findUnique.mockResolvedValue(null) // User not found in DB
 
-      const request = createMockRequest('POST', 'http://localhost:3000/api/projects', validProjectData)
+      const request = createMockRequest({
+        method: 'POST',
+        url: 'http://localhost:3000/api/projects',
+        body: validProjectData
+      })
       const response = await POST(request)
       const responseData = await response.json()
 
@@ -216,7 +242,11 @@ describe('/api/projects', () => {
         helpType: 'INVALID',
       }
 
-      const request = createMockRequest('POST', 'http://localhost:3000/api/projects', invalidData)
+      const request = createMockRequest({
+        method: 'POST',
+        url: 'http://localhost:3000/api/projects',
+        body: invalidData
+      })
       const response = await POST(request)
       const responseData = await response.json()
 
@@ -229,7 +259,11 @@ describe('/api/projects', () => {
       
       const invalidData = { ...validProjectData, name: 'AI' }
       
-      const request = createMockRequest('POST', 'http://localhost:3000/api/projects', invalidData)
+      const request = createMockRequest({
+        method: 'POST',
+        url: 'http://localhost:3000/api/projects',
+        body: invalidData
+      })
       const response = await POST(request)
       const responseData = await response.json()
 
@@ -242,7 +276,11 @@ describe('/api/projects', () => {
       
       const invalidData = { ...validProjectData, description: 'Too short' }
       
-      const request = createMockRequest('POST', 'http://localhost:3000/api/projects', invalidData)
+      const request = createMockRequest({
+        method: 'POST',
+        url: 'http://localhost:3000/api/projects',
+        body: invalidData
+      })
       const response = await POST(request)
       const responseData = await response.json()
 
@@ -259,6 +297,9 @@ describe('/api/projects', () => {
             create: jest.fn().mockResolvedValue(mockProject),
             findUnique: jest.fn().mockResolvedValue(mockProject),
           },
+          projectMember: {
+            create: jest.fn(),
+          },
           post: {
             create: jest.fn(),
           },
@@ -269,7 +310,11 @@ describe('/api/projects', () => {
       
       const dataWithExtraFields = { ...validProjectData, projectType: 'INVALID' }
       
-      const request = createMockRequest('POST', 'http://localhost:3000/api/projects', dataWithExtraFields)
+      const request = createMockRequest({
+        method: 'POST',
+        url: 'http://localhost:3000/api/projects',
+        body: dataWithExtraFields
+      })
       const response = await POST(request)
       const responseData = await response.json()
 
@@ -283,7 +328,11 @@ describe('/api/projects', () => {
       
       const invalidData = { ...validProjectData, helpType: 'INVALID' }
       
-      const request = createMockRequest('POST', 'http://localhost:3000/api/projects', invalidData)
+      const request = createMockRequest({
+        method: 'POST',
+        url: 'http://localhost:3000/api/projects',
+        body: invalidData
+      })
       const response = await POST(request)
       const responseData = await response.json()
 
@@ -300,6 +349,9 @@ describe('/api/projects', () => {
             create: jest.fn().mockResolvedValue(mockProject),
             findUnique: jest.fn().mockResolvedValue(mockProject),
           },
+          projectMember: {
+            create: jest.fn(),
+          },
           post: {
             create: jest.fn(),
           },
@@ -310,7 +362,11 @@ describe('/api/projects', () => {
       
       const dataWithExtraFields = { ...validProjectData, maxVolunteers: 51 }
       
-      const request = createMockRequest('POST', 'http://localhost:3000/api/projects', dataWithExtraFields)
+      const request = createMockRequest({
+        method: 'POST',
+        url: 'http://localhost:3000/api/projects',
+        body: dataWithExtraFields
+      })
       const response = await POST(request)
       const responseData = await response.json()
 
@@ -324,7 +380,11 @@ describe('/api/projects', () => {
       
       const invalidData = { ...validProjectData, contactEmail: 'invalid-email' }
       
-      const request = createMockRequest('POST', 'http://localhost:3000/api/projects', invalidData)
+      const request = createMockRequest({
+        method: 'POST',
+        url: 'http://localhost:3000/api/projects',
+        body: invalidData
+      })
       const response = await POST(request)
       const responseData = await response.json()
 

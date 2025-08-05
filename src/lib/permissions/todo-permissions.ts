@@ -2,17 +2,16 @@ import { prisma } from '@/lib/prisma'
 
 /**
  * Check if a user can manage todos in a project (create, update, delete)
- * Must be project owner, accepted volunteer, or organization member
+ * Must be project member (ADMIN/MEMBER role) or accepted volunteer
  */
 export async function canManageTodos(userId: string, projectId: string): Promise<boolean> {
   const project = await prisma.project.findUnique({
     where: { id: projectId },
     include: {
-      organization: {
-        include: {
-          members: {
-            where: { userId }
-          }
+      members: {
+        where: { 
+          userId,
+          role: { in: ['ADMIN', 'MEMBER'] }
         }
       },
       applications: {
@@ -26,13 +25,41 @@ export async function canManageTodos(userId: string, projectId: string): Promise
 
   if (!project) return false
 
-  // Check if user is project owner
-  if (project.ownerId === userId) return true
+  // Check if user has project membership with appropriate role
+  if (project.members.length > 0) return true
 
-  // Check if user is in the organization
-  if (project.organization && project.organization.members.length > 0) return true
+  // Check if user is an accepted volunteer (legacy support)
+  if (project.applications.length > 0) return true
 
-  // Check if user is an accepted volunteer
+  return false
+}
+
+/**
+ * Check if a user can view todos in a project
+ * Must be project member or accepted volunteer
+ */
+export async function canViewTodos(userId: string, projectId: string): Promise<boolean> {
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    include: {
+      members: {
+        where: { userId }
+      },
+      applications: {
+        where: {
+          userId,
+          status: 'ACCEPTED'
+        }
+      }
+    }
+  })
+
+  if (!project) return false
+
+  // Check if user has project membership
+  if (project.members.length > 0) return true
+
+  // Check if user is an accepted volunteer (legacy support)
   if (project.applications.length > 0) return true
 
   return false
@@ -40,7 +67,7 @@ export async function canManageTodos(userId: string, projectId: string): Promise
 
 /**
  * Check if a user can update a specific todo
- * Must be creator, assignee, or project owner
+ * Must be creator, assignee, or project member with ADMIN/MEMBER role
  */
 export async function canUpdateTodo(userId: string, todoId: string): Promise<boolean> {
   const todo = await prisma.todo.findUnique({
@@ -48,12 +75,10 @@ export async function canUpdateTodo(userId: string, todoId: string): Promise<boo
     include: {
       project: {
         include: {
-          owner: true,
-          organization: {
-            include: {
-              members: {
-                where: { userId }
-              }
+          members: {
+            where: { 
+              userId,
+              role: { in: ['ADMIN', 'MEMBER'] }
             }
           }
         }
@@ -69,20 +94,15 @@ export async function canUpdateTodo(userId: string, todoId: string): Promise<boo
   // Assignee can update
   if (todo.assigneeId === userId) return true
 
-  // Project owner can update
-  if (todo.project.ownerId === userId) return true
-
-  // Organization members can update
-  if (todo.project.organization && todo.project.organization.members.length > 0) {
-    return true
-  }
+  // Project members with appropriate role can update
+  if (todo.project.members.length > 0) return true
 
   return false
 }
 
 /**
  * Check if a user can delete a specific todo
- * Must be creator or project owner
+ * Must be creator or project admin
  */
 export async function canDeleteTodo(userId: string, todoId: string): Promise<boolean> {
   const todo = await prisma.todo.findUnique({
@@ -90,11 +110,10 @@ export async function canDeleteTodo(userId: string, todoId: string): Promise<boo
     include: {
       project: {
         include: {
-          organization: {
-            include: {
-              members: {
-                where: { userId, role: 'OWNER' }
-              }
+          members: {
+            where: { 
+              userId,
+              role: 'ADMIN'
             }
           }
         }
@@ -107,47 +126,32 @@ export async function canDeleteTodo(userId: string, todoId: string): Promise<boo
   // Creator can delete
   if (todo.creatorId === userId) return true
 
-  // Project owner can delete
-  if (todo.project.ownerId === userId) return true
-
-  // Organization owners can delete
-  if (todo.project.organization && todo.project.organization.members.length > 0) {
-    return true
-  }
+  // Project admins can delete
+  if (todo.project.members.length > 0) return true
 
   return false
 }
 
 /**
  * Check if a user is a valid assignee for a project
- * Must be project participant (owner, accepted volunteer, or org member)
+ * Must be project member or accepted volunteer
  */
 export async function isValidAssignee(userId: string, projectId: string): Promise<boolean> {
-  // Check if user is project owner
   const project = await prisma.project.findUnique({
     where: { id: projectId },
     include: {
-      organization: {
-        include: {
-          members: {
-            where: { userId }
-          }
-        }
+      members: {
+        where: { userId }
       }
     }
   })
 
   if (!project) return false
 
-  // Project owner is valid
-  if (project.ownerId === userId) return true
+  // Project members are valid assignees
+  if (project.members.length > 0) return true
 
-  // Organization members are valid
-  if (project.organization && project.organization.members.length > 0) {
-    return true
-  }
-
-  // Check if user is an accepted volunteer
+  // Check if user is an accepted volunteer (legacy support)
   const application = await prisma.application.findUnique({
     where: {
       userId_projectId: {

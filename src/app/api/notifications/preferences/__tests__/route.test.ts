@@ -70,7 +70,7 @@ describe('/api/notifications/preferences', () => {
 
       mockPrisma.notificationPreference.findUnique.mockResolvedValue(mockPreference as any)
 
-      const request = createMockRequest('GET', 'http://localhost:3000/api/notifications/preferences')
+      const request = createMockRequest({ method: 'GET', url: 'http://localhost:3000/api/notifications/preferences' })
       const response = await GET(request)
       const data = await response.json()
 
@@ -82,7 +82,7 @@ describe('/api/notifications/preferences', () => {
       mockSession(mockUser)
       mockPrisma.notificationPreference.findUnique.mockResolvedValue(null)
 
-      const request = createMockRequest('GET', 'http://localhost:3000/api/notifications/preferences')
+      const request = createMockRequest({ method: 'GET', url: 'http://localhost:3000/api/notifications/preferences' })
       const response = await GET(request)
       const data = await response.json()
 
@@ -93,7 +93,7 @@ describe('/api/notifications/preferences', () => {
     it('should return 401 when not authenticated', async () => {
       mockSession(null)
 
-      const request = createMockRequest('GET', 'http://localhost:3000/api/notifications/preferences')
+      const request = createMockRequest({ method: 'GET', url: 'http://localhost:3000/api/notifications/preferences' })
       const response = await GET(request)
       const data = await response.json()
 
@@ -105,7 +105,7 @@ describe('/api/notifications/preferences', () => {
       mockSession(mockUser)
       mockPrisma.notificationPreference.findUnique.mockRejectedValue(new Error('Database error'))
 
-      const request = createMockRequest('GET', 'http://localhost:3000/api/notifications/preferences')
+      const request = createMockRequest({ method: 'GET', url: 'http://localhost:3000/api/notifications/preferences' })
       const response = await GET(request)
       const data = await response.json()
 
@@ -132,7 +132,7 @@ describe('/api/notifications/preferences', () => {
 
       mockPrisma.notificationPreference.upsert.mockResolvedValue(updatedPreference as any)
 
-      const request = createMockRequest('PUT', 'http://localhost:3000/api/notifications/preferences', requestBody)
+      const request = createMockRequest({ method: 'PUT', url: 'http://localhost:3000/api/notifications/preferences', body: requestBody })
       const response = await PUT(request)
       const data = await response.json()
 
@@ -164,7 +164,7 @@ describe('/api/notifications/preferences', () => {
 
       mockPrisma.notificationPreference.upsert.mockResolvedValue(newPreference as any)
 
-      const request = createMockRequest('PUT', 'http://localhost:3000/api/notifications/preferences', requestBody)
+      const request = createMockRequest({ method: 'PUT', url: 'http://localhost:3000/api/notifications/preferences', body: requestBody })
       const response = await PUT(request)
       const data = await response.json()
 
@@ -186,7 +186,7 @@ describe('/api/notifications/preferences', () => {
         emailEnabled: false,
       }
 
-      const request = createMockRequest('PUT', 'http://localhost:3000/api/notifications/preferences', requestBody)
+      const request = createMockRequest({ method: 'PUT', url: 'http://localhost:3000/api/notifications/preferences', body: requestBody })
       const response = await PUT(request)
       const data = await response.json()
 
@@ -211,7 +211,7 @@ describe('/api/notifications/preferences', () => {
 
       mockPrisma.notificationPreference.upsert.mockResolvedValue(updatedPreference as any)
 
-      const request = createMockRequest('PUT', 'http://localhost:3000/api/notifications/preferences', requestBody)
+      const request = createMockRequest({ method: 'PUT', url: 'http://localhost:3000/api/notifications/preferences', body: requestBody })
       const response = await PUT(request)
       const data = await response.json()
 
@@ -229,7 +229,7 @@ describe('/api/notifications/preferences', () => {
 
       mockPrisma.notificationPreference.upsert.mockRejectedValue(new Error('Database error'))
 
-      const request = createMockRequest('PUT', 'http://localhost:3000/api/notifications/preferences', requestBody)
+      const request = createMockRequest({ method: 'PUT', url: 'http://localhost:3000/api/notifications/preferences', body: requestBody })
       const response = await PUT(request)
       const data = await response.json()
 
@@ -250,7 +250,7 @@ describe('/api/notifications/preferences', () => {
 
       mockPrisma.notificationPreference.upsert.mockResolvedValue(updatedPreference as any)
 
-      const request = createMockRequest('PUT', 'http://localhost:3000/api/notifications/preferences', {})
+      const request = createMockRequest({ method: 'PUT', url: 'http://localhost:3000/api/notifications/preferences', body: {} })
       const response = await PUT(request)
       const data = await response.json()
 
