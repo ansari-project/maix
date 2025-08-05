@@ -1,6 +1,47 @@
 echo "🔍 Running pre-commit checks..."
 
-# Step 1: Build check
+# Step 1: Prisma Schema Validation
+echo "🗄️  Validating Prisma schema..."
+npx prisma validate
+if [ $? -ne 0 ]; then
+  echo "❌ Prisma schema is invalid. Please fix schema errors before committing."
+  exit 1
+fi
+
+# Step 2: Check if schema and client are in sync
+echo "🔄 Checking Prisma client sync..."
+# Check if client exists and was generated recently
+if [ ! -d "node_modules/.prisma/client" ] || [ "prisma/schema.prisma" -nt "node_modules/.prisma/client" ]; then
+  echo "❌ Prisma client may be out of sync. Run 'npx prisma generate' first."
+  exit 1
+fi
+
+# Step 3: Migration status check (only if .env exists and DATABASE_URL is set)
+if [ -f .env ]; then
+  source .env
+  if [ ! -z "$DATABASE_URL" ]; then
+    echo "📊 Checking migration status..."
+    npm run db:migrate:status > /dev/null 2>&1
+    MIGRATION_STATUS=$?
+    if [ $MIGRATION_STATUS -ne 0 ]; then
+      echo "⚠️  Warning: Database has pending migrations or connection issues"
+      echo "💡 Run 'npm run db:migrate:status' to check manually"
+      # Don't fail the commit for migration issues - just warn
+    fi
+  fi
+fi
+
+# Step 4: Ensure migration files are included when schema changes
+SCHEMA_CHANGED=$(git diff --cached --name-only | grep -E "prisma/schema.prisma" || true)
+MIGRATIONS_CHANGED=$(git diff --cached --name-only | grep -E "prisma/migrations/.*\.sql" || true)
+if [ ! -z "$SCHEMA_CHANGED" ] && [ -z "$MIGRATIONS_CHANGED" ]; then
+  echo "⚠️  Warning: Schema changed but no migration files staged"
+  echo "💡 Did you forget to run 'npm run db:migrate:new migration_name'?"
+  echo "💡 Or stage the migration files with 'git add prisma/migrations/'"
+  # Don't fail - this might be intentional (like comments/formatting)
+fi
+
+# Step 5: Build check
 echo "📦 Running build check..."
 npm run build
 if [ $? -ne 0 ]; then
@@ -8,13 +49,12 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-# Step 2: Unit tests
+# Step 6: Unit tests
 echo "🧪 Running unit tests..."
 npm run test -- --silent
 if [ $? -ne 0 ]; then
   echo "❌ Unit tests failed. Please fix failing tests before committing."
   exit 1
 fi
-
 
 echo "✅ All pre-commit checks passed!"

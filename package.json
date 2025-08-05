@@ -17,6 +17,7 @@
     "db:migrate:status": "source .env && prisma migrate status",
     "db:migrate:reset": "echo '⚠️  WARNING: This will DELETE all data! Use db:backup first' && prisma migrate reset",
     "db:backup": "./scripts/backup_database.sh",
+    "db:health": "./scripts/db-health-check.sh",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
     "db:push": "echo '❌ ERROR: db:push is dangerous! Use db:migrate:new instead' && exit 1",

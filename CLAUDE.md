@@ -41,6 +41,7 @@
    npm run db:migrate:apply               # Apply pending migrations using deploy
    npm run db:migrate:status              # Check migration status
    npm run db:backup                      # Backup database with table counts
+   npm run db:health                      # Comprehensive database health check
    npm run db:studio                      # Open Prisma Studio (read-only recommended)
    ```
 

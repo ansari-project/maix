@@ -371,6 +371,204 @@ This workflow:
 - ✅ **Production-ready** (based on diff, not dev command)
 - ✅ **Prevents data loss** (explicit review step)
 
+## Complete Workflow Examples
+
+### Example 1: Adding a New Field
+
+**Scenario**: Add a `bio` field to the User model
+
+```bash
+# Step 1: Edit the schema
+# Add to prisma/schema.prisma:
+model User {
+  id    String @id @default(cuid())
+  email String @unique
+  name  String?
+  bio   String?  // ← New field added
+  // ... other fields
+}
+
+# Step 2: Create migration
+npm run db:migrate:new add_user_bio_field
+
+# Output:
+# Creating migration: add_user_bio_field
+# Migration created at: prisma/migrations/20250805123456_add_user_bio_field/migration.sql
+# 
+# Review the migration:
+#   cat prisma/migrations/20250805123456_add_user_bio_field/migration.sql
+# 
+# Apply the migration:
+#   npm run db:migrate:apply
+
+# Step 3: Review the generated SQL
+cat prisma/migrations/20250805123456_add_user_bio_field/migration.sql
+
+# Output:
+# -- AlterTable
+# ALTER TABLE "users" ADD COLUMN "bio" TEXT;
+
+# Step 4: Apply the migration
+npm run db:migrate:apply
+
+# Output:
+# > source .env && prisma migrate deploy
+# Environment variables loaded from .env
+# Prisma schema loaded from prisma/schema.prisma
+# 1 migration found in prisma/migrations
+# Applying migration `20250805123456_add_user_bio_field`
+# The following migration(s) have been applied:
+# migrations/
+#   └─ 20250805123456_add_user_bio_field/
+#     └─ migration.sql
+# All migrations have been successfully applied.
+
+# Step 5: Verify everything is up to date
+npm run db:migrate:status
+
+# Output:
+# Database schema is up to date!
+
+# Step 6: Commit the changes
+git add prisma/schema.prisma prisma/migrations/
+git commit -m "feat: add bio field to User model"
+```
+
+### Example 2: Adding a New Table
+
+**Scenario**: Add a new Comment model
+
+```bash
+# Step 1: Add new model to prisma/schema.prisma
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  authorId  String
+  postId    String
+  createdAt DateTime @default(now())
+  
+  author User @relation(fields: [authorId], references: [id])
+  post   Post @relation(fields: [postId], references: [id])
+  
+  @@map("comments")
+}
+
+# Don't forget to add the relation to User and Post models:
+model User {
+  // ... existing fields
+  comments Comment[]
+}
+
+model Post {
+  // ... existing fields  
+  comments Comment[]
+}
+
+# Step 2: Create migration
+npm run db:migrate:new add_comments_table
+
+# Step 3: Review the generated SQL
+cat prisma/migrations/*/migration.sql
+
+# Expected output:
+# -- CreateTable
+# CREATE TABLE "comments" (
+#     "id" TEXT NOT NULL,
+#     "content" TEXT NOT NULL,
+#     "authorId" TEXT NOT NULL,
+#     "postId" TEXT NOT NULL,
+#     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+#     CONSTRAINT "comments_pkey" PRIMARY KEY ("id")
+# );
+# 
+# -- AddForeignKey
+# ALTER TABLE "comments" ADD CONSTRAINT "comments_authorId_fkey" 
+#   FOREIGN KEY ("authorId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+# 
+# -- AddForeignKey  
+# ALTER TABLE "comments" ADD CONSTRAINT "comments_postId_fkey"
+#   FOREIGN KEY ("postId") REFERENCES "posts"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+# Step 4: Apply migration
+npm run db:migrate:apply
+
+# Step 5: Update Prisma client
+npx prisma generate
+
+# Step 6: Commit
+git add prisma/
+git commit -m "feat: add Comment model with user and post relations"
+```
+
+### Example 3: What happens when there are no changes?
+
+**Scenario**: Run migration command when schema hasn't changed
+
+```bash
+# Try to create migration when nothing changed
+npm run db:migrate:new test_no_changes
+
+# Output:
+# Creating migration: test_no_changes
+# No changes detected in schema
+
+# The script automatically cleans up and exits - no migration created
+```
+
+### Example 4: Emergency rollback scenario
+
+**Scenario**: You applied a migration but need to undo it
+
+```bash
+# ⚠️  IMPORTANT: Always backup first!
+npm run db:backup
+
+# Check current migration status
+npm run db:migrate:status
+
+# For rollbacks, you have these options:
+
+# Option 1: Point-in-time recovery (Neon/Supabase)
+# - Use your database provider's dashboard
+# - Restore to timestamp before the migration
+
+# Option 2: Create a reverse migration
+# Edit schema to remove the changes, then:
+npm run db:migrate:new rollback_problematic_change
+npm run db:migrate:apply
+
+# Option 3: Restore from backup (last resort)
+# psql $DATABASE_URL < db_backups/maix_backup_TIMESTAMP.sql
+```
+
+## Troubleshooting Common Issues
+
+### Issue: "No changes detected in schema"
+**Cause**: The schema file matches the current database state
+**Solution**: This is normal - no migration needed
+
+### Issue: Migration creates unexpected changes
+**Cause**: Schema drift or manual database changes
+**Solution**: 
+1. Review the generated SQL carefully
+2. Use `npm run db:health` to check for drift
+3. Consider manual cleanup before migration
+
+### Issue: Migration fails to apply
+**Cause**: Database constraints, data conflicts, or connection issues
+**Solution**:
+1. Check the error message in migration output
+2. Verify database connectivity with `npm run db:health`
+3. Ensure no conflicting data exists
+4. Consider data transformation before schema change
+
+### Issue: Git merge conflicts in migrations
+**Cause**: Multiple developers creating migrations simultaneously
+**Solution**:
+1. Coordinate schema changes with team
+2. Resolve conflicts by keeping both migrations
+3. Test the combined result thoroughly
+
 ## Migration Strategy
 
 ### Phase 1: Immediate Safeguards (✅ COMPLETED August 5, 2025)

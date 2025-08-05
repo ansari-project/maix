@@ -514,6 +514,7 @@ enum ExperienceLevel {
 enum HelpType {
   ADVICE
   PROTOTYPE
+  FEATURE
   MVP
   FULL_PRODUCT
 }
