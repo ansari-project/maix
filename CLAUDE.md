@@ -24,8 +24,9 @@
 
 3. **Data Backup Before Production Migrations**:
    ```bash
-   pg_dump $DATABASE_URL --data-only --no-owner > backup_$(date +%Y%m%d_%H%M%S).sql
+   ./scripts/backup_database.sh
    ```
+   See `docs/guides/database-backup-procedure.md` for detailed backup instructions.
 
 This warning exists because `db push` destroyed production data multiple times in July 2025.
 

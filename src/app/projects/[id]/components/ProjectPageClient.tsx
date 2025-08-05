@@ -151,7 +151,8 @@ export default function ProjectPageClient({
   const isAuthenticated = !!currentUser
   const isOwner = userRole === 'OWNER' || userRole === 'ADMIN'
   const hasApplied = !!userApplication
-  const canApply = isAuthenticated && !isOwner && !hasApplied && project.isActive
+  // Allow owners to volunteer for their own projects
+  const canApply = isAuthenticated && !hasApplied && project.isActive
   const isAcceptedVolunteer = userApplication?.status === 'ACCEPTED'
   const canPostUpdate = userRole && ['OWNER', 'ADMIN', 'MEMBER'].includes(userRole)
 
@@ -180,7 +181,7 @@ export default function ProjectPageClient({
                     size="lg" 
                     onClick={() => document.getElementById('application-form')?.scrollIntoView({ behavior: 'smooth' })}
                   >
-                    Apply to Volunteer
+                    {isOwner ? 'Volunteer for Your Project' : 'Apply to Volunteer'}
                   </Button>
                 )}
                 {hasApplied && (
@@ -352,10 +353,12 @@ export default function ProjectPageClient({
               {canApply && (
                 <Card id="application-form">
                   <CardHeader>
-                    <CardTitle>Apply to this Project</CardTitle>
+                    <CardTitle>{isOwner ? 'Volunteer for Your Project' : 'Apply to this Project'}</CardTitle>
                     <CardDescription>
                       {project.isActive 
-                        ? "Tell the project owner why you'd be a great fit"
+                        ? isOwner 
+                          ? "As the project owner, you can also volunteer to contribute hands-on work"
+                          : "Tell the project owner why you'd be a great fit"
                         : "This project is not currently accepting volunteers"
                       }
                     </CardDescription>
@@ -368,7 +371,10 @@ export default function ProjectPageClient({
                           id="message"
                           value={applicationMessage}
                           onChange={(e) => setApplicationMessage(e.target.value)}
-                          placeholder="Explain your background, why you're interested, and how you can help..."
+                          placeholder={isOwner 
+                            ? "Describe how you plan to contribute and what areas you'll work on..."
+                            : "Explain your background, why you're interested, and how you can help..."
+                          }
                           rows={4}
                         />
                       </div>
