@@ -24,7 +24,8 @@ import {
   LogOut,
   HelpCircle,
   Shield,
-  Megaphone
+  Megaphone,
+  CheckSquare
 } from "lucide-react"
 
 interface NavigationItem {
@@ -82,6 +83,12 @@ export function Sidebar({ isCollapsed = false, onToggle, currentPath }: SidebarP
       href: "/volunteering",
       icon: FileText,
       isActive: pathname === "/volunteering"
+    },
+    {
+      name: "My Todos",
+      href: "/my-todos",
+      icon: CheckSquare,
+      isActive: pathname === "/my-todos"
     },
     {
       name: "Organizations",
