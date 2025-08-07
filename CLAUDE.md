@@ -155,13 +155,19 @@ After:  **[ACCEPTED]** - Simplicity outweighs audit granularity
 
 **Output**: Numbered phase plan with deliverables, dependencies, and success criteria (reviewed and validated)
 
-##### 4. Produce - Iterative Development
+##### 4. Produce - Iterative Development (ITR Cycle)
 
 **Purpose**: Execute the implementation plan
 
-**Process**: For each phase: Implement → Test → Review (`mcp__zen__codereview`) → Update plan
+**MANDATORY Process** - For EACH phase, you MUST:
+1. **Implement**: Build the code for current phase
+2. **Test**: Write and run tests for the implementation
+3. **Review**: Code review using `mcp__zen__codereview`
+4. **Update**: Update plan document with progress
 
-**Output**: Working, tested code with plan document updated (no separate phase docs)
+**⚠️ CRITICAL**: Do NOT commit until ALL three ITR steps are complete!
+
+**Output**: Working, tested, reviewed code with plan document updated
 
 ##### 5. Evaluate - Comprehensive Assessment
 
@@ -239,6 +245,7 @@ Proposals & Questions    Decisions Made         Phases Defined            Phases
 
 ##### Produce → Evaluate Gate
 - ✅ All planned phases complete
+- ✅ Each phase completed ITR cycle (Implement, Test, Review)
 - ✅ Code passes all tests
 - ✅ Documentation updated
 - ✅ No critical bugs open
