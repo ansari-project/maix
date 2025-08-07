@@ -95,18 +95,75 @@ maix/
 
 ## Development Guidelines
 
-### Feature Development Workflow (DRSITR)
+### Feature Development Workflow (DAPPER)
 
-**DRSITR** - Our standard development workflow: Design, Review, Simplify, Implement, Test, Review
+**DAPPER** - Our standard development workflow: Design, Agree, Plan, Produce, Evaluate, Refine
 
-1. **Design** - Work out the overall design and architecture
-2. **Review** - Use `mcp__zen__thinkdeep` for comprehensive design analysis
-3. **Simplify** - Review the design to ensure it's as simple as possible
-4. **Implement** - Build the feature following the agreed design
-5. **Test** - Write comprehensive tests and run quality checks
-6. **Review** - Final code review with `mcp__zen__codereview` tool
+#### Workflow Stages
 
-**Enforcement**: Follow DRSITR for all non-trivial features. For simple changes (like text updates), Review steps may be simplified.
+1. **Design** - Collaborative AI-assisted design phase
+   - AI agents (Claude, Gemini Pro, O4) work together to create comprehensive design
+   - Work through technical challenges and explore multiple approaches
+   - Identify and attempt to resolve open questions through analysis
+   - Propose simplifications to prevent over-engineering
+   - Flag remaining questions that require human input or business decisions
+   - Output: Design document with solutions, simplifications, and unresolved questions
+
+2. **Agree** - Human review and decision phase
+   - Review and select which simplifications to adopt
+   - Answer open questions from the design phase
+   - Provide additional constraints or requirements
+   - Output: Approved design with all decisions documented
+
+3. **Plan** - Break design into executable phases
+   - Convert approved design into sequential, independent phases
+   - Each phase must deliver working, committable functionality
+   - Define clear success criteria for each phase
+   - Output: Phase plan document (see `docs/plans/PLAN-TEMPLATE.md`)
+
+4. **Produce** - Execute the implementation
+   - For each planned phase, perform these cycles:
+     - **Implement**: Build the code for current phase
+     - **Test**: Write and run tests for the implementation
+     - **Review**: Code review using `mcp__zen__codereview`
+   - **Update the plan document as you progress** (DO NOT create separate phase MD files)
+   - The plan document is the single source of truth for tracking progress
+   - Continue until all phases are complete
+   - Output: Working, tested code for all phases
+
+5. **Evaluate** - Comprehensive assessment
+   - Run integration tests across all implemented phases
+   - Verify against original requirements and success criteria
+   - Performance and security validation
+   - User acceptance testing if applicable
+   - Output: Evaluation report with findings
+
+6. **Refine** - Final polish and documentation
+   - Address any issues identified during evaluation
+   - Update all documentation to reflect the implementation
+   - Final code cleanup and optimization
+   - Ensure all quality gates are met
+   - Output: Production-ready code with complete documentation
+
+#### Stage Gates and Artifacts
+
+| Stage | Key Actors | Input | Output |
+|-------|------------|-------|--------|
+| **Design** | AI Agents (Claude, Gemini Pro, O4) | Requirements/Feature request | Design proposal with solutions, simplifications, and unresolved questions |
+| **Agree** | Human (Developer/PM) | Design proposal | Approved design with decisions |
+| **Plan** | Developer | Approved design | Phase plan with deliverables |
+| **Produce** | Developer | Phase plan | Tested code for all phases |
+| **Evaluate** | Developer/QA | Tested code | Evaluation report |
+| **Refine** | Developer | Evaluation report | Production-ready release |
+
+#### Feedback Loops
+
+- **Agree → Design**: If human identifies issues, return to Design with specific feedback
+- **Produce → Design/Agree**: If major discoveries invalidate design, stop and return to Design
+- **Evaluate → Produce**: If evaluation finds issues, return to Produce for fixes
+- **Refine → New DAPPER cycle**: Findings may trigger new feature cycles
+
+**Enforcement**: Follow DAPPER for all non-trivial features. For simple changes (like text updates), a simplified workflow may be used.
 
 ### Project Management
 - **Phase-Based Development**: We organize work into phases, not time-based estimates
@@ -220,7 +277,7 @@ When designing new features:
 1. **Always use the template**: Copy `docs/designs/FEATURE-DESIGN-TEMPLATE.md`
 2. **Focus on architecture**: Emphasize high-level design, not implementation details
 3. **Use phases, not dates**: "Phase 1: Core functionality" not "Week 1"
-4. **Apply DRS process**: For complex features, use Design-Review-Simplify workflow
+4. **Apply DAPPER process**: For complex features, use the DAPPER workflow
 
 Directory structure for designs:
 - `docs/designs/experimental/`: Early explorations
@@ -266,7 +323,7 @@ npm outdated                       # Update only if needed
 
 1. **Safety First**: Follow git and database safety protocols above
 2. **Keep It Simple**: Bias towards simple solutions for current problems
-3. **Use DRSITR**: Design, Review, Simplify, Implement, Test, Review
+3. **Use DAPPER**: Design, Agree, Plan, Produce, Evaluate, Refine
 4. **Test Pragmatically**: See testing-strategy.md
 5. **Track Progress**: Use TodoWrite tool for task management
 6. **No Claude Suffixes**: Never add "Generated with Claude Code" to commits

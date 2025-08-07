@@ -7,7 +7,7 @@ Our development process ensures thoughtful design, iterative improvement, and hi
 ## Process Flow
 
 ```
-1. IDEAS → 2. MVP PLAN → 3. PHASED IMPLEMENTATION (DRSITR)
+1. IDEAS → 2. MVP PLAN → 3. PHASED IMPLEMENTATION (DAPPER)
 ```
 
 ---
@@ -139,23 +139,21 @@ Features to consider after MVP:
 
 ---
 
-## 3. Phased Implementation (DRSITR)
+## 3. Phased Implementation (DAPPER)
 
 **Location**: `/docs/plans/[feature-name]-implementation.md`
 
 ### Purpose
-Track the actual implementation of each phase using DRSITR protocol.
+Track the actual implementation using the DAPPER workflow.
 
-### DRSITR Protocol
+### DAPPER Workflow
 
-Each phase goes through:
-
-1. **Design**: Detailed technical design for the phase
-2. **Review**: Use tools like `thinkdeep` to analyze the design
-3. **Simplify**: Remove unnecessary complexity based on review
-4. **Implement**: Build according to simplified design
-5. **Test**: Verify functionality works as expected
-6. **Review**: Final code review before moving to next phase
+1. **Design**: AI agents collaborate on comprehensive design with simplifications
+2. **Agree**: Human reviews and selects simplifications/answers questions
+3. **Plan**: Break into executable phases (each delivers working functionality)
+4. **Produce**: Execute implementation (update plan doc as you progress - no separate phase files)
+5. **Evaluate**: Comprehensive assessment against requirements
+6. **Refine**: Final polish and documentation
 
 ### Document Structure
 ```markdown
@@ -188,7 +186,7 @@ Status tracker for all phases.
 [Final review notes]
 
 ## Phase 2: [Name] [STATUS: PENDING]
-[Repeat DRSITR structure]
+[Continue tracking progress in the plan document]
 ```
 
 ---
@@ -202,7 +200,7 @@ Status tracker for all phases.
 `/docs/ideas/maix-rbac-organizations-simplified.md` - Stripped down to just visibility controls and basic organizations
 
 ### 3. Implementation
-`/docs/plans/rbac-implementation-complete.md` - Tracking DRSITR for each phase
+`/docs/plans/rbac-implementation-complete.md` - Tracking DAPPER progress
 
 ---
 
@@ -219,7 +217,7 @@ Status tracker for all phases.
 - Always ask "what's the simplest thing that provides value?"
 
 ### Implementation
-- Complete each DRSITR step before moving on
+- Complete each DAPPER stage before moving on
 - Update status in real-time
 - Don't skip steps even if they seem obvious
 - Document simplifications for future reference
@@ -236,7 +234,7 @@ Status tracker for all phases.
 
 1. **Clear Thinking**: Ideas are fully explored before implementation
 2. **Scope Control**: MVP planning prevents feature creep
-3. **Quality**: DRSITR ensures thoughtful implementation
+3. **Quality**: DAPPER ensures thoughtful implementation
 4. **Traceability**: Can trace from idea to implementation
 5. **Learning**: Document what was simplified and why
 
@@ -246,5 +244,5 @@ Status tracker for all phases.
 
 ```
 /docs/ideas/feature.md → /docs/plans/feature-mvp.md → /docs/plans/feature-implementation.md
-   (Full Vision)            (Scoped Plan)                (DRSITR Execution)
+   (Full Vision)            (Scoped Plan)                (DAPPER Execution)
 ```
