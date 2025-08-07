@@ -95,121 +95,145 @@ maix/
 
 ## Development Guidelines
 
-### Feature Development Workflow (DAPPER)
+### DAPPER Development Methodology
 
-**DAPPER** - Our standard development workflow: Design, Agree, Plan, Produce, Evaluate, Refine
+**DAPPER** - Our structured development workflow: Design, Align, Plan, Produce, Evaluate, Refine
 
-#### Workflow Stages
+DAPPER ensures thoughtful design, human alignment, and high-quality implementation. The key principle: **one document evolves through the entire process**, maintaining a complete history of proposals, decisions, and rationale.
 
-1. **Design** - Collaborative AI-assisted design phase
-   - AI agents (Claude, Gemini Pro, O4) work together to create comprehensive design
-   - Work through technical challenges and explore multiple approaches
-   - Identify and attempt to resolve open questions through analysis
-   - Propose simplifications to prevent over-engineering
-   - Flag remaining questions that require human input or business decisions
-   - Output: Design document with solutions, simplifications, and unresolved questions
+#### When to Use DAPPER
 
-2. **Agree** - Human review and decision phase
-   - Review and select which simplifications to adopt
-   - Answer open questions from the design phase
-   - Provide additional constraints or requirements
-   - Output: Approved design with all decisions documented
+**Use DAPPER for:**
+- New features requiring design decisions
+- Complex refactoring with multiple approaches  
+- Architecture changes with trade-offs
+- Any work with significant complexity
 
-3. **Plan** - Break design into executable phases
-   - Convert approved design into sequential, independent phases
-   - Each phase must deliver working, committable functionality
-   - Define clear success criteria for each phase
-   - Output: Phase plan document (see `docs/plans/PLAN-TEMPLATE.md`)
+**Skip DAPPER for:**
+- Simple bug fixes
+- Text/copy changes
+- Configuration updates
+- Straightforward dependency updates
 
-4. **Produce** - Execute the implementation
-   - For each planned phase, perform these cycles:
-     - **Implement**: Build the code for current phase
-     - **Test**: Write and run tests for the implementation
-     - **Review**: Code review using `mcp__zen__codereview`
-   - **Update the plan document as you progress** (DO NOT create separate phase MD files)
-   - The plan document is the single source of truth for tracking progress
-   - Continue until all phases are complete
-   - Output: Working, tested code for all phases
+#### The Six Stages
 
-5. **Evaluate** - Comprehensive assessment
-   - Run integration tests across all implemented phases
-   - Verify against original requirements and success criteria
-   - Performance and security validation
-   - User acceptance testing if applicable
-   - Output: Evaluation report with findings
+##### 1. Design - Collaborative AI Design
 
-6. **Refine** - Final polish and documentation
-   - Address any issues identified during evaluation
-   - Update all documentation to reflect the implementation
-   - Final code cleanup and optimization
-   - Ensure all quality gates are met
-   - Output: Production-ready code with complete documentation
+**Purpose**: Create comprehensive design exploring multiple approaches
 
-#### Stage Gates and Artifacts
+**Process**:
+- Multiple AI agents collaborate to explore technical solutions
+- Identify and propose simplifications to prevent over-engineering
+- Surface trade-offs and alternative approaches
+- Flag unresolved questions requiring human input
 
-| Stage | Key Actors | Input | Output |
-|-------|------------|-------|--------|
-| **Design** | AI Agents (Claude, Gemini Pro, O4) | Requirements/Feature request | Design proposal with solutions, simplifications, and unresolved questions |
-| **Agree** | Human (Developer/PM) | Design proposal | Approved design with decisions |
-| **Plan** | Developer | Approved design | Phase plan with deliverables |
-| **Produce** | Developer | Phase plan | Tested code for all phases |
-| **Evaluate** | Developer/QA | Tested code | Evaluation report |
-| **Refine** | Developer | Evaluation report | Production-ready release |
+**Output**: Design document with architecture proposals, simplifications, alternatives, open questions, and risk analysis
 
-#### Feedback Loops
+##### 2. Align - Human Alignment & Decisions
 
-- **Agree → Design**: If human identifies issues, return to Design with specific feedback
-- **Produce → Design/Agree**: If major discoveries invalidate design, stop and return to Design
-- **Evaluate → Produce**: If evaluation finds issues, return to Produce for fixes
-- **Refine → New DAPPER cycle**: Findings may trigger new feature cycles
+**Purpose**: Review AI proposals and make strategic decisions
 
-**Enforcement**: Follow DAPPER for all non-trivial features. For simple changes (like text updates), a simplified workflow may be used.
+**Process**:
+- Review each proposed simplification
+- Make decisions on all open questions
+- Provide additional constraints if needed
+- Document rationale for decisions
+
+**Output**: SAME document updated with decisions marked `[ACCEPTED]`, `[REJECTED]`, or `[DECIDED: choice + rationale]`, plus new "Alignment Outcomes" section
+
+**Example transformation**:
+```markdown
+Before: **Awaiting Decision**
+After:  **[ACCEPTED]** - Simplicity outweighs audit granularity
+```
+
+##### 3. Plan - Phase-Based Implementation Plan
+
+**Purpose**: Break aligned design into executable phases
+
+**Process**: Convert design into sequential phases that each deliver working functionality with clear success criteria
+
+**Output**: Numbered phase plan with deliverables, dependencies, and success criteria
+
+##### 4. Produce - Iterative Development
+
+**Purpose**: Execute the implementation plan
+
+**Process**: For each phase: Implement → Test → Review (`mcp__zen__codereview`) → Update plan
+
+**Output**: Working, tested code with plan document updated (no separate phase docs)
+
+##### 5. Evaluate - Comprehensive Assessment
+
+**Purpose**: Validate implementation against requirements
+
+**Process**: Run integration tests, verify requirements, validate performance/security, user acceptance
+
+**Output**: Evaluation report with test results, metrics, and identified issues
+
+##### 6. Refine - Final Polish
+
+**Purpose**: Address evaluation findings and prepare for production
+
+**Process**: Fix identified issues, update documentation, optimize code, final quality checks
+
+**Output**: Production-ready release
+
+#### Document Evolution
+
+The key insight: **one document evolves** through the process:
+
+```
+Initial Design → [Align] → Aligned Design → [Plan] → Phase Plan → [Produce] → Progress Tracking
+     ↓                           ↓                        ↓                          ↓
+Proposals & Questions    Decisions Made         Phases Defined            Phases Completed
+```
+
+#### Best Practices
+
+- **Design**: Let AI explore broadly, document trade-offs, be specific about open questions
+- **Align**: Make clear decisions with rationale, balance simplicity with functionality  
+- **Plan**: Keep phases small and independently valuable, front-load risky work
+- **Produce**: Update plan in real-time, complete phases sequentially, test as you go
+- **Evaluate**: Test against requirements and edge cases, verify assumptions
+- **Refine**: Update docs, clean technical debt, ensure deployment readiness
+
+#### Common Pitfalls to Avoid
+
+1. **Skipping Align**: Don't let AI make business decisions
+2. **Big Phases**: Keep phases small and deliverable
+3. **Multiple Documents**: Maintain one evolving document
+4. **Skipping Stages**: Each stage serves a purpose
+5. **No Documentation**: Update docs as you go, not at the end
+
+#### Quick Reference
+
+```
+D - Design    : AI explores and proposes
+A - Align     : Human decides and aligns  
+P - Plan      : Break into executable phases
+P - Produce   : Build, test, review, repeat
+E - Evaluate  : Comprehensive validation
+R - Refine    : Polish for production
+```
 
 ### Project Management
-- **Phase-Based Development**: We organize work into phases, not time-based estimates
+- **Phase-Based Development**: We organize work into phases based on functionality, not time
 - **Phases represent logical completion points**: Each phase delivers working functionality
-- **No week/time estimates**: Focus on completion criteria rather than duration
+- **No time estimates**: Phases are defined by deliverables, not duration
 - **Sequential phases**: Complete one phase before moving to the next
 
-### Git Commit Guidelines
+### Git Guidelines
 
-- **NEVER include "Generated with Claude Code" or "Co-Authored-By: Claude" in commit messages**
-- Use descriptive commit messages that explain the purpose of changes
-- Keep commit messages concise and focused on the changes made
-- Group related changes into a single commit
-- **NEVER use `git add .` or `git add --all`** - Always specify individual files
+**Commits**: No "Generated with Claude Code", descriptive messages, use `git add [specific-files]` never `git add .`
 
-#### Git Push Guidelines - CRITICAL
-
-- **NEVER force push** without explicit user permission
-- **ALWAYS run `git fetch origin && git status` before pushing**
-- **If push is rejected**, STOP and inform the user - wait for instructions
-- **NEVER make unilateral decisions** about resolving divergent branches
-
-#### Pre-Commit Mental Checklist
-1. ✅ **Descriptive message**: Explains purpose and impact
-2. ✅ **No Claude suffixes**: No "Generated with Claude Code"
-3. ✅ **Specific staging**: Used `git add [specific-files]`
-4. ✅ **Build/test passed**: Pre-commit hooks validated
+**Pushing**: Never force push, always `git fetch origin && git status` first, if rejected STOP and ask user
 
 ### Pre-Commit Checklist
 
-1. **Check for Dependency Changes:**
-   - If you installed new packages, ensure both `package.json` AND `package-lock.json` are staged
-   - Never commit code that uses packages without committing the dependency files
-
-2. **Local Validation:**
-   - Run `npm run build` to ensure no TypeScript or build errors
-   - Run `npm run test` to ensure all unit tests pass
-   - Fix any errors found during build or test
-
-3. **Code Review (for non-trivial changes):**
-   - For significant features, use the `mcp__zen__codereview` tool
-   - Focus on addressing critical issues (bugs, security, major design flaws)
-   - Remember: bias towards simple solutions for current problems
-
-4. **Never push code that fails to build or has failing tests**
-   - Pre-commit hooks exist to maintain code quality
+1. **Include dependencies**: Both `package.json` AND `package-lock.json` if changed
+2. **Validate locally**: Run `npm run build` and `npm run test`
+3. **Review significant changes**: Use `mcp__zen__codereview` for features
 
 ### Simplicity and Pragmatism
 
@@ -219,13 +243,9 @@ maix/
 - **Focus on current scale**: Design for the data and usage patterns we have today
 - **Iterative complexity**: Add architectural complexity only when simple solutions prove insufficient
 
-#### Real Examples of Keeping Things Simple
+#### Example: Keeping Things Simple
 
-**Avatar Photos**: Instead of implementing complex avatar components with image handling, fallbacks, and Radix UI primitives, we simply display user names. This eliminates image storage, upload handling, and UI complexity while providing the essential user identification we need.
-
-**Performance Optimization**: Rather than implementing complex Prisma query optimization, database indexing strategies, N+1 query prevention, and caching layers upfront, we use straightforward Prisma queries and will only optimize if we observe actual performance problems.
-
-**Content Moderation**: Rather than implementing a complex content moderation system with status fields, review workflows, admin interfaces, and approval processes upfront, we start with simple content posting and will only add moderation if we experience actual abuse problems.
+**Avatar Photos**: Display user names instead of complex image handling. Eliminates storage, uploads, and UI complexity while providing essential identification. Similar approach for performance (optimize only when needed) and moderation (add only if abuse occurs).
 
 ### Performance and Security Priorities
 
@@ -243,22 +263,11 @@ maix/
 - **Authentication**: Basic session management with NextAuth is sufficient
 - **Priority**: User experience and functionality over restrictive controls
 
-### Database Operations
-- Always use Prisma for database operations
-- Use transactions for multi-table operations
-- Implement proper error handling
-- Use connection pooling for performance
+### Technical Standards
 
-### Authentication
-- All protected routes must use NextAuth.js
-- Implement role-based access control
-- Validate user sessions on API routes
-
-### UI/UX Guidelines
-- Follow clean design principles
-- Ensure accessibility (WCAG 2.1 AA)
-- Use semantic HTML elements
-- **All textarea fields must support Markdown**: Use the `<Markdown>` component from `@/components/ui/markdown`
+**Database**: Use Prisma for all operations, transactions for multi-table, proper error handling
+**Auth**: NextAuth.js for protected routes, role-based access, validate sessions on API routes  
+**UI/UX**: Clean design, WCAG 2.1 AA accessibility, semantic HTML, Markdown support via `<Markdown>` component
 
 ## Key Database Concepts
 
@@ -270,20 +279,11 @@ Projects use a dual status system:
 
 For detailed schema information, see `prisma/schema.prisma` and `docs/guides/maix-data-model.md`.
 
-## Feature Development Documentation
+## Feature Documentation
 
-When designing new features:
+For new features, use `docs/designs/FEATURE-DESIGN-TEMPLATE.md`. Focus on architecture, define phases by functionality not duration.
 
-1. **Always use the template**: Copy `docs/designs/FEATURE-DESIGN-TEMPLATE.md`
-2. **Focus on architecture**: Emphasize high-level design, not implementation details
-3. **Use phases, not dates**: "Phase 1: Core functionality" not "Week 1"
-4. **Apply DAPPER process**: For complex features, use the DAPPER workflow
-
-Directory structure for designs:
-- `docs/designs/experimental/`: Early explorations
-- `docs/designs/planned/`: Ready for implementation
-- `docs/designs/active/`: Currently being built
-- `docs/designs/shipped/`: Completed features
+Directory structure: `experimental/` → `planned/` → `active/` → `shipped/`
 
 ## Testing Strategy
 
@@ -306,24 +306,15 @@ npm outdated                       # Update only if needed
 
 ## Additional Resources
 
-### Key Documentation
-- **README.md**: Technology stack, setup, and general information
-- **docs/guides/testing-strategy.md**: Comprehensive testing philosophy
-- **docs/guides/maix-data-model.md**: Database schema and patterns
-- **docs/guides/google-genai-sdk-usage.md**: Google AI integration
-- **docs/designs/FEATURE-DESIGN-TEMPLATE.md**: Feature design process
+**Key Docs**: README.md (setup), testing-strategy.md, maix-data-model.md, google-genai-sdk-usage.md
 
-### Community Values
-- Prioritize community benefit over profit
-- Promote knowledge sharing
-- Build trust through transparency
-- Foster collaborative spirit
+**Community Values**: Community benefit over profit, knowledge sharing, transparency, collaboration
 
 ## Key Reminders for Claude Code
 
 1. **Safety First**: Follow git and database safety protocols above
 2. **Keep It Simple**: Bias towards simple solutions for current problems
-3. **Use DAPPER**: Design, Agree, Plan, Produce, Evaluate, Refine
+3. **Use DAPPER**: Design, Align, Plan, Produce, Evaluate, Refine
 4. **Test Pragmatically**: See testing-strategy.md
 5. **Track Progress**: Use TodoWrite tool for task management
 6. **No Claude Suffixes**: Never add "Generated with Claude Code" to commits
