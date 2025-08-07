@@ -155,19 +155,55 @@ After:  **[ACCEPTED]** - Simplicity outweighs audit granularity
 
 **Output**: Numbered phase plan with deliverables, dependencies, and success criteria (reviewed and validated)
 
-##### 4. Produce - Iterative Development (ITR Cycle)
+##### 4. Produce - Iterative Development (ITR Cycle with Evidence-Based Enforcement)
 
-**Purpose**: Execute the implementation plan
+**Purpose**: Execute the implementation plan with verifiable completion
 
 **MANDATORY Process** - For EACH phase, you MUST:
 1. **Implement**: Build the code for current phase
-2. **Test**: Write and run tests for the implementation
+2. **Test**: Write and run tests for the implementation  
 3. **Review**: Code review using `mcp__zen__codereview`
 4. **Update**: Update plan document with progress
 
-**⚠️ CRITICAL**: Do NOT commit until ALL three ITR steps are complete!
+**⚠️ CRITICAL ENFORCEMENT - EVIDENCE-BASED COMPLETION**:
+- **NEVER mark a todo as complete without evidence of execution**
+- **Test step**: Must show actual test output (npm test results or specific test file runs)
+- **Review step**: Must capture continuation_id from mcp__zen__codereview tool
+- **Each phase**: Cannot proceed to next phase until all ITR evidence is documented
 
-**Output**: Working, tested, reviewed code with plan document updated
+**Evidence Requirements**:
+```
+✅ CORRECT TODO COMPLETION:
+Todo: "Phase 2: Write tests"
+Evidence: Test output showing "Test Suites: 5 passed, Tests: 42 passed"
+Status: Can mark complete ✓
+
+❌ INCORRECT TODO COMPLETION:
+Todo: "Phase 2: Code review"
+Evidence: None (tool not run)
+Status: CANNOT mark complete ✗
+```
+
+**Verification Checklist Before Marking ITR Steps Complete**:
+- [ ] Did I actually run the tool/command?
+- [ ] Do I have output/results to prove it?
+- [ ] Can I provide the continuation_id or execution proof?
+- [ ] Would an audit find evidence this step was done?
+
+**Anti-Pattern Prevention**:
+- **DO NOT**: Mark review todos complete without running mcp__zen__codereview
+- **DO NOT**: Mark test todos complete without showing test results
+- **DO NOT**: Skip steps due to perceived time pressure
+- **DO NOT**: Batch-mark multiple todos complete without individual evidence
+- **DO NOT**: Proceed to next phase without completing ALL ITR steps with evidence
+
+**Phase Completion Requirement**:
+- **MANDATORY**: Commit at the end of EVERY phase after completing ITR cycle
+- Each phase must be a complete, working unit that can be committed
+- This ensures incremental progress and prevents large, risky commits
+- If a phase cannot be committed, it's too large - break it down further
+
+**Output**: Working, tested, reviewed code with evidence trail, updated plan document, and committed to git
 
 ##### 5. Evaluate - Comprehensive Assessment
 
@@ -245,7 +281,10 @@ Proposals & Questions    Decisions Made         Phases Defined            Phases
 
 ##### Produce → Evaluate Gate
 - ✅ All planned phases complete
-- ✅ Each phase completed ITR cycle (Implement, Test, Review)
+- ✅ Each phase completed ITR cycle (Implement, Test, Review) WITH EVIDENCE
+  - ✅ Test execution logs captured and verified
+  - ✅ Code review continuation_id documented
+  - ✅ No steps marked complete without proof of execution
 - ✅ Code passes all tests
 - ✅ Documentation updated
 - ✅ No critical bugs open
@@ -277,6 +316,18 @@ When you have open questions during Align, categorize them:
 - Future enhancements
 - Optimization details
 
+#### ITR Evidence Collection (MANDATORY)
+
+**Every ITR step requires documented evidence before marking complete:**
+
+| Step | Evidence Required | Example |
+|------|------------------|---------|
+| **Implement** | Code changes staged/committed | `git status` showing files modified |
+| **Test** | Test execution output | `npm test` results or `jest` output |
+| **Review** | Code review tool output | `continuation_id` from mcp__zen__codereview |
+
+**Process Integrity Rule**: If you cannot provide evidence, the step is NOT complete.
+
 #### Common Pitfalls to Avoid
 
 1. **Premature Planning**: Moving to Plan before answering Tier 1 questions
@@ -286,6 +337,7 @@ When you have open questions during Align, categorize them:
 5. **No Stage Gates**: Proceeding without meeting exit criteria
 6. **Silent PAT Generation**: For third-party integrations, always get user consent
 7. **Incoherent Plans**: Phase objectives must match their tasks
+8. **Marking Without Evidence**: NEVER mark ITR steps complete without proof of execution
 
 #### Quick Reference
 
