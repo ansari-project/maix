@@ -191,20 +191,93 @@ Proposals & Questions    Decisions Made         Phases Defined            Phases
 
 #### Best Practices
 
-- **Design**: Let AI explore broadly, document trade-offs, be specific about open questions
-- **Align**: Make clear decisions with rationale, balance simplicity with functionality  
-- **Plan**: Keep phases small and independently valuable, front-load risky work
+- **Design**: Let AI explore broadly, document trade-offs, be specific about open questions, categorize questions by tier
+- **Align**: Answer ALL Tier 1 questions first, make clear decisions with rationale, update design doc immediately
+- **Plan**: Only start after Align gate passed, keep phases small and independently valuable, front-load risky work
 - **Produce**: Update plan in real-time, complete phases sequentially, test as you go
 - **Evaluate**: Test against requirements and edge cases, verify assumptions
 - **Refine**: Update docs, clean technical debt, ensure deployment readiness
 
+#### Lessons Learned from Event Manager
+
+**What Went Wrong**: Jumped from Align to Plan without answering critical questions about public/private events, PAT UX, and capacity limits.
+
+**Key Learning**: The Align stage isn't complete just because you've made simplification decisions. You must also:
+1. Answer all Tier 1 questions
+2. Update the design document
+3. Get stakeholder sign-off
+4. Verify no contradictions remain
+
+**Prevention**: Use the stage gate checklist. Cannot proceed to Plan until ALL items checked.
+
+#### Stage Gate Criteria
+
+**CRITICAL**: You cannot proceed to the next stage without meeting exit criteria.
+
+##### Design → Align Gate
+- ✅ Architecture diagram complete
+- ✅ Key components identified  
+- ✅ Technical approach documented
+- ✅ Open questions listed
+- ✅ Initial risk assessment done
+
+##### Align → Plan Gate  
+- ✅ ALL Tier 1 (critical) questions answered
+- ✅ Simplifications agreed and documented
+- ✅ Design document updated with decisions
+- ✅ No contradictions in documentation
+- ✅ Technical feasibility validated
+- ✅ Stakeholder sign-off obtained
+
+##### Plan → Produce Gate
+- ✅ Phases clearly defined with deliverables
+- ✅ Dependencies mapped between phases
+- ✅ Each phase has acceptance criteria
+- ✅ Testing strategy defined
+- ✅ Resource requirements identified
+
+##### Produce → Evaluate Gate
+- ✅ All planned phases complete
+- ✅ Code passes all tests
+- ✅ Documentation updated
+- ✅ No critical bugs open
+- ✅ Feature works end-to-end
+
+##### Evaluate → Refine Gate
+- ✅ Performance benchmarks met
+- ✅ User feedback collected
+- ✅ Issues prioritized by severity
+- ✅ Refinement scope defined
+
+#### Question Prioritization Framework
+
+When you have open questions during Align, categorize them:
+
+**Tier 1: Critical Blockers** (MUST answer before Plan)
+- Affects database schema or core models
+- Determines API design or architecture
+- Impacts security or authentication
+- Defines core business logic
+
+**Tier 2: Important** (Should answer before relevant phase)
+- Affects specific feature behavior
+- Determines UI/UX patterns
+- Impacts performance optimization
+
+**Tier 3: Deferrable** (Can answer later or during implementation)
+- Nice-to-have features
+- Future enhancements
+- Optimization details
+
 #### Common Pitfalls to Avoid
 
-1. **Skipping Align**: Don't let AI make business decisions
-2. **Big Phases**: Keep phases small and deliverable
-3. **Multiple Documents**: Maintain one evolving document
-4. **Skipping Stages**: Each stage serves a purpose
-5. **No Documentation**: Update docs as you go, not at the end
+1. **Premature Planning**: Moving to Plan before answering Tier 1 questions
+2. **Skipping Align**: Don't let AI make business decisions
+3. **Big Phases**: Keep phases small and deliverable
+4. **Multiple Documents**: Maintain one evolving document
+5. **No Stage Gates**: Proceeding without meeting exit criteria
+6. **Silent PAT Generation**: For third-party integrations, always get user consent
+7. **Incoherent Plans**: Phase objectives must match their tasks
 
 #### Quick Reference
 
