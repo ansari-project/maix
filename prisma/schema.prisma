@@ -21,6 +21,7 @@ model Organization {
   products     Product[]
   projects     Project[]
   invitations  Invitation[]
+  events       MaixEvent[]          @relation("OrganizationEvents")
 
   @@map("organizations")
 }
@@ -113,6 +114,10 @@ model User {
   todosAssigned           Todo[]                  @relation("TodosAssigned")
   todosCreated            Todo[]                  @relation("TodosCreated")
   invitationsSent         Invitation[]            @relation("InvitationsSent")
+  eventsCreated           MaixEvent[]             @relation("EventsCreated")
+  registrations           Registration[]
+  eventConversations      EventConversation[]
+  userPreferences         UserPreferences?
 
   @@index([skills], type: Gin)
   @@map("users")
@@ -201,14 +206,17 @@ model Message {
 }
 
 model PersonalAccessToken {
-  id         String    @id @default(cuid())
-  userId     String
-  tokenHash  String    @unique
-  name       String
-  createdAt  DateTime  @default(now())
-  lastUsedAt DateTime?
-  expiresAt  DateTime?
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String           @id @default(cuid())
+  userId            String
+  tokenHash         String           @unique
+  name              String
+  scopes            String[]
+  isSystemGenerated Boolean          @default(false)
+  createdAt         DateTime         @default(now())
+  lastUsedAt        DateTime?
+  expiresAt         DateTime?
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userPreferences   UserPreferences?
 
   @@index([userId])
   @@map("personal_access_tokens")
@@ -229,6 +237,7 @@ model Post {
   projectDiscussionThreadId String?   @unique
   productId                 String?
   productDiscussionThreadId String?   @unique
+  maixEventId               String?
   parentId                  String?
   isResolved                Boolean   @default(false)
   bestAnswerId              String?   @unique
@@ -243,6 +252,7 @@ model Post {
   product                   Product?  @relation("ProductUpdates", fields: [productId], references: [id], onDelete: Cascade)
   projectDiscussionThread   Project?  @relation("ProjectDiscussionThread", fields: [projectDiscussionThreadId], references: [id], onDelete: Cascade)
   project                   Project?  @relation("ProjectUpdates", fields: [projectId], references: [id], onDelete: Cascade)
+  maixEvent                 MaixEvent? @relation("MaixEventPosts", fields: [maixEventId], references: [id], onDelete: Cascade)
   todo                      Todo?     @relation("TodoPosts", fields: [todoId], references: [id])
 
   @@index([authorId])
@@ -254,6 +264,7 @@ model Post {
   @@index([bestAnswerId])
   @@index([type, createdAt])
   @@index([todoId])
+  @@index([maixEventId])
   @@map("posts")
 }
 
@@ -418,15 +429,18 @@ model Todo {
   dueDate     DateTime?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
-  projectId   String
+  projectId   String?
+  eventId     String?
   creatorId   String
   assigneeId  String?
   posts       Post[]     @relation("TodoPosts")
   assignee    User?      @relation("TodosAssigned", fields: [assigneeId], references: [id])
   creator     User       @relation("TodosCreated", fields: [creatorId], references: [id])
-  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project     Project?   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  event       MaixEvent? @relation("EventTodos", fields: [eventId], references: [id], onDelete: Cascade)
 
   @@index([projectId, status])
+  @@index([eventId, status])
   @@index([assigneeId, status])
   @@map("todos")
 }
@@ -542,6 +556,8 @@ enum PostType {
   PRODUCT_UPDATE
   PROJECT_DISCUSSION
   PRODUCT_DISCUSSION
+  EVENT_UPDATE
+  EVENT_DISCUSSION
 }
 
 enum NotificationType {
@@ -557,4 +573,88 @@ enum TodoStatus {
   OPEN
   IN_PROGRESS
   COMPLETED
+}
+
+// New Event models
+model MaixEvent {
+  id              String             @id @default(cuid())
+  organizationId  String
+  organization    Organization       @relation("OrganizationEvents", fields: [organizationId], references: [id])
+  name            String
+  description     String             @db.Text
+  date            DateTime
+  venueJson       Json?
+  capacity        Int?
+  status          MaixEventStatus    @default(DRAFT)
+  isPublic        Boolean            @default(true)
+  createdBy       String
+  creator         User               @relation("EventsCreated", fields: [createdBy], references: [id])
+  todos           Todo[]             @relation("EventTodos")
+  posts           Post[]             @relation("MaixEventPosts")
+  registrations   Registration[]
+  conversations   EventConversation[]
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([organizationId, status])
+  @@map("maix_events")
+}
+
+model Registration {
+  id        String             @id @default(cuid())
+  eventId   String
+  event     MaixEvent          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?              @relation(fields: [userId], references: [id])
+  email     String
+  name      String
+  status    RegistrationStatus @default(PENDING)
+  metadata  Json?
+  createdAt DateTime           @default(now())
+
+  @@unique([eventId, email])
+  @@index([eventId, status])
+  @@map("registrations")
+}
+
+model EventConversation {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     MaixEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  messages  Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([eventId, userId])
+  @@map("event_conversations")
+}
+
+model UserPreferences {
+  id                String               @id @default(cuid())
+  userId            String               @unique
+  user              User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventManagerPatId String?              @unique
+  eventManagerPat   PersonalAccessToken? @relation(fields: [eventManagerPatId], references: [id])
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  @@map("user_preferences")
+}
+
+enum MaixEventStatus {
+  DRAFT
+  PLANNING
+  PUBLISHED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum RegistrationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  WAITLISTED
 }

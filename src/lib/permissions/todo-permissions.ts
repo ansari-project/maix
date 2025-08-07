@@ -95,7 +95,7 @@ export async function canUpdateTodo(userId: string, todoId: string): Promise<boo
   if (todo.assigneeId === userId) return true
 
   // Project members with appropriate role can update
-  if (todo.project.members.length > 0) return true
+  if (todo.project?.members.length && todo.project.members.length > 0) return true
 
   return false
 }
@@ -127,7 +127,7 @@ export async function canDeleteTodo(userId: string, todoId: string): Promise<boo
   if (todo.creatorId === userId) return true
 
   // Project admins can delete
-  if (todo.project.members.length > 0) return true
+  if (todo.project?.members.length && todo.project.members.length > 0) return true
 
   return false
 }

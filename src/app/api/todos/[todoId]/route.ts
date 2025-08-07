@@ -104,7 +104,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ to
   const validatedData = updateTodoSchema.parse(body)
 
   // If assigneeId is being updated, validate they are a project participant
-  if (validatedData.assigneeId !== undefined && validatedData.assigneeId !== null) {
+  if (validatedData.assigneeId !== undefined && validatedData.assigneeId !== null && existingTodo.projectId) {
     const isValid = await isValidAssignee(validatedData.assigneeId, existingTodo.projectId)
     if (!isValid) {
       return NextResponse.json(

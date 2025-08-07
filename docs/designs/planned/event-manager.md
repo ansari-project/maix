@@ -281,7 +281,7 @@ export async function POST(req: Request) {
 - **Custom chat component**: Build with existing Card components
 - **Markdown rendering**: Use existing `<Markdown>` component
 - **Message history**: Store in database, paginate with React Query
-- **No streaming needed**: Server returns complete responses
+- **Streaming responses**: Via Vercel AI SDK's streamText function
 
 #### State Management  
 - **React Query (TanStack Query)**: Server state (already in use)
@@ -314,7 +314,7 @@ export async function POST(req: Request) {
 
 #### Task Dashboard
 - **Reuse Todo components**: Adapt existing todo UI with event context
-- **Live Updates**: SSE connection for real-time task updates
+- **Polling Updates**: React Query with 5-second intervals during active chat
 - **Categories**: Event-specific task categories (venue, speakers, logistics)
 
 ### User Interface
@@ -508,44 +508,52 @@ enum PostType {
 ```typescript
 // Add to existing Maix MCP server
 
-// Tool: Manage events
+// Tool: Create event
 server.tool(
-  "maix_manage_event",
-  "Create, update, delete, or get events",
+  "maix_create_event",
+  "Create a new event",
   {
-    action: z.enum(["create", "update", "delete", "get", "list"]),
-    eventId: z.string().optional(),
+    name: z.string(),
+    description: z.string(),
+    date: z.string(), // ISO 8601
+    organizationId: z.string(),
+    capacity: z.number().optional(),
+  },
+  async (params, extra) => {
+    // Implementation
+  }
+)
+
+// Tool: Update event
+server.tool(
+  "maix_update_event",
+  "Update event details",
+  {
+    eventId: z.string(),
     name: z.string().optional(),
     description: z.string().optional(),
-    date: z.string().optional(), // ISO 8601
+    date: z.string().optional(),
     venueJson: z.any().optional(),
     status: z.enum(EVENT_STATUS_VALUES).optional(),
   },
   async (params, extra) => {
-    // Implementation using existing patterns
+    // Implementation
   }
 )
 
-// Tool: Manage event speakers
+// Tool: Get event
 server.tool(
-  "maix_manage_speaker",
-  "Manage event speakers (including non-platform speakers)",
+  "maix_get_event",
+  "Get event details",
   {
-    action: z.enum(["add", "update", "remove", "list"]),
     eventId: z.string(),
-    speakerId: z.string().optional(),
-    // For non-platform speakers
-    name: z.string().optional(),
-    email: z.string().email().optional(),
-    bio: z.string().optional(),
-    topic: z.string().optional(),
-    // For platform speakers
-    userId: z.string().optional(),
   },
   async (params, extra) => {
-    // Handle both platform and non-platform speakers
+    // Implementation
   }
 )
+
+// Speaker management deferred to post-MVP
 
 // Tool: Manage registrations
 server.tool(
@@ -741,7 +749,7 @@ export async function getOrCreateEventManagerPat(userId: string): Promise<string
       name: 'Event Manager (System)',
       token: generateSecureToken(),
       scopes: ['events:manage', 'todos:manage', 'posts:create'],
-      expiresAt: addDays(new Date(), 365),
+      expiresAt: addDays(new Date(), 90),
       isSystemGenerated: true,
       lastUsedAt: new Date()
     }

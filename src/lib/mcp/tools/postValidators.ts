@@ -71,6 +71,22 @@ export const validateProductDiscussion = (input: CreatePostInput) => {
   }
 };
 
+export const validateEventUpdate = (input: CreatePostInput) => {
+  if (!input.content) {
+    throw new Error("Event update requires content");
+  }
+  // Event updates will need maixEventId, but that's not in CreatePostInput yet
+  // For now, just validate content
+};
+
+export const validateEventDiscussion = (input: CreatePostInput) => {
+  if (!input.content) {
+    throw new Error("Event discussion requires content");
+  }
+  // Event discussions will need maixEventId, but that's not in CreatePostInput yet
+  // For now, just validate content
+};
+
 // Validation strategy map
 export const createPostValidators = {
   [PostType.QUESTION]: validateQuestion,
@@ -79,6 +95,8 @@ export const createPostValidators = {
   [PostType.PRODUCT_UPDATE]: validateProductUpdate,
   [PostType.PROJECT_DISCUSSION]: validateProjectDiscussion,
   [PostType.PRODUCT_DISCUSSION]: validateProductDiscussion,
+  [PostType.EVENT_UPDATE]: validateEventUpdate,
+  [PostType.EVENT_DISCUSSION]: validateEventDiscussion,
 };
 
 // Update validation for questions (only questions can have isResolved/bestAnswerId)

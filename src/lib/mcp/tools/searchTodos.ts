@@ -143,8 +143,9 @@ export async function handleSearchTodos(params: SearchTodosParams, context: Cont
     const isOverdue = todo.dueDate && todo.dueDate < now && todo.status !== "COMPLETED";
     const overdueText = isOverdue ? " 🚨 OVERDUE" : "";
     
+    const projectName = todo.project?.name || "Event";
     return `  ${statusIcon} ${todo.title}${assigneeText}${dueDateText}${overdueText}
-    Project: ${todo.project.name} | ID: ${todo.id}`;
+    Project: ${projectName} | ID: ${todo.id}`;
   }).join("\n");
 
   const totalText = todos.length === (params.limit || 20) ? ` (showing first ${todos.length})` : "";

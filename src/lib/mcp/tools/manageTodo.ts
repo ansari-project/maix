@@ -62,7 +62,8 @@ export async function handleManageTodo(params: ManageTodoParams, context: Contex
         ? ` (due ${todo.dueDate.toLocaleDateString()})`
         : "";
 
-      return `Todo "${todo.title}" created successfully in project "${todo.project.name}"${assigneeText}${dueDateText}. ID: ${todo.id}`;
+      const projectName = todo.project?.name || "Event";
+      return `Todo "${todo.title}" created successfully in project "${projectName}"${assigneeText}${dueDateText}. ID: ${todo.id}`;
     }
 
     case "list": {
@@ -128,7 +129,11 @@ export async function handleManageTodo(params: ManageTodoParams, context: Contex
         throw new Error("Todo not found.");
       }
 
-      // Check permissions
+      // Check permissions - for now, todos must have a projectId
+      // Event todos will be handled separately in Phase 4
+      if (!todo.projectId) {
+        throw new Error("Todo must belong to a project.");
+      }
       const canView = await canViewTodos(user.id, todo.projectId);
       if (!canView) {
         throw new Error("You don't have permission to view this todo.");
@@ -146,7 +151,7 @@ export async function handleManageTodo(params: ManageTodoParams, context: Contex
 Title: ${todo.title}
 Description: ${todo.description || "No description"}
 Status: ${todo.status}
-${assigneeText}${dueDateText}Project: ${todo.project.name}
+${assigneeText}${dueDateText}Project: ${todo.project?.name || "Event"}
 Created by: ${todo.creator.name || todo.creator.email}
 Created: ${todo.createdAt.toLocaleDateString()}
 ID: ${todo.id}`;
@@ -167,7 +172,11 @@ ID: ${todo.id}`;
         throw new Error("Todo not found.");
       }
 
-      // Check permissions
+      // Check permissions - for now, todos must have a projectId
+      // Event todos will be handled separately in Phase 4
+      if (!existingTodo.projectId) {
+        throw new Error("Todo must belong to a project.");
+      }
       const canManage = await canManageTodos(user.id, existingTodo.projectId);
       if (!canManage) {
         throw new Error("You don't have permission to update this todo.");
@@ -191,7 +200,8 @@ ID: ${todo.id}`;
         }
       });
 
-      return `Todo "${updatedTodo.title}" updated successfully in project "${updatedTodo.project.name}".`;
+      const projectName = updatedTodo.project?.name || "Event";
+      return `Todo "${updatedTodo.title}" updated successfully in project "${projectName}".`;
     }
 
     case "delete": {
@@ -209,7 +219,11 @@ ID: ${todo.id}`;
         throw new Error("Todo not found.");
       }
 
-      // Check permissions
+      // Check permissions - for now, todos must have a projectId
+      // Event todos will be handled separately in Phase 4
+      if (!existingTodo.projectId) {
+        throw new Error("Todo must belong to a project.");
+      }
       const canManage = await canManageTodos(user.id, existingTodo.projectId);
       if (!canManage) {
         throw new Error("You don't have permission to delete this todo.");
@@ -219,7 +233,8 @@ ID: ${todo.id}`;
         where: { id: params.todoId }
       });
 
-      return `Todo "${existingTodo.title}" deleted successfully from project "${existingTodo.project.name}".`;
+      const projectName = existingTodo.project?.name || "Event";
+      return `Todo "${existingTodo.title}" deleted successfully from project "${projectName}".`;
     }
 
     default:
