@@ -8,7 +8,16 @@
 
 ## Executive Summary
 
-This plan implements the Event Manager feature following completed Align decisions. The feature provides AI-powered event planning with transparent authentication, streaming responses, and desktop-first UI.
+This plan implements the Event Manager feature following completed Align decisions. The feature provides an **AI assistant that guides users through the entire event planning process** - from initial concept through execution.
+
+### Core Value Proposition
+The AI assistant actively helps users:
+- Define event goals and requirements
+- Select and book appropriate venues
+- Identify and coordinate speakers (future phase)
+- Create comprehensive task lists with timelines
+- Manage registrations and communications
+- Track progress and suggest next steps
 
 ### Key Aligned Decisions
 - Public events only (no visibility controls)
@@ -103,19 +112,32 @@ This plan implements the Event Manager feature following completed Align decisio
 ---
 
 ### Phase 4: MCP Tool Integration
-**Objective**: Add event-specific tools to MCP server
+**Objective**: Add event-specific tools for AI to use
 
 **Deliverables**:
-- `maix_manage_event` tool
-- `maix_manage_registration` tool
-- Integration with existing MCP server
+- `maix_manage_event` tool (CRUD operations)
+- `maix_manage_registration` tool (attendee management)
+- `maix_search_venues` tool (venue suggestions)
+- Integration with existing todo and post tools
 
 **Tasks**:
-1. Add event management tool
-2. Add registration tool (basic operations only)
-3. Implement permission checks in tools
-4. Test tool integration
-5. Update MCP server documentation
+1. Add event management tool:
+   - Create, update, get event details
+   - Update venue information
+   - Set capacity and dates
+2. Add registration tool:
+   - Register attendees
+   - Check capacity
+   - List registrations
+3. Add venue search tool:
+   - Search by capacity/location
+   - Return venue suggestions
+   - Store venue details in event
+4. Ensure todo tool integration:
+   - AI can create event-specific todos
+   - Todos linked to event context
+5. Test all tool integrations
+6. Update MCP server documentation
 
 **Acceptance Criteria**:
 - [ ] Tools accessible via MCP
@@ -127,50 +149,97 @@ This plan implements the Event Manager feature following completed Align decisio
 
 ---
 
-### Phase 5: AI Chat Integration
-**Objective**: Implement streaming AI chat with Gemini
+### Phase 5: AI Assistant Core
+**Objective**: Build the intelligent event planning assistant
 
 **Deliverables**:
-- Chat API endpoint with streaming
-- Vercel AI SDK integration
-- MCP client with transparent PAT
-- Conversation persistence
+- AI assistant with event planning expertise
+- Guided conversation flows for event planning
+- Proactive task generation
+- Context-aware suggestions
+- Progress tracking and next-step recommendations
 
 **Tasks**:
-1. Install Vercel AI SDK dependencies
-2. Create chat endpoint (`/api/events/[id]/chat`)
-3. Implement `experimental_createMCPClient`
-4. Configure streaming with `streamText`
-5. Add conversation persistence
-6. Handle errors gracefully
+1. Design AI prompts for event planning expertise:
+   - Initial event conceptualization
+   - Venue selection criteria and suggestions
+   - Timeline and milestone planning
+   - Budget considerations (advisory only)
+   - Registration strategy
+2. Implement guided conversation flows:
+   - "Let's start planning your event" onboarding
+   - Progressive information gathering
+   - Smart defaults based on event type
+3. Create proactive task generation:
+   - AI suggests todos based on event type/date
+   - Automatic task prioritization
+   - Dependency management between tasks
+4. Build streaming chat endpoint with context
+5. Add conversation persistence with history
+6. Implement progress tracking:
+   - AI recognizes completed tasks
+   - Suggests next critical steps
+   - Warns about approaching deadlines
+
+**AI Conversation Examples**:
+```
+User: "I want to organize a tech meetup"
+AI: "Great! Let's plan your tech meetup. I'll help you through each step. First, let's establish the basics:
+- What's your target date? 
+- Expected number of attendees?
+- Do you have a venue in mind, or shall I suggest options?"
+
+[After basic info gathered]
+AI: "Based on a 50-person tech meetup on March 15th, I'll create your planning checklist:
+✓ Creating venue research task (due 2 weeks out)
+✓ Creating speaker outreach task (due 4 weeks out)  
+✓ Creating registration setup task (due 3 weeks out)
+✓ Creating catering arrangement task (due 1 week out)
+
+Let's start with the venue. For 50 people in your area, I recommend considering..."
+```
 
 **Acceptance Criteria**:
-- [ ] Streaming responses work
-- [ ] MCP tools callable from AI
-- [ ] PAT transparently generated
-- [ ] Conversations persist
-- [ ] Error states handled
+- [ ] AI demonstrates event planning expertise
+- [ ] Conversation flows feel natural and helpful
+- [ ] Tasks are automatically generated based on context
+- [ ] AI provides specific, actionable suggestions
+- [ ] Progress tracking works accurately
 
 **Dependencies**: Phase 2 (PAT system), Phase 4 (MCP tools)
 
 ---
 
 ### Phase 6: Desktop UI Implementation
-**Objective**: Build two-panel desktop interface
+**Objective**: Build AI-first two-panel interface
 
 **Deliverables**:
-- Event list page
-- Event detail page with two panels
-- AI chat component with streaming
-- Task dashboard integration
+- Event creation flow guided by AI
+- Two-panel layout with AI chat as primary interface
+- Live task dashboard updating as AI creates todos
+- Event timeline visualization
 
 **Tasks**:
-1. Create event list page (`/events`)
-2. Build two-panel layout
-3. Implement chat component with `useChat`
-4. Integrate existing TodoList component
-5. Add event details display
-6. Style for desktop-first experience
+1. Create AI-guided event creation:
+   - Start with chat, not forms
+   - AI asks questions and fills in details
+   - Event created through conversation
+2. Build two-panel layout:
+   - Left: AI Assistant (primary focus)
+   - Right: Live task dashboard and event details
+3. Implement chat component with `useChat`:
+   - Show AI thinking indicators
+   - Display when AI is creating tasks
+   - Show tool invocations inline
+4. Integrate TodoList with live updates:
+   - Tasks appear as AI creates them
+   - Visual feedback for AI-generated items
+5. Add event timeline view:
+   - Visual representation of key milestones
+   - AI can reference and update timeline
+6. Style for conversational UI:
+   - Chat-first interface
+   - Forms are secondary/hidden
 
 **Acceptance Criteria**:
 - [ ] Two-panel layout responsive
@@ -246,7 +315,9 @@ This plan implements the Event Manager feature following completed Align decisio
 
 ## Success Metrics
 
-- Event creation < 5 minutes
+- Event creation < 5 minutes (guided by AI)
+- AI generates 80% of required tasks automatically
+- Users feel guided, not overwhelmed
 - AI response time < 2 seconds
 - Zero PAT configuration friction
 - 80% test coverage overall
