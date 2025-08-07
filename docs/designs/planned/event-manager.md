@@ -354,7 +354,7 @@ model Event {
   todos           Todo[]   @relation("EventTodos")
   posts           Post[]   @relation("EventPosts")
   registrations   Registration[]
-  speakers        EventSpeaker[]
+  // speakers     EventSpeaker[]  // Deferred to Phase 2
   conversations   EventConversation[]
   
   createdAt       DateTime @default(now())
