@@ -13,6 +13,24 @@ After thorough analysis, we're using the Vercel AI SDK's built-in MCP client bec
 - **HTTP/SSE Support**: Works directly with the existing Maix HTTP MCP server
 - **Production Ready**: Already used by Zapier, Vapi, and other production apps
 
+## Align Stage Decisions (August 2025)
+
+Following DAPPER methodology, these decisions were made during the Align stage:
+
+### Core Architecture Decisions
+- ✅ **Transparent PAT Generation**: Auto-generate PATs without user confirmation (first-party feature)
+- ✅ **Streaming Required**: Full streaming support via Vercel AI SDK for optimal UX
+- ✅ **Specialized MCP Tools**: Multiple focused tools rather than single generic tool
+- ✅ **Database Persistence**: Conversations stored in database, not session storage
+- ✅ **Desktop-First**: Two-panel layout optimized for desktop
+- ✅ **Public Events Only**: All events are public (no visibility controls in MVP)
+
+### Scope Simplifications
+- ✅ **No Speaker Management**: Defer to later phase
+- ✅ **Basic Registration**: Simple email/name only, no waitlists
+- ✅ **Optional Capacity**: Events can have optional capacity limits
+- ✅ **Conversation Limit**: 100 messages per conversation
+
 ## Requirements
 
 ### Functional Requirements
@@ -149,7 +167,7 @@ interface Registration {
 import { experimental_createMCPClient, streamText } from 'ai'
 import { google } from '@ai-sdk/google'
 import { auth } from '@/lib/auth'
-import { getPatForUser } from '@/lib/mcp/pat-manager'
+import { getOrCreateEventManagerPat } from '@/lib/mcp/pat-manager'
 
 // Cache MCP clients per user
 const mcpClients = new Map<string, Awaited<ReturnType<typeof experimental_createMCPClient>>>()
@@ -160,11 +178,11 @@ async function getMCPClient(userId: string) {
     return mcpClients.get(userId)!
   }
 
-  // Get user's PAT from encrypted storage
-  const patToken = await getPatForUser(userId)
+  // Transparently get or create PAT (no user interaction needed)
+  const patToken = await getOrCreateEventManagerPat(userId)
   
   if (!patToken) {
-    throw new Error('MCP_NOT_CONFIGURED')
+    throw new Error('PAT_GENERATION_FAILED')
   }
 
   // IMPORTANT: Use HTTP transport, not SSE
@@ -346,7 +364,9 @@ model Event {
   description     String   @db.Text // Markdown content
   date            DateTime
   venueJson       Json?    // Venue details
+  capacity        Int?     // Optional capacity limit
   status          EventStatus @default(DRAFT)
+  isPublic        Boolean  @default(true) // All events public in MVP
   createdBy       String
   creator         User     @relation(fields: [createdBy], references: [id])
   
@@ -675,145 +695,62 @@ export function EventChat({ eventId }: { eventId: string }) {
 }
 ```
 
-### PAT Manager Implementation
+### Transparent PAT Manager Implementation
 
 ```typescript
 // lib/mcp/pat-manager.ts
-import { encrypt, decrypt } from '@/lib/crypto'
 import { prisma } from '@/lib/prisma'
+import { generateSecureToken } from '@/lib/crypto'
+import { addDays } from 'date-fns'
 
-export async function savePatForUser(userId: string, patToken: string) {
-  const encrypted = encrypt(patToken)
+export async function getOrCreateEventManagerPat(userId: string): Promise<string> {
+  // Check for existing valid PAT
+  const userPref = await prisma.userPreferences.findUnique({
+    where: { userId },
+    include: { eventManagerPat: true }
+  })
   
+  if (userPref?.eventManagerPat && userPref.eventManagerPat.expiresAt > new Date()) {
+    // Update last used timestamp
+    await prisma.personalAccessToken.update({
+      where: { id: userPref.eventManagerPat.id },
+      data: { lastUsedAt: new Date() }
+    })
+    return userPref.eventManagerPat.token
+  }
+  
+  // Auto-generate new PAT transparently
+  const pat = await prisma.personalAccessToken.create({
+    data: {
+      userId,
+      name: 'Event Manager (System)',
+      token: generateSecureToken(),
+      scopes: ['events:manage', 'todos:manage', 'posts:create'],
+      expiresAt: addDays(new Date(), 365),
+      isSystemGenerated: true,
+      lastUsedAt: new Date()
+    }
+  })
+  
+  // Store reference in UserPreferences
   await prisma.userPreferences.upsert({
     where: { userId },
     create: {
       userId,
-      mcpTokenEnc: encrypted
+      eventManagerPatId: pat.id
     },
     update: {
-      mcpTokenEnc: encrypted
+      eventManagerPatId: pat.id
     }
   })
-}
-
-export async function getPatForUser(userId: string): Promise<string | null> {
-  const prefs = await prisma.userPreferences.findUnique({
-    where: { userId }
-  })
   
-  if (!prefs?.mcpTokenEnc) {
-    return null
-  }
-  
-  return decrypt(prefs.mcpTokenEnc)
-}
-
-export async function removePatForUser(userId: string) {
-  await prisma.userPreferences.update({
-    where: { userId },
-    data: { mcpTokenEnc: null }
-  })
+  return pat.token
 }
 ```
 
-### Event Manager Settings Page
-
-```tsx
-// app/events/settings/page.tsx
-'use client'
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { useToast } from '@/components/ui/use-toast'
-
-export default function EventManagerSettings() {
-  const [token, setToken] = useState('')
-  const [isConfigured, setIsConfigured] = useState(false)
-  const { toast } = useToast()
-
-  const handleSaveToken = async () => {
-    try {
-      const res = await fetch('/api/events/settings/pat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token })
-      })
-      
-      if (!res.ok) throw new Error('Failed to save token')
-      
-      setIsConfigured(true)
-      setToken('') // Clear from UI
-      toast({
-        title: 'Success',
-        description: 'MCP token configured successfully'
-      })
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to save token',
-        variant: 'destructive'
-      })
-    }
-  }
-
-  return (
-    <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Event Manager Settings</h1>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>MCP Integration</CardTitle>
-          <CardDescription>
-            Configure your Personal Access Token to enable AI features
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isConfigured ? (
-            <div className="space-y-4">
-              <Alert>
-                <CheckCircle className="h-4 w-4" />
-                <AlertDescription>
-                  MCP integration is configured and active
-                </AlertDescription>
-              </Alert>
-              <Button variant="destructive" onClick={handleRemoveToken}>
-                Remove Token
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  To use AI features, you need to configure a Personal Access Token:
-                  <ol className="list-decimal ml-6 mt-2">
-                    <li>Go to <Link href="/settings/api">Settings → API</Link></li>
-                    <li>Generate a new Personal Access Token</li>
-                    <li>Copy the token and paste it below</li>
-                  </ol>
-                </AlertDescription>
-              </Alert>
-              
-              <div className="flex gap-2">
-                <Input
-                  type="password"
-                  placeholder="maix_pat_..."
-                  value={token}
-                  onChange={(e) => setToken(e.target.value)}
-                />
-                <Button onClick={handleSaveToken} disabled={!token}>
-                  Save Token
-                </Button>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  )
-}
-```
+// Event Manager Settings Page - NOT NEEDED
+// PAT generation is now transparent to users
+// The Event Manager "just works" without any configuration
 
 ### Task Dashboard Integration
 
@@ -904,38 +841,47 @@ After investigation, the Maix MCP server uses `mcp-handler` which only supports 
 - The AI SDK will handle HTTP-based tool calling
 - Streaming still works via Gemini's `streamText` response
 
-#### Authentication Flow
+#### Transparent Authentication Flow
 
-1. **Initial Setup** (One-time per user):
+1. **First Use** (Automatic):
    ```
-   User → Settings → API Tokens → Generate PAT
-   User → Event Manager Settings → Configure PAT
+   User → Event Manager → Auto-generate PAT → Store → Ready
    ```
 
-2. **Runtime Flow**:
+2. **Subsequent Uses**:
    ```
-   Event Chat Request → Retrieve User's PAT → Create MCP Client → Call Tools
+   User → Event Manager → Use existing PAT → Works
    ```
 
 3. **PAT Storage Architecture**:
    ```typescript
-   // Option 1: User Preferences (Recommended)
    model UserPreferences {
-     id          String @id @default(cuid())
-     userId      String @unique
-     mcpTokenEnc String? // Encrypted PAT
-     user        User @relation(fields: [userId], references: [id])
+     id                String @id @default(cuid())
+     userId            String @unique
+     eventManagerPatId String? // Reference to system-generated PAT
+     user              User @relation(fields: [userId], references: [id])
+     eventManagerPat   PersonalAccessToken? @relation(fields: [eventManagerPatId])
    }
    
-   // Option 2: Session Storage
-   // Store encrypted in NextAuth session (temporary)
+   model PersonalAccessToken {
+     id                String @id @default(cuid())
+     userId            String
+     name              String
+     token             String @unique
+     scopes            String[]
+     isSystemGenerated Boolean @default(false)
+     expiresAt         DateTime
+     lastUsedAt        DateTime?
+   }
    ```
 
-4. **Security Considerations**:
-   - PATs are encrypted at rest using app-level encryption key
-   - Tokens are never exposed to client-side code
-   - Each user must configure their own PAT
-   - PATs can be revoked from main Maix settings
+4. **Benefits of Transparent PATs**:
+   - Zero user friction - just works
+   - No configuration needed
+   - Full security (scoped, encrypted)
+   - Audit trail maintained
+   - Can still be managed in Settings if needed
+   - Appropriate for first-party features
 
 ## Future Considerations
 - Integration with calendar systems
