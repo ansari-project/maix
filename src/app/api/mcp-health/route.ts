@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { eventTools } from '@/lib/mcp/tools/manageEvent';
+import { registrationTools } from '@/lib/mcp/tools/manageRegistration';
+import { eventTaskTools } from '@/lib/mcp/tools/manageEventTasks';
 
 export async function GET() {
   try {
@@ -17,12 +20,24 @@ export async function GET() {
     const userCount = await prisma.user.count();
     console.log('MCP Health: User table exists, count:', userCount);
     
+    // Count MCP tools
+    const toolCount = 
+      Object.keys(eventTools).length + 
+      Object.keys(registrationTools).length + 
+      Object.keys(eventTaskTools).length;
+    
     return NextResponse.json({ 
       status: 'healthy', 
       database: 'connected',
       tables: {
         personalAccessToken: { exists: true, count: patCount },
         user: { exists: true, count: userCount }
+      },
+      tools: toolCount,
+      toolCategories: {
+        event: Object.keys(eventTools).length,
+        registration: Object.keys(registrationTools).length,
+        eventTasks: Object.keys(eventTaskTools).length
       },
       timestamp: new Date().toISOString()
     });

@@ -95,6 +95,45 @@ maix/
 
 ## Development Guidelines
 
+### Testing Requirements (CRITICAL - Updated August 8, 2025)
+
+#### Integration-First Testing Strategy
+**IMPORTANT**: We use an "integration-first" approach. Mocked tests give false confidence and miss real bugs.
+
+1. **Test Database Setup (Phase 1 Requirement)**
+   - Set up test database IMMEDIATELY when starting any feature
+   - Copy `.env.test.example` to `.env.test` and configure
+   - Run `npm run test:integration` to verify setup
+
+2. **Testing Priority Order**
+   ```
+   1. Integration Tests (60%) - Real database, real constraints
+   2. Unit Tests (30%) - Only for pure business logic  
+   3. E2E Tests (10%) - Critical user paths
+   ```
+
+3. **When to Mock vs When to Use Real Database**
+   - ✅ Use REAL database for: Service layer, API routes, data operations
+   - ✅ Mock ONLY: External services (email, payments, third-party APIs)
+   - ❌ NEVER mock: Prisma, database operations, internal services
+
+4. **Schema Validation Requirements**
+   - Run `npm run build` after EVERY schema change
+   - Test with real database queries immediately
+   - No phase is complete without TypeScript compilation passing
+
+5. **Integration Test Checklist**
+   ```bash
+   # For every new feature:
+   [ ] Test database configured
+   [ ] Integration tests written BEFORE implementation
+   [ ] Real database operations tested
+   [ ] Transactions and rollbacks verified
+   [ ] Constraints and cascades tested
+   ```
+
+See `docs/guides/integration-testing.md` for detailed guide.
+
 ### DAPPER Development Methodology
 
 **DAPPER** - Our structured development workflow: Design, Align, Plan, Produce, Evaluate, Refine
