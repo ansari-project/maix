@@ -50,12 +50,10 @@ describe('Event Service Integration Tests', () => {
     
     // Create test data
     testUser = await createTestUser({
-      email: 'organizer@example.com',
       name: 'Event Organizer'
     })
     
     otherUser = await createTestUser({
-      email: 'other@example.com', 
       name: 'Other User'
     })
     

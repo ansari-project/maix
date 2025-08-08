@@ -85,33 +85,34 @@ export async function setupTestDatabase(): Promise<void> {
 export async function cleanupTestDatabase(): Promise<void> {
   try {
     // SAFETY CHECK: Only allow this on local test database
-    const dbUrl = process.env.DATABASE_URL || 'postgresql://mwk@localhost:5432/maix_test'
-    if (dbUrl.includes('neon.tech') || dbUrl.includes('production')) {
+    const dbUrl = process.env.DATABASE_URL
+    if (!dbUrl || dbUrl.includes('neon.tech') || dbUrl.includes('production')) {
       throw new Error('SAFETY: Cannot run cleanup against production database!')
     }
     
-    // Get all table names from the database (excluding system tables)
-    const result = await prismaTest.$queryRaw<Array<{tablename: string}>>`
-      SELECT tablename FROM pg_tables 
-      WHERE schemaname = 'public' 
-      AND tablename NOT LIKE '_prisma%'
-      ORDER BY tablename;
+    // Check if tables exist first
+    const result = await prismaTest.$queryRaw<Array<{table_name: string}>>`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public' 
+      AND table_type = 'BASE TABLE'
     `
     
     if (result.length === 0) {
-      return // No tables to clean
+      console.log('⚠️  No tables found to clean up')
+      return
     }
     
     // Disable foreign key checks temporarily
     await prismaTest.$executeRawUnsafe('SET session_replication_role = replica;')
     
-    // Truncate all tables
+    // Truncate all existing tables
     for (const row of result) {
       try {
-        await prismaTest.$executeRawUnsafe(`TRUNCATE TABLE "${row.tablename}" CASCADE;`)
+        await prismaTest.$executeRawUnsafe(`TRUNCATE TABLE "${row.table_name}" CASCADE;`)
       } catch (err) {
         // If table doesn't exist, continue
-        console.warn(`Could not truncate ${row.tablename}, continuing...`)
+        console.warn(`Could not truncate ${row.table_name}, continuing...`)
       }
     }
     
@@ -119,27 +120,28 @@ export async function cleanupTestDatabase(): Promise<void> {
     await prismaTest.$executeRawUnsafe('SET session_replication_role = DEFAULT;')
   } catch (error) {
     console.error('Failed to cleanup database:', error)
-    // Don't throw - allow tests to continue even if cleanup fails
+    // Don't throw if cleanup fails - might be first run
   }
 }
 
 /**
  * Create test user
  */
+let userCounter = 0
+
 export async function createTestUser(data?: Partial<{
   email: string
   name: string
   username: string
 }>) {
-  // Generate unique username based on email or timestamp
-  const email = data?.email || 'test@example.com'
-  const defaultUsername = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '')
+  userCounter++
+  const uniqueSuffix = `${Date.now()}_${userCounter}_${Math.random().toString(36).substring(7)}`
   
   return prismaTest.user.create({
     data: {
-      email: email,
+      email: data?.email || `test_${uniqueSuffix}@example.com`,
       name: data?.name || 'Test User',
-      username: data?.username || defaultUsername,
+      username: data?.username || `testuser_${uniqueSuffix}`,
       password: 'hashed_password', // In real tests, use proper hashing
     }
   })

@@ -49,12 +49,10 @@ describe('Registration Service Integration Tests', () => {
     
     // Create test data
     testUser = await createTestUser({
-      email: 'organizer@example.com',
       name: 'Event Organizer'
     })
     
     otherUser = await createTestUser({
-      email: 'attendee@example.com',
       name: 'Event Attendee'
     })
     
