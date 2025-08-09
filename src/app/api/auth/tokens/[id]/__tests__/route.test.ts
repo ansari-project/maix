@@ -16,7 +16,6 @@ jest.mock('@/lib/prisma', () => ({
 jest.mock('@/lib/mcp/services/pat.service');
 
 const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
-const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 const mockPatService = patService as jest.Mocked<typeof patService>;
 
 describe('/api/auth/tokens/[id]', () => {
@@ -44,7 +43,7 @@ describe('/api/auth/tokens/[id]', () => {
       const request = new NextRequest('http://localhost/api/auth/tokens/token-1', {
         method: 'DELETE',
       });
-      const response = await DELETE(request, { params: { id: 'token-1' } });
+      const response = await DELETE(request, { params: Promise.resolve({ id: 'token-1' }) });
       const data = await response.json();
 
       expect(response.status).toBe(401);
@@ -57,7 +56,7 @@ describe('/api/auth/tokens/[id]', () => {
       const request = new NextRequest('http://localhost/api/auth/tokens/', {
         method: 'DELETE',
       });
-      const response = await DELETE(request, { params: { id: '' } });
+      const response = await DELETE(request, { params: Promise.resolve({ id: '' }) });
       const data = await response.json();
 
       expect(response.status).toBe(400);
@@ -66,12 +65,12 @@ describe('/api/auth/tokens/[id]', () => {
 
     it('should return 404 when user is not found in database', async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
 
       const request = new NextRequest('http://localhost/api/auth/tokens/token-1', {
         method: 'DELETE',
       });
-      const response = await DELETE(request, { params: { id: 'token-1' } });
+      const response = await DELETE(request, { params: Promise.resolve({ id: 'token-1' }) });
       const data = await response.json();
 
       expect(response.status).toBe(404);
@@ -80,13 +79,13 @@ describe('/api/auth/tokens/[id]', () => {
 
     it('should return 404 when token is not found or not owned by user', async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
       mockPatService.revokePersonalAccessToken.mockResolvedValue(false);
 
       const request = new NextRequest('http://localhost/api/auth/tokens/token-1', {
         method: 'DELETE',
       });
-      const response = await DELETE(request, { params: { id: 'token-1' } });
+      const response = await DELETE(request, { params: Promise.resolve({ id: 'token-1' }) });
       const data = await response.json();
 
       expect(response.status).toBe(404);
@@ -96,13 +95,13 @@ describe('/api/auth/tokens/[id]', () => {
 
     it('should successfully revoke token', async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
       mockPatService.revokePersonalAccessToken.mockResolvedValue(true);
 
       const request = new NextRequest('http://localhost/api/auth/tokens/token-1', {
         method: 'DELETE',
       });
-      const response = await DELETE(request, { params: { id: 'token-1' } });
+      const response = await DELETE(request, { params: Promise.resolve({ id: 'token-1' }) });
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -112,13 +111,13 @@ describe('/api/auth/tokens/[id]', () => {
 
     it('should handle service errors gracefully', async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
       mockPatService.revokePersonalAccessToken.mockRejectedValue(new Error('Database error'));
 
       const request = new NextRequest('http://localhost/api/auth/tokens/token-1', {
         method: 'DELETE',
       });
-      const response = await DELETE(request, { params: { id: 'token-1' } });
+      const response = await DELETE(request, { params: Promise.resolve({ id: 'token-1' }) });
       const data = await response.json();
 
       expect(response.status).toBe(500);
