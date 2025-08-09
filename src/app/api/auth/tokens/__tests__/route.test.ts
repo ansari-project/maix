@@ -16,7 +16,6 @@ jest.mock('@/lib/prisma', () => ({
 jest.mock('@/lib/mcp/services/pat.service');
 
 const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
-const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 const mockPatService = patService as jest.Mocked<typeof patService>;
 
 describe('/api/auth/tokens', () => {
@@ -51,7 +50,7 @@ describe('/api/auth/tokens', () => {
 
     it('should return 404 when user is not found in database', async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
 
       const request = new NextRequest('http://localhost/api/auth/tokens');
       const response = await GET(request);
@@ -66,14 +65,14 @@ describe('/api/auth/tokens', () => {
         {
           id: 'token-1',
           name: 'Test Token',
-          createdAt: new Date().toISOString(),
+          createdAt: new Date().toISOString() as any,
           lastUsedAt: null,
           expiresAt: null,
         },
       ];
 
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
       mockPatService.listPersonalAccessTokens.mockResolvedValue(mockTokens);
 
       const request = new NextRequest('http://localhost/api/auth/tokens');
@@ -87,7 +86,7 @@ describe('/api/auth/tokens', () => {
 
     it('should handle service errors gracefully', async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
       mockPatService.listPersonalAccessTokens.mockRejectedValue(new Error('Database error'));
 
       const request = new NextRequest('http://localhost/api/auth/tokens');
@@ -144,7 +143,7 @@ describe('/api/auth/tokens', () => {
 
     it('should return 404 when user is not found in database', async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
 
       const request = new NextRequest('http://localhost/api/auth/tokens', {
         method: 'POST',
@@ -169,7 +168,7 @@ describe('/api/auth/tokens', () => {
       };
 
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
       mockPatService.createPersonalAccessToken.mockResolvedValue(mockTokenData);
 
       const request = new NextRequest('http://localhost/api/auth/tokens', {
@@ -203,7 +202,7 @@ describe('/api/auth/tokens', () => {
       };
 
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
       mockPatService.createPersonalAccessToken.mockResolvedValue(mockTokenData);
 
       const request = new NextRequest('http://localhost/api/auth/tokens', {
@@ -226,7 +225,7 @@ describe('/api/auth/tokens', () => {
 
     it('should handle service errors gracefully', async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
       mockPatService.createPersonalAccessToken.mockRejectedValue(new Error('Database error'));
 
       const request = new NextRequest('http://localhost/api/auth/tokens', {

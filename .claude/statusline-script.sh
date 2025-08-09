@@ -65,7 +65,7 @@ if [ -d "$CURRENT_DIR/.git" ] || git -C "$CURRENT_DIR" rev-parse --git-dir >/dev
         GIT_BRANCH_COLOR=$YELLOW
     fi
     
-    GIT_INFO=" ${GRAY}|${NC} ${GIT_BRANCH_COLOR}⎇ ${BRANCH}${NC}"
+    GIT_INFO="${GIT_BRANCH_COLOR}⎇ ${BRANCH}${NC}"
     if [ -n "$STATUS" ]; then
         GIT_INFO="${GIT_INFO}${RED}${STATUS}${NC}"
     fi
@@ -90,4 +90,8 @@ else
 fi
 
 # Build the complete status line
-printf "${GIT_INFO} ${GRAY}|${NC} ${PURPLE}${MODEL_NAME}${NC} ${GRAY}|${NC} ${GRAY}${CURRENT_TIME}${NC} ${GRAY}|${NC} ${CYAN}${TASK_INFO}${NC}"
+if [ -n "$GIT_INFO" ]; then
+    printf "${GIT_INFO} ${GRAY}|${NC} ${PURPLE}${MODEL_NAME}${NC} ${GRAY}|${NC} ${GRAY}${CURRENT_TIME}${NC} ${GRAY}|${NC} ${CYAN}${TASK_INFO}${NC}"
+else
+    printf "${PURPLE}${MODEL_NAME}${NC} ${GRAY}|${NC} ${GRAY}${CURRENT_TIME}${NC} ${GRAY}|${NC} ${CYAN}${TASK_INFO}${NC}"
+fi

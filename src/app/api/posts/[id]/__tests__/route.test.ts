@@ -26,7 +26,7 @@ import {
 } from '@/lib/test-utils'
 import { handleApiError, successResponse, parseRequestBody } from '@/lib/api-utils'
 
-const mockPrisma = prisma as jest.Mocked<typeof prisma>
+// Cast Prisma methods as jest.Mock for proper typing
 const mockHandleApiError = handleApiError as jest.MockedFunction<typeof handleApiError>
 const mockSuccessResponse = successResponse as jest.MockedFunction<typeof successResponse>
 const mockParseRequestBody = parseRequestBody as jest.MockedFunction<typeof parseRequestBody>
@@ -89,7 +89,7 @@ describe('/api/posts/[id]', () => {
         ]
       }
 
-      mockPrisma.post.findUnique.mockResolvedValue(mockPostWithReplies)
+      ;(prisma.post.findUnique as jest.Mock).mockResolvedValue(mockPostWithReplies)
       mockSuccessResponse.mockReturnValue(
         mockApiSuccessResponse(mockPostWithReplies, 200) as any
       )
@@ -104,7 +104,7 @@ describe('/api/posts/[id]', () => {
       expect(data.comments).toHaveLength(1)
       
       // Verify query structure
-      expect(mockPrisma.post.findUnique).toHaveBeenCalledWith({
+      expect(prisma.post.findUnique).toHaveBeenCalledWith({
         where: { 
           id: 'post-123'
         },
@@ -124,7 +124,7 @@ describe('/api/posts/[id]', () => {
     })
 
     it('should return 404 for non-existent post', async () => {
-      mockPrisma.post.findUnique.mockResolvedValue(null)
+      ;(prisma.post.findUnique as jest.Mock).mockResolvedValue(null)
       mockHandleApiError.mockReturnValue(
         mockApiErrorResponse('Post not found', 404) as any
       )
@@ -149,8 +149,8 @@ describe('/api/posts/[id]', () => {
       mockParseRequestBody.mockResolvedValue({
         content: 'Updated: How do I implement AI?'
       })
-      mockPrisma.post.findUnique.mockResolvedValue(mockPost)
-      mockPrisma.post.update.mockResolvedValue(updatedPost)
+      ;(prisma.post.findUnique as jest.Mock).mockResolvedValue(mockPost)
+      ;(prisma.post.update as jest.Mock).mockResolvedValue(updatedPost)
       mockSuccessResponse.mockReturnValue(
         mockApiSuccessResponse(updatedPost, 200) as any
       )
@@ -170,7 +170,7 @@ describe('/api/posts/[id]', () => {
 
       expect(response.status).toBe(200)
       expect(data.content).toBe('Updated: How do I implement AI?')
-      expect(mockPrisma.post.update).toHaveBeenCalledWith({
+      expect((prisma.post.update as jest.Mock)).toHaveBeenCalledWith({
         where: { id: 'post-123' },
         data: { content: 'Updated: How do I implement AI?' },
         include: expect.any(Object)
@@ -184,7 +184,7 @@ describe('/api/posts/[id]', () => {
       mockParseRequestBody.mockResolvedValue({
         content: 'Unauthorized update'
       })
-      mockPrisma.post.findUnique.mockResolvedValue(otherUserPost)
+      ;(prisma.post.findUnique as jest.Mock).mockResolvedValue(otherUserPost)
       mockHandleApiError.mockReturnValue(
         mockApiErrorResponse('Forbidden', 403) as any
       )
@@ -202,7 +202,7 @@ describe('/api/posts/[id]', () => {
       const response = await PATCH(request, { params: Promise.resolve({ id: 'post-123' }) })
 
       expect(response.status).toBe(403)
-      expect(mockPrisma.post.update).not.toHaveBeenCalled()
+      expect((prisma.post.update as jest.Mock)).not.toHaveBeenCalled()
     })
 
     it('should require authentication', async () => {
@@ -234,8 +234,8 @@ describe('/api/posts/[id]', () => {
       const postWithNoReplies = { ...mockPost, _count: { replies: 0 } }
 
       mockRequireAuth.mockResolvedValue(mockUser as any)
-      mockPrisma.post.findUnique.mockResolvedValue(postWithNoReplies)
-      mockPrisma.post.delete.mockResolvedValue(mockPost)
+      ;(prisma.post.findUnique as jest.Mock).mockResolvedValue(postWithNoReplies)
+      ;(prisma.post.delete as jest.Mock).mockResolvedValue(mockPost)
       mockSuccessResponse.mockReturnValue(
         mockApiSuccessResponse({ message: 'Post deleted successfully' }, 200) as any
       )
@@ -249,7 +249,7 @@ describe('/api/posts/[id]', () => {
 
       expect(response.status).toBe(200)
       expect(data.message).toBe('Post deleted successfully')
-      expect(mockPrisma.post.delete).toHaveBeenCalledWith({
+      expect((prisma.post.delete as jest.Mock)).toHaveBeenCalledWith({
         where: { id: 'post-123' }
       })
     })
@@ -262,7 +262,7 @@ describe('/api/posts/[id]', () => {
       }
 
       mockRequireAuth.mockResolvedValue(mockUser as any)
-      mockPrisma.post.findUnique.mockResolvedValue(questionWithAnswers)
+      ;(prisma.post.findUnique as jest.Mock).mockResolvedValue(questionWithAnswers)
       mockHandleApiError.mockReturnValue(
         mockApiErrorResponse('Cannot delete question with answers', 400) as any
       )
@@ -274,7 +274,7 @@ describe('/api/posts/[id]', () => {
       const response = await DELETE(request, { params: Promise.resolve({ id: 'post-123' }) })
 
       expect(response.status).toBe(400)
-      expect(mockPrisma.post.delete).not.toHaveBeenCalled()
+      expect((prisma.post.delete as jest.Mock)).not.toHaveBeenCalled()
     })
 
     it('should prevent deletion of discussion posts', async () => {
@@ -284,7 +284,7 @@ describe('/api/posts/[id]', () => {
       }
 
       mockRequireAuth.mockResolvedValue(mockUser as any)
-      mockPrisma.post.findUnique.mockResolvedValue(discussionPost)
+      ;(prisma.post.findUnique as jest.Mock).mockResolvedValue(discussionPost)
       mockHandleApiError.mockReturnValue(
         mockApiErrorResponse('Cannot delete discussion posts', 400) as any
       )
@@ -296,14 +296,14 @@ describe('/api/posts/[id]', () => {
       const response = await DELETE(request, { params: Promise.resolve({ id: 'post-123' }) })
 
       expect(response.status).toBe(400)
-      expect(mockPrisma.post.delete).not.toHaveBeenCalled()
+      expect((prisma.post.delete as jest.Mock)).not.toHaveBeenCalled()
     })
 
     it('should reject deletion by non-author', async () => {
       const otherUserPost = { ...mockPost, authorId: 'other-user' }
 
       mockRequireAuth.mockResolvedValue(mockUser as any)
-      mockPrisma.post.findUnique.mockResolvedValue(otherUserPost)
+      ;(prisma.post.findUnique as jest.Mock).mockResolvedValue(otherUserPost)
       mockHandleApiError.mockReturnValue(
         mockApiErrorResponse('Forbidden', 403) as any
       )
@@ -315,7 +315,7 @@ describe('/api/posts/[id]', () => {
       const response = await DELETE(request, { params: Promise.resolve({ id: 'post-123' }) })
 
       expect(response.status).toBe(403)
-      expect(mockPrisma.post.delete).not.toHaveBeenCalled()
+      expect((prisma.post.delete as jest.Mock)).not.toHaveBeenCalled()
     })
   })
 })
