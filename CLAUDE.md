@@ -346,7 +346,7 @@ Phase 2: Implement User Authentication
 1. **I - Implement**: Build the code for current phase
 2. **T - Test**: Write and run tests for the implementation IMMEDIATELY after implementing
 3. **R - Review**: Code review using `mcp__zen__codereview`
-4. **C - Commit**: Git commit with ITRC evidence in commit message
+4. **C - Commit & Push**: Git commit with ITRC evidence AND push to remote repository
 
 **CRITICAL**: Testing is NOT a separate phase - it happens WITHIN each phase as part of the ITRC cycle. Every phase must have its own tests before moving to the next phase.
 
@@ -358,7 +358,7 @@ todos = [
   { content: "Phase 1-I: Implement - Create layout components", status: "pending" },
   { content: "Phase 1-T: Test - Write and run layout tests", status: "pending" },
   { content: "Phase 1-R: Review - Code review", status: "pending" },
-  { content: "Phase 1-C: Commit - Git commit", status: "pending" }
+  { content: "Phase 1-C: Commit & Push - Git commit and push", status: "pending" }
 ]
 
 // WRONG: Missing ITRC structure
@@ -415,7 +415,7 @@ Before starting ANY new phase work (even exploratory edits):
 2. **EVIDENCE AUDIT**: Can you show:
    - Test execution logs? (Must show PASSING tests)
    - Code review continuation_id?
-   - Git commit hash for phase completion?
+   - Git commit hash AND successful push for phase completion?
 3. **VIOLATION DETECTION**: If you find yourself:
    - Editing files for next phase before ITR complete → STOP
    - Creating new components for next phase → STOP
@@ -428,8 +428,8 @@ Before starting ANY new phase work (even exploratory edits):
 ```
 
 **Phase Completion Requirement**:
-- **MANDATORY**: Commit at the end of EVERY phase after completing ITRC cycle
-- Each phase must be a complete, working unit that can be committed
+- **MANDATORY**: Commit AND PUSH at the end of EVERY phase after completing ITRC cycle
+- Each phase must be a complete, working unit that can be committed and pushed
 - Commit message MUST include ITRC evidence:
   ```
   feat: Phase X - [Description]
@@ -439,7 +439,8 @@ Before starting ANY new phase work (even exploratory edits):
   - Review: continuation_id: [UUID]
   - ITRC cycle complete: I✓ T✓ R✓ C✓
   ```
-- This ensures incremental progress and prevents large, risky commits
+- **PUSH REQUIREMENT**: After commit, ALWAYS push to remote repository
+- This ensures incremental progress, prevents large risky commits, and keeps remote in sync
 - If a phase cannot be committed, it's too large - break it down further
 
 **Output**: Working, tested, reviewed code with evidence trail, updated plan document, and committed to git
@@ -522,7 +523,7 @@ Proposals & Questions    Decisions Made         Phases Defined            Phases
 
 ##### Produce → Evaluate Gate
 - ✅ All planned phases complete
-- ✅ Each phase completed ITR cycle (Implement, Test, Review) WITH EVIDENCE
+- ✅ Each phase completed ITRC cycle (Implement, Test, Review, Commit & Push) WITH EVIDENCE
   - ✅ Test execution logs captured and verified
   - ✅ Code review continuation_id documented
   - ✅ No steps marked complete without proof of execution
@@ -559,13 +560,14 @@ When you have open questions during Align, categorize them:
 
 #### ITR Evidence Collection (MANDATORY)
 
-**Every ITR step requires documented evidence before marking complete:**
+**Every ITRC step requires documented evidence before marking complete:**
 
 | Step | Evidence Required | Example |
 |------|------------------|---------|
 | **Implement** | Code changes staged/committed | `git status` showing files modified |
 | **Test** | Test execution output | `npm test` results or `jest` output |
 | **Review** | Code review tool output | `continuation_id` from mcp__zen__codereview |
+| **Commit & Push** | Git operations complete | `git push` output showing success |
 
 **Process Integrity Rule**: If you cannot provide evidence, the step is NOT complete.
 
@@ -578,7 +580,7 @@ When you have open questions during Align, categorize them:
 5. **No Stage Gates**: Proceeding without meeting exit criteria
 6. **Silent PAT Generation**: For third-party integrations, always get user consent
 7. **Incoherent Plans**: Phase objectives must match their tasks
-8. **Marking Without Evidence**: NEVER mark ITR steps complete without proof of execution
+8. **Marking Without Evidence**: NEVER mark ITRC steps complete without proof of execution
 
 #### Quick Reference
 
