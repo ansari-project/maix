@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { useSession, signOut } from 'next-auth/react'
 import { usePathname } from 'next/navigation'
 import { Sidebar } from '../Sidebar'
+import { describe, it, expect, beforeEach } from '@jest/globals'
 
 // Mock dependencies
 jest.mock('next-auth/react')

@@ -1,6 +1,7 @@
 import { EventProcessor } from '../event-processor';
 import { prisma } from '@/lib/prisma';
 import { createHash } from 'crypto';
+import { describe, it, expect, beforeEach } from '@jest/globals'
 
 // Mock dependencies
 jest.mock('@/lib/prisma', () => ({

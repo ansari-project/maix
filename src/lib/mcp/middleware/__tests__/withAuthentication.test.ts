@@ -1,4 +1,5 @@
 // TypeScript test fixes applied
+import { describe, it, expect, beforeEach } from '@jest/globals'
 ;
 import { NextRequest } from 'next/server';
 import { authenticateRequest, withAuthentication } from '../withAuthentication';

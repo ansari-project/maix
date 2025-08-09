@@ -3,6 +3,7 @@ import React from 'react';
 import { render, screen, waitFor, act } from '@testing-library/react';
 import { useSession } from 'next-auth/react';
 import { PATManagement } from '../PATManagement';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals'
 
 // Mock next-auth
 jest.mock('next-auth/react');

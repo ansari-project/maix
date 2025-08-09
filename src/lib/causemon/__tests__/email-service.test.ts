@@ -1,5 +1,6 @@
 import { EmailService } from '../email-service';
 import { Resend } from 'resend';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals'
 
 // Mock Resend
 jest.mock('resend', () => ({

@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { PostCard } from '../PostCard'
 import { format } from 'date-fns'
+import { describe, it, expect, beforeEach } from '@jest/globals'
 
 // Mock dependencies
 jest.mock('next/link', () => ({

@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { TodoCard } from '../todo-card'
 import { TodoWithRelations } from '@/types/todo'
 import { TodoStatus, ProjectStatus } from '@prisma/client'
+import { describe, it, expect } from '@jest/globals'
 
 // Mock the Markdown component
 jest.mock('@/components/ui/markdown', () => ({

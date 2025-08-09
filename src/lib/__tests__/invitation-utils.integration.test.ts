@@ -1,7 +1,8 @@
 /**
  * @jest-environment node
-import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll } from '@jest/globals'
  */
+
+import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll } from '@jest/globals'
 
 /**
  * Invitation Utils Integration Tests

@@ -1,7 +1,8 @@
 /**
  * @jest-environment node
-import { describe, it, expect, beforeEach, beforeAll, afterAll } from '@jest/globals'
  */
+
+import { describe, it, expect, beforeEach, beforeAll, afterAll } from '@jest/globals'
 
 /**
  * Event Manager Models Integration Tests

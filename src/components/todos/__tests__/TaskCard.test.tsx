@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { TaskCard } from '../TaskCard'
 import { TodoStatus, ProjectStatus } from '@prisma/client'
+import { describe, it, expect } from '@jest/globals'
 
 // Mock DnD kit hooks
 jest.mock('@dnd-kit/sortable', () => ({

@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server'
 import { POST } from '../route'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import { describe, test, expect, beforeEach } from '@jest/globals'
 
 // Mock the dependencies
 jest.mock('@/lib/prisma')

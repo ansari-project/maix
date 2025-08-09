@@ -1,5 +1,6 @@
 // Simple test for ownership utilities
 import { validateOwnership } from '../ownership-utils'
+import { describe, it, expect } from '@jest/globals'
 
 describe('Ownership Utilities', () => {
   describe('validateOwnership', () => {

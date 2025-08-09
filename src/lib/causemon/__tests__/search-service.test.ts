@@ -1,5 +1,6 @@
 import { GeminiSearchService } from '../search-service';
 import { GoogleGenAI } from '@google/genai';
+import { describe, it, expect, beforeEach } from '@jest/globals'
 
 // Mock the Google Generative AI
 jest.mock('@google/genai', () => ({

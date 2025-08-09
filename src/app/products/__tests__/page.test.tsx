@@ -4,6 +4,7 @@ import '@testing-library/jest-dom'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import ProductsPage from '../page'
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals'
 
 // Mock the dependencies
 jest.mock('next-auth/react')

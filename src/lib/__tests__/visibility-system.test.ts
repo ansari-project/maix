@@ -1,4 +1,5 @@
 /**
+import { describe, it, expect } from '@jest/globals'
  * Tests for the visibility layer implementation
  * Testing NotFoundError and basic visibility functionality
  */

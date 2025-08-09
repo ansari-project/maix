@@ -1,7 +1,8 @@
 /**
  * @jest-environment node
-import { describe, it, expect, beforeEach, beforeAll, afterAll } from '@jest/globals'
  */
+
+import { describe, it, expect, beforeEach, beforeAll, afterAll } from '@jest/globals'
 
 /**
  * Auth Tokens Route Integration Tests

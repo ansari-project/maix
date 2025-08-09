@@ -1,5 +1,6 @@
 // TypeScript test fixes applied
 /**
+import { describe, it, expect, beforeEach } from '@jest/globals'
  * Tests for the unified project page with visibility controls
  */
 

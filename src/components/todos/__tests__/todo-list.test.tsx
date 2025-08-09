@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { TodoList } from '../todo-list'
 import { TodoWithRelations } from '@/types/todo'
 import { TodoStatus, ProjectStatus } from '@prisma/client'
+import { describe, it, expect } from '@jest/globals'
 
 // Mock child components
 jest.mock('../todo-card', () => ({

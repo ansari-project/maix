@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { getSearchService } from '@/lib/causemon/search-service';
 import { getEventProcessor } from '@/lib/causemon/event-processor';
 import { getEmailService } from '@/lib/causemon/email-service';
+import { describe, it, expect, beforeEach } from '@jest/globals'
 
 // Mock dependencies
 jest.mock('@/lib/prisma', () => ({

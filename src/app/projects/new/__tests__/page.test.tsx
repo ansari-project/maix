@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import NewProjectPage from '../page'
 import { useToast } from '@/hooks/use-toast'
+import { describe, it, expect, beforeEach } from '@jest/globals'
 
 // Mock dependencies
 jest.mock('next-auth/react')

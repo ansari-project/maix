@@ -1,6 +1,7 @@
 import { EventProcessor } from '../event-processor';
 import { prisma } from '@/lib/prisma';
 import { SearchResult } from '../search-service';
+import { describe, it, expect, beforeEach } from '@jest/globals'
 
 // Mock Prisma
 jest.mock('@/lib/prisma', () => ({

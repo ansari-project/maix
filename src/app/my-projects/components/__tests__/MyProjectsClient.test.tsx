@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import { MyProjectsClient } from '../MyProjectsClient'
+import { describe, it, expect, beforeEach } from '@jest/globals'
 
 // Mock next-auth
 jest.mock('next-auth/react', () => ({

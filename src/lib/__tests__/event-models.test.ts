@@ -1,6 +1,7 @@
 // TypeScript test fixes applied
 import { TodoStatus } from '@prisma/client'
 import { MaixEventStatus, RegistrationStatus } from '@prisma/client'
+import { describe, it, expect, beforeEach } from '@jest/globals'
 
 // Mock Prisma
 jest.mock('@/lib/prisma', () => ({

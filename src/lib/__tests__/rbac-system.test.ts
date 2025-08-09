@@ -2,6 +2,7 @@
 import { getEffectiveRole, requirePermission, hasPermission, can, ROLE_HIERARCHY } from '../auth-utils'
 import { AuthError } from '../errors'
 import { UnifiedRole, Visibility } from '@prisma/client'
+import { describe, it, expect, beforeEach } from '@jest/globals'
 
 // Mock prisma
 jest.mock('../prisma', () => {

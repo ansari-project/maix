@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { ZodError } from 'zod'
+import { describe, it, expect, beforeEach } from '@jest/globals'
 
 // Mock the Prisma module with inline classes
 jest.mock('@prisma/client', () => ({

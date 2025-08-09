@@ -6,6 +6,7 @@ import {
   hashToken,
   compareTokens
 } from '../encryption'
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals'
 
 // Mock crypto methods for consistent testing
 const mockIv = Buffer.from('1234567890123456')

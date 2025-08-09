@@ -4,6 +4,7 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { FeedContainer } from '../FeedContainer'
 import { useSession } from 'next-auth/react'
 import '@testing-library/jest-dom'
+import { describe, it, expect, beforeEach } from '@jest/globals'
 
 // Mock next-auth
 jest.mock('next-auth/react')

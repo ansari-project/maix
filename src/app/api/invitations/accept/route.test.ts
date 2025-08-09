@@ -3,6 +3,7 @@ import { POST } from './route';
 import { getServerSession } from 'next-auth/next';
 import { validateInvitationToken } from '@/lib/invitation-utils';
 import { prisma } from '@/lib/prisma';
+import { describe, it, expect, beforeEach } from '@jest/globals'
 
 // Mock dependencies
 jest.mock('next-auth/next');

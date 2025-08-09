@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import { MyProjectsClient } from '../MyProjectsClient'
 import { CreateProjectDialog } from '../CreateProjectDialog'
+import { describe, it, expect, beforeEach } from '@jest/globals'
 
 // Mock dependencies
 jest.mock('next-auth/react', () => ({
