@@ -21,8 +21,15 @@ if (fs.existsSync(testEnvPath)) {
   console.warn('⚠️  .env.test not found. Using default test configuration.')
 }
 
-// Override DATABASE_URL with unique database name
-process.env.DATABASE_URL = `postgresql://testuser:testpass@localhost:5433/${testDbName}`
+// In CI environment, use the provided DATABASE_URL
+// Otherwise use local test database
+if (process.env.CI) {
+  // CI environment - DATABASE_URL is already set by GitHub Actions
+  console.log('🔧 Running in CI environment, using provided DATABASE_URL')
+} else {
+  // Local environment - use unique database name
+  process.env.DATABASE_URL = `postgresql://testuser:testpass@localhost:5433/${testDbName}`
+}
 
 // Create a separate Prisma client for tests
 export const prismaTest = new PrismaClient({
@@ -40,38 +47,60 @@ export const prismaTest = new PrismaClient({
  */
 export async function setupTestDatabase(): Promise<void> {
   try {
-    console.log(`🔧 Setting up test database: ${testDbName}`)
-    
     // SAFETY CHECK: Only allow this on local test database
     const dbUrl = process.env.DATABASE_URL
     if (!dbUrl || dbUrl.includes('neon.tech') || dbUrl.includes('production')) {
       throw new Error('SAFETY: Cannot run tests against production database!')
     }
     
-    // Disconnect all clients
-    await prismaTest.$disconnect()
-    
-    // Create the unique database using psql
-    // Connect to postgres database to create the test database
-    execSync(`PGPASSWORD=testpass psql -U testuser -h localhost -p 5433 -d postgres -c "DROP DATABASE IF EXISTS ${testDbName};"`, {
-      stdio: 'pipe'
-    })
-    execSync(`PGPASSWORD=testpass psql -U testuser -h localhost -p 5433 -d postgres -c "CREATE DATABASE ${testDbName};"`, {
-      stdio: 'pipe'
-    })
-    
-    // Run migrations with test database URL
-    execSync('npx prisma migrate deploy', {
-      env: {
-        ...process.env,
-        DATABASE_URL: process.env.DATABASE_URL // Use the new unique database URL
-      }
-    })
-    
-    // Reconnect after database creation
-    await prismaTest.$connect()
-    
-    console.log(`✅ Test database ready: ${testDbName}`)
+    if (process.env.CI) {
+      // In CI, database already exists - just run migrations
+      console.log('🔧 CI Environment: Running migrations on existing database')
+      
+      // Disconnect all clients
+      await prismaTest.$disconnect()
+      
+      // Run migrations
+      execSync('npx prisma migrate deploy', {
+        env: {
+          ...process.env,
+          DATABASE_URL: process.env.DATABASE_URL
+        }
+      })
+      
+      // Reconnect after migrations
+      await prismaTest.$connect()
+      
+      console.log('✅ CI test database ready')
+    } else {
+      // Local environment - create unique database
+      console.log(`🔧 Setting up test database: ${testDbName}`)
+      
+      // Disconnect all clients
+      await prismaTest.$disconnect()
+      
+      // Create the unique database using psql
+      // Connect to postgres database to create the test database
+      execSync(`PGPASSWORD=testpass psql -U testuser -h localhost -p 5433 -d postgres -c "DROP DATABASE IF EXISTS ${testDbName};"`, {
+        stdio: 'pipe'
+      })
+      execSync(`PGPASSWORD=testpass psql -U testuser -h localhost -p 5433 -d postgres -c "CREATE DATABASE ${testDbName};"`, {
+        stdio: 'pipe'
+      })
+      
+      // Run migrations with test database URL
+      execSync('npx prisma migrate deploy', {
+        env: {
+          ...process.env,
+          DATABASE_URL: process.env.DATABASE_URL // Use the new unique database URL
+        }
+      })
+      
+      // Reconnect after database creation
+      await prismaTest.$connect()
+      
+      console.log(`✅ Test database ready: ${testDbName}`)
+    }
   } catch (error) {
     console.error('❌ Failed to setup test database:', error)
     throw error

@@ -8,6 +8,7 @@ on:
 
 env:
   NODE_ENV: test
+  CI: true
 
 jobs:
   unit-tests:
