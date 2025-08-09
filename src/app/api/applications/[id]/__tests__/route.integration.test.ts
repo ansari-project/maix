@@ -115,12 +115,8 @@ describe('/api/applications/[id] Integration Tests', () => {
 
   describe('PATCH /api/applications/[id]', () => {
     it('should update application status when project owner approves', async () => {
-      // Mock auth as project owner
-      mockRequireAuth.mockResolvedValue({
-        id: projectOwner.id,
-        email: projectOwner.email,
-        name: projectOwner.name,
-      } as any)
+      // Mock auth as project owner - return full user object
+      mockRequireAuth.mockResolvedValue(projectOwner)
 
       const updateData = {
         status: 'ACCEPTED',
@@ -155,11 +151,7 @@ describe('/api/applications/[id] Integration Tests', () => {
       })
 
       // Mock auth as different user
-      mockRequireAuth.mockResolvedValue({
-        id: otherUser.id,
-        email: otherUser.email,
-        name: otherUser.name,
-      } as any)
+      mockRequireAuth.mockResolvedValue(otherUser)
 
       const updateData = {
         status: 'ACCEPTED',
@@ -231,11 +223,7 @@ describe('/api/applications/[id] Integration Tests', () => {
       })
 
       // Mock auth as org owner
-      mockRequireAuth.mockResolvedValue({
-        id: orgOwner.id,
-        email: orgOwner.email,
-        name: orgOwner.name,
-      } as any)
+      mockRequireAuth.mockResolvedValue(orgOwner)
 
       const updateData = {
         status: 'REJECTED',
@@ -254,11 +242,7 @@ describe('/api/applications/[id] Integration Tests', () => {
     })
 
     it('should return 404 for non-existent application', async () => {
-      mockRequireAuth.mockResolvedValue({
-        id: projectOwner.id,
-        email: projectOwner.email,
-        name: projectOwner.name,
-      } as any)
+      mockRequireAuth.mockResolvedValue(projectOwner)
 
       const request = createMockRequest({ status: 'ACCEPTED' })
       const response = await PATCH(request, { 
@@ -271,11 +255,7 @@ describe('/api/applications/[id] Integration Tests', () => {
     })
 
     it('should validate status enum values', async () => {
-      mockRequireAuth.mockResolvedValue({
-        id: projectOwner.id,
-        email: projectOwner.email,
-        name: projectOwner.name,
-      } as any)
+      mockRequireAuth.mockResolvedValue(projectOwner)
 
       const request = createMockRequest({ 
         status: 'INVALID_STATUS' 
@@ -290,11 +270,7 @@ describe('/api/applications/[id] Integration Tests', () => {
     })
 
     it('should validate message length', async () => {
-      mockRequireAuth.mockResolvedValue({
-        id: projectOwner.id,
-        email: projectOwner.email,
-        name: projectOwner.name,
-      } as any)
+      mockRequireAuth.mockResolvedValue(projectOwner)
 
       const request = createMockRequest({ 
         status: 'ACCEPTED',
@@ -310,11 +286,7 @@ describe('/api/applications/[id] Integration Tests', () => {
     })
 
     it('should accept all valid status values', async () => {
-      mockRequireAuth.mockResolvedValue({
-        id: projectOwner.id,
-        email: projectOwner.email,
-        name: projectOwner.name,
-      } as any)
+      mockRequireAuth.mockResolvedValue(projectOwner)
 
       const validStatuses = ['PENDING', 'ACCEPTED', 'REJECTED', 'WITHDRAWN']
       
@@ -346,11 +318,7 @@ describe('/api/applications/[id] Integration Tests', () => {
     })
 
     it('should update only status without message', async () => {
-      mockRequireAuth.mockResolvedValue({
-        id: projectOwner.id,
-        email: projectOwner.email,
-        name: projectOwner.name,
-      } as any)
+      mockRequireAuth.mockResolvedValue(projectOwner)
 
       const request = createMockRequest({ 
         status: 'REJECTED' 
@@ -371,11 +339,7 @@ describe('/api/applications/[id] Integration Tests', () => {
     })
 
     it('should update only message without status', async () => {
-      mockRequireAuth.mockResolvedValue({
-        id: projectOwner.id,
-        email: projectOwner.email,
-        name: projectOwner.name,
-      } as any)
+      mockRequireAuth.mockResolvedValue(projectOwner)
 
       const request = createMockRequest({ 
         message: 'Thank you for your interest' 
@@ -409,11 +373,7 @@ describe('/api/applications/[id] Integration Tests', () => {
     })
 
     it('should handle concurrent updates correctly', async () => {
-      mockRequireAuth.mockResolvedValue({
-        id: projectOwner.id,
-        email: projectOwner.email,
-        name: projectOwner.name,
-      } as any)
+      mockRequireAuth.mockResolvedValue(projectOwner)
 
       // Create multiple requests for the same application
       const requests = [
