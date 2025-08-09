@@ -8,23 +8,36 @@ interface EventWithRelations extends Event {
 }
 
 export class EmailService {
-  private resend: Resend;
+  private resend: Resend | null = null;
 
   constructor() {
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey) {
-      throw new Error('RESEND_API_KEY is not set');
+    // Don't throw during construction - check when actually sending
+  }
+
+  private getResendClient(): Resend {
+    if (!this.resend) {
+      const apiKey = process.env.RESEND_API_KEY;
+      if (!apiKey) {
+        throw new Error('RESEND_API_KEY is not set');
+      }
+      this.resend = new Resend(apiKey);
     }
-    this.resend = new Resend(apiKey);
+    return this.resend;
   }
 
   async sendDailyDigest(userEmail: string, userName: string, events: EventWithRelations[]) {
     if (!events.length) return;
 
+    // Skip email sending if no API key configured
+    if (!process.env.RESEND_API_KEY) {
+      console.log('RESEND_API_KEY not configured, skipping daily digest email');
+      return;
+    }
+
     const subject = `Causemon Daily: ${events.length} new events`;
     const html = this.generateHTML(userName, events);
 
-    await this.resend.emails.send({
+    await this.getResendClient().emails.send({
       from: process.env.EMAIL_FROM || 'Maix <ai-noreply@maix.io>',
       to: userEmail,
       subject,

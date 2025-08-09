@@ -95,13 +95,26 @@ describe('EmailService', () => {
   });
 
   describe('constructor', () => {
-    it('should throw error if RESEND_API_KEY is not set', () => {
+    it('should not throw error even if RESEND_API_KEY is not set (lazy initialization)', () => {
       delete process.env.RESEND_API_KEY;
-      expect(() => new EmailService()).toThrow('RESEND_API_KEY is not set');
+      // Constructor should not throw - we use lazy initialization now
+      expect(() => new EmailService()).not.toThrow();
     });
   });
 
   describe('sendDailyDigest', () => {
+    it('should skip email sending if RESEND_API_KEY is not set', async () => {
+      delete process.env.RESEND_API_KEY;
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      
+      await service.sendDailyDigest('user@example.com', 'John Smith', mockEvents);
+
+      expect(mockSend).not.toHaveBeenCalled();
+      expect(consoleSpy).toHaveBeenCalledWith('RESEND_API_KEY not configured, skipping daily digest email');
+      
+      consoleSpy.mockRestore();
+    });
+
     it('should send email with events', async () => {
       mockSend.mockResolvedValue({ id: 'email-id' });
 

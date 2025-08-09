@@ -3,7 +3,16 @@ import * as React from 'react';
 import { InvitationEmail } from '@/emails';
 import { generateInvitationToken } from './invitation-utils';
 
-const resend = new Resend(process.env.RESEND_API_KEY!);
+// Lazy instantiation to handle missing API key during build
+let resend: Resend | null = null;
+
+function getResendClient(): Resend {
+  if (!resend) {
+    const apiKey = process.env.RESEND_API_KEY!;
+    resend = new Resend(apiKey);
+  }
+  return resend;
+}
 
 interface SendInvitationEmailParams {
   invitation: {
@@ -30,6 +39,12 @@ interface SendInvitationEmailParams {
 }
 
 export async function sendInvitationEmail({ invitation, token }: SendInvitationEmailParams) {
+  // Skip email sending if no API key (e.g., during build)
+  if (!process.env.RESEND_API_KEY) {
+    console.log('RESEND_API_KEY not configured, skipping invitation email');
+    return { success: true, id: 'mock-email-id' };
+  }
+
   const entityType = invitation.organization ? 'organization' : 
                     invitation.product ? 'product' : 
                     'project';
@@ -42,7 +57,7 @@ export async function sendInvitationEmail({ invitation, token }: SendInvitationE
   const invitationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/accept-invitation?token=${token}`;
   
   try {
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResendClient().emails.send({
       from: process.env.EMAIL_FROM || 'Maix <noreply@maix.io>',
       to: invitation.email,
       subject: `You're invited to join ${entityName}`,
@@ -82,12 +97,18 @@ interface ResendInvitationEmailParams {
 }
 
 export async function resendInvitationEmail(params: ResendInvitationEmailParams) {
+  // Skip email sending if no API key (e.g., during build)
+  if (!process.env.RESEND_API_KEY) {
+    console.log('RESEND_API_KEY not configured, skipping resend invitation email');
+    return { success: true, newToken: 'mock-token' };
+  }
+
   // Generate a new token for the resend
   const newToken = generateInvitationToken();
   const invitationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/accept-invitation?token=${newToken}`;
   
   try {
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResendClient().emails.send({
       from: process.env.EMAIL_FROM || 'Maix <noreply@maix.io>',
       to: params.email,
       subject: `Reminder: You're invited to join ${params.entityName}`,
