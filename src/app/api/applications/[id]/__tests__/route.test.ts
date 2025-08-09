@@ -1,4 +1,3 @@
-import { describe, it, test, expect, beforeEach, jest } from '@jest/globals'
 import { NextRequest } from 'next/server'
 
 // Mock all dependencies first before importing anything
@@ -21,7 +20,7 @@ import { hasResourceAccess } from '@/lib/ownership-utils'
 const mockHandleApiError = handleApiError as jest.MockedFunction<typeof handleApiError>
 const mockSuccessResponse = successResponse as jest.MockedFunction<typeof successResponse>
 const mockParseRequestBody = parseRequestBody as jest.MockedFunction<typeof parseRequestBody>
-const mockHasResourceAccess = hasResourceAccess as jest.MockedFunction<typeof hasResourceAccess>
+const mockHasResourceAccess = hasResourceAccess as jest.MockedFunction<any>
 
 // Cast Prisma methods properly
 const mockFindUnique = prisma.application.findUnique as jest.Mock

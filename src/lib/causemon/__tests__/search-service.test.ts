@@ -1,4 +1,3 @@
-import { describe, it, expect, beforeEach } from '@jest/globals'
 import { GeminiSearchService } from '../search-service';
 import { GoogleGenAI } from '@google/genai';
 

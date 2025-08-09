@@ -1,8 +1,7 @@
 /**
  * @jest-environment node
+import { describe, it, expect, beforeEach, beforeAll, afterAll } from '@jest/globals'
  */
-
-import { describe, it, expect, beforeAll, afterAll, beforeEach, jest } from '@jest/globals'
 
 /**
  * Causemon Daily Cron Route Integration Tests

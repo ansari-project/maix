@@ -1,5 +1,4 @@
 // TypeScript test fixes applied
-import { describe, it, expect, beforeEach } from '@jest/globals'
 import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';

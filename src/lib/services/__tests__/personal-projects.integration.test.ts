@@ -1,6 +1,6 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals'
 // TypeScript test fixes applied
 import { TodoStatus } from '@prisma/client'
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals'
 import { PrismaClient } from '@prisma/client'
 import { cleanupTestDatabase, createTestUser, createTestOrganization } from '@/lib/test/db-test-utils'
 

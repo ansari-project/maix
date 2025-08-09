@@ -1,5 +1,4 @@
 // TypeScript test fixes applied
-import { describe, it, expect, beforeEach } from '@jest/globals'
 import React from 'react'
 import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { FeedContainer } from '../FeedContainer'

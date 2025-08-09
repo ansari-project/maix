@@ -1,8 +1,7 @@
 /**
  * @jest-environment node
+import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll } from '@jest/globals'
  */
-
-import { describe, it, expect, beforeAll, afterAll, beforeEach, jest } from '@jest/globals'
 
 /**
  * Invitation Utils Integration Tests
@@ -28,7 +27,6 @@ jest.mock('@/lib/prisma', () => ({
   prisma: require('@/lib/test/db-test-utils').prismaTest
 }))
 
-import { describe, it, expect, beforeEach } from '@jest/globals'
 import { createHash } from 'crypto'
 import {
   generateInvitationToken,

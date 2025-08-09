@@ -1,5 +1,4 @@
 // TypeScript test fixes applied
-import { describe, it, expect, beforeEach } from '@jest/globals'
 import { TodoStatus, ProjectStatus } from '@prisma/client'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { useToast } from '@/hooks/use-toast'

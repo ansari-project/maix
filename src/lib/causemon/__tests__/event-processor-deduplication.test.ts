@@ -1,4 +1,3 @@
-import { describe, it, expect, beforeEach } from '@jest/globals'
 import { EventProcessor } from '../event-processor';
 import { prisma } from '@/lib/prisma';
 import { SearchResult } from '../search-service';

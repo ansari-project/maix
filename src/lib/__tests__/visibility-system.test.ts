@@ -3,7 +3,6 @@
  * Testing NotFoundError and basic visibility functionality
  */
 
-import { describe, it, expect } from '@jest/globals'
 import { NotFoundError, ROLE_HIERARCHY, hasPermission } from '../auth-utils'
 
 describe('Visibility System', () => {

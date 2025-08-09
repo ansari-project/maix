@@ -36,7 +36,7 @@ export function TodoPostLink({
     async function fetchTodos() {
       try {
         setLoading(true)
-        const response = await fetch(`/api/projects/${projectId}/todos?status=OPEN&status=IN_PROGRESS`)
+        const response = await fetch(`/api/projects/${projectId}/todos?status=NOT_STARTED&status=IN_PROGRESS`)
         if (response.ok) {
           const data = await response.json()
           setTodos(data.todos || [])
