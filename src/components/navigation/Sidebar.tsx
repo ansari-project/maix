@@ -2,6 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useSession } from 'next-auth/react'
 import { useLayout } from '@/contexts/LayoutContext'
 import { 
@@ -66,10 +67,12 @@ export function Sidebar() {
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center gap-3">
           {session?.user?.image ? (
-            <img
+            <Image
               src={session.user.image}
               alt={session.user.name || 'User'}
-              className="w-8 h-8 rounded-full"
+              width={32}
+              height={32}
+              className="rounded-full"
             />
           ) : (
             <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
