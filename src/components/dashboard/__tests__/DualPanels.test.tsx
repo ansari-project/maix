@@ -35,20 +35,19 @@ describe('Phase 2: Dual Panel Layout Tests', () => {
       expect(screen.getByText('New Organization')).toBeInTheDocument()
     })
 
-    it('displays Your Activities section', () => {
+    it('displays My Todos section', () => {
       render(<ActionsPanel />)
-      expect(screen.getByText('Your Activities')).toBeInTheDocument()
-      expect(screen.getByText('My Projects')).toBeInTheDocument()
-      expect(screen.getByText('My Volunteering')).toBeInTheDocument()
       expect(screen.getByText('My Todos')).toBeInTheDocument()
+      expect(screen.getByText('Your tasks and priorities')).toBeInTheDocument()
     })
 
-    it('shows Your Impact stats', () => {
+    it('does not show removed sections', () => {
       render(<ActionsPanel />)
-      expect(screen.getByText('Your Impact')).toBeInTheDocument()
-      expect(screen.getByText('Projects')).toBeInTheDocument()
-      expect(screen.getByText('Collaborations')).toBeInTheDocument()
-      expect(screen.getByText('Tasks Done')).toBeInTheDocument()
+      // Verify that removed sections are not present
+      expect(screen.queryByText('Your Activities')).not.toBeInTheDocument()
+      expect(screen.queryByText('Your Impact')).not.toBeInTheDocument()
+      expect(screen.queryByText('My Projects')).not.toBeInTheDocument()
+      expect(screen.queryByText('My Volunteering')).not.toBeInTheDocument()
     })
   })
 
@@ -63,10 +62,11 @@ describe('Phase 2: Dual Panel Layout Tests', () => {
       expect(screen.getByText('Community Feed')).toBeInTheDocument()
     })
 
-    it('shows filter and refresh buttons', () => {
+    it('does not show filter and refresh buttons', () => {
       render(<CommunityPanel />)
-      expect(screen.getByText('Filter')).toBeInTheDocument()
-      expect(screen.getByText('Refresh')).toBeInTheDocument()
+      // Verify that removed buttons are not present
+      expect(screen.queryByText('Filter')).not.toBeInTheDocument()
+      expect(screen.queryByText('Refresh')).not.toBeInTheDocument()
     })
 
     it('renders FeedContainer', () => {

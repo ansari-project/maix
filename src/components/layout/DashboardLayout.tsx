@@ -11,10 +11,10 @@ const AIAssistant = lazy(() => import('@/components/ai/AIAssistant').then(module
 
 // AI Assistant loading fallback
 const AIAssistantSkeleton = () => (
-  <div className="h-12 bg-gray-100 border-t flex items-center px-4">
+  <div className="h-12 bg-muted/30 border-t border-border flex items-center px-4">
     <div className="animate-pulse flex items-center space-x-2">
-      <div className="h-6 w-6 bg-gray-300 rounded"></div>
-      <div className="h-4 w-32 bg-gray-300 rounded"></div>
+      <div className="h-6 w-6 bg-muted rounded"></div>
+      <div className="h-4 w-32 bg-muted rounded"></div>
     </div>
   </div>
 )
@@ -28,7 +28,7 @@ const DashboardLayoutContent = memo(function DashboardLayoutContent({ children, 
   const { isMobile, isAIExpanded } = useLayout()
   
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-background">
       {/* Sidebar - Desktop only */}
       {!isMobile && <Sidebar />}
       
