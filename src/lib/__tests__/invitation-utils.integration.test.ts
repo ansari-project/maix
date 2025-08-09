@@ -97,7 +97,7 @@ describe('Invitation Utils Integration Tests', () => {
         name: 'Test Product',
         description: 'Test product for invitations',
         organizationId: testOrg.id,
-        createdBy: testUser.id
+        ownerId: testUser.id
       }
     })
   })
