@@ -138,6 +138,7 @@ node_modules
 
 # TypeScript build info
 tsconfig.tsbuildinfo
+tsconfig.build.tsbuildinfo
 
 # Presentation files
 docs/outward/*.pdf

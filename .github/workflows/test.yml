@@ -126,7 +126,7 @@ jobs:
         run: npx prisma generate
       
       - name: TypeScript check
-        run: npx tsc --noEmit
+        run: npx tsc --noEmit --project tsconfig.build.json
       
       - name: Build application
         run: npm run build
