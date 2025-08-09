@@ -340,7 +340,7 @@ export default function MyTasksView() {
             <div className="text-2xl font-bold">{counts.total}</div>
           </CardContent>
         </Card>
-        {statusColumns.slice(1, 5).map((col) => (
+        {statusColumns.map((col) => (
           <Card key={col.status}>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -425,7 +425,7 @@ export default function MyTasksView() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {statusColumns.slice(1, 5).map((col) => (
+                  {statusColumns.map((col) => (
                     <SelectItem key={col.status} value={col.status}>
                       {col.label}
                     </SelectItem>
