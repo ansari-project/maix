@@ -54,14 +54,14 @@ export async function setupTestDatabase(): Promise<void> {
     }
     
     if (process.env.CI) {
-      // In CI, database already exists - just run migrations
-      console.log('🔧 CI Environment: Running migrations on existing database')
+      // In CI, database already exists - use db push to create schema
+      console.log('🔧 CI Environment: Creating schema on existing database')
       
       // Disconnect all clients
       await prismaTest.$disconnect()
       
-      // Run migrations
-      execSync('npx prisma migrate deploy', {
+      // Use db push for CI as well - creates schema from scratch
+      execSync('npx prisma db push --skip-generate --accept-data-loss', {
         env: {
           ...process.env,
           DATABASE_URL: process.env.DATABASE_URL
@@ -88,8 +88,8 @@ export async function setupTestDatabase(): Promise<void> {
         stdio: 'pipe'
       })
       
-      // Run migrations with test database URL
-      execSync('npx prisma migrate deploy', {
+      // Use db push for test database - creates schema from scratch without migrations
+      execSync('npx prisma db push --skip-generate --accept-data-loss', {
         env: {
           ...process.env,
           DATABASE_URL: process.env.DATABASE_URL // Use the new unique database URL
