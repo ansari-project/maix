@@ -4,14 +4,7 @@ import { NextRequest } from 'next/server'
 jest.mock('@/lib/auth-utils')
 jest.mock('@/lib/ownership-utils')
 jest.mock('@/lib/api-utils')
-jest.mock('@/lib/prisma', () => ({
-  prisma: {
-    application: {
-      findUnique: jest.fn(),
-      update: jest.fn(),
-    },
-  },
-}))
+jest.mock('@/lib/prisma')
 
 import { PATCH } from '../route'
 import { prisma } from '@/lib/prisma'
@@ -24,11 +17,14 @@ import {
 import { handleApiError, successResponse, parseRequestBody } from '@/lib/api-utils'
 import { hasResourceAccess } from '@/lib/ownership-utils'
 
-const mockPrisma = prisma as jest.Mocked<typeof prisma>
 const mockHandleApiError = handleApiError as jest.MockedFunction<typeof handleApiError>
 const mockSuccessResponse = successResponse as jest.MockedFunction<typeof successResponse>
 const mockParseRequestBody = parseRequestBody as jest.MockedFunction<typeof parseRequestBody>
 const mockHasResourceAccess = hasResourceAccess as jest.MockedFunction<typeof hasResourceAccess>
+
+// Cast Prisma methods properly
+const mockFindUnique = prisma.application.findUnique as jest.Mock
+const mockUpdate = prisma.application.update as jest.Mock
 
 describe('/api/applications/[id]', () => {
   beforeEach(() => {
@@ -92,8 +88,8 @@ describe('/api/applications/[id]', () => {
     test('should update volunteer application with valid data', async () => {
       mockRequireAuth.mockResolvedValue(mockProjectOwner as any)
       mockParseRequestBody.mockResolvedValue(validUpdateData)
-      mockPrisma.application.findUnique.mockResolvedValue(mockApplication as any)
-      mockPrisma.application.update.mockResolvedValue(mockUpdatedApplication as any)
+      mockFindUnique.mockResolvedValue(mockApplication as any)
+      mockUpdate.mockResolvedValue(mockUpdatedApplication as any)
       mockSuccessResponse.mockReturnValue(
         mockApiSuccessResponse(mockUpdatedApplication, 200) as any
       )
@@ -105,7 +101,7 @@ describe('/api/applications/[id]', () => {
       expect(response.status).toBe(200)
       expect(responseData.status).toBe('ACCEPTED')
       expect(responseData.message).toBe('Welcome to the team!')
-      expect(mockPrisma.application.update).toHaveBeenCalledWith({
+      expect(mockUpdate).toHaveBeenCalledWith({
         where: { id: mockParams.id },
         data: {
           status: validUpdateData.status,
@@ -142,7 +138,7 @@ describe('/api/applications/[id]', () => {
     test('should return 404 for non-existent application', async () => {
       mockRequireAuth.mockResolvedValue(mockProjectOwner as any)
       mockParseRequestBody.mockResolvedValue(validUpdateData)
-      mockPrisma.application.findUnique.mockResolvedValue(null)
+      mockFindUnique.mockResolvedValue(null)
       mockHandleApiError.mockReturnValue(
         mockApiErrorResponse('Application not found', 404) as any
       )
@@ -164,7 +160,7 @@ describe('/api/applications/[id]', () => {
 
       mockRequireAuth.mockResolvedValue(nonOwner as any)
       mockParseRequestBody.mockResolvedValue(validUpdateData)
-      mockPrisma.application.findUnique.mockResolvedValue(mockApplication as any)
+      mockFindUnique.mockResolvedValue(mockApplication as any)
       mockHasResourceAccess.mockResolvedValue(false)  // Non-owner doesn't have access
       mockHandleApiError.mockReturnValue(
         mockApiErrorResponse('Unauthorized', 403) as any
@@ -250,8 +246,8 @@ describe('/api/applications/[id]', () => {
         jest.clearAllMocks()
         mockRequireAuth.mockResolvedValue(mockProjectOwner as any)
         mockParseRequestBody.mockResolvedValue({ status })
-        mockPrisma.application.findUnique.mockResolvedValue(mockApplication as any)
-        mockPrisma.application.update.mockResolvedValue({
+        mockFindUnique.mockResolvedValue(mockApplication as any)
+        mockUpdate.mockResolvedValue({
           ...mockUpdatedApplication,
           status,
         } as any)
@@ -272,8 +268,8 @@ describe('/api/applications/[id]', () => {
         status: 'REJECTED',
       }
       mockParseRequestBody.mockResolvedValue(statusOnlyData)
-      mockPrisma.application.findUnique.mockResolvedValue(mockApplication as any)
-      mockPrisma.application.update.mockResolvedValue(mockUpdatedApplication as any)
+      mockFindUnique.mockResolvedValue(mockApplication as any)
+      mockUpdate.mockResolvedValue(mockUpdatedApplication as any)
       mockSuccessResponse.mockReturnValue(
         mockApiSuccessResponse(mockUpdatedApplication, 200) as any
       )
@@ -282,7 +278,7 @@ describe('/api/applications/[id]', () => {
       const response = await PATCH(request, { params: Promise.resolve(mockParams) })
 
       expect(response.status).toBe(200)
-      expect(mockPrisma.application.update).toHaveBeenCalledWith({
+      expect(mockUpdate).toHaveBeenCalledWith({
         where: { id: mockParams.id },
         data: {
           status: 'REJECTED',
@@ -306,8 +302,8 @@ describe('/api/applications/[id]', () => {
         message: 'Thank you for your interest.',
       }
       mockParseRequestBody.mockResolvedValue(messageOnlyData)
-      mockPrisma.application.findUnique.mockResolvedValue(mockApplication as any)
-      mockPrisma.application.update.mockResolvedValue(mockUpdatedApplication as any)
+      mockFindUnique.mockResolvedValue(mockApplication as any)
+      mockUpdate.mockResolvedValue(mockUpdatedApplication as any)
       mockSuccessResponse.mockReturnValue(
         mockApiSuccessResponse(mockUpdatedApplication, 200) as any
       )
@@ -316,7 +312,7 @@ describe('/api/applications/[id]', () => {
       const response = await PATCH(request, { params: Promise.resolve(mockParams) })
 
       expect(response.status).toBe(200)
-      expect(mockPrisma.application.update).toHaveBeenCalledWith({
+      expect(mockUpdate).toHaveBeenCalledWith({
         where: { id: mockParams.id },
         data: {
           status: undefined,
@@ -337,7 +333,7 @@ describe('/api/applications/[id]', () => {
     test('should handle database errors during application lookup', async () => {
       mockRequireAuth.mockResolvedValue(mockProjectOwner as any)
       mockParseRequestBody.mockResolvedValue(validUpdateData)
-      mockPrisma.application.findUnique.mockRejectedValue(new Error('Database error'))
+      mockFindUnique.mockRejectedValue(new Error('Database error'))
       mockHandleApiError.mockReturnValue(
         mockApiErrorResponse('Internal server error', 500) as any
       )
@@ -353,8 +349,8 @@ describe('/api/applications/[id]', () => {
     test('should handle database errors during application update', async () => {
       mockRequireAuth.mockResolvedValue(mockProjectOwner as any)
       mockParseRequestBody.mockResolvedValue(validUpdateData)
-      mockPrisma.application.findUnique.mockResolvedValue(mockApplication as any)
-      mockPrisma.application.update.mockRejectedValue(new Error('Database error'))
+      mockFindUnique.mockResolvedValue(mockApplication as any)
+      mockUpdate.mockRejectedValue(new Error('Database error'))
       mockHandleApiError.mockReturnValue(
         mockApiErrorResponse('Internal server error', 500) as any
       )
@@ -370,8 +366,8 @@ describe('/api/applications/[id]', () => {
     test('should include project owner info in application lookup', async () => {
       mockRequireAuth.mockResolvedValue(mockProjectOwner as any)
       mockParseRequestBody.mockResolvedValue(validUpdateData)
-      mockPrisma.application.findUnique.mockResolvedValue(mockApplication as any)
-      mockPrisma.application.update.mockResolvedValue(mockUpdatedApplication as any)
+      mockFindUnique.mockResolvedValue(mockApplication as any)
+      mockUpdate.mockResolvedValue(mockUpdatedApplication as any)
       mockSuccessResponse.mockReturnValue(
         mockApiSuccessResponse(mockUpdatedApplication, 200) as any
       )
@@ -379,7 +375,7 @@ describe('/api/applications/[id]', () => {
       const request = createMockRequest(validUpdateData)
       const response = await PATCH(request, { params: Promise.resolve(mockParams) })
 
-      expect(mockPrisma.application.findUnique).toHaveBeenCalledWith({
+      expect(mockFindUnique).toHaveBeenCalledWith({
         where: { id: mockParams.id },
         include: {
           project: {
@@ -401,8 +397,8 @@ describe('/api/applications/[id]', () => {
         message: '',
       }
       mockParseRequestBody.mockResolvedValue(emptyMessageData)
-      mockPrisma.application.findUnique.mockResolvedValue(mockApplication as any)
-      mockPrisma.application.update.mockResolvedValue(mockUpdatedApplication as any)
+      mockFindUnique.mockResolvedValue(mockApplication as any)
+      mockUpdate.mockResolvedValue(mockUpdatedApplication as any)
       mockSuccessResponse.mockReturnValue(
         mockApiSuccessResponse(mockUpdatedApplication, 200) as any
       )
@@ -411,7 +407,7 @@ describe('/api/applications/[id]', () => {
       const response = await PATCH(request, { params: Promise.resolve(mockParams) })
 
       expect(response.status).toBe(200)
-      expect(mockPrisma.application.update).toHaveBeenCalledWith({
+      expect(mockUpdate).toHaveBeenCalledWith({
         where: { id: mockParams.id },
         data: {
           status: 'ACCEPTED',
@@ -435,8 +431,8 @@ describe('/api/applications/[id]', () => {
 
       mockRequireAuth.mockResolvedValue(mockProjectOwner as any)
       mockParseRequestBody.mockResolvedValue(validUpdateData)
-      mockPrisma.application.findUnique.mockResolvedValue(mockApplication as any)
-      mockPrisma.application.update.mockResolvedValue(mockUpdatedApplication as any)
+      mockFindUnique.mockResolvedValue(mockApplication as any)
+      mockUpdate.mockResolvedValue(mockUpdatedApplication as any)
       mockSuccessResponse.mockReturnValue(
         mockApiSuccessResponse(mockUpdatedApplication, 200) as any
       )
@@ -445,7 +441,7 @@ describe('/api/applications/[id]', () => {
       const response = await PATCH(request, { params: Promise.resolve(mockParams) })
 
       expect(response.status).toBe(200)
-      expect(mockPrisma.application.update).toHaveBeenCalledWith({
+      expect(mockUpdate).toHaveBeenCalledWith({
         where: { id: mockParams.id },
         data: {
           status: validUpdateData.status,

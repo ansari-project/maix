@@ -230,11 +230,13 @@ describe('Todo and Project Services Integration', () => {
       const task1 = await createTodo(testUser1.id, {
         title: 'Task 1',
         projectId: project.id,
+        status: TodoStatus.NOT_STARTED,
       })
 
       const task2 = await createTodo(testUser1.id, {
         title: 'Task 2',
         projectId: project.id,
+        status: TodoStatus.NOT_STARTED,
       })
 
       // Delete project
@@ -272,16 +274,19 @@ describe('Todo and Project Services Integration', () => {
       await createStandaloneTask(testUser1.id, {
         title: 'Task 3',
         startDate: date3,
+        status: TodoStatus.NOT_STARTED,
       })
 
       await createStandaloneTask(testUser1.id, {
         title: 'Task 1',
         startDate: date1,
+        status: TodoStatus.NOT_STARTED,
       })
 
       await createStandaloneTask(testUser1.id, {
         title: 'Task 2',
         startDate: date2,
+        status: TodoStatus.NOT_STARTED,
       })
 
       const myTasks = await getMyTasks(testUser1.id)
