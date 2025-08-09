@@ -10,6 +10,7 @@
     "postinstall": "prisma generate",
     "type-check": "tsc --noEmit",
     "test": "jest --passWithNoTests",
+    "test:unit": "jest --passWithNoTests --testPathIgnorePatterns='/tests/e2e|integration\\.test'",
     "test:watch": "jest --watch",
     "test:integration": "jest --config jest.integration.config.js --runInBand",
     "test:integration:watch": "jest --config jest.integration.config.js --watch --runInBand",

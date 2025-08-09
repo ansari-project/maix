@@ -49,9 +49,9 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-# Step 6: Unit tests
+# Step 6: Unit tests (excluding integration tests and e2e tests)
 echo "🧪 Running unit tests..."
-npm run test -- --silent
+npm run test:unit -- --silent
 if [ $? -ne 0 ]; then
   echo "❌ Unit tests failed. Please fix failing tests before committing."
   exit 1
