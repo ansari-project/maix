@@ -150,14 +150,19 @@ export async function createTestUser(data?: Partial<{
 /**
  * Create test organization
  */
+let orgCounter = 0
+
 export async function createTestOrganization(ownerId: string, data?: Partial<{
   name: string
   slug: string
 }>) {
+  orgCounter++
+  const uniqueSuffix = `${Date.now()}_${orgCounter}_${Math.random().toString(36).substring(7)}`
+  
   return prismaTest.organization.create({
     data: {
       name: data?.name || 'Test Organization',
-      slug: data?.slug || 'test-org',
+      slug: data?.slug || `test-org-${uniqueSuffix}`,
       description: 'Test organization for integration tests',
       members: {
         create: {

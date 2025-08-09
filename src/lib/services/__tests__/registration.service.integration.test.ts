@@ -57,8 +57,7 @@ describe('Registration Service Integration Tests', () => {
     })
     
     testOrg = await createTestOrganization(testUser.id, {
-      name: 'Conference Org',
-      slug: 'conf-org'
+      name: 'Conference Org'
     })
     
     testEvent = await createTestEvent(testOrg.id, testUser.id, {
