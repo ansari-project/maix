@@ -525,6 +525,53 @@ R - Refine    : Polish for production
 **Auth**: NextAuth.js for protected routes, role-based access, validate sessions on API routes  
 **UI/UX**: Clean design, WCAG 2.1 AA accessibility, semantic HTML, Markdown support via `<Markdown>` component
 
+### TypeScript Configuration Strategy
+
+Our project uses two separate TypeScript configuration files to ensure correctness for both development and production builds. This separation is intentional and critical.
+
+- **`tsconfig.json` (The Base Config)**
+  - **Purpose**: Primary configuration used for local development by editors (VS Code) and for running our test suite via Jest (`ts-jest`)
+  - **Scope**: Configured to understand the entire codebase, including application source code, test files, and test-specific libraries (Jest globals). Provides seamless developer experience.
+
+- **`tsconfig.build.json` (The Build Config)**
+  - **Purpose**: Used exclusively by CI/CD pipeline for build validation (`npx tsc --noEmit -p tsconfig.build.json`)
+  - **Scope**: Inherits from base `tsconfig.json` but explicitly **excludes** all test files (`**/*.test.ts`, etc.)
+  - **Why**: Ensures CI type-check precisely matches what Next.js includes in production builds, preventing CI failures due to test-specific code
+
+This approach follows TypeScript best practices: different environments (application vs test) have different type contracts and should be validated separately.
+
+### Debugging CI/CD Issues Efficiently
+
+When GitHub Actions jobs fail, use GitHub CLI (`gh`) for faster debugging instead of navigating the web UI or using inefficient sleep commands.
+
+**Core Workflow**:
+
+1. **Check Status**: List recent runs to find failures
+   ```bash
+   gh run list --limit 5
+   ```
+
+2. **View Detailed Status**: Get job breakdown for a specific run
+   ```bash
+   gh run view <RUN_ID>
+   ```
+
+3. **Get Failed Logs**: View logs for failed jobs (works immediately after completion)
+   ```bash
+   gh run view --log-failed --job=<JOB_ID>
+   ```
+
+4. **Monitor Progress**: Check status periodically while working on other tasks
+   ```bash
+   # Work on other tasks, then check:
+   gh run view <RUN_ID>
+   ```
+
+**Pro Tips**:
+- Don't use `sleep` commands - work asynchronously and check periodically
+- Use `--log-failed` to get only the relevant error information
+- The `gh run view` command shows real-time status without repeatedly polling
+
 ## Key Database Concepts
 
 ### Project Lifecycle Management

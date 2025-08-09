@@ -10,7 +10,16 @@ import {
   NewQuestionEmail
 } from '@/emails'
 
-const resend = new Resend(process.env.RESEND_API_KEY!)
+// Lazy instantiation to handle missing API key during build
+let resend: Resend | null = null
+
+function getResendClient(): Resend {
+  if (!resend) {
+    const apiKey = process.env.RESEND_API_KEY!
+    resend = new Resend(apiKey)
+  }
+  return resend
+}
 
 interface EmailParams {
   userId: string
@@ -23,6 +32,12 @@ interface EmailParams {
 export async function sendNotificationEmail(params: EmailParams) {
   const { userId, type } = params
   
+  // Skip email sending if no API key (e.g., during build)
+  if (!process.env.RESEND_API_KEY) {
+    console.log('RESEND_API_KEY not configured, skipping email send')
+    return
+  }
+  
   // Get user details
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -34,7 +49,7 @@ export async function sendNotificationEmail(params: EmailParams) {
   try {
     const emailComponent = getEmailComponent(type, user, params)
     
-    await resend.emails.send({
+    await getResendClient().emails.send({
       from: process.env.EMAIL_FROM || 'Maix <ai-noreply@maix.io>',
       to: user.email,
       subject: getEmailSubject(type, params),
