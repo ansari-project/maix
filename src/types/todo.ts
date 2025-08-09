@@ -1,9 +1,12 @@
 import type { User, Project, Post } from '@prisma/client'
 
 export enum TodoStatus {
-  OPEN = 'OPEN',
+  NOT_STARTED = 'NOT_STARTED',
+  OPEN = 'OPEN', // Legacy - consider deprecating
   IN_PROGRESS = 'IN_PROGRESS',
-  COMPLETED = 'COMPLETED'
+  WAITING_FOR = 'WAITING_FOR',
+  COMPLETED = 'COMPLETED',
+  DONE = 'DONE' // Alias for COMPLETED
 }
 
 export interface Todo {
@@ -11,10 +14,12 @@ export interface Todo {
   title: string
   description?: string | null
   status: TodoStatus
+  startDate?: Date | null
   dueDate?: Date | null
   createdAt: Date
   updatedAt: Date
-  projectId: string
+  projectId?: string | null // Now optional for standalone tasks
+  eventId?: string | null
   creatorId: string
   assigneeId?: string | null
   creator?: User

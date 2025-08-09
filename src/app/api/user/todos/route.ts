@@ -86,11 +86,14 @@ export async function GET(request: NextRequest) {
       _count: true,
     })
 
-    const counts = {
+    const counts: Record<string, number> = {
       total: todos.length,
+      NOT_STARTED: 0,
       OPEN: 0,
       IN_PROGRESS: 0,
+      WAITING_FOR: 0,
       COMPLETED: 0,
+      DONE: 0,
     }
 
     statusCounts.forEach((count) => {

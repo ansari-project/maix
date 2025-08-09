@@ -126,13 +126,15 @@ model User {
 model Project {
   id                   String          @id @default(cuid())
   name                 String
-  goal                 String
+  goal                 String?         // Nullable for personal projects
   description          String
-  contactEmail         String
-  helpType             HelpType
+  contactEmail         String?         // Nullable for personal projects
+  helpType             HelpType?       // Nullable for personal projects
   status               ProjectStatus   @default(AWAITING_VOLUNTEERS)
   targetCompletionDate DateTime?
   isActive             Boolean         @default(true)
+  isPersonal           Boolean         @default(false) // Personal vs Organization project
+  personalCategory     String?         // Free-form category for personal projects
   createdAt            DateTime        @default(now())
   updatedAt            DateTime        @updatedAt
   ownerId              String?
@@ -152,6 +154,7 @@ model Project {
 
   @@index([isActive, createdAt])
   @@index([status])
+  @@index([isPersonal, ownerId]) // For personal projects query
   @@map("projects")
 }
 
@@ -425,7 +428,8 @@ model Todo {
   id          String     @id @default(cuid())
   title       String     @db.VarChar(255)
   description String?
-  status      TodoStatus @default(OPEN)
+  status      TodoStatus @default(OPEN) // Will change to NOT_STARTED after migration
+  startDate   DateTime?  // When to start working on this task
   dueDate     DateTime?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
@@ -570,9 +574,12 @@ enum NotificationType {
 }
 
 enum TodoStatus {
-  OPEN
+  NOT_STARTED
+  OPEN          // Legacy - consider deprecating
   IN_PROGRESS
+  WAITING_FOR
   COMPLETED
+  DONE          // Alias for COMPLETED - for user preference
 }
 
 // New Event models

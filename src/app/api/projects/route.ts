@@ -74,6 +74,18 @@ const handleGet = async (request: Request) => {
       ...(organizationId && { organizationId }),
       OR: [
         { visibility: 'PUBLIC' },
+        // User's personal projects
+        {
+          isPersonal: true,
+          ownerId: userId
+        },
+        // Personal projects shared with user
+        {
+          isPersonal: true,
+          members: {
+            some: { userId }
+          }
+        },
         // Check membership in project directly
         {
           members: {
@@ -140,6 +152,46 @@ const handlePost = withAuth(async (request: AuthenticatedRequest) => {
 
   // Create project with associated discussion post
   const project = await prisma.$transaction(async (tx) => {
+    // Handle personal project creation
+    if (validatedData.isPersonal) {
+      // Personal projects don't need organization/product validation
+      // They also have relaxed requirements for goal, contactEmail, helpType
+      const newProject = await tx.project.create({
+        data: {
+          name: validatedData.name,
+          description: validatedData.description,
+          isPersonal: true,
+          personalCategory: validatedData.personalCategory,
+          ownerId: request.user.id,
+          status: 'IN_PROGRESS', // Personal projects start in progress
+          isActive: true,
+          visibility: 'PRIVATE', // Personal projects are private by default
+          targetCompletionDate: validatedData.targetCompletionDate ? new Date(validatedData.targetCompletionDate) : null,
+          // These fields are null for personal projects
+          goal: null,
+          contactEmail: null,
+          helpType: null,
+          organizationId: null,
+          productId: null,
+        },
+        include: {
+          owner: {
+            select: {
+              name: true,
+              email: true
+            }
+          }
+        }
+      })
+      
+      return newProject
+    }
+    
+    // For organization projects, validate requirements
+    if (!validatedData.goal || !validatedData.contactEmail || !validatedData.helpType) {
+      throw new ValidationError('Organization projects require goal, contactEmail, and helpType')
+    }
+    
     // If organizationId is provided, validate membership
     if (validatedData.organizationId) {
       const isMember = await tx.organizationMember.findUnique({
@@ -205,15 +257,17 @@ const handlePost = withAuth(async (request: AuthenticatedRequest) => {
       }
     })
 
-    // 2. Create the discussion post and link it to the project
-    await tx.post.create({
-      data: {
-        type: 'PROJECT_DISCUSSION',
-        authorId: request.user.id,
-        content: `Discussion thread for ${newProject.name}`,
-        projectDiscussionThreadId: newProject.id, // Post holds FK to Project
-      }
-    })
+    // 2. Create the discussion post and link it to the project (only for org projects)
+    if (!validatedData.isPersonal) {
+      await tx.post.create({
+        data: {
+          type: 'PROJECT_DISCUSSION',
+          authorId: request.user.id,
+          content: `Discussion thread for ${newProject.name}`,
+          projectDiscussionThreadId: newProject.id, // Post holds FK to Project
+        }
+      })
+    }
 
     // 3. Return the project with includes
     return tx.project.findUnique({
@@ -247,29 +301,32 @@ const handlePost = withAuth(async (request: AuthenticatedRequest) => {
     throw new Error('Failed to create project')
   }
 
-  // Send notifications for new project (to all active users)
-  // This runs after the transaction completes to ensure the project exists
-  const activeUsers = await prisma.user.findMany({
-    where: { 
-      isActive: true,
-      id: { not: request.user.id } // Don't notify the creator
-    },
-    select: { id: true }
-  })
-
-  // Create notifications for each user 
-  // NOTE: Currently synchronous for MVP simplicity. For scale, consider:
-  // 1. Background job queue (Bull/BullMQ with Redis)
-  // 2. Promise.allSettled() for parallel processing
-  // 3. Batch notification creation with single DB transaction
-  for (const activeUser of activeUsers) {
-    await NotificationService.createNewProject({
-      userId: activeUser.id,
-      projectName: project.name,
-      projectGoal: project.goal,
-      projectId: project.id,
-      helpType: project.helpType
+  // Send notifications for new project (only for organization projects)
+  // Personal projects don't send notifications to all users
+  if (!validatedData.isPersonal) {
+    // This runs after the transaction completes to ensure the project exists
+    const activeUsers = await prisma.user.findMany({
+      where: { 
+        isActive: true,
+        id: { not: request.user.id } // Don't notify the creator
+      },
+      select: { id: true }
     })
+
+    // Create notifications for each user 
+    // NOTE: Currently synchronous for MVP simplicity. For scale, consider:
+    // 1. Background job queue (Bull/BullMQ with Redis)
+    // 2. Promise.allSettled() for parallel processing
+    // 3. Batch notification creation with single DB transaction
+    for (const activeUser of activeUsers) {
+      await NotificationService.createNewProject({
+        userId: activeUser.id,
+        projectName: project.name,
+        projectGoal: project.goal || '',
+        projectId: project.id,
+        helpType: project.helpType || 'ADVICE'
+      })
+    }
   }
 
   logger.info('Project created', {

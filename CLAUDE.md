@@ -162,18 +162,20 @@ DAPPER ensures thoughtful design, human alignment, and high-quality implementati
 
 **Process**:
 - Multiple AI agents collaborate to explore technical solutions
-- Identify and propose simplifications to prevent over-engineering
+- Identify and PROPOSE simplifications as OPTIONS (not decisions) to prevent over-engineering
+- Present simplifications with pros/cons for human to choose
 - Surface trade-offs and alternative approaches
 - Flag unresolved questions requiring human input
 
-**Output**: Design document with architecture proposals, simplifications, alternatives, open questions, and risk analysis
+**Output**: Design document with architecture proposals, simplification OPTIONS (not decisions), alternatives, open questions, and risk analysis
 
 ##### 2. Align - Human Alignment & Decisions
 
 **Purpose**: Review AI proposals and make strategic decisions
 
 **Process**:
-- Review each proposed simplification
+- Review each proposed simplification OPTION
+- Choose which simplifications to accept or reject
 - Make decisions on all open questions
 - Provide additional constraints if needed
 - Document rationale for decisions
@@ -190,19 +192,25 @@ After:  **[ACCEPTED]** - Simplicity outweighs audit granularity
 
 **Purpose**: Break aligned design into executable phases
 
-**Process**: Convert design into sequential phases that each deliver working functionality with clear success criteria, then get expert review from O4 and Gemini Pro
+**Process**: 
+- Convert design into sequential phases that each deliver working functionality
+- Define clear success criteria for each phase
+- **MANDATORY**: Get expert review from multiple models (e.g., O4 and Gemini Pro) before proceeding
+- Incorporate review feedback into final plan
 
-**Output**: Numbered phase plan with deliverables, dependencies, and success criteria (reviewed and validated)
+**Output**: Numbered phase plan with deliverables, dependencies, success criteria, and expert review confirmation
 
 ##### 4. Produce - Iterative Development (ITR Cycle with Evidence-Based Enforcement)
 
 **Purpose**: Execute the implementation plan with verifiable completion
 
-**MANDATORY Process** - For EACH phase, you MUST:
+**MANDATORY Process** - For EACH phase, you MUST complete the ITR cycle:
 1. **Implement**: Build the code for current phase
-2. **Test**: Write and run tests for the implementation  
+2. **Test**: Write and run tests for the implementation IMMEDIATELY after implementing
 3. **Review**: Code review using `mcp__zen__codereview`
 4. **Update**: Update plan document with progress
+
+**CRITICAL**: Testing is NOT a separate phase - it happens WITHIN each phase as part of the ITR cycle. Every phase must have its own tests before moving to the next phase.
 
 **⚠️ CRITICAL ENFORCEMENT - EVIDENCE-BASED COMPLETION**:
 - **NEVER mark a todo as complete without evidence of execution**
@@ -217,7 +225,12 @@ Todo: "Phase 2: Write tests"
 Evidence: Test output showing "Test Suites: 5 passed, Tests: 42 passed"
 Status: Can mark complete ✓
 
-❌ INCORRECT TODO COMPLETION:
+❌ INCORRECT TODO COMPLETION - NO PASSING TESTS:
+Todo: "Phase 2: Write tests"
+Evidence: Test output showing "Tests: 10 failed, 2 passed"
+Status: CANNOT mark complete ✗ - Tests must PASS
+
+❌ INCORRECT TODO COMPLETION - NO EVIDENCE:
 Todo: "Phase 2: Code review"
 Evidence: None (tool not run)
 Status: CANNOT mark complete ✗
@@ -226,12 +239,14 @@ Status: CANNOT mark complete ✗
 **Verification Checklist Before Marking ITR Steps Complete**:
 - [ ] Did I actually run the tool/command?
 - [ ] Do I have output/results to prove it?
+- [ ] For tests: Do ALL tests PASS? (Not just "tests written")
 - [ ] Can I provide the continuation_id or execution proof?
 - [ ] Would an audit find evidence this step was done?
 
 **Anti-Pattern Prevention**:
 - **DO NOT**: Mark review todos complete without running mcp__zen__codereview
 - **DO NOT**: Mark test todos complete without showing test results
+- **DO NOT**: Mark test todos complete if tests are FAILING
 - **DO NOT**: Skip steps due to perceived time pressure
 - **DO NOT**: Batch-mark multiple todos complete without individual evidence
 - **DO NOT**: Proceed to next phase without completing ALL ITR steps with evidence
@@ -316,7 +331,9 @@ Proposals & Questions    Decisions Made         Phases Defined            Phases
 - ✅ Each phase has acceptance criteria
 - ✅ Testing strategy defined
 - ✅ Resource requirements identified
-- ✅ **Expert Review**: Plan reviewed by O4 and Gemini Pro for feasibility and completeness
+- ✅ **Expert Review MANDATORY**: Plan reviewed by multiple models (O4, Gemini Pro, etc.) for feasibility and completeness
+- ✅ Review feedback incorporated into plan
+- ✅ Final plan validated and approved
 
 ##### Produce → Evaluate Gate
 - ✅ All planned phases complete
@@ -394,6 +411,14 @@ R - Refine    : Polish for production
 - **Phases represent logical completion points**: Each phase delivers working functionality
 - **No time estimates**: Phases are defined by deliverables, not duration
 - **Sequential phases**: Complete one phase before moving to the next
+
+### Script Organization
+- **Keep scripts organized**: Do not scatter .js and .py files throughout the codebase
+- **Use scripts/tmp/**: Place temporary or one-off scripts in `scripts/tmp/` directory
+- **Main scripts directory**: Production scripts go in `scripts/`
+- **Clear naming**: Use descriptive names that indicate the script's purpose
+- **Documentation**: Add comments at the top of scripts explaining their purpose
+- **Environment variables**: Do not set env vars directly on the command line (e.g., `DATABASE_URL=... npm test`). Instead, create a script that sets the env vars internally
 
 ### Git Guidelines
 

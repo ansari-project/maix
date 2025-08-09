@@ -83,14 +83,16 @@ export const projectCreateSchema = z.object({
     .max(255, 'Project name must be less than 255 characters long'),
   goal: z.string()
     .min(10, 'Project goal must be at least 10 characters long')
-    .max(500, 'Project goal must be less than 500 characters long'),
+    .max(500, 'Project goal must be less than 500 characters long')
+    .optional(), // Optional for personal projects
   description: z.string()
     .min(50, 'Description must be at least 50 characters long')
     .max(5000, 'Description must be less than 5000 characters long'),
   contactEmail: z.string()
     .email('Invalid contact email address')
-    .max(255, 'Contact email must be less than 255 characters long'),
-  helpType: z.enum(['ADVICE', 'PROTOTYPE', 'MVP', 'FULL_PRODUCT']),
+    .max(255, 'Contact email must be less than 255 characters long')
+    .optional(), // Optional for personal projects
+  helpType: z.enum(['ADVICE', 'PROTOTYPE', 'MVP', 'FULL_PRODUCT']).optional(), // Optional for personal projects
   status: z.enum(['AWAITING_VOLUNTEERS', 'PLANNING', 'IN_PROGRESS', 'ON_HOLD', 'COMPLETED', 'CANCELLED']).optional(),
   targetCompletionDate: z.string()
     .datetime('Invalid date format')
@@ -99,6 +101,8 @@ export const projectCreateSchema = z.object({
   productId: z.string().cuid('Invalid product ID format').optional(),
   visibility: z.enum(['PUBLIC', 'PRIVATE']).default('PUBLIC').optional(),
   organizationId: z.string().cuid('Invalid organization ID format').optional(),
+  isPersonal: z.boolean().optional(), // New field for personal projects
+  personalCategory: z.string().max(100).optional(), // New field for personal project categories
 })
 
 export const projectUpdateSchema = projectCreateSchema.partial()

@@ -44,9 +44,12 @@ interface Project {
 
 interface TodoCounts {
   total: number
+  NOT_STARTED: number
   OPEN: number
   IN_PROGRESS: number
+  WAITING_FOR: number
   COMPLETED: number
+  DONE: number
 }
 
 export default function MyTodosClient() {
@@ -57,9 +60,12 @@ export default function MyTodosClient() {
   const [projects, setProjects] = useState<Project[]>([])
   const [counts, setCounts] = useState<TodoCounts>({
     total: 0,
+    NOT_STARTED: 0,
     OPEN: 0,
     IN_PROGRESS: 0,
+    WAITING_FOR: 0,
     COMPLETED: 0,
+    DONE: 0,
   })
   const [loading, setLoading] = useState(true)
   const [selectedStatus, setSelectedStatus] = useState<TodoStatus | "ALL">("ALL")
@@ -172,11 +178,19 @@ export default function MyTodosClient() {
       // Update counts
       const oldTodo = todos.find((t) => t.id === todoId)
       if (oldTodo) {
-        setCounts((prev) => ({
-          ...prev,
-          [oldTodo.status]: prev[oldTodo.status] - 1,
-          [newStatus]: prev[newStatus] + 1,
-        }))
+        setCounts((prev) => {
+          const newCounts = { ...prev }
+          // Safely update counts using string indexing
+          const oldStatus = oldTodo.status as keyof TodoCounts
+          const statusKey = newStatus as keyof TodoCounts
+          if (oldStatus in newCounts && oldStatus !== 'total') {
+            newCounts[oldStatus] = (newCounts[oldStatus] as number) - 1
+          }
+          if (statusKey in newCounts && statusKey !== 'total') {
+            newCounts[statusKey] = (newCounts[statusKey] as number) + 1
+          }
+          return newCounts
+        })
       }
 
       toast({
