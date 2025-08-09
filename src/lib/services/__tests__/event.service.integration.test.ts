@@ -1,17 +1,26 @@
 /**
+ * @jest-environment node
+ */
+
+/**
  * Event Service Integration Tests
  * Tests with real database instead of mocks
  */
+
+// Mock the prisma module to use test database
+jest.mock('@/lib/prisma', () => ({
+  prisma: require('@/lib/test/db-test-utils').prismaTest
+}))
 
 import {
   createEvent,
   updateEvent,
   deleteEvent,
   getEvent,
-  listEvents,
   listPublicEvents,
   listOrganizationEvents,
-  canManageEvent
+  canManageEvents,
+  canViewEvent
 } from '../event.service'
 
 import {
@@ -32,9 +41,8 @@ describe('Event Service Integration Tests', () => {
 
   beforeAll(async () => {
     // Setup test database once
-    await waitForDatabase()
     await setupTestDatabase()
-  })
+  }, 30000) // 30 second timeout for database setup
 
   beforeEach(async () => {
     // Clean data before each test
@@ -82,7 +90,7 @@ describe('Event Service Integration Tests', () => {
       expect(event.id).toBeDefined()
       expect(event.name).toBe('AI Workshop')
       expect(event.organizationId).toBe(testOrg.id)
-      expect(event.creatorId).toBe(testUser.id)
+      expect(event.createdBy).toBe(testUser.id)
       
       // Verify we can retrieve it
       const retrieved = await prismaTest.maixEvent.findUnique({
@@ -103,7 +111,7 @@ describe('Event Service Integration Tests', () => {
       // Other user is not a member
       await expect(
         createEvent(otherUser.id, eventData)
-      ).rejects.toThrow('not a member')
+      ).rejects.toThrow('You do not have permission')
     })
 
     it('should handle database constraints', async () => {
@@ -152,7 +160,7 @@ describe('Event Service Integration Tests', () => {
     it('should prevent unauthorized updates', async () => {
       await expect(
         updateEvent(otherUser.id, testEvent.id, { name: 'Hacked' })
-      ).rejects.toThrow('Permission denied')
+      ).rejects.toThrow('You do not have permission')
     })
   })
 
@@ -183,6 +191,12 @@ describe('Event Service Integration Tests', () => {
         }
       })
 
+      // Cancel the event first (required before deletion with registrations)
+      await prismaTest.maixEvent.update({
+        where: { id: testEvent.id },
+        data: { status: 'CANCELLED' }
+      })
+
       await deleteEvent(testUser.id, testEvent.id)
       
       // Check registrations are deleted
@@ -193,7 +207,7 @@ describe('Event Service Integration Tests', () => {
     })
   })
 
-  describe('listEvents', () => {
+  describe('listOrganizationEvents', () => {
     beforeEach(async () => {
       // Create multiple events
       await createTestEvent(testOrg.id, testUser.id, {
@@ -211,8 +225,7 @@ describe('Event Service Integration Tests', () => {
     })
 
     it('should list all events for organization member', async () => {
-      const result = await listEvents(testUser.id, {
-        organizationId: testOrg.id
+      const result = await listOrganizationEvents(testUser.id, testOrg.id, {
       })
 
       expect(result.events).toHaveLength(3)
@@ -220,8 +233,7 @@ describe('Event Service Integration Tests', () => {
     })
 
     it('should filter upcoming events', async () => {
-      const result = await listEvents(testUser.id, {
-        organizationId: testOrg.id,
+      const result = await listOrganizationEvents(testUser.id, testOrg.id, {
         upcoming: true
       })
 
@@ -230,8 +242,7 @@ describe('Event Service Integration Tests', () => {
     })
 
     it('should paginate results', async () => {
-      const page1 = await listEvents(testUser.id, {
-        organizationId: testOrg.id,
+      const page1 = await listOrganizationEvents(testUser.id, testOrg.id, {
         limit: 2,
         offset: 0
       })
@@ -239,8 +250,7 @@ describe('Event Service Integration Tests', () => {
       expect(page1.events).toHaveLength(2)
       expect(page1.total).toBe(3)
 
-      const page2 = await listEvents(testUser.id, {
-        organizationId: testOrg.id,
+      const page2 = await listOrganizationEvents(testUser.id, testOrg.id, {
         limit: 2,
         offset: 2
       })
@@ -279,7 +289,7 @@ describe('Event Service Integration Tests', () => {
     })
   })
 
-  describe('canManageEvent', () => {
+  describe('canManageEvents', () => {
     let testEvent: any
 
     beforeEach(async () => {
@@ -287,17 +297,17 @@ describe('Event Service Integration Tests', () => {
     })
 
     it('should allow organization members to manage', async () => {
-      const canManage = await canManageEvent(testUser.id, testEvent.id)
+      const canManage = await canManageEvents(testUser.id, testOrg.id)
       expect(canManage).toBe(true)
     })
 
     it('should deny non-members', async () => {
-      const canManage = await canManageEvent(otherUser.id, testEvent.id)
+      const canManage = await canManageEvents(otherUser.id, testOrg.id)
       expect(canManage).toBe(false)
     })
 
-    it('should handle non-existent events', async () => {
-      const canManage = await canManageEvent(testUser.id, 'non-existent')
+    it('should handle non-existent organizations', async () => {
+      const canManage = await canManageEvents(testUser.id, 'non-existent')
       expect(canManage).toBe(false)
     })
   })

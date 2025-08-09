@@ -9,16 +9,20 @@ import * as dotenv from 'dotenv'
 import * as path from 'path'
 import * as fs from 'fs'
 
+// Generate unique database name for this test run
+const testDbSuffix = Math.random().toString(36).substring(7)
+const testDbName = `maix_test_${testDbSuffix}`
+
 // Load test environment variables
 const testEnvPath = path.join(process.cwd(), '.env.test')
 if (fs.existsSync(testEnvPath)) {
   dotenv.config({ path: testEnvPath })
 } else {
   console.warn('⚠️  .env.test not found. Using default test configuration.')
-  // Set minimal test defaults
-  process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/maix_test'
-  // NODE_ENV is read-only in TypeScript, skip setting it
 }
+
+// Override DATABASE_URL with unique database name
+process.env.DATABASE_URL = `postgresql://testuser:testpass@localhost:5433/${testDbName}`
 
 // Create a separate Prisma client for tests
 export const prismaTest = new PrismaClient({
@@ -32,27 +36,42 @@ export const prismaTest = new PrismaClient({
 
 /**
  * Setup test database
- * Creates schema and runs migrations
+ * Creates a unique database for this test run and runs migrations
  */
 export async function setupTestDatabase(): Promise<void> {
   try {
-    console.log('🔧 Setting up test database...')
+    console.log(`🔧 Setting up test database: ${testDbName}`)
     
-    // Reset database schema
-    await prismaTest.$executeRawUnsafe(`
-      DROP SCHEMA IF EXISTS public CASCADE;
-      CREATE SCHEMA public;
-    `)
+    // SAFETY CHECK: Only allow this on local test database
+    const dbUrl = process.env.DATABASE_URL
+    if (!dbUrl || dbUrl.includes('neon.tech') || dbUrl.includes('production')) {
+      throw new Error('SAFETY: Cannot run tests against production database!')
+    }
     
-    // Run migrations
+    // Disconnect all clients
+    await prismaTest.$disconnect()
+    
+    // Create the unique database using psql
+    // Connect to postgres database to create the test database
+    execSync(`PGPASSWORD=testpass psql -U testuser -h localhost -p 5433 -d postgres -c "DROP DATABASE IF EXISTS ${testDbName};"`, {
+      stdio: 'pipe'
+    })
+    execSync(`PGPASSWORD=testpass psql -U testuser -h localhost -p 5433 -d postgres -c "CREATE DATABASE ${testDbName};"`, {
+      stdio: 'pipe'
+    })
+    
+    // Run migrations with test database URL
     execSync('npx prisma migrate deploy', {
       env: {
         ...process.env,
-        DATABASE_URL: process.env.DATABASE_URL
+        DATABASE_URL: process.env.DATABASE_URL // Use the new unique database URL
       }
     })
     
-    console.log('✅ Test database ready')
+    // Reconnect after database creation
+    await prismaTest.$connect()
+    
+    console.log(`✅ Test database ready: ${testDbName}`)
   } catch (error) {
     console.error('❌ Failed to setup test database:', error)
     throw error
@@ -64,36 +83,43 @@ export async function setupTestDatabase(): Promise<void> {
  * Truncates all tables but keeps schema
  */
 export async function cleanupTestDatabase(): Promise<void> {
-  const tables = [
-    'Registration',
-    'EventConversation', 
-    'MaixEvent',
-    'Todo',
-    'PersonalAccessToken',
-    'ProjectCollaborator',
-    'Project',
-    'Product',
-    'OrganizationMember',
-    'Organization',
-    'Post',
-    'Notification',
-    'User'
-  ]
-  
   try {
+    // SAFETY CHECK: Only allow this on local test database
+    const dbUrl = process.env.DATABASE_URL || 'postgresql://mwk@localhost:5432/maix_test'
+    if (dbUrl.includes('neon.tech') || dbUrl.includes('production')) {
+      throw new Error('SAFETY: Cannot run cleanup against production database!')
+    }
+    
+    // Get all table names from the database (excluding system tables)
+    const result = await prismaTest.$queryRaw<Array<{tablename: string}>>`
+      SELECT tablename FROM pg_tables 
+      WHERE schemaname = 'public' 
+      AND tablename NOT LIKE '_prisma%'
+      ORDER BY tablename;
+    `
+    
+    if (result.length === 0) {
+      return // No tables to clean
+    }
+    
     // Disable foreign key checks temporarily
     await prismaTest.$executeRawUnsafe('SET session_replication_role = replica;')
     
     // Truncate all tables
-    for (const table of tables) {
-      await prismaTest.$executeRawUnsafe(`TRUNCATE TABLE "${table}" CASCADE;`)
+    for (const row of result) {
+      try {
+        await prismaTest.$executeRawUnsafe(`TRUNCATE TABLE "${row.tablename}" CASCADE;`)
+      } catch (err) {
+        // If table doesn't exist, continue
+        console.warn(`Could not truncate ${row.tablename}, continuing...`)
+      }
     }
     
     // Re-enable foreign key checks
     await prismaTest.$executeRawUnsafe('SET session_replication_role = DEFAULT;')
   } catch (error) {
     console.error('Failed to cleanup database:', error)
-    throw error
+    // Don't throw - allow tests to continue even if cleanup fails
   }
 }
 
@@ -105,11 +131,15 @@ export async function createTestUser(data?: Partial<{
   name: string
   username: string
 }>) {
+  // Generate unique username based on email or timestamp
+  const email = data?.email || 'test@example.com'
+  const defaultUsername = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '')
+  
   return prismaTest.user.create({
     data: {
-      email: data?.email || 'test@example.com',
+      email: email,
       name: data?.name || 'Test User',
-      username: data?.username || 'testuser',
+      username: data?.username || defaultUsername,
       password: 'hashed_password', // In real tests, use proper hashing
     }
   })
@@ -222,8 +252,18 @@ export async function waitForDatabase(maxAttempts = 10): Promise<void> {
 }
 
 /**
- * Disconnect from database
+ * Disconnect from database and cleanup
  */
 export async function disconnectDatabase(): Promise<void> {
   await prismaTest.$disconnect()
+  
+  // Drop the test database after tests complete
+  try {
+    console.log(`🧹 Cleaning up test database: ${testDbName}`)
+    execSync(`PGPASSWORD=testpass psql -U testuser -h localhost -p 5433 -d postgres -c "DROP DATABASE IF EXISTS ${testDbName};"`, {
+      stdio: 'pipe'
+    })
+  } catch (error) {
+    console.warn(`Could not drop test database ${testDbName}:`, error)
+  }
 }

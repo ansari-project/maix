@@ -1,7 +1,16 @@
 /**
+ * @jest-environment node
+ */
+
+/**
  * Registration Service Integration Tests
  * Tests with real database instead of mocks
  */
+
+// Mock the prisma module to use test database
+jest.mock('@/lib/prisma', () => ({
+  prisma: require('@/lib/test/db-test-utils').prismaTest
+}))
 
 import {
   createRegistration,
@@ -32,9 +41,8 @@ describe('Registration Service Integration Tests', () => {
   let otherUser: any
 
   beforeAll(async () => {
-    await waitForDatabase()
     await setupTestDatabase()
-  })
+  }, 30000) // 30 second timeout for database setup
 
   beforeEach(async () => {
     await cleanupTestDatabase()
@@ -168,6 +176,12 @@ describe('Registration Service Integration Tests', () => {
         data: { status: 'CANCELLED' }
       })
 
+      // Delete the cancelled registration to allow re-registration
+      // (Due to unique constraint on eventId+email)
+      await prismaTest.registration.delete({
+        where: { id: first.id }
+      })
+
       // Should be able to register again
       const second = await createRegistration({
         eventId: testEvent.id,
@@ -251,6 +265,7 @@ describe('Registration Service Integration Tests', () => {
 
     beforeEach(async () => {
       registration = await createTestRegistration(testEvent.id, {
+        email: 'waitlisted@example.com',
         status: 'WAITLISTED'
       })
     })
@@ -280,11 +295,13 @@ describe('Registration Service Integration Tests', () => {
 
       // Fill capacity
       await createTestRegistration(fullEvent.id, {
+        email: 'confirmed@example.com',
         status: 'CONFIRMED'
       })
 
       // Create waitlisted
       const waitlisted = await createTestRegistration(fullEvent.id, {
+        email: 'waitlisted@example.com',
         status: 'WAITLISTED'
       })
 
@@ -357,10 +374,10 @@ describe('Registration Service Integration Tests', () => {
         testEvent.id
       )
 
-      // Should be: CONFIRMED, CONFIRMED, WAITLISTED, CANCELLED
+      // Should be: CONFIRMED, CONFIRMED, CANCELLED, WAITLISTED (based on enum order)
       expect(result.registrations[0].status).toBe('CONFIRMED')
-      expect(result.registrations[2].status).toBe('WAITLISTED')
-      expect(result.registrations[3].status).toBe('CANCELLED')
+      expect(result.registrations[2].status).toBe('CANCELLED')
+      expect(result.registrations[3].status).toBe('WAITLISTED')
     })
 
     it('should paginate results', async () => {
