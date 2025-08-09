@@ -16,6 +16,11 @@ jest.mock('next/link', () => ({
   ),
 }))
 
+// Mock DashboardLayout
+jest.mock('@/components/layout/DashboardLayout', () => ({
+  DashboardLayout: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}))
+
 const mockUseSession = useSession as jest.MockedFunction<typeof useSession>
 const mockUseRouter = useRouter as jest.MockedFunction<typeof useRouter>
 const mockPush = jest.fn()
