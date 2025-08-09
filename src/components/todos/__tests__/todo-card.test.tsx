@@ -13,7 +13,7 @@ const mockTodo: TodoWithRelations = {
   id: 'todo-1',
   title: 'Test Todo',
   description: 'Test description',
-  status: TodoStatus.OPEN,
+  status: TodoStatus.NOT_STARTED,
   dueDate: new Date('2025-12-31'),
   createdAt: new Date(),
   updatedAt: new Date(),

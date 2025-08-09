@@ -64,7 +64,7 @@ const mockProjects = [
       {
         id: 'todo1',
         title: 'Complete React tutorial',
-        status: 'OPEN',
+        status: 'NOT_STARTED',
       },
     ],
   },
@@ -442,6 +442,21 @@ describe('MyProjectsClient', () => {
       status: 'authenticated',
     })
 
+    // Mock successful API responses for this test
+    ;(fetch as jest.Mock)
+      .mockImplementationOnce(() => 
+        Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(mockProjects),
+        })
+      )
+      .mockImplementationOnce(() => 
+        Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(mockCategories),
+        })
+      )
+
     render(<MyProjectsClient />)
 
     await waitFor(() => {
@@ -449,6 +464,6 @@ describe('MyProjectsClient', () => {
     })
 
     // Look for the shared toggle button
-    expect(screen.getByText('Show')).toBeInTheDocument()
+    expect(screen.getByText('Show Shared')).toBeInTheDocument()
   })
 })

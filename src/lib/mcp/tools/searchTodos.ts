@@ -7,7 +7,7 @@ import type { User } from "@prisma/client";
 export const SearchTodosSchema = z.object({
   projectId: z.string().optional().describe("Filter todos by project ID"),
   includePersonal: z.boolean().optional().describe("Include personal/standalone todos (todos without a project)"),
-  status: z.array(z.enum(["NOT_STARTED", "OPEN", "IN_PROGRESS", "WAITING_FOR", "COMPLETED", "DONE"])).optional().describe("Filter by todo status"),
+  status: z.array(z.enum(["NOT_STARTED", "IN_PROGRESS", "WAITING_FOR", "COMPLETED"])).optional().describe("Filter by todo status"),
   assigneeId: z.string().optional().describe("Filter by assignee user ID"),
   creatorId: z.string().optional().describe("Filter by creator user ID"),
   query: z.string().optional().describe("Search text in title and description"),
@@ -115,7 +115,7 @@ export async function handleSearchTodos(params: SearchTodosParams, context: Cont
       lt: now
     };
     // Overdue todos should not be completed
-    where.status = { notIn: ["COMPLETED", "DONE"] };
+    where.status = { not: "COMPLETED" };
   }
 
   const todos = await prisma.todo.findMany({
@@ -151,14 +151,13 @@ export async function handleSearchTodos(params: SearchTodosParams, context: Cont
     const dueDateText = todo.dueDate ? ` - Due: ${todo.dueDate.toLocaleDateString()}` : "";
     
     let statusIcon = "⭕";
-    if (todo.status === "COMPLETED" || todo.status === "DONE") statusIcon = "✅";
+    if (todo.status === "COMPLETED") statusIcon = "✅";
     else if (todo.status === "IN_PROGRESS") statusIcon = "🔄";
     else if (todo.status === "WAITING_FOR") statusIcon = "⏳";
-    else if (todo.status === "OPEN") statusIcon = "🔵";
     
     // Mark overdue todos
     const isOverdue = todo.dueDate && todo.dueDate < now && 
-                      todo.status !== "COMPLETED" && todo.status !== "DONE";
+                      todo.status !== "COMPLETED";
     const overdueText = isOverdue ? " 🚨 OVERDUE" : "";
     
     const projectInfo = todo.project?.name 

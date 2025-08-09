@@ -84,7 +84,7 @@ export async function handleManagePersonalProject(params: ManagePersonalProjectP
             select: {
               todos: {
                 where: {
-                  status: { notIn: ["COMPLETED", "DONE"] }
+                  status: { not: "COMPLETED" }
                 }
               }
             }
@@ -94,7 +94,7 @@ export async function handleManagePersonalProject(params: ManagePersonalProjectP
       });
 
       if (projects.length === 0) {
-        return "No personal projects found. Use the 'create' action to create your first personal project.";
+        return "No personal projects found. Use the 'create' action to create your first _personal_ project.";
       }
 
       const projectList = projects.map(project => {
@@ -134,7 +134,7 @@ export async function handleManagePersonalProject(params: ManagePersonalProjectP
           _count: {
             select: {
               todos: {
-                where: { status: { notIn: ["COMPLETED", "DONE"] } }
+                where: { status: { not: "COMPLETED" } }
               }
             }
           }

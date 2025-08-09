@@ -517,16 +517,14 @@ Create a new todo for a project.
 
 ## Enhanced Todo Status Values
 
-The enhanced todo system supports 6 status values:
+The enhanced todo system supports 4 clean status values:
 
 | Status | Description | Usage |
 |--------|-------------|-------|
 | `NOT_STARTED` | Task created but not yet begun | Default for new tasks |
-| `OPEN` | Task ready to be worked on | Legacy status (same as NOT_STARTED) |
 | `IN_PROGRESS` | Currently being worked on | Active development |
 | `WAITING_FOR` | Blocked waiting for external input | Dependencies, reviews, approvals |
-| `COMPLETED` | Task finished and delivered | Work done, ready for review |
-| `DONE` | Task fully complete and accepted | Final state, reviewed and approved |
+| `COMPLETED` | Task finished and ready | Final state |
 
 ## Permission Model
 

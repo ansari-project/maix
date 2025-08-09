@@ -64,7 +64,7 @@ async function createTestProject(userId: string) {
       {
         title: 'Create initial wireframes',
         description: 'Design the basic UI layout for the main features',
-        status: 'OPEN',
+        status: 'NOT_STARTED',
         projectId: project.id,
         creatorId: userId,
       },

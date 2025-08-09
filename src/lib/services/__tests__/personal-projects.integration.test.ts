@@ -31,7 +31,7 @@ describe('Personal Projects Integration Tests', () => {
       expect(todo.status).toBe('NOT_STARTED')
 
       // Test all new statuses
-      const statuses = ['NOT_STARTED', 'WAITING_FOR', 'DONE', 'IN_PROGRESS', 'COMPLETED']
+      const statuses = ['NOT_STARTED', 'WAITING_FOR', 'COMPLETED', 'IN_PROGRESS']
       for (const status of statuses) {
         const updated = await prisma.todo.update({
           where: { id: todo.id },
@@ -169,8 +169,8 @@ describe('Personal Projects Integration Tests', () => {
         }
       })
 
-      // Should use OPEN for now (until we change default in second migration)
-      expect(['OPEN', 'NOT_STARTED']).toContain(todo.status)
+      // Should use NOT_STARTED as default
+      expect(todo.status).toBe('NOT_STARTED')
     })
   })
 })

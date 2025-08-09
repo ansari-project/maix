@@ -95,13 +95,40 @@ maix/
 
 ## Development Guidelines
 
-### Testing Requirements (CRITICAL - Updated August 8, 2025)
+### Testing Requirements (CRITICAL - Updated August 9, 2025)
+
+#### 🐳 TEST DATABASE WITH DOCKER - YES WE HAVE ONE!
+**IMPORTANT**: We have a fully functional test database using Docker. USE IT for integration tests!
+
+```bash
+# Start the test database (Docker required)
+npm run test:db:start     # Starts PostgreSQL on port 5433
+
+# Run integration tests with real database
+npm run test:integration  # Runs all integration tests
+npm run test:int         # Alternative: uses test-db script
+
+# Stop/reset test database
+npm run test:db:stop     # Stops the container
+npm run test:db:reset    # Completely resets the database
+
+# Full test suite
+npm run test:all         # Runs both unit and integration tests
+```
+
+**Test Database Configuration:**
+- Runs on port 5433 (not 5432) to avoid conflicts with dev database
+- Database name: `maix_test`
+- User: `testuser`
+- Password: `testpass`
+- Copy `.env.test.example` to `.env.test` for configuration
+- Database URL: `postgresql://testuser:testpass@localhost:5433/maix_test`
 
 #### Integration-First Testing Strategy
 **IMPORTANT**: We use an "integration-first" approach. Mocked tests give false confidence and miss real bugs.
 
 1. **Test Database Setup (Phase 1 Requirement)**
-   - Set up test database IMMEDIATELY when starting any feature
+   - Start Docker: `npm run test:db:start`
    - Copy `.env.test.example` to `.env.test` and configure
    - Run `npm run test:integration` to verify setup
 
@@ -125,12 +152,25 @@ maix/
 5. **Integration Test Checklist**
    ```bash
    # For every new feature:
-   [ ] Test database configured
+   [ ] Docker started: npm run test:db:start
+   [ ] .env.test configured with test database URL
    [ ] Integration tests written BEFORE implementation
    [ ] Real database operations tested
    [ ] Transactions and rollbacks verified
    [ ] Constraints and cascades tested
    ```
+
+**Available Test Commands:**
+- `npm test` - All tests (unit + integration if DB is running)
+- `npm run test:unit` - Unit tests only (excludes integration)
+- `npm run test:integration` - Integration tests with real database
+- `npm run test:int` - Alternative integration test runner (uses scripts/int_test.sh)
+- `npm run test:all` - Both unit and integration tests
+- `npm run test:watch` - Watch mode for unit tests
+- `npm run test:integration:watch` - Watch mode for integration tests
+- `npm run test:db:start` - Start Docker test database
+- `npm run test:db:stop` - Stop Docker test database
+- `npm run test:db:reset` - Reset Docker test database
 
 See `docs/guides/integration-testing.md` for detailed guide.
 

@@ -45,7 +45,7 @@ const mockTodos = [
     id: 'todo-1',
     title: 'Implement user authentication',
     description: 'Set up NextAuth.js with Google OAuth',
-    status: 'OPEN',
+    status: 'NOT_STARTED',
     dueDate: null,
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
@@ -229,7 +229,7 @@ describe('Todo Integration Components', () => {
     })
     
     // Verify the API was called to fetch todos with status filters
-    expect(mockFetch).toHaveBeenCalledWith('/api/projects/project-1/todos?status=OPEN&status=IN_PROGRESS')
+    expect(mockFetch).toHaveBeenCalledWith('/api/projects/project-1/todos?status=NOT_STARTED&status=IN_PROGRESS')
     
     // Verify we can find the select trigger
     const selectTrigger = screen.getByRole('combobox')
@@ -252,7 +252,7 @@ describe('Todo Integration Components', () => {
     })
     
     // Verify the API was called to fetch todos with status filters
-    expect(mockFetch).toHaveBeenCalledWith('/api/projects/project-1/todos?status=OPEN&status=IN_PROGRESS')
+    expect(mockFetch).toHaveBeenCalledWith('/api/projects/project-1/todos?status=NOT_STARTED&status=IN_PROGRESS')
     
     // Verify the select component is rendered
     const selectTrigger = screen.getByRole('combobox')

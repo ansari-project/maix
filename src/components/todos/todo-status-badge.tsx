@@ -20,12 +20,6 @@ export function TodoStatusBadge({ status, className }: TodoStatusBadgeProps) {
       icon: Circle,
       className: "text-gray-600 border-gray-300"
     },
-    OPEN: {
-      label: "Open",
-      variant: "outline" as const,
-      icon: CircleDot,
-      className: "text-gray-600 border-gray-300"
-    },
     IN_PROGRESS: {
       label: "In Progress",
       variant: "secondary" as const,
@@ -40,12 +34,6 @@ export function TodoStatusBadge({ status, className }: TodoStatusBadgeProps) {
     },
     COMPLETED: {
       label: "Completed",
-      variant: "default" as const,
-      icon: CheckCircle,
-      className: "text-green-600 bg-green-50 border-green-200 hover:bg-green-100"
-    },
-    DONE: {
-      label: "Done",
       variant: "default" as const,
       icon: CheckCircle,
       className: "text-green-600 bg-green-50 border-green-200 hover:bg-green-100"

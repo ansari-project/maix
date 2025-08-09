@@ -10,14 +10,14 @@ export const createTodoSchema = z.object({
 export const updateTodoSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255, 'Title must be less than 255 characters').optional(),
   description: z.string().nullable().optional(),
-  status: z.enum(['OPEN', 'IN_PROGRESS', 'COMPLETED']).optional(),
+  status: z.enum(['NOT_STARTED', 'IN_PROGRESS', 'WAITING_FOR', 'COMPLETED']).optional(),
   assigneeId: z.string().nullable().optional(),
   dueDate: z.string().datetime().nullable().optional(),
   todoId: z.string().nullable().optional() // For updating post's todoId
 })
 
 export const todoQuerySchema = z.object({
-  status: z.enum(['OPEN', 'IN_PROGRESS', 'COMPLETED']).nullable().optional(),
+  status: z.enum(['NOT_STARTED', 'IN_PROGRESS', 'WAITING_FOR', 'COMPLETED']).nullable().optional(),
   assigneeId: z.string().nullable().optional(),
   limit: z.preprocess(
     (val) => val === null || val === undefined ? 50 : Number(val),

@@ -111,7 +111,7 @@ describe('handleManageTodo', () => {
     it('should throw error when required fields are missing', async () => {
       await expect(handleManageTodo({
         action: 'create'
-      }, mockContext)).rejects.toThrow("Project ID and title are required for creating a todo.")
+      }, mockContext)).rejects.toThrow("Title is required for creating a todo.")
     })
   })
 
@@ -302,7 +302,7 @@ describe('handleManageTodo', () => {
     it('should throw error for invalid action', async () => {
       await expect(handleManageTodo({
         action: 'invalid' as any
-      }, mockContext)).rejects.toThrow('Invalid action. Use: create, update, get, list, or delete.')
+      }, mockContext)).rejects.toThrow('Invalid action. Use: create, update, get, list, list-standalone, or delete.')
     })
   })
 })

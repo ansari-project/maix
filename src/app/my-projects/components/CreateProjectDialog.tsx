@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -51,6 +51,13 @@ export function CreateProjectDialog({ open, onOpenChange, onProjectCreated }: Cr
     setTargetCompletionDate(undefined)
     setErrors({})
   }
+
+  // Reset form when dialog is closed
+  useEffect(() => {
+    if (!open) {
+      resetForm()
+    }
+  }, [open])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

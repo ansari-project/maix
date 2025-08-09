@@ -116,7 +116,7 @@ export async function getMyTasks(
   // Optionally filter out completed tasks
   if (!options?.includeCompleted) {
     where.status = {
-      notIn: [TodoStatus.COMPLETED, TodoStatus.DONE],
+      notIn: [TodoStatus.COMPLETED],
     }
   }
 

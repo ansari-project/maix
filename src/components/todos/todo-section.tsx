@@ -138,8 +138,9 @@ export function TodoSection({ projectId, canManage = false }: TodoSectionProps) 
   // Calculate stats
   const stats = {
     total: todos.length,
-    open: todos.filter(t => t.status === 'OPEN').length,
+    notStarted: todos.filter(t => t.status === 'NOT_STARTED').length,
     inProgress: todos.filter(t => t.status === 'IN_PROGRESS').length,
+    waitingFor: todos.filter(t => t.status === 'WAITING_FOR').length,
     completed: todos.filter(t => t.status === 'COMPLETED').length
   }
 

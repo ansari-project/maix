@@ -428,7 +428,7 @@ model Todo {
   id          String     @id @default(cuid())
   title       String     @db.VarChar(255)
   description String?
-  status      TodoStatus @default(OPEN) // Will change to NOT_STARTED after migration
+  status      TodoStatus @default(NOT_STARTED)
   startDate   DateTime?  // When to start working on this task
   dueDate     DateTime?
   createdAt   DateTime   @default(now())
@@ -575,11 +575,9 @@ enum NotificationType {
 
 enum TodoStatus {
   NOT_STARTED
-  OPEN          // Legacy - consider deprecating
   IN_PROGRESS
   WAITING_FOR
   COMPLETED
-  DONE          // Alias for COMPLETED - for user preference
 }
 
 // New Event models

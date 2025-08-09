@@ -11,7 +11,7 @@ export const ManageTodoSchema = z.object({
   projectId: z.string().optional().describe("The ID of the project (optional for create, required for list actions - use list-standalone for personal todos)"),
   title: z.string().min(1).max(255).optional().describe("Todo title"),
   description: z.string().optional().describe("Todo description"),
-  status: z.enum(["NOT_STARTED", "OPEN", "IN_PROGRESS", "WAITING_FOR", "COMPLETED", "DONE"]).optional().describe("Todo status"),
+  status: z.enum(["NOT_STARTED", "IN_PROGRESS", "WAITING_FOR", "COMPLETED"]).optional().describe("Todo status"),
   assigneeId: z.string().nullable().optional().describe("ID of user to assign the todo to"),
   dueDate: z.string().optional().describe("Due date in ISO format (YYYY-MM-DD)")
 });
@@ -108,10 +108,9 @@ export async function handleManageTodo(params: ManageTodoParams, context: Contex
           ? ` - Due: ${todo.dueDate.toLocaleDateString()}`
           : "";
         
-        const statusIcon = (todo.status === "COMPLETED" || todo.status === "DONE") ? "✅" : 
+        const statusIcon = todo.status === "COMPLETED" ? "✅" : 
                           todo.status === "IN_PROGRESS" ? "🔄" : 
-                          todo.status === "WAITING_FOR" ? "⏳" :
-                          todo.status === "OPEN" ? "🔵" : "⭕";
+                          todo.status === "WAITING_FOR" ? "⏳" : "⭕";
         
         return `  ${statusIcon} ${todo.title}${assigneeText}${dueDateText} [${todo.id}]`;
       }).join("\n");
@@ -148,10 +147,9 @@ export async function handleManageTodo(params: ManageTodoParams, context: Contex
           ? ` - Due: ${todo.dueDate.toLocaleDateString()}`
           : "";
         
-        const statusIcon = (todo.status === "COMPLETED" || todo.status === "DONE") ? "✅" : 
+        const statusIcon = todo.status === "COMPLETED" ? "✅" : 
                           todo.status === "IN_PROGRESS" ? "🔄" : 
-                          todo.status === "WAITING_FOR" ? "⏳" :
-                          todo.status === "OPEN" ? "🔵" : "⭕";
+                          todo.status === "WAITING_FOR" ? "⏳" : "⭕";
         
         return `  ${statusIcon} ${todo.title}${assigneeText}${dueDateText} [${todo.id}]`;
       }).join("\n");

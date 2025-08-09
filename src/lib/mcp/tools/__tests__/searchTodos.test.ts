@@ -149,9 +149,11 @@ describe('handleSearchTodos', () => {
 
       expect(prisma.todo.findMany).toHaveBeenCalledWith({
         where: {
-          projectId: {
-            in: ['project-1', 'project-2']
-          }
+          OR: [{
+            projectId: {
+              in: ['project-1', 'project-2']
+            }
+          }]
         },
         include: {
           creator: { select: { name: true, email: true } },
@@ -176,7 +178,7 @@ describe('handleSearchTodos', () => {
 
       const result = await handleSearchTodos({}, mockContext)
 
-      expect(result).toBe("No todos found - you don't have access to any projects.")
+      expect(result).toBe("No todos found - you don't have access to any projects and personal todos were not requested.")
     })
   })
 
@@ -190,13 +192,13 @@ describe('handleSearchTodos', () => {
       ;(prisma.todo.findMany as jest.Mock).mockResolvedValue([])
 
       await handleSearchTodos({
-        status: ['OPEN', 'IN_PROGRESS']
+        status: ['NOT_STARTED', 'IN_PROGRESS']
       }, mockContext)
 
       expect(prisma.todo.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
-            status: { in: ['OPEN', 'IN_PROGRESS'] }
+            status: { in: ['NOT_STARTED', 'IN_PROGRESS'] }
           })
         })
       )

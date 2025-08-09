@@ -22,7 +22,7 @@ const createMockTodo = (overrides: Partial<TodoWithRelations> = {}): TodoWithRel
   id: `todo-${Math.random()}`,
   title: 'Test Todo',
   description: null,
-  status: TodoStatus.OPEN,
+  status: TodoStatus.NOT_STARTED,
   dueDate: null,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -46,7 +46,7 @@ const createMockTodo = (overrides: Partial<TodoWithRelations> = {}): TodoWithRel
 
 describe('TodoList', () => {
   const mockTodos = [
-    createMockTodo({ id: 'todo-1', title: 'Open Todo', status: TodoStatus.OPEN }),
+    createMockTodo({ id: 'todo-1', title: 'Not Started Todo', status: TodoStatus.NOT_STARTED }),
     createMockTodo({ id: 'todo-2', title: 'In Progress Todo', status: TodoStatus.IN_PROGRESS }),
     createMockTodo({ id: 'todo-3', title: 'Completed Todo', status: TodoStatus.COMPLETED })
   ]
@@ -54,7 +54,7 @@ describe('TodoList', () => {
   it('renders todos grouped by status when no filter applied', () => {
     render(<TodoList todos={mockTodos} />)
     
-    expect(screen.getByText('Open (1)')).toBeInTheDocument()
+    expect(screen.getByText('Not Started (1)')).toBeInTheDocument()
     expect(screen.getByText('In Progress (1)')).toBeInTheDocument()
     expect(screen.getByText('Completed (1)')).toBeInTheDocument()
     
@@ -71,8 +71,8 @@ describe('TodoList', () => {
     const statusFilter = screen.getByRole('combobox')
     await user.click(statusFilter)
     
-    // Select "Open" status
-    await user.click(screen.getByText('Open'))
+    // Select "Not Started" status
+    await user.click(screen.getByText('Not Started'))
     
     expect(screen.getByTestId('todo-card-todo-1')).toBeInTheDocument()
     expect(screen.queryByTestId('todo-card-todo-2')).not.toBeInTheDocument()
@@ -170,9 +170,9 @@ describe('TodoList', () => {
     
     render(<TodoList todos={todosWithNoOpen} />)
     
-    // Filter to show only open todos (none exist)
+    // Filter to show only not started todos (none exist)
     await user.click(screen.getByRole('combobox'))
-    await user.click(screen.getByText('Open'))
+    await user.click(screen.getByText('Not Started'))
     
     expect(screen.getByText('No todos match your filters')).toBeInTheDocument()
   })

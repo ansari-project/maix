@@ -6,7 +6,7 @@ This guide walks you through using MAIX's enhanced todo system, covering persona
 
 The enhanced todo system introduces powerful new capabilities:
 
-✨ **6-Status Workflow**: More granular task tracking with `NOT_STARTED`, `OPEN`, `IN_PROGRESS`, `WAITING_FOR`, `COMPLETED`, `DONE`
+✨ **4-Status Workflow**: Clean task tracking with `NOT_STARTED`, `IN_PROGRESS`, `WAITING_FOR`, `COMPLETED`
 
 📋 **Personal Todos**: Create tasks not tied to any project for personal productivity
 
@@ -27,21 +27,19 @@ Navigate to **My Tasks** from your MAIX dashboard sidebar. You'll see:
 
 ### 2. Understanding Task Status Flow
 
-The enhanced system uses a 6-status workflow that mirrors real development processes:
+The enhanced system uses a clean 4-status workflow:
 
 ```
-NOT_STARTED → IN_PROGRESS → COMPLETED → DONE
-      ↓             ↓
-    OPEN      WAITING_FOR
+NOT_STARTED → IN_PROGRESS → COMPLETED
+                   ↓
+             WAITING_FOR
 ```
 
 **Status Meanings:**
 - ⭕ **NOT_STARTED** - Task created but work hasn't begun
-- 🔵 **OPEN** - Ready to work on (legacy status)
 - 🔄 **IN_PROGRESS** - Currently working on this task
 - ⏳ **WAITING_FOR** - Blocked waiting for something (approval, feedback, dependencies)
-- ✅ **COMPLETED** - Work finished, ready for review
-- ✅ **DONE** - Fully complete and accepted
+- ✅ **COMPLETED** - Work finished and ready
 
 ## Using Personal Todos
 
@@ -268,8 +266,7 @@ The enhanced system provides powerful search capabilities.
 1. **Start with NOT_STARTED** for all new tasks
 2. **Move to IN_PROGRESS** when you begin work
 3. **Use WAITING_FOR** for blocked tasks (be specific in comments about what you're waiting for)
-4. **Mark COMPLETED** when work is done but needs review
-5. **Only use DONE** after review/acceptance is complete
+4. **Mark COMPLETED** when work is finished and ready
 
 ### Personal Project Organization
 

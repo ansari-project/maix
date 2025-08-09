@@ -5,7 +5,7 @@ The Enhanced Todo System in MAIX provides comprehensive task management capabili
 ## Overview
 
 The enhanced todo system supports:
-- **6-Value Status Workflow**: `NOT_STARTED` → `OPEN` → `IN_PROGRESS` → `WAITING_FOR` → `COMPLETED` → `DONE`
+- **4-Value Status Workflow**: `NOT_STARTED` → `IN_PROGRESS` → `WAITING_FOR` → `COMPLETED`
 - **Personal/Standalone Todos**: Tasks not tied to any project
 - **Project-Based Todos**: Tasks within collaborative projects
 - **Advanced Search**: Filter by status, assignments, due dates, and text
@@ -18,11 +18,9 @@ The enhanced todo system supports:
 | Status | Icon | Description | When to Use |
 |--------|------|-------------|-------------|
 | `NOT_STARTED` | ⭕ | Task created but not yet begun | Initial state for planned tasks |
-| `OPEN` | 🔵 | Task ready to be worked on | Legacy status, same as NOT_STARTED |
 | `IN_PROGRESS` | 🔄 | Currently being worked on | Active development/execution |
 | `WAITING_FOR` | ⏳ | Blocked waiting for external input | Dependencies, reviews, approvals |
-| `COMPLETED` | ✅ | Task finished and delivered | Work done, ready for review |
-| `DONE` | ✅ | Task fully complete and accepted | Final state, accepted/approved |
+| `COMPLETED` | ✅ | Task finished and ready | Final state |
 
 ### Todo Types
 
@@ -316,7 +314,6 @@ Complete personal project lifecycle management.
 2. **IN_PROGRESS** → **WAITING_FOR**: When blocked
 3. **WAITING_FOR** → **IN_PROGRESS**: When unblocked
 4. **IN_PROGRESS** → **COMPLETED**: When work finished
-5. **COMPLETED** → **DONE**: When reviewed/accepted
 
 ### Personal vs Project Todos
 - Use **personal todos** for individual tasks, learning, and planning
@@ -348,7 +345,7 @@ Complete personal project lifecycle management.
 - Verify project membership for project-based search
 
 **Status Updates Failing**
-- Ensure status value is valid (6 supported values)
+- Ensure status value is valid (4 supported values: NOT_STARTED, IN_PROGRESS, WAITING_FOR, COMPLETED)
 - Check permissions on the specific todo
 - Verify todo exists and is accessible
 
@@ -362,15 +359,15 @@ Complete personal project lifecycle management.
 ## Migration Notes
 
 ### From Legacy Todo System
-- **OPEN status**: Automatically maps to NOT_STARTED in new system
+- **Simplified statuses**: OPEN and DONE have been removed for clarity
 - **Existing todos**: All existing todos remain accessible
-- **API compatibility**: Legacy endpoints continue to work
-- **Gradual adoption**: New features can be adopted incrementally
+- **API compatibility**: All endpoints updated to use 4-status system
+- **Clean workflow**: Streamlined status progression
 
 ### Database Schema Changes
-- **TodoStatus enum**: Expanded to 6 values with legacy support
+- **TodoStatus enum**: Simplified to 4 clean values
 - **Personal projects**: New isPersonal flag on Project model
 - **Standalone todos**: projectId can be null for personal todos
-- **Backward compatibility**: All existing data remains valid
+- **Clean design**: Removed redundant status values
 
 This enhanced todo system provides a comprehensive, flexible foundation for both personal productivity and collaborative project management within the MAIX platform.

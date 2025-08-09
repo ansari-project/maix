@@ -97,10 +97,10 @@ export function TodoCard({
                   size="sm"
                   onClick={() => onStatusChange(
                     todo.id, 
-                    todo.status === 'OPEN' ? 'IN_PROGRESS' : 'COMPLETED'
+                    todo.status === 'NOT_STARTED' ? 'IN_PROGRESS' : 'COMPLETED'
                   )}
                 >
-                  Mark as {todo.status === 'OPEN' ? 'In Progress' : 'Completed'}
+                  Mark as {todo.status === 'NOT_STARTED' ? 'In Progress' : 'Completed'}
                 </Button>
               )}
             </div>

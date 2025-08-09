@@ -50,8 +50,9 @@ export function TodoList({
 
   // Group by status
   const todosByStatus = {
-    OPEN: filteredTodos.filter(t => t.status === 'OPEN'),
+    NOT_STARTED: filteredTodos.filter(t => t.status === 'NOT_STARTED'),
     IN_PROGRESS: filteredTodos.filter(t => t.status === 'IN_PROGRESS'),
+    WAITING_FOR: filteredTodos.filter(t => t.status === 'WAITING_FOR'),
     COMPLETED: filteredTodos.filter(t => t.status === 'COMPLETED')
   }
 
@@ -76,7 +77,8 @@ export function TodoList({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">All statuses</SelectItem>
-              <SelectItem value="OPEN">Open</SelectItem>
+              <SelectItem value="NOT_STARTED">Not Started</SelectItem>
+              <SelectItem value="WAITING_FOR">Waiting For</SelectItem>
               <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
               <SelectItem value="COMPLETED">Completed</SelectItem>
             </SelectContent>
@@ -129,13 +131,13 @@ export function TodoList({
           {statusFilter === 'ALL' ? (
             // Show grouped by status
             <>
-              {todosByStatus.OPEN.length > 0 && (
+              {todosByStatus.NOT_STARTED.length > 0 && (
                 <div>
                   <h3 className="font-medium text-sm text-muted-foreground mb-2">
-                    Open ({todosByStatus.OPEN.length})
+                    Not Started ({todosByStatus.NOT_STARTED.length})
                   </h3>
                   <div className="space-y-2">
-                    {todosByStatus.OPEN.map(todo => (
+                    {todosByStatus.NOT_STARTED.map(todo => (
                       <TodoCard
                         key={todo.id}
                         todo={todo}
@@ -155,6 +157,25 @@ export function TodoList({
                   </h3>
                   <div className="space-y-2">
                     {todosByStatus.IN_PROGRESS.map(todo => (
+                      <TodoCard
+                        key={todo.id}
+                        todo={todo}
+                        onStatusChange={canManage ? onStatusChange : undefined}
+                        onAssigneeChange={canManage ? onAssigneeChange : undefined}
+                        showProject={showProject}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {todosByStatus.WAITING_FOR.length > 0 && (
+                <div>
+                  <h3 className="font-medium text-sm text-muted-foreground mb-2">
+                    Waiting For ({todosByStatus.WAITING_FOR.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {todosByStatus.WAITING_FOR.map(todo => (
                       <TodoCard
                         key={todo.id}
                         todo={todo}

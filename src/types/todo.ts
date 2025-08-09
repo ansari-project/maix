@@ -2,11 +2,9 @@ import type { User, Project, Post } from '@prisma/client'
 
 export enum TodoStatus {
   NOT_STARTED = 'NOT_STARTED',
-  OPEN = 'OPEN', // Legacy - consider deprecating
   IN_PROGRESS = 'IN_PROGRESS',
   WAITING_FOR = 'WAITING_FOR',
-  COMPLETED = 'COMPLETED',
-  DONE = 'DONE' // Alias for COMPLETED
+  COMPLETED = 'COMPLETED'
 }
 
 export interface Todo {

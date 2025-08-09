@@ -50,7 +50,7 @@ export function TaskCard({ task, projectName }: TaskCardProps) {
     transition,
   }
 
-  const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== TodoStatus.COMPLETED && task.status !== TodoStatus.DONE
+  const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== TodoStatus.COMPLETED
 
   return (
     <div

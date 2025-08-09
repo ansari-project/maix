@@ -34,7 +34,7 @@ Manages todos with full CRUD operations, supporting both project and personal/st
   projectId?: string       // Optional for create, required for list
   title?: string           // Todo title (1-255 chars)
   description?: string     // Todo description
-  status?: "NOT_STARTED" | "OPEN" | "IN_PROGRESS" | "WAITING_FOR" | "COMPLETED" | "DONE"
+  status?: "NOT_STARTED" | "IN_PROGRESS" | "WAITING_FOR" | "COMPLETED"
   assigneeId?: string      // User ID to assign todo to
   dueDate?: string        // ISO date string (YYYY-MM-DD)
 }
@@ -165,11 +165,9 @@ Todo "Set up database schema" deleted successfully from project "Project Name".
 | Status | Icon | Meaning |
 |--------|------|---------|
 | `NOT_STARTED` | ⭕ | Not yet begun |
-| `OPEN` | 🔵 | Ready to work on (legacy) |
 | `IN_PROGRESS` | 🔄 | Currently active |
 | `WAITING_FOR` | ⏳ | Blocked/waiting |
 | `COMPLETED` | ✅ | Work finished |
-| `DONE` | ✅ | Fully complete |
 
 ### Permission Model
 
@@ -190,7 +188,7 @@ Search and list todos with advanced filtering options, supporting both project a
 {
   projectId?: string                    // Filter by specific project
   includePersonal?: boolean            // Include personal/standalone todos
-  status?: ("NOT_STARTED" | "OPEN" | "IN_PROGRESS" | "WAITING_FOR" | "COMPLETED" | "DONE")[]
+  status?: ("NOT_STARTED" | "IN_PROGRESS" | "WAITING_FOR" | "COMPLETED")[]
   assigneeId?: string                  // Filter by assignee
   creatorId?: string                   // Filter by creator
   query?: string                       // Text search in title/description
@@ -486,7 +484,7 @@ Error: You don't have permission to view this todo.
 
 **Invalid Status:**
 ```  
-Error: Invalid status. Use: NOT_STARTED, OPEN, IN_PROGRESS, WAITING_FOR, COMPLETED, or DONE.
+Error: Invalid status. Use: NOT_STARTED, IN_PROGRESS, WAITING_FOR, or COMPLETED.
 ```
 
 **Missing Required Field:**

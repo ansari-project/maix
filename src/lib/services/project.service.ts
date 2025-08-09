@@ -93,7 +93,7 @@ export async function getPersonalProjects(
       todos: {
         where: {
           status: {
-            notIn: ['COMPLETED', 'DONE'],
+            notIn: ['COMPLETED'],
           },
         },
       },
@@ -281,7 +281,7 @@ export async function getUserProjects(
           todos: {
             where: {
               status: {
-                notIn: ['COMPLETED', 'DONE'],
+                notIn: ['COMPLETED'],
               },
             },
           },

@@ -46,20 +46,16 @@ interface ProjectGroup {
 interface TaskCounts {
   total: number
   NOT_STARTED: number
-  OPEN: number
   IN_PROGRESS: number
   WAITING_FOR: number
   COMPLETED: number
-  DONE: number
 }
 
 const statusColumns: { status: TodoStatus; label: string; color: string }[] = [
   { status: TodoStatus.NOT_STARTED, label: "Not Started", color: "bg-gray-100 text-gray-800" },
-  { status: TodoStatus.OPEN, label: "Open", color: "bg-blue-100 text-blue-800" },
   { status: TodoStatus.IN_PROGRESS, label: "In Progress", color: "bg-yellow-100 text-yellow-800" },
   { status: TodoStatus.WAITING_FOR, label: "Waiting For", color: "bg-orange-100 text-orange-800" },
   { status: TodoStatus.COMPLETED, label: "Completed", color: "bg-green-100 text-green-800" },
-  { status: TodoStatus.DONE, label: "Done", color: "bg-purple-100 text-purple-800" },
 ]
 
 function DroppableColumn({ 
@@ -90,11 +86,9 @@ export default function MyTasksView() {
   const [counts, setCounts] = useState<TaskCounts>({
     total: 0,
     NOT_STARTED: 0,
-    OPEN: 0,
     IN_PROGRESS: 0,
     WAITING_FOR: 0,
     COMPLETED: 0,
-    DONE: 0,
   })
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
@@ -102,7 +96,7 @@ export default function MyTasksView() {
   const [showCompleted, setShowCompleted] = useState(false)
   const [newTaskTitle, setNewTaskTitle] = useState("")
   const [newTaskProject, setNewTaskProject] = useState<string | null>(null)
-  const [newTaskStatus, setNewTaskStatus] = useState<TodoStatus>(TodoStatus.OPEN)
+  const [newTaskStatus, setNewTaskStatus] = useState<TodoStatus>(TodoStatus.NOT_STARTED)
   const [activeTask, setActiveTask] = useState<Task | null>(null)
 
   useEffect(() => {
@@ -135,11 +129,9 @@ export default function MyTasksView() {
       const newCounts: TaskCounts = {
         total: allTasks.length,
         NOT_STARTED: 0,
-        OPEN: 0,
         IN_PROGRESS: 0,
         WAITING_FOR: 0,
         COMPLETED: 0,
-        DONE: 0,
       }
       
       allTasks.forEach((task: Task) => {
@@ -293,7 +285,7 @@ export default function MyTasksView() {
       
       setNewTaskTitle("")
       setNewTaskProject(null)
-      setNewTaskStatus(TodoStatus.OPEN)
+      setNewTaskStatus(TodoStatus.NOT_STARTED)
 
       toast({
         title: "Success",
@@ -365,14 +357,6 @@ export default function MyTasksView() {
             </CardContent>
           </Card>
         ))}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Done</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600">{counts.DONE}</div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Filters and Quick Add */}

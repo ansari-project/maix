@@ -3,11 +3,11 @@ import { TodoStatusBadge } from '../todo-status-badge'
 import { TodoStatus } from '@prisma/client'
 
 describe('TodoStatusBadge', () => {
-  it('renders OPEN status correctly', () => {
-    render(<TodoStatusBadge status={TodoStatus.OPEN} />)
+  it('renders NOT_STARTED status correctly', () => {
+    render(<TodoStatusBadge status={TodoStatus.NOT_STARTED} />)
     
-    expect(screen.getByText('Open')).toBeInTheDocument()
-    const badge = screen.getByText('Open').closest('div')
+    expect(screen.getByText('Not Started')).toBeInTheDocument()
+    const badge = screen.getByText('Not Started').closest('div')
     expect(badge).toHaveClass('text-gray-600', 'border-gray-300')
   })
 
@@ -28,14 +28,14 @@ describe('TodoStatusBadge', () => {
   })
 
   it('applies custom className', () => {
-    render(<TodoStatusBadge status={TodoStatus.OPEN} className="custom-class" />)
+    render(<TodoStatusBadge status={TodoStatus.NOT_STARTED} className="custom-class" />)
     
-    const badge = screen.getByText('Open').closest('div')
+    const badge = screen.getByText('Not Started').closest('div')
     expect(badge).toHaveClass('custom-class')
   })
 
   it('renders correct icons for each status', () => {
-    const { container, rerender } = render(<TodoStatusBadge status={TodoStatus.OPEN} />)
+    const { container, rerender } = render(<TodoStatusBadge status={TodoStatus.NOT_STARTED} />)
     expect(container.querySelector('svg')).toBeTruthy() // Circle icon
     
     rerender(<TodoStatusBadge status={TodoStatus.IN_PROGRESS} />)

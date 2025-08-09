@@ -267,7 +267,7 @@ describe('Event Manager Models - Phase 1', () => {
         eventId: testEventId,
         projectId: null,
         creatorId: testUserId,
-        status: 'OPEN',
+        status: 'NOT_STARTED',
         createdAt: new Date(),
         updatedAt: new Date()
       }
@@ -297,7 +297,7 @@ describe('Event Manager Models - Phase 1', () => {
         projectId,
         eventId: null,
         creatorId: testUserId,
-        status: 'OPEN',
+        status: 'NOT_STARTED',
         createdAt: new Date(),
         updatedAt: new Date()
       }

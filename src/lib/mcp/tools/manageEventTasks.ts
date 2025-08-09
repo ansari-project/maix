@@ -112,7 +112,7 @@ export async function maix_generate_event_tasks(
             title: task.title,
             description: task.description,
             dueDate: task.dueDate,
-            status: TodoStatus.OPEN,
+            status: TodoStatus.NOT_STARTED,
             eventId: event.id,
             creatorId: userId,
             assigneeId: userId
@@ -130,7 +130,7 @@ export async function maix_generate_event_tasks(
               title: task.title,
               description: `Priority: ${task.priority}${task.category ? `\nCategory: ${task.category}` : ''}`,
               dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
-              status: TodoStatus.OPEN,
+              status: TodoStatus.NOT_STARTED,
               eventId: event.id,
               creatorId: userId,
               assigneeId: userId
@@ -275,7 +275,7 @@ export async function maix_bulk_create_tasks(
             title: task.title,
             description: `${task.description || ''}${task.priority ? `\nPriority: ${task.priority}` : ''}${task.labels?.length ? `\nLabels: ${task.labels.join(', ')}` : ''}`.trim(),
             dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
-            status: TodoStatus.OPEN,
+            status: TodoStatus.NOT_STARTED,
             eventId: validatedParams.eventId,
             creatorId: userId,
             assigneeId: userId

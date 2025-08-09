@@ -3,7 +3,7 @@
  * Enhanced MCP Tools Test Suite
  * 
  * Validates the enhanced MCP functionality including:
- * - 6-value TodoStatus enum support (NOT_STARTED, OPEN, IN_PROGRESS, WAITING_FOR, COMPLETED, DONE)
+ * - 4-value TodoStatus enum support (NOT_STARTED, IN_PROGRESS, WAITING_FOR, COMPLETED)
  * - Personal/standalone todos (todos without project association)
  * - Personal project management with CRUD operations
  * - Enhanced search capabilities with includePersonal parameter
@@ -138,7 +138,7 @@ class SimpleMCPTestSuite {
   async testEnhancedTodoStatuses() {
     console.log('\n📝 Test 2: Enhanced Todo Status Values');
     
-    const testStatuses = ['NOT_STARTED', 'WAITING_FOR', 'DONE'];
+    const testStatuses = ['NOT_STARTED', 'WAITING_FOR', 'COMPLETED'];
     const createdTodos = [];
 
     for (const status of testStatuses) {
@@ -179,7 +179,7 @@ class SimpleMCPTestSuite {
       const expectedIcons = {
         'NOT_STARTED': '⭕',
         'WAITING_FOR': '⏳', 
-        'DONE': '✅'
+        'COMPLETED': '✅'
       };
 
       const responseText = searchResult.content?.[0]?.text || '';

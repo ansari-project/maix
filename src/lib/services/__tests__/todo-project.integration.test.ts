@@ -167,7 +167,7 @@ describe('Todo and Project Services Integration', () => {
         TodoStatus.NOT_STARTED,
         TodoStatus.IN_PROGRESS,
         TodoStatus.WAITING_FOR,
-        TodoStatus.DONE,
+        TodoStatus.COMPLETED,
       ]
 
       const task = await createStandaloneTask(testUser1.id, {
