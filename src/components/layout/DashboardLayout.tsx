@@ -3,7 +3,7 @@
 import React, { ReactNode } from 'react'
 import { LayoutProvider, useLayout } from '@/contexts/LayoutContext'
 import { Sidebar } from '@/components/navigation/Sidebar'
-import { AIAssistantPlaceholder } from '@/components/ai/AIAssistantPlaceholder'
+import { AIAssistant } from '@/components/ai/AIAssistant'
 import { MobileNav } from '@/components/navigation/MobileNav'
 import { cn } from '@/lib/utils'
 
@@ -34,7 +34,7 @@ function DashboardLayoutContent({ children, className }: DashboardLayoutProps) {
         </main>
         
         {/* AI Assistant - Present on all pages */}
-        <AIAssistantPlaceholder />
+        <AIAssistant />
       </div>
       
       {/* Mobile Navigation - Mobile only */}

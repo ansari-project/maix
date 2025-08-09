@@ -13,10 +13,13 @@ jest.mock('@/contexts/LayoutContext', () => ({
     isMobile: false,
     isAIExpanded: false,
     isSidebarCollapsed: false,
-    activePath: '/',
+    currentPath: '/',
+    isActivePath: jest.fn(),
     toggleAI: jest.fn(),
     toggleSidebar: jest.fn(),
-    setActivePath: jest.fn()
+    setAIExpanded: jest.fn(),
+    setSidebarCollapsed: jest.fn(),
+    setIsMobile: jest.fn()
   })
 }))
 
@@ -25,8 +28,8 @@ jest.mock('@/components/navigation/Sidebar', () => ({
   Sidebar: () => <div data-testid="sidebar">Sidebar Component</div>
 }))
 
-jest.mock('@/components/ai/AIAssistantPlaceholder', () => ({
-  AIAssistantPlaceholder: () => <div data-testid="ai-assistant">AI Assistant Component</div>
+jest.mock('@/components/ai/AIAssistant', () => ({
+  AIAssistant: () => <div data-testid="ai-assistant">AI Assistant Component</div>
 }))
 
 jest.mock('@/components/navigation/MobileNav', () => ({
