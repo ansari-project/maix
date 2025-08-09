@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals'
 import { EmailService } from '../email-service';
 import { Resend } from 'resend';
 

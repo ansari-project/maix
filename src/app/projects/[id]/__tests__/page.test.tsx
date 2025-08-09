@@ -3,6 +3,7 @@
  * Tests for the unified project page with visibility controls
  */
 
+import { describe, it, expect, beforeEach } from '@jest/globals'
 import { notFound } from 'next/navigation'
 import { getServerSession } from 'next-auth/next'
 import ProjectPage from '../page'

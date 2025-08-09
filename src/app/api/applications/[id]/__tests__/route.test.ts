@@ -1,3 +1,4 @@
+import { describe, it, test, expect, beforeEach, jest } from '@jest/globals'
 import { NextRequest } from 'next/server'
 
 // Mock all dependencies first before importing anything

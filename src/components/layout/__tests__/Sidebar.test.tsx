@@ -1,4 +1,5 @@
 // TypeScript test fixes applied
+import { describe, it, expect, beforeEach } from '@jest/globals'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useSession, signOut } from 'next-auth/react'

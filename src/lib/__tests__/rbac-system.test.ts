@@ -1,4 +1,5 @@
 // TypeScript test fixes applied
+import { describe, it, expect, beforeEach } from '@jest/globals'
 import { getEffectiveRole, requirePermission, hasPermission, can, ROLE_HIERARCHY } from '../auth-utils'
 import { AuthError } from '../errors'
 import { UnifiedRole, Visibility } from '@prisma/client'

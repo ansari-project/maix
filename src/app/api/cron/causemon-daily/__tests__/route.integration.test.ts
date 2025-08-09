@@ -61,15 +61,15 @@ describe('/api/cron/causemon-daily Integration Tests', () => {
   let monitor2: any
 
   const mockSearchService = {
-    searchForEvents: jest.fn()
+    searchForEvents: jest.fn() as jest.MockedFunction<any>
   }
 
   const mockEventProcessor = {
-    processSearchResults: jest.fn()
+    processSearchResults: jest.fn() as jest.MockedFunction<any>
   }
 
   const mockEmailService = {
-    sendDailyDigest: jest.fn()
+    sendDailyDigest: jest.fn() as jest.MockedFunction<any>
   }
 
   beforeAll(async () => {
