@@ -73,7 +73,7 @@ describe('GET /api/feed - updatedAt sorting', () => {
     expect(response.status).toBe(200)
     
     // Verify findMany was called with updatedAt sorting
-    expect(prisma.project.findMany).toHaveBeenCalledWith({
+    expect((prisma.project.findMany as jest.Mock)).toHaveBeenCalledWith({
       take: 10,
       orderBy: { updatedAt: 'desc' },
       include: { owner: { select: { id: true, name: true } } }

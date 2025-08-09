@@ -53,7 +53,7 @@ describe('handleSearchTodos', () => {
         {
           id: 'todo-1',
           title: 'First Todo',
-          status: 'OPEN',
+          status: 'NOT_STARTED' as any,
           dueDate: null,
           creator: { name: 'Creator 1', email: 'creator1@example.com' },
           assignee: null,
@@ -62,7 +62,7 @@ describe('handleSearchTodos', () => {
         {
           id: 'todo-2',
           title: 'Second Todo',
-          status: 'IN_PROGRESS',
+          status: 'IN_PROGRESS' as any,
           dueDate: new Date('2024-12-31'),
           creator: { name: 'Creator 2', email: 'creator2@example.com' },
           assignee: { name: 'Assignee', email: 'assignee@example.com' },
@@ -118,7 +118,7 @@ describe('handleSearchTodos', () => {
         {
           id: 'todo-1',
           title: 'Cross-project Todo',
-          status: 'OPEN',
+          status: 'NOT_STARTED' as any,
           dueDate: null,
           creator: { name: 'Creator', email: 'creator@example.com' },
           assignee: null,
@@ -330,7 +330,7 @@ describe('handleSearchTodos', () => {
         {
           id: 'todo-1',
           title: 'Overdue Todo',
-          status: 'OPEN',
+          status: 'NOT_STARTED' as any,
           dueDate: yesterday,
           creator: { name: 'Creator', email: 'creator@example.com' },
           assignee: null,

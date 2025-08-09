@@ -74,7 +74,7 @@ describe('GET /api/public/feed - updatedAt sorting', () => {
     expect(response.status).toBe(200)
     
     // Verify findMany was called without isActive filter
-    expect(prisma.project.findMany).toHaveBeenCalledWith({
+    expect((prisma.project.findMany as jest.Mock)).toHaveBeenCalledWith({
       where: { visibility: 'PUBLIC' },
       take: 10,
       orderBy: { updatedAt: 'desc' },

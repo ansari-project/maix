@@ -173,7 +173,7 @@ describe('/api/cron/causemon-daily', () => {
     );
 
     // Verify lastDigestSentAt was updated
-    expect(prisma.user.update).toHaveBeenCalledWith({
+    expect((prisma.user.update as jest.Mock)).toHaveBeenCalledWith({
       where: { id: 'user1' },
       data: { lastDigestSentAt: expect.any(Date) },
     });

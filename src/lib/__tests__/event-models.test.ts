@@ -274,7 +274,7 @@ describe('Event Manager Models - Phase 1', () => {
       
       ;(prisma.todo.create as jest.Mock).mockResolvedValue(mockTodo)
       
-      const todo = await prisma.todo.create({
+      const todo = await (prisma.todo.create as jest.Mock)({
         data: {
           title: 'Book venue for meetup',
           description: 'Find and book a suitable venue',
@@ -304,7 +304,7 @@ describe('Event Manager Models - Phase 1', () => {
       
       ;(prisma.todo.create as jest.Mock).mockResolvedValue(mockTodo)
       
-      const todo = await prisma.todo.create({
+      const todo = await (prisma.todo.create as jest.Mock)({
         data: {
           title: 'Project task',
           projectId,
@@ -332,7 +332,7 @@ describe('Event Manager Models - Phase 1', () => {
       
       ;(prisma.personalAccessToken.create as jest.Mock).mockResolvedValue(mockPat)
       
-      const pat = await prisma.personalAccessToken.create({
+      const pat = await (prisma.personalAccessToken.create as jest.Mock)({
         data: {
           userId: testUserId,
           tokenHash: 'test-hash-' + Date.now(),
@@ -362,7 +362,7 @@ describe('Event Manager Models - Phase 1', () => {
       
       ;(prisma.post.create as jest.Mock).mockResolvedValue(mockEventUpdate)
       
-      const eventUpdate = await prisma.post.create({
+      const eventUpdate = await (prisma.post.create as jest.Mock)({
         data: {
           type: 'EVENT_UPDATE',
           content: 'Event venue confirmed!',

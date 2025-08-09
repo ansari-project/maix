@@ -59,7 +59,7 @@ describe('GET /api/projects/[id]', () => {
     expect(data.isActive).toBe(false)
 
     // Verify the query didn't filter by isActive
-    expect(prisma.project.findUnique).toHaveBeenCalledWith({
+    expect((prisma.project.findUnique as jest.Mock)).toHaveBeenCalledWith({
       where: { id: 'proj1' },
       include: expect.any(Object)
     })

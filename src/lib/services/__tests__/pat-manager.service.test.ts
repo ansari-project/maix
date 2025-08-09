@@ -85,7 +85,7 @@ describe('PAT Manager Service', () => {
         ...mockPat,
         plainToken: mockToken
       })
-      expect(prisma.personalAccessToken.create).toHaveBeenCalledWith({
+      expect((prisma.personalAccessToken.create as jest.Mock)).toHaveBeenCalledWith({
         data: expect.objectContaining({
           userId: mockUserId,
           tokenHash: mockHashedToken,
@@ -118,7 +118,7 @@ describe('PAT Manager Service', () => {
       const result = await getOrCreateEventManagerPat(mockUserId)
 
       expect(result).toEqual(mockPat)
-      expect(prisma.personalAccessToken.create).not.toHaveBeenCalled()
+      expect((prisma.personalAccessToken.create as jest.Mock)).not.toHaveBeenCalled()
     })
 
     it('should delete and recreate expired PAT', async () => {
@@ -158,7 +158,7 @@ describe('PAT Manager Service', () => {
 
       const result = await getOrCreateEventManagerPat(mockUserId)
 
-      expect(prisma.personalAccessToken.delete).toHaveBeenCalledWith({
+      expect((prisma.personalAccessToken.delete as jest.Mock)).toHaveBeenCalledWith({
         where: { id: mockPatId }
       })
       expect(result.id).toBe('pat-456')
@@ -204,7 +204,7 @@ describe('PAT Manager Service', () => {
 
       expect(result.id).toBe('pat-789')
       expect(result.plainToken).toBe(mockToken)
-      expect(prisma.personalAccessToken.delete).toHaveBeenCalledWith({
+      expect((prisma.personalAccessToken.delete as jest.Mock)).toHaveBeenCalledWith({
         where: { id: mockPatId }
       })
     })
@@ -235,7 +235,7 @@ describe('PAT Manager Service', () => {
       const result = await validatePatToken(mockToken)
 
       expect(result).toEqual(mockUser)
-      expect(prisma.personalAccessToken.update).toHaveBeenCalledWith({
+      expect((prisma.personalAccessToken.update as jest.Mock)).toHaveBeenCalledWith({
         where: { id: mockPatId },
         data: { lastUsedAt: new Date('2025-01-01') }
       })
@@ -247,7 +247,7 @@ describe('PAT Manager Service', () => {
       const result = await validatePatToken('invalid-token')
 
       expect(result).toBeNull()
-      expect(prisma.personalAccessToken.update).not.toHaveBeenCalled()
+      expect((prisma.personalAccessToken.update as jest.Mock)).not.toHaveBeenCalled()
     })
 
     it('should return null for expired token', async () => {
@@ -288,7 +288,7 @@ describe('PAT Manager Service', () => {
 
       await revokeEventManagerPat(mockUserId)
 
-      expect(prisma.personalAccessToken.delete).toHaveBeenCalledWith({
+      expect((prisma.personalAccessToken.delete as jest.Mock)).toHaveBeenCalledWith({
         where: { id: mockPatId }
       })
       expect(prisma.userPreferences.update).toHaveBeenCalledWith({
@@ -306,7 +306,7 @@ describe('PAT Manager Service', () => {
 
       await revokeEventManagerPat(mockUserId)
 
-      expect(prisma.personalAccessToken.delete).not.toHaveBeenCalled()
+      expect((prisma.personalAccessToken.delete as jest.Mock)).not.toHaveBeenCalled()
       expect(prisma.userPreferences.update).not.toHaveBeenCalled()
     })
   })
