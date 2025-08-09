@@ -26,6 +26,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
+      - name: Setup test environment for unit tests
+        run: |
+          cp .env.test.example .env.test
+          # Use a mock database URL for unit tests (not used, but prevents Prisma errors)
+          echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/maix_test_mock" >> .env.test
+      
+      - name: Generate Prisma Client
+        run: npx prisma generate
+      
       - name: Run unit tests
         run: npm test
       
@@ -74,6 +83,11 @@ jobs:
           # Override with CI database URL
           echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/maix_test" >> .env.test
       
+      - name: Generate Prisma Client
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/maix_test
+        run: npx prisma generate
+      
       - name: Run Prisma migrations
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/maix_test
@@ -106,6 +120,9 @@ jobs:
       
       - name: Install dependencies
         run: npm ci
+      
+      - name: Generate Prisma Client
+        run: npx prisma generate
       
       - name: TypeScript check
         run: npx tsc --noEmit
