@@ -1,3 +1,5 @@
+import { jest } from '@jest/globals'
+
 export const prisma = {
   todo: {
     create: jest.fn().mockResolvedValue({}),
@@ -24,4 +26,5 @@ export const prisma = {
     findMany: jest.fn().mockResolvedValue([]),
     delete: jest.fn().mockResolvedValue({}),
   },
+  $transaction: jest.fn().mockImplementation((fn) => fn(prisma)),
 }
