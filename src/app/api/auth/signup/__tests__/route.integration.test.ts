@@ -4,7 +4,21 @@
 
 /**
  * Auth Signup Route Integration Tests
- * Tests with real database instead of mocks
+ * 
+ * 🗄️ INTEGRATION TEST - Uses REAL TEST DATABASE on port 5433
+ * 
+ * Prerequisites:
+ *   ✅ Docker test database running (npm run test:db:start)
+ *   ✅ .env.test configured with test database URL
+ * 
+ * This test:
+ *   - Creates real users in a test database
+ *   - Validates database constraints and unique indexes
+ *   - Tests actual password hashing and validation
+ *   - Verifies data persistence and integrity
+ * 
+ * Run with: npm run test:integration
+ * Run safely with: npm run test:integration:safe (auto-starts DB)
  */
 
 // Mock the prisma module to use test database

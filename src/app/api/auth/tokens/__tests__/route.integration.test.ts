@@ -4,7 +4,21 @@
 
 /**
  * Auth Tokens Route Integration Tests
- * Tests with real database instead of mocks
+ * 
+ * 🗄️ INTEGRATION TEST - Uses REAL TEST DATABASE on port 5433
+ * 
+ * Prerequisites:
+ *   ✅ Docker test database running (npm run test:db:start)
+ *   ✅ .env.test configured with test database URL
+ * 
+ * This test:
+ *   - Creates real personal access tokens in test database
+ *   - Tests actual database unique constraints on tokens
+ *   - Validates real timestamp generation
+ *   - Verifies token listing and filtering logic
+ * 
+ * Run with: npm run test:integration
+ * Run safely with: npm run test:integration:safe (auto-starts DB)
  */
 
 // Mock the prisma module to use test database

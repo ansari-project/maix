@@ -4,7 +4,21 @@
 
 /**
  * Ownership Utils Integration Tests
- * Tests with real database instead of mocks
+ * 
+ * 🗄️ INTEGRATION TEST - Uses REAL TEST DATABASE on port 5433
+ * 
+ * Prerequisites:
+ *   ✅ Docker test database running (npm run test:db:start)
+ *   ✅ .env.test configured with test database URL
+ * 
+ * This test:
+ *   - Creates real users and organizations in test database
+ *   - Tests actual database relationships and constraints
+ *   - Validates organization membership queries
+ *   - Verifies access control with real data
+ * 
+ * Run with: npm run test:integration
+ * Run safely with: npm run test:integration:safe (auto-starts DB)
  */
 
 // Mock the prisma module to use test database

@@ -151,6 +151,13 @@ npm run test:all         # Runs both unit and integration tests
 
 5. **Integration Test Checklist**
    ```bash
+   # Before running integration tests:
+   [ ] Test database running? Check with: docker ps | grep postgres-test
+   [ ] If not running: npm run test:db:start
+   [ ] Run integration tests: npm run test:integration
+   [ ] Test database uses port 5433 (not 5432)
+   [ ] Integration tests use real database via prismaTest from db-test-utils
+   
    # For every new feature:
    [ ] Docker started: npm run test:db:start
    [ ] .env.test configured with test database URL
@@ -164,6 +171,8 @@ npm run test:all         # Runs both unit and integration tests
 - `npm test` - All tests (unit + integration if DB is running)
 - `npm run test:unit` - Unit tests only (excludes integration)
 - `npm run test:integration` - Integration tests with real database
+- `npm run test:integration:full` - Starts DB then runs integration tests
+- `npm run test:integration:single` - Starts DB then runs single test file
 - `npm run test:int` - Alternative integration test runner (uses scripts/int_test.sh)
 - `npm run test:all` - Both unit and integration tests
 - `npm run test:watch` - Watch mode for unit tests
@@ -171,6 +180,12 @@ npm run test:all         # Runs both unit and integration tests
 - `npm run test:db:start` - Start Docker test database
 - `npm run test:db:stop` - Stop Docker test database
 - `npm run test:db:reset` - Reset Docker test database
+
+**Important Notes:**
+- Integration tests require Docker to be running
+- Test database runs on port 5433 (production uses 5432)
+- Tests use real database operations, not mocks
+- Database is cleaned between tests but not dropped
 
 See `docs/guides/integration-testing.md` for detailed guide.
 
