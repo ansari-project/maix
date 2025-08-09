@@ -28,8 +28,11 @@ jest.mock('@/lib/prisma', () => ({
   prisma: require('@/lib/test/db-test-utils').prismaTest
 }))
 
-// Mock only auth for session management
-jest.mock('@/lib/auth-utils')
+// Mock only requireAuth, not the entire auth-utils module
+jest.mock('@/lib/auth-utils', () => ({
+  ...jest.requireActual('@/lib/auth-utils'),
+  requireAuth: jest.fn()
+}))
 
 import { NextRequest } from 'next/server'
 import { PATCH } from '../route'

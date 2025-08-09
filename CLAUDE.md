@@ -164,6 +164,22 @@ it('should have correct CSS class', () => {
 
 ## Development Guidelines
 
+### Debugging Tips
+
+**Schema Inspection**: When debugging database-related issues, read the Prisma schema file directly (`prisma/schema.prisma`) instead of starting Prisma Studio. This is faster and provides the exact field definitions and relationships.
+
+**Mock Carefully in Tests**: When mocking auth modules, only mock the specific functions you need (e.g., `requireAuth`), not the entire module. This prevents breaking other functions that your code depends on:
+```javascript
+// Good - preserves other functions
+jest.mock('@/lib/auth-utils', () => ({
+  ...jest.requireActual('@/lib/auth-utils'),
+  requireAuth: jest.fn()
+}))
+
+// Bad - breaks all other functions
+jest.mock('@/lib/auth-utils')
+```
+
 ### Testing Requirements (CRITICAL - Updated August 9, 2025)
 
 #### 🐳 TEST DATABASE WITH DOCKER - YES WE HAVE ONE!
