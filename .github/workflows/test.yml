@@ -132,6 +132,9 @@ jobs:
         run: npm run build
       
       - name: Validate Prisma schema
+        env:
+          # Dummy URL for validation only - Prisma validate doesn't connect to DB
+          DATABASE_URL: "postgresql://user:password@localhost:5432/db"
         run: npx prisma validate
 
   # Optional: Neon-specific integration tests (commented out to save costs)
