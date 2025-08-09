@@ -2,6 +2,8 @@
  * @jest-environment node
  */
 
+import { describe, it, expect, beforeAll, afterAll, beforeEach, jest } from '@jest/globals'
+
 /**
  * Applications Route Integration Tests
  * 
@@ -204,7 +206,7 @@ describe('/api/applications/[id] Integration Tests', () => {
           goal: 'Organization project goal',
           description: 'Organization project description',
           contactEmail: 'org@test.com',
-          helpType: 'CONSULTING',
+          helpType: 'FEATURE',
           status: 'AWAITING_VOLUNTEERS',
           visibility: 'PUBLIC',
           organizationId: org.id,

@@ -2,6 +2,8 @@
  * @jest-environment node
  */
 
+import { describe, it, expect, beforeAll, afterAll, beforeEach, jest } from '@jest/globals'
+
 /**
  * Event Processor Integration Tests
  * 

@@ -24,7 +24,8 @@ const customJestConfig = {
     '<rootDir>/node_modules/', 
     '<rootDir>/.next/',
     '<rootDir>/src/__tests__/helpers/',
-    '<rootDir>/tests/e2e/'
+    '<rootDir>/tests/e2e/',
+    '.*\\.integration\\.test\\.(ts|tsx)$'
   ],
   transformIgnorePatterns: [
     '/node_modules/',

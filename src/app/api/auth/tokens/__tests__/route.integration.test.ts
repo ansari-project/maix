@@ -2,6 +2,8 @@
  * @jest-environment node
  */
 
+import { describe, it, expect, beforeAll, afterAll, beforeEach, jest } from '@jest/globals'
+
 /**
  * Auth Tokens Route Integration Tests
  * 
@@ -118,8 +120,7 @@ describe('/api/auth/tokens Integration Tests', () => {
       const token1 = await prismaTest.personalAccessToken.create({
         data: {
           name: 'Test Token 1',
-          token: 'maix_pat_test1',
-          hashedToken: 'hashed1',
+          tokenHash: 'hashed1',
           userId: testUser.id,
           lastUsedAt: new Date(),
         }
@@ -128,8 +129,7 @@ describe('/api/auth/tokens Integration Tests', () => {
       const token2 = await prismaTest.personalAccessToken.create({
         data: {
           name: 'Test Token 2',
-          token: 'maix_pat_test2',
-          hashedToken: 'hashed2',
+          tokenHash: 'hashed2',
           userId: testUser.id,
         }
       })
@@ -143,8 +143,8 @@ describe('/api/auth/tokens Integration Tests', () => {
       expect(data.tokens[0].name).toBe('Test Token 1')
       expect(data.tokens[1].name).toBe('Test Token 2')
       // Should not return the actual token values
-      expect(data.tokens[0].token).toBeUndefined()
-      expect(data.tokens[0].hashedToken).toBeUndefined()
+      expect(data.tokens[0]).not.toHaveProperty('token')
+      expect(data.tokens[0]).not.toHaveProperty('tokenHash')
     })
   })
 
@@ -233,9 +233,9 @@ describe('/api/auth/tokens Integration Tests', () => {
       })
       expect(tokenInDb).toBeTruthy()
       expect(tokenInDb?.name).toBe('My API Token')
-      expect(tokenInDb?.hashedToken).toBeDefined()
+      expect(tokenInDb?.tokenHash).toBeDefined()
       // Actual token should not be stored, only hash
-      expect(tokenInDb?.token).not.toBe(data.token.token)
+      expect(tokenInDb?.tokenHash).not.toBe(data.token.token)
     })
 
     it('should allow multiple tokens with same name for same user', async () => {
