@@ -7,8 +7,8 @@ export const createTodoSchema = z.object({
   title: z.string().min(1).max(255),
   description: z.string().optional(),
   status: z.nativeEnum(TodoStatus).default(TodoStatus.NOT_STARTED),
-  startDate: z.date().optional(),
-  dueDate: z.date().optional(),
+  startDate: z.coerce.date().optional(),
+  dueDate: z.coerce.date().optional(),
   projectId: z.string().optional(),
   eventId: z.string().optional(),
   assigneeId: z.string().optional(),
@@ -18,8 +18,8 @@ export const updateTodoSchema = z.object({
   title: z.string().min(1).max(255).optional(),
   description: z.string().optional(),
   status: z.nativeEnum(TodoStatus).optional(),
-  startDate: z.date().nullable().optional(),
-  dueDate: z.date().nullable().optional(),
+  startDate: z.coerce.date().nullable().optional(),
+  dueDate: z.coerce.date().nullable().optional(),
   assigneeId: z.string().nullable().optional(),
 })
 
@@ -73,7 +73,7 @@ export async function updateTodoStatus(
   // Verify user has permission to update
   const todo = await prisma.todo.findUnique({
     where: { id: todoId },
-    include: { project: true },
+    include: { project: { include: { members: true } } },
   })
 
   if (!todo) {
@@ -209,7 +209,7 @@ export async function moveTaskToProject(
 ): Promise<Todo> {
   const todo = await prisma.todo.findUnique({
     where: { id: todoId },
-    include: { project: true },
+    include: { project: { include: { members: true } } },
   })
 
   if (!todo) {
@@ -282,7 +282,7 @@ function canAccessProject(
   // Check if user is a member
   if (project.members) {
     return project.members.some((m: any) => 
-      m.userId === userId || m.id === userId
+      m.userId === userId
     )
   }
   

@@ -7,7 +7,7 @@ export const createPersonalProjectSchema = z.object({
   name: z.string().min(1).max(255),
   description: z.string(),
   personalCategory: z.string().max(100).optional(),
-  targetCompletionDate: z.date().optional(),
+  targetCompletionDate: z.coerce.date().optional(),
 })
 
 export const createOrgProjectSchema = z.object({
@@ -16,7 +16,7 @@ export const createOrgProjectSchema = z.object({
   goal: z.string(),
   contactEmail: z.string().email(),
   helpType: z.enum(['ADVICE', 'PROTOTYPE', 'FEATURE', 'MVP', 'FULL_PRODUCT']),
-  targetCompletionDate: z.date().optional(),
+  targetCompletionDate: z.coerce.date().optional(),
   organizationId: z.string().optional(),
 })
 
