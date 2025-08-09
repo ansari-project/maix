@@ -115,7 +115,7 @@ describe('RBAC System Integration Tests', () => {
         name: 'Test Product',
         description: 'Test product for RBAC',
         organizationId: testOrg.id,
-        createdBy: owner.id,
+        ownerId: owner.id,
         members: {
           create: [
             { userId: admin.id, role: 'ADMIN' as const },
@@ -410,7 +410,7 @@ describe('RBAC System Integration Tests', () => {
           name: 'Conflict Product',
           description: 'Product with conflicting roles',
           organizationId: testOrg.id,
-          createdBy: owner.id,
+          ownerId: owner.id,
           members: {
             create: [
               { userId: admin.id, role: 'VIEWER' as const } // Lower than org role
