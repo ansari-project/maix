@@ -56,7 +56,7 @@ describe('handleManageTodo', () => {
         id: 'todo-1',
         title: 'Test Todo',
         description: 'Test description',
-        status: 'OPEN',
+        status: 'NOT_STARTED',
         projectId: 'project-1',
         creatorId: 'user-1',
         assigneeId: null,
@@ -68,7 +68,7 @@ describe('handleManageTodo', () => {
         project: { name: 'Test Project' }
       }
 
-      mockPrisma.todo.create.mockResolvedValue(mockTodo)
+      ;(prisma.todo.create as jest.Mock).mockResolvedValue(mockTodo)
 
       const result = await handleManageTodo({
         action: 'create',
@@ -82,7 +82,7 @@ describe('handleManageTodo', () => {
         data: {
           title: 'Test Todo',
           description: 'Test description',
-          status: 'OPEN',
+          status: 'NOT_STARTED',
           projectId: 'project-1',
           creatorId: 'user-1',
           assigneeId: null,
@@ -123,7 +123,7 @@ describe('handleManageTodo', () => {
         {
           id: 'todo-1',
           title: 'Todo 1',
-          status: 'OPEN',
+          status: 'NOT_STARTED',
           dueDate: null,
           creator: { name: 'User 1', email: 'user1@example.com' },
           assignee: null
@@ -138,7 +138,7 @@ describe('handleManageTodo', () => {
         }
       ]
 
-      mockPrisma.todo.findMany.mockResolvedValue(mockTodos)
+      ;(prisma.todo.findMany as jest.Mock).mockResolvedValue(mockTodos)
 
       const result = await handleManageTodo({
         action: 'list',
@@ -154,7 +154,7 @@ describe('handleManageTodo', () => {
 
     it('should return message when no todos found', async () => {
       mockCanViewTodos.mockResolvedValue(true)
-      mockPrisma.todo.findMany.mockResolvedValue([])
+      ;(prisma.todo.findMany as jest.Mock).mockResolvedValue([])
 
       const result = await handleManageTodo({
         action: 'list',
@@ -182,7 +182,7 @@ describe('handleManageTodo', () => {
         id: 'todo-1',
         title: 'Test Todo',
         description: 'Test description',
-        status: 'OPEN',
+        status: 'NOT_STARTED',
         projectId: 'project-1',
         dueDate: new Date('2024-12-31'),
         createdAt: new Date('2024-01-01'),
@@ -191,7 +191,7 @@ describe('handleManageTodo', () => {
         project: { name: 'Test Project', ownerId: 'user-1' }
       }
 
-      mockPrisma.todo.findUnique.mockResolvedValue(mockTodo)
+      ;(prisma.todo.findUnique as jest.Mock).mockResolvedValue(mockTodo)
 
       const result = await handleManageTodo({
         action: 'get',
@@ -205,7 +205,7 @@ describe('handleManageTodo', () => {
     })
 
     it('should throw error when todo not found', async () => {
-      mockPrisma.todo.findUnique.mockResolvedValue(null)
+      ;(prisma.todo.findUnique as jest.Mock).mockResolvedValue(null)
 
       await expect(handleManageTodo({
         action: 'get',
@@ -229,9 +229,9 @@ describe('handleManageTodo', () => {
         project: { name: 'Test Project' }
       }
 
-      mockPrisma.todo.findUnique.mockResolvedValue(existingTodo)
+      ;(prisma.todo.findUnique as jest.Mock).mockResolvedValue(existingTodo)
       mockCanManageTodos.mockResolvedValue(true)
-      mockPrisma.todo.update.mockResolvedValue(updatedTodo)
+      ;(prisma.todo.update as jest.Mock).mockResolvedValue(updatedTodo)
 
       const result = await handleManageTodo({
         action: 'update',
@@ -249,7 +249,7 @@ describe('handleManageTodo', () => {
         project: { name: 'Test Project' }
       }
 
-      mockPrisma.todo.findUnique.mockResolvedValue(existingTodo)
+      ;(prisma.todo.findUnique as jest.Mock).mockResolvedValue(existingTodo)
       mockCanManageTodos.mockResolvedValue(false)
 
       await expect(handleManageTodo({
@@ -269,9 +269,9 @@ describe('handleManageTodo', () => {
         project: { name: 'Test Project' }
       }
 
-      mockPrisma.todo.findUnique.mockResolvedValue(existingTodo)
+      ;(prisma.todo.findUnique as jest.Mock).mockResolvedValue(existingTodo)
       mockCanManageTodos.mockResolvedValue(true)
-      mockPrisma.todo.delete.mockResolvedValue(existingTodo)
+      ;(prisma.todo.delete as jest.Mock).mockResolvedValue(existingTodo)
 
       const result = await handleManageTodo({
         action: 'delete',
@@ -288,7 +288,7 @@ describe('handleManageTodo', () => {
         project: { name: 'Test Project' }
       }
 
-      mockPrisma.todo.findUnique.mockResolvedValue(existingTodo)
+      ;(prisma.todo.findUnique as jest.Mock).mockResolvedValue(existingTodo)
       mockCanManageTodos.mockResolvedValue(false)
 
       await expect(handleManageTodo({

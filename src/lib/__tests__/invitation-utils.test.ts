@@ -119,7 +119,7 @@ describe('invitation-utils', () => {
 
   describe('isEmailAlreadyInvited', () => {
     it('should return true if email has pending invitation for entity', async () => {
-      mockPrisma.invitation.findFirst.mockResolvedValue({
+      ;(prisma.invitation.findFirst as jest.Mock).mockResolvedValue({
         id: 'invitation-1',
         email: 'test@example.com',
         status: 'PENDING',
@@ -153,7 +153,7 @@ describe('invitation-utils', () => {
     });
 
     it('should return false if no pending invitation exists', async () => {
-      mockPrisma.invitation.findFirst.mockResolvedValue(null);
+      ;(prisma.invitation.findFirst as jest.Mock).mockResolvedValue(null);
 
       const result = await isEmailAlreadyInvited('test@example.com', 'org-1');
 
@@ -180,7 +180,7 @@ describe('invitation-utils', () => {
     });
 
     it('should return NOT_FOUND for non-existent token', async () => {
-      mockPrisma.invitation.findUnique.mockResolvedValue(null);
+      ;(prisma.invitation.findUnique as jest.Mock).mockResolvedValue(null);
       
       const token = 'a'.repeat(64);
       const result = await validateInvitationToken(token);
@@ -220,7 +220,7 @@ describe('invitation-utils', () => {
         projectMember: []
       };
       
-      mockPrisma.invitation.findUnique.mockResolvedValue(mockInvitation);
+      ;(prisma.invitation.findUnique as jest.Mock).mockResolvedValue(mockInvitation);
 
       const token = 'a'.repeat(64);
       const result = await validateInvitationToken(token);
@@ -257,7 +257,7 @@ describe('invitation-utils', () => {
         projectMember: []
       };
       
-      mockPrisma.invitation.findUnique.mockResolvedValue(mockInvitation);
+      ;(prisma.invitation.findUnique as jest.Mock).mockResolvedValue(mockInvitation);
 
       const token = 'a'.repeat(64);
       const result = await validateInvitationToken(token);
@@ -294,7 +294,7 @@ describe('invitation-utils', () => {
         projectMember: []
       };
       
-      mockPrisma.invitation.findUnique.mockResolvedValue(mockInvitation);
+      ;(prisma.invitation.findUnique as jest.Mock).mockResolvedValue(mockInvitation);
 
       const token = 'a'.repeat(64);
       const result = await validateInvitationToken(token);
@@ -308,7 +308,7 @@ describe('invitation-utils', () => {
 
   describe('cleanupExpiredInvitations', () => {
     it('should delete expired pending invitations', async () => {
-      mockPrisma.invitation.deleteMany.mockResolvedValue({ count: 5 });
+      ;(prisma.invitation.deleteMany as jest.Mock).mockResolvedValue({ count: 5 });
 
       const result = await cleanupExpiredInvitations();
 
@@ -322,7 +322,7 @@ describe('invitation-utils', () => {
     });
 
     it('should return 0 when no expired invitations exist', async () => {
-      mockPrisma.invitation.deleteMany.mockResolvedValue({ count: 0 });
+      ;(prisma.invitation.deleteMany as jest.Mock).mockResolvedValue({ count: 0 });
 
       const result = await cleanupExpiredInvitations();
 

@@ -150,7 +150,7 @@ describe('/api/profile', () => {
       
       mockRequireAuth.mockResolvedValue(mockProfileUser as any)
       mockParseRequestBody.mockResolvedValue(validUpdateData)
-      mockPrisma.user.update.mockResolvedValue(updatedUser as any)
+      ;(prisma.user.update as jest.Mock).mockResolvedValue(updatedUser as any)
       mockSuccessResponse.mockReturnValue(
         mockApiSuccessResponse(updatedUser, 200) as any
       )
@@ -241,7 +241,7 @@ describe('/api/profile', () => {
         portfolioUrl: '',
       }
       mockParseRequestBody.mockResolvedValue(dataWithEmptyUrls)
-      mockPrisma.user.update.mockResolvedValue(mockProfileUser as any)
+      ;(prisma.user.update as jest.Mock).mockResolvedValue(mockProfileUser as any)
       mockSuccessResponse.mockReturnValue(
         mockApiSuccessResponse(mockProfileUser, 200) as any
       )
@@ -276,7 +276,7 @@ describe('/api/profile', () => {
     test('should handle database errors', async () => {
       mockRequireAuth.mockResolvedValue(mockProfileUser as any)
       mockParseRequestBody.mockResolvedValue(validUpdateData)
-      mockPrisma.user.update.mockRejectedValue(new Error('Database error'))
+      ;(prisma.user.update as jest.Mock).mockRejectedValue(new Error('Database error'))
       mockHandleApiError.mockReturnValue(
         mockApiErrorResponse('Internal server error', 500) as any
       )
@@ -315,7 +315,7 @@ describe('/api/profile', () => {
       mockParseRequestBody.mockResolvedValue(updateDataWithConflictingUsername)
       
       // Mock that another user already has this username
-      mockPrisma.user.findUnique.mockResolvedValue({
+      ;(prisma.user.findUnique as jest.Mock).mockResolvedValue({
         id: 'other-user-id',
         username: conflictingUsername
       } as any)
@@ -338,8 +338,8 @@ describe('/api/profile', () => {
       mockParseRequestBody.mockResolvedValue(sameUsernameData)
       
       // Mock that the current user has this username
-      mockPrisma.user.findUnique.mockResolvedValue(mockProfileUser as any)
-      mockPrisma.user.update.mockResolvedValue(mockProfileUser as any)
+      ;(prisma.user.findUnique as jest.Mock).mockResolvedValue(mockProfileUser as any)
+      ;(prisma.user.update as jest.Mock).mockResolvedValue(mockProfileUser as any)
       mockSuccessResponse.mockReturnValue(
         mockApiSuccessResponse(mockProfileUser, 200) as any
       )

@@ -76,11 +76,11 @@ describe('/api/questions/[id]/resolve', () => {
 
       mockRequireAuth.mockResolvedValue(mockUser as any)
       mockParseRequestBody.mockResolvedValue({ bestAnswerId: 'ckl1234567890abcdefghijk3' })
-      mockPrisma.post.findUnique.mockResolvedValueOnce({
+      ;(prisma.post.findUnique as jest.Mock).mockResolvedValueOnce({
         ...mockQuestion,
         replies: [mockAnswer]
       })
-      mockPrisma.post.update.mockResolvedValue(updatedQuestion)
+      ;(prisma.post.update as jest.Mock).mockResolvedValue(updatedQuestion)
       mockSuccessResponse.mockReturnValue(
         mockApiSuccessResponse(updatedQuestion, 200) as any
       )
@@ -128,7 +128,7 @@ describe('/api/questions/[id]/resolve', () => {
 
       mockRequireAuth.mockResolvedValue(mockUser as any)
       mockParseRequestBody.mockResolvedValue({ bestAnswerId: 'ckl1234567890abcdefghijk3' })
-      mockPrisma.post.findUnique.mockResolvedValue({
+      ;(prisma.post.findUnique as jest.Mock).mockResolvedValue({
         ...otherUserQuestion,
         replies: [mockAnswer]
       })
@@ -155,7 +155,7 @@ describe('/api/questions/[id]/resolve', () => {
     it('should reject if question does not exist', async () => {
       mockRequireAuth.mockResolvedValue(mockUser as any)
       mockParseRequestBody.mockResolvedValue({ bestAnswerId: 'ckl1234567890abcdefghijk3' })
-      mockPrisma.post.findUnique.mockResolvedValue(null)
+      ;(prisma.post.findUnique as jest.Mock).mockResolvedValue(null)
       mockHandleApiError.mockReturnValue(
         mockApiErrorResponse('Question not found', 404) as any
       )
@@ -184,7 +184,7 @@ describe('/api/questions/[id]/resolve', () => {
 
       mockRequireAuth.mockResolvedValue(mockUser as any)
       mockParseRequestBody.mockResolvedValue({ bestAnswerId: 'ckl1234567890abcdefghijk3' })
-      mockPrisma.post.findUnique.mockResolvedValue({
+      ;(prisma.post.findUnique as jest.Mock).mockResolvedValue({
         ...updatePost,
         replies: [mockAnswer]
       })
@@ -211,7 +211,7 @@ describe('/api/questions/[id]/resolve', () => {
     it('should reject if answer does not exist', async () => {
       mockRequireAuth.mockResolvedValue(mockUser as any)
       mockParseRequestBody.mockResolvedValue({ bestAnswerId: 'ckl1234567890abcdefghijk3' })
-      mockPrisma.post.findUnique.mockResolvedValue({
+      ;(prisma.post.findUnique as jest.Mock).mockResolvedValue({
         ...mockQuestion,
         replies: [] // No answers found
       })
@@ -243,7 +243,7 @@ describe('/api/questions/[id]/resolve', () => {
 
       mockRequireAuth.mockResolvedValue(mockUser as any)
       mockParseRequestBody.mockResolvedValue({ bestAnswerId: 'ckl1234567890abcdefghijk3' })
-      mockPrisma.post.findUnique.mockResolvedValue({
+      ;(prisma.post.findUnique as jest.Mock).mockResolvedValue({
         ...mockQuestion,
         replies: [] // Answer with wrong parentId not found in replies
       })
@@ -335,11 +335,11 @@ describe('/api/questions/[id]/resolve', () => {
 
       mockRequireAuth.mockResolvedValue(mockUser as any)
       mockParseRequestBody.mockResolvedValue({ bestAnswerId: 'ckl1234567890abcdefghijk8' })
-      mockPrisma.post.findUnique.mockResolvedValue({
+      ;(prisma.post.findUnique as jest.Mock).mockResolvedValue({
         ...questionWithBestAnswer,
         replies: [newAnswer]
       })
-      mockPrisma.post.update.mockResolvedValue(updatedQuestion)
+      ;(prisma.post.update as jest.Mock).mockResolvedValue(updatedQuestion)
       mockSuccessResponse.mockReturnValue(
         mockApiSuccessResponse(updatedQuestion, 200) as any
       )

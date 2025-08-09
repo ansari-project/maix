@@ -136,7 +136,7 @@ describe('manageProject tool', () => {
   describe('update action', () => {
     beforeEach(() => {
       // Setup projectMember mock to allow updates
-      mockPrisma.projectMember.findFirst.mockResolvedValue({
+      ;(prisma.projectMember.findFirst as jest.Mock).mockResolvedValue({
         id: 'pm-123',
         projectId: 'project-123',
         userId: 'user-123',
@@ -147,7 +147,7 @@ describe('manageProject tool', () => {
     });
 
     it('should update a project successfully', async () => {
-      mockPrisma.project.update.mockResolvedValue(mockProject);
+      ;(prisma.project.update as jest.Mock).mockResolvedValue(mockProject);
 
       const params = {
         action: 'update' as const,
@@ -201,7 +201,7 @@ describe('manageProject tool', () => {
 
     it('should handle non-existent project', async () => {
       // Mock no permission
-      mockPrisma.projectMember.findFirst.mockResolvedValue(null);
+      ;(prisma.projectMember.findFirst as jest.Mock).mockResolvedValue(null);
 
       const params = {
         action: 'update' as const,
@@ -219,7 +219,7 @@ describe('manageProject tool', () => {
   describe('delete action', () => {
     beforeEach(() => {
       // Setup projectMember mock to allow deletes
-      mockPrisma.projectMember.findFirst.mockResolvedValue({
+      ;(prisma.projectMember.findFirst as jest.Mock).mockResolvedValue({
         id: 'pm-123',
         projectId: 'project-123',
         userId: 'user-123',
@@ -230,7 +230,7 @@ describe('manageProject tool', () => {
     });
 
     it('should delete a project successfully', async () => {
-      mockPrisma.project.delete.mockResolvedValue(mockProject);
+      ;(prisma.project.delete as jest.Mock).mockResolvedValue(mockProject);
 
       const params = {
         action: 'delete' as const,
@@ -268,7 +268,7 @@ describe('manageProject tool', () => {
 
     it('should handle non-existent project for delete', async () => {
       // Mock no permission
-      mockPrisma.projectMember.findFirst.mockResolvedValue(null);
+      ;(prisma.projectMember.findFirst as jest.Mock).mockResolvedValue(null);
 
       const params = {
         action: 'delete' as const,
@@ -299,7 +299,7 @@ describe('manageProject tool', () => {
           },
         ],
       };
-      mockPrisma.project.findFirst.mockResolvedValue(projectWithApplications);
+      ;(prisma.project.findFirst as jest.Mock).mockResolvedValue(projectWithApplications);
 
       const params = {
         action: 'get' as const,
@@ -360,7 +360,7 @@ describe('manageProject tool', () => {
     });
 
     it('should handle non-existent project', async () => {
-      mockPrisma.project.findFirst.mockResolvedValue(null);
+      ;(prisma.project.findFirst as jest.Mock).mockResolvedValue(null);
 
       const params = {
         action: 'get' as const,
@@ -377,7 +377,7 @@ describe('manageProject tool', () => {
   describe('list action', () => {
     it('should list user projects successfully', async () => {
       const projects = [mockProject, { ...mockProject, id: 'project-456', name: 'Another Project' }];
-      mockPrisma.project.findMany.mockResolvedValue(projects);
+      ;(prisma.project.findMany as jest.Mock).mockResolvedValue(projects);
 
       const params = {
         action: 'list' as const,

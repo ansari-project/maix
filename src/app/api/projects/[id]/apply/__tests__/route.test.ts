@@ -94,7 +94,7 @@ describe('/api/projects/[id]/apply', () => {
       )
 
       const request = createMockRequest(validApplicationData)
-      const response = await POST(request, { params: mockParams })
+      const response = await POST(request, { params: Promise.resolve(mockParams) })
       const responseData = await response.json()
 
       expect(response.status).toBe(201)
@@ -131,7 +131,7 @@ describe('/api/projects/[id]/apply', () => {
       )
 
       const request = createMockRequest(validApplicationData)
-      const response = await POST(request, { params: mockParams })
+      const response = await POST(request, { params: Promise.resolve(mockParams) })
       const responseData = await response.json()
 
       expect(response.status).toBe(401)
@@ -147,7 +147,7 @@ describe('/api/projects/[id]/apply', () => {
       )
 
       const request = createMockRequest(validApplicationData)
-      const response = await POST(request, { params: mockParams })
+      const response = await POST(request, { params: Promise.resolve(mockParams) })
       const responseData = await response.json()
 
       expect(response.status).toBe(404)
@@ -163,7 +163,7 @@ describe('/api/projects/[id]/apply', () => {
       )
 
       const request = createMockRequest(validApplicationData)
-      const response = await POST(request, { params: mockParams })
+      const response = await POST(request, { params: Promise.resolve(mockParams) })
       const responseData = await response.json()
 
       expect(response.status).toBe(404)
@@ -186,7 +186,7 @@ describe('/api/projects/[id]/apply', () => {
       )
 
       const request = createMockRequest(validApplicationData)
-      const response = await POST(request, { params: mockParams })
+      const response = await POST(request, { params: Promise.resolve(mockParams) })
       const responseData = await response.json()
 
       expect(response.status).toBe(400)
@@ -208,7 +208,7 @@ describe('/api/projects/[id]/apply', () => {
       )
 
       const request = createMockRequest(validApplicationData)
-      const response = await POST(request, { params: mockParams })
+      const response = await POST(request, { params: Promise.resolve(mockParams) })
       const responseData = await response.json()
 
       expect(response.status).toBe(400)
@@ -229,7 +229,7 @@ describe('/api/projects/[id]/apply', () => {
       }
 
       const request = createMockRequest(invalidData)
-      const response = await POST(request, { params: mockParams })
+      const response = await POST(request, { params: Promise.resolve(mockParams) })
       const responseData = await response.json()
 
       expect(response.status).toBe(400)
@@ -250,7 +250,7 @@ describe('/api/projects/[id]/apply', () => {
       }
 
       const request = createMockRequest(invalidData)
-      const response = await POST(request, { params: mockParams })
+      const response = await POST(request, { params: Promise.resolve(mockParams) })
       const responseData = await response.json()
 
       expect(response.status).toBe(400)
@@ -271,7 +271,7 @@ describe('/api/projects/[id]/apply', () => {
       }
 
       const request = createMockRequest(invalidData)
-      const response = await POST(request, { params: mockParams })
+      const response = await POST(request, { params: Promise.resolve(mockParams) })
       const responseData = await response.json()
 
       expect(response.status).toBe(400)
@@ -290,7 +290,7 @@ describe('/api/projects/[id]/apply', () => {
       const invalidData = {}
 
       const request = createMockRequest(invalidData)
-      const response = await POST(request, { params: mockParams })
+      const response = await POST(request, { params: Promise.resolve(mockParams) })
       const responseData = await response.json()
 
       expect(response.status).toBe(400)
@@ -308,7 +308,7 @@ describe('/api/projects/[id]/apply', () => {
       )
 
       const request = createMockRequest(validApplicationData)
-      const response = await POST(request, { params: mockParams })
+      const response = await POST(request, { params: Promise.resolve(mockParams) })
 
       expect(prisma.application.findUnique).toHaveBeenCalledWith({
         where: {
@@ -329,7 +329,7 @@ describe('/api/projects/[id]/apply', () => {
       )
 
       const request = createMockRequest(validApplicationData)
-      const response = await POST(request, { params: mockParams })
+      const response = await POST(request, { params: Promise.resolve(mockParams) })
       const responseData = await response.json()
 
       expect(response.status).toBe(500)
@@ -345,7 +345,7 @@ describe('/api/projects/[id]/apply', () => {
       )
 
       const request = createMockRequest(validApplicationData)
-      const response = await POST(request, { params: mockParams })
+      const response = await POST(request, { params: Promise.resolve(mockParams) })
       const responseData = await response.json()
 
       expect(response.status).toBe(500)
@@ -363,7 +363,7 @@ describe('/api/projects/[id]/apply', () => {
       )
 
       const request = createMockRequest(validApplicationData)
-      const response = await POST(request, { params: mockParams })
+      const response = await POST(request, { params: Promise.resolve(mockParams) })
       const responseData = await response.json()
 
       expect(response.status).toBe(500)
@@ -381,7 +381,7 @@ describe('/api/projects/[id]/apply', () => {
       )
 
       const request = createMockRequest(validApplicationData)
-      const response = await POST(request, { params: mockParams })
+      const response = await POST(request, { params: Promise.resolve(mockParams) })
 
       expect(prisma.project.findUnique).toHaveBeenCalledWith({
         where: { id: mockParams.id },
@@ -407,7 +407,7 @@ describe('/api/projects/[id]/apply', () => {
       }
 
       const request = createMockRequest(invalidData)
-      const response = await POST(request, { params: mockParams })
+      const response = await POST(request, { params: Promise.resolve(mockParams) })
       const responseData = await response.json()
 
       expect(response.status).toBe(400)

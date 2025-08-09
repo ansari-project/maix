@@ -200,7 +200,7 @@ describe('manageProduct tool', () => {
   describe('update action', () => {
     beforeEach(() => {
       // Setup productMember mock to allow updates
-      mockPrisma.productMember.findFirst.mockResolvedValue({
+      ;(prisma.productMember.findFirst as jest.Mock).mockResolvedValue({
         id: 'pm-123',
         productId: 'product-123',
         userId: 'user-123',
@@ -212,7 +212,7 @@ describe('manageProduct tool', () => {
 
     it('should update a product successfully', async () => {
       const updatedProduct = { ...mockProduct, name: 'Updated Product Name' };
-      mockPrisma.product.update.mockResolvedValue(updatedProduct);
+      ;(prisma.product.update as jest.Mock).mockResolvedValue(updatedProduct);
 
       const params = {
         action: 'update' as const,
@@ -253,7 +253,7 @@ describe('manageProduct tool', () => {
     });
 
     it('should update only provided fields', async () => {
-      mockPrisma.product.update.mockResolvedValue(mockProduct);
+      ;(prisma.product.update as jest.Mock).mockResolvedValue(mockProduct);
 
       const params = {
         action: 'update' as const,
@@ -282,7 +282,7 @@ describe('manageProduct tool', () => {
 
     it('should handle URL updates including empty string', async () => {
       const updatedProduct = { ...mockProduct, url: null };
-      mockPrisma.product.update.mockResolvedValue(updatedProduct);
+      ;(prisma.product.update as jest.Mock).mockResolvedValue(updatedProduct);
 
       const params = {
         action: 'update' as const,
@@ -323,7 +323,7 @@ describe('manageProduct tool', () => {
 
     it('should handle non-existent product', async () => {
       // Mock no permission
-      mockPrisma.productMember.findFirst.mockResolvedValue(null);
+      ;(prisma.productMember.findFirst as jest.Mock).mockResolvedValue(null);
 
       const params = {
         action: 'update' as const,
@@ -341,7 +341,7 @@ describe('manageProduct tool', () => {
   describe('delete action', () => {
     beforeEach(() => {
       // Setup productMember mock to allow deletes
-      mockPrisma.productMember.findFirst.mockResolvedValue({
+      ;(prisma.productMember.findFirst as jest.Mock).mockResolvedValue({
         id: 'pm-123',
         productId: 'product-123',
         userId: 'user-123',
@@ -352,7 +352,7 @@ describe('manageProduct tool', () => {
     });
 
     it('should delete a product successfully', async () => {
-      mockPrisma.product.delete.mockResolvedValue(mockProduct);
+      ;(prisma.product.delete as jest.Mock).mockResolvedValue(mockProduct);
 
       const params = {
         action: 'delete' as const,
@@ -390,7 +390,7 @@ describe('manageProduct tool', () => {
 
     it('should handle non-existent product for delete', async () => {
       // Mock no permission
-      mockPrisma.productMember.findFirst.mockResolvedValue(null);
+      ;(prisma.productMember.findFirst as jest.Mock).mockResolvedValue(null);
 
       const params = {
         action: 'delete' as const,
@@ -406,7 +406,7 @@ describe('manageProduct tool', () => {
 
   describe('get action', () => {
     it('should get a product successfully', async () => {
-      mockPrisma.product.findFirst.mockResolvedValue(mockProductWithRelations);
+      ;(prisma.product.findFirst as jest.Mock).mockResolvedValue(mockProductWithRelations);
 
       const params = {
         action: 'get' as const,
@@ -476,7 +476,7 @@ describe('manageProduct tool', () => {
     });
 
     it('should handle non-existent product for get', async () => {
-      mockPrisma.product.findFirst.mockResolvedValue(null);
+      ;(prisma.product.findFirst as jest.Mock).mockResolvedValue(null);
 
       const params = {
         action: 'get' as const,
@@ -501,7 +501,7 @@ describe('manageProduct tool', () => {
           _count: { projects: 1, updates: 3 }
         }
       ];
-      mockPrisma.product.findMany.mockResolvedValue(products);
+      ;(prisma.product.findMany as jest.Mock).mockResolvedValue(products);
 
       const params = {
         action: 'list' as const,
@@ -551,7 +551,7 @@ describe('manageProduct tool', () => {
     });
 
     it('should handle empty product list', async () => {
-      mockPrisma.product.findMany.mockResolvedValue([]);
+      ;(prisma.product.findMany as jest.Mock).mockResolvedValue([]);
 
       const params = {
         action: 'list' as const,

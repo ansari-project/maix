@@ -52,8 +52,8 @@ describe('manageOrganization MCP Tool', () => {
         aiEngagement: 'We leverage state-of-the-art AI technologies including:\n\n- **LLMs**: Using GPT-4 and Claude for automated code review and documentation\n- **Computer Vision**: Developing tools for medical image analysis\n- **ML Ops**: Building scalable infrastructure for AI model deployment\n\nOur team actively contributes to open-source AI projects and maintains several popular libraries.',
       }
 
-      mockPrisma.organization.findUnique.mockResolvedValueOnce(null) // Slug not taken
-      mockPrisma.organization.create.mockResolvedValueOnce({
+      ;(prisma.organization.findUnique as jest.Mock).mockResolvedValueOnce(null) // Slug not taken
+      ;(prisma.organization.create as jest.Mock).mockResolvedValueOnce({
         id: 'new-org-id',
         ...params,
         createdAt: new Date(),
@@ -103,8 +103,8 @@ describe('manageOrganization MCP Tool', () => {
         slug: 'simple-org',
       }
 
-      mockPrisma.organization.findUnique.mockResolvedValueOnce(null)
-      mockPrisma.organization.create.mockResolvedValueOnce({
+      ;(prisma.organization.findUnique as jest.Mock).mockResolvedValueOnce(null)
+      ;(prisma.organization.create as jest.Mock).mockResolvedValueOnce({
         id: 'simple-org-id',
         ...params,
         mission: null,
@@ -155,7 +155,7 @@ describe('manageOrganization MCP Tool', () => {
         slug: 'existing-slug',
       }
 
-      mockPrisma.organization.findUnique.mockResolvedValueOnce({
+      ;(prisma.organization.findUnique as jest.Mock).mockResolvedValueOnce({
         id: 'existing-org',
         slug: 'existing-slug',
       } as any)
@@ -179,13 +179,13 @@ describe('manageOrganization MCP Tool', () => {
         aiEngagement: 'We have expanded our AI initiatives to include natural language processing and robotics',
       }
 
-      mockPrisma.organizationMember.findUnique.mockResolvedValueOnce({
+      ;(prisma.organizationMember.findUnique as jest.Mock).mockResolvedValueOnce({
         userId: mockContext.user.id,
         organizationId: 'org-123',
         role: 'OWNER',
       } as any)
 
-      mockPrisma.organization.update.mockResolvedValueOnce({
+      ;(prisma.organization.update as jest.Mock).mockResolvedValueOnce({
         id: 'org-123',
         ...params,
         slug: 'existing-slug',
@@ -226,13 +226,13 @@ describe('manageOrganization MCP Tool', () => {
         // Other fields not provided, so they won't be updated
       }
 
-      mockPrisma.organizationMember.findUnique.mockResolvedValueOnce({
+      ;(prisma.organizationMember.findUnique as jest.Mock).mockResolvedValueOnce({
         userId: mockContext.user.id,
         organizationId: 'org-123',
         role: 'OWNER',
       } as any)
 
-      mockPrisma.organization.update.mockResolvedValueOnce({
+      ;(prisma.organization.update as jest.Mock).mockResolvedValueOnce({
         id: 'org-123',
         name: 'Updated Name Only',
         slug: 'unchanged-slug',
@@ -277,7 +277,7 @@ describe('manageOrganization MCP Tool', () => {
         name: 'Attempted Update',
       }
 
-      mockPrisma.organizationMember.findUnique.mockResolvedValueOnce({
+      ;(prisma.organizationMember.findUnique as jest.Mock).mockResolvedValueOnce({
         userId: mockContext.user.id,
         organizationId: 'org-123',
         role: 'MEMBER',
@@ -312,7 +312,7 @@ describe('manageOrganization MCP Tool', () => {
         products: [],
       }
 
-      mockPrisma.organization.findFirst.mockResolvedValueOnce(mockOrg as any)
+      ;(prisma.organization.findFirst as jest.Mock).mockResolvedValueOnce(mockOrg as any)
 
       const params = {
         action: 'get' as const,
@@ -365,7 +365,7 @@ describe('manageOrganization MCP Tool', () => {
         },
       ]
 
-      mockPrisma.organization.findMany.mockResolvedValueOnce(mockOrgs as any)
+      ;(prisma.organization.findMany as jest.Mock).mockResolvedValueOnce(mockOrgs as any)
 
       const params = {
         action: 'list' as const,

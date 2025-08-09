@@ -110,9 +110,9 @@ describe('/api/public/search', () => {
         },
       ]
 
-      mockPrisma.project.findMany.mockResolvedValueOnce(mockProjects as any)
-      mockPrisma.product.findMany.mockResolvedValueOnce(mockProducts as any)
-      mockPrisma.post.findMany.mockResolvedValueOnce(mockQuestions as any)
+      ;(prisma.project.findMany as jest.Mock).mockResolvedValueOnce(mockProjects as any)
+      ;(prisma.product.findMany as jest.Mock).mockResolvedValueOnce(mockProducts as any)
+      ;(prisma.post.findMany as jest.Mock).mockResolvedValueOnce(mockQuestions as any)
 
       const request = new NextRequest('http://localhost:3000/api/public/search?q=test')
       
@@ -188,7 +188,7 @@ describe('/api/public/search', () => {
 
     it('should search only projects when type=projects', async () => {
       const mockProjects = [{ id: 'proj-1', name: 'Test Project' }]
-      mockPrisma.project.findMany.mockResolvedValueOnce(mockProjects as any)
+      ;(prisma.project.findMany as jest.Mock).mockResolvedValueOnce(mockProjects as any)
 
       const request = new NextRequest('http://localhost:3000/api/public/search?q=test&type=projects')
       
@@ -207,7 +207,7 @@ describe('/api/public/search', () => {
 
     it('should search only products when type=products', async () => {
       const mockProducts = [{ id: 'prod-1', name: 'Test Product' }]
-      mockPrisma.product.findMany.mockResolvedValueOnce(mockProducts as any)
+      ;(prisma.product.findMany as jest.Mock).mockResolvedValueOnce(mockProducts as any)
 
       const request = new NextRequest('http://localhost:3000/api/public/search?q=test&type=products')
       
@@ -226,7 +226,7 @@ describe('/api/public/search', () => {
 
     it('should search only questions when type=questions', async () => {
       const mockQuestions = [{ id: 'post-1', type: 'QUESTION', content: 'Test question' }]
-      mockPrisma.post.findMany.mockResolvedValueOnce(mockQuestions as any)
+      ;(prisma.post.findMany as jest.Mock).mockResolvedValueOnce(mockQuestions as any)
 
       const request = new NextRequest('http://localhost:3000/api/public/search?q=test&type=questions')
       
@@ -244,9 +244,9 @@ describe('/api/public/search', () => {
     })
 
     it('should handle case-insensitive search', async () => {
-      mockPrisma.project.findMany.mockResolvedValueOnce([])
-      mockPrisma.product.findMany.mockResolvedValueOnce([])
-      mockPrisma.post.findMany.mockResolvedValueOnce([])
+      ;(prisma.project.findMany as jest.Mock).mockResolvedValueOnce([])
+      ;(prisma.product.findMany as jest.Mock).mockResolvedValueOnce([])
+      ;(prisma.post.findMany as jest.Mock).mockResolvedValueOnce([])
 
       const request = new NextRequest('http://localhost:3000/api/public/search?q=TeSt')
       
@@ -263,9 +263,9 @@ describe('/api/public/search', () => {
     it('should limit results to 20 per type', async () => {
       const request = new NextRequest('http://localhost:3000/api/public/search?q=popular')
       
-      mockPrisma.project.findMany.mockResolvedValueOnce([])
-      mockPrisma.product.findMany.mockResolvedValueOnce([])
-      mockPrisma.post.findMany.mockResolvedValueOnce([])
+      ;(prisma.project.findMany as jest.Mock).mockResolvedValueOnce([])
+      ;(prisma.product.findMany as jest.Mock).mockResolvedValueOnce([])
+      ;(prisma.post.findMany as jest.Mock).mockResolvedValueOnce([])
 
       await GET(request)
 
@@ -284,9 +284,9 @@ describe('/api/public/search', () => {
     it('should only return public and active content', async () => {
       const request = new NextRequest('http://localhost:3000/api/public/search?q=test')
       
-      mockPrisma.project.findMany.mockResolvedValueOnce([])
-      mockPrisma.product.findMany.mockResolvedValueOnce([])
-      mockPrisma.post.findMany.mockResolvedValueOnce([])
+      ;(prisma.project.findMany as jest.Mock).mockResolvedValueOnce([])
+      ;(prisma.product.findMany as jest.Mock).mockResolvedValueOnce([])
+      ;(prisma.post.findMany as jest.Mock).mockResolvedValueOnce([])
 
       await GET(request)
 
@@ -304,7 +304,7 @@ describe('/api/public/search', () => {
     })
 
     it('should handle database errors gracefully', async () => {
-      mockPrisma.project.findMany.mockRejectedValueOnce(new Error('Database error'))
+      ;(prisma.project.findMany as jest.Mock).mockRejectedValueOnce(new Error('Database error'))
 
       const request = new NextRequest('http://localhost:3000/api/public/search?q=test')
       
@@ -316,9 +316,9 @@ describe('/api/public/search', () => {
     })
 
     it('should handle special characters in search query', async () => {
-      mockPrisma.project.findMany.mockResolvedValueOnce([])
-      mockPrisma.product.findMany.mockResolvedValueOnce([])
-      mockPrisma.post.findMany.mockResolvedValueOnce([])
+      ;(prisma.project.findMany as jest.Mock).mockResolvedValueOnce([])
+      ;(prisma.product.findMany as jest.Mock).mockResolvedValueOnce([])
+      ;(prisma.post.findMany as jest.Mock).mockResolvedValueOnce([])
 
       const request = new NextRequest('http://localhost:3000/api/public/search?q=test%20%26%20special%20chars!')
       
@@ -333,9 +333,9 @@ describe('/api/public/search', () => {
     })
 
     it('should handle empty search results', async () => {
-      mockPrisma.project.findMany.mockResolvedValueOnce([])
-      mockPrisma.product.findMany.mockResolvedValueOnce([])
-      mockPrisma.post.findMany.mockResolvedValueOnce([])
+      ;(prisma.project.findMany as jest.Mock).mockResolvedValueOnce([])
+      ;(prisma.product.findMany as jest.Mock).mockResolvedValueOnce([])
+      ;(prisma.post.findMany as jest.Mock).mockResolvedValueOnce([])
 
       const request = new NextRequest('http://localhost:3000/api/public/search?q=nonexistent')
       

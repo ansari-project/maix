@@ -46,7 +46,7 @@ describe('updateProfile tool', () => {
   };
 
   it('should update user profile successfully', async () => {
-    mockPrisma.user.update.mockResolvedValue(mockUpdatedUser);
+    ;(prisma.user.update as jest.Mock).mockResolvedValue(mockUpdatedUser);
 
     const params = {
       name: 'Updated Name',
@@ -89,7 +89,7 @@ describe('updateProfile tool', () => {
   });
 
   it('should update only provided fields', async () => {
-    mockPrisma.user.update.mockResolvedValue(mockUpdatedUser);
+    ;(prisma.user.update as jest.Mock).mockResolvedValue(mockUpdatedUser);
 
     const params = {
       name: 'Updated Name',
@@ -123,7 +123,7 @@ describe('updateProfile tool', () => {
   });
 
   it('should handle database errors', async () => {
-    mockPrisma.user.update.mockRejectedValue(new Error('Database error'));
+    ;(prisma.user.update as jest.Mock).mockRejectedValue(new Error('Database error'));
 
     const params = {
       name: 'Updated Name',
@@ -174,7 +174,7 @@ describe('updateProfile tool', () => {
   });
 
   it('should handle empty updates', async () => {
-    mockPrisma.user.update.mockResolvedValue(mockUpdatedUser);
+    ;(prisma.user.update as jest.Mock).mockResolvedValue(mockUpdatedUser);
 
     const params = {}; // No fields to update
 

@@ -100,7 +100,7 @@ describe('PAT Service', () => {
 
     it('should return null for non-existent token', async () => {
       const token = 'maix_pat_invalid';
-      mockPrisma.personalAccessToken.findUnique.mockResolvedValue(null);
+      ;(prisma.personalAccessToken.findUnique as jest.Mock).mockResolvedValue(null);
 
       const result = await validatePersonalAccessToken(token);
 
@@ -118,7 +118,7 @@ describe('PAT Service', () => {
         expiresAt: new Date('2020-01-01'), // Past date
       };
       
-      mockPrisma.personalAccessToken.findUnique.mockResolvedValue(expiredPAT);
+      ;(prisma.personalAccessToken.findUnique as jest.Mock).mockResolvedValue(expiredPAT);
 
       const result = await validatePersonalAccessToken(token);
 
@@ -127,8 +127,8 @@ describe('PAT Service', () => {
 
     it('should return user for valid token', async () => {
       const token = 'maix_pat_valid';
-      mockPrisma.personalAccessToken.findUnique.mockResolvedValue(mockPAT);
-      mockPrisma.personalAccessToken.update.mockResolvedValue({} as any);
+      ;(prisma.personalAccessToken.findUnique as jest.Mock).mockResolvedValue(mockPAT);
+      ;(prisma.personalAccessToken.update as jest.Mock).mockResolvedValue({} as any);
 
       const result = await validatePersonalAccessToken(token);
 
@@ -146,8 +146,8 @@ describe('PAT Service', () => {
         expiresAt: new Date('2030-01-01'), // Future date
       };
       
-      mockPrisma.personalAccessToken.findUnique.mockResolvedValue(futurePAT);
-      mockPrisma.personalAccessToken.update.mockResolvedValue({} as any);
+      ;(prisma.personalAccessToken.findUnique as jest.Mock).mockResolvedValue(futurePAT);
+      ;(prisma.personalAccessToken.update as jest.Mock).mockResolvedValue({} as any);
 
       const result = await validatePersonalAccessToken(token);
 
@@ -156,7 +156,7 @@ describe('PAT Service', () => {
 
     it('should handle database errors gracefully', async () => {
       const token = 'maix_pat_error';
-      mockPrisma.personalAccessToken.findUnique.mockRejectedValue(new Error('DB Error'));
+      ;(prisma.personalAccessToken.findUnique as jest.Mock).mockRejectedValue(new Error('DB Error'));
 
       const result = await validatePersonalAccessToken(token);
 
@@ -166,8 +166,8 @@ describe('PAT Service', () => {
 
     it('should handle lastUsedAt update failure gracefully', async () => {
       const token = 'maix_pat_update_fail';
-      mockPrisma.personalAccessToken.findUnique.mockResolvedValue(mockPAT);
-      mockPrisma.personalAccessToken.update.mockRejectedValue(new Error('Update failed'));
+      ;(prisma.personalAccessToken.findUnique as jest.Mock).mockResolvedValue(mockPAT);
+      ;(prisma.personalAccessToken.update as jest.Mock).mockRejectedValue(new Error('Update failed'));
 
       const result = await validatePersonalAccessToken(token);
 
@@ -192,7 +192,7 @@ describe('PAT Service', () => {
     };
 
     it('should create token without expiration', async () => {
-      mockPrisma.personalAccessToken.create.mockResolvedValue(mockTokenRecord);
+      ;(prisma.personalAccessToken.create as jest.Mock).mockResolvedValue(mockTokenRecord);
 
       const result = await createPersonalAccessToken('user-123', 'Test Token');
 
@@ -216,7 +216,7 @@ describe('PAT Service', () => {
         expiresAt: expirationDate,
       };
       
-      mockPrisma.personalAccessToken.create.mockResolvedValue(tokenRecordWithExpiry);
+      ;(prisma.personalAccessToken.create as jest.Mock).mockResolvedValue(tokenRecordWithExpiry);
 
       const result = await createPersonalAccessToken('user-123', 'Test Token', expirationDate);
 
@@ -234,7 +234,7 @@ describe('PAT Service', () => {
     });
 
     it('should generate correct token hash', async () => {
-      mockPrisma.personalAccessToken.create.mockResolvedValue(mockTokenRecord);
+      ;(prisma.personalAccessToken.create as jest.Mock).mockResolvedValue(mockTokenRecord);
 
       const result = await createPersonalAccessToken('user-123', 'Test Token');
 
@@ -247,7 +247,7 @@ describe('PAT Service', () => {
 
   describe('revokePersonalAccessToken', () => {
     it('should successfully revoke token', async () => {
-      mockPrisma.personalAccessToken.delete.mockResolvedValue({} as any);
+      ;(prisma.personalAccessToken.delete as jest.Mock).mockResolvedValue({} as any);
 
       const result = await revokePersonalAccessToken('token-123', 'user-123');
 
@@ -261,7 +261,7 @@ describe('PAT Service', () => {
     });
 
     it('should return false on database error', async () => {
-      mockPrisma.personalAccessToken.delete.mockRejectedValue(new Error('Not found'));
+      ;(prisma.personalAccessToken.delete as jest.Mock).mockRejectedValue(new Error('Not found'));
 
       const result = await revokePersonalAccessToken('token-123', 'user-123');
 
@@ -270,7 +270,7 @@ describe('PAT Service', () => {
     });
 
     it('should only allow users to revoke their own tokens', async () => {
-      mockPrisma.personalAccessToken.delete.mockResolvedValue({} as any);
+      ;(prisma.personalAccessToken.delete as jest.Mock).mockResolvedValue({} as any);
 
       await revokePersonalAccessToken('token-123', 'user-456');
 
@@ -302,7 +302,7 @@ describe('PAT Service', () => {
     ];
 
     it('should list tokens for user', async () => {
-      mockPrisma.personalAccessToken.findMany.mockResolvedValue(mockTokens);
+      ;(prisma.personalAccessToken.findMany as jest.Mock).mockResolvedValue(mockTokens);
 
       const result = await listPersonalAccessTokens('user-123');
 
@@ -321,7 +321,7 @@ describe('PAT Service', () => {
     });
 
     it('should not include tokenHash in response', async () => {
-      mockPrisma.personalAccessToken.findMany.mockResolvedValue(mockTokens);
+      ;(prisma.personalAccessToken.findMany as jest.Mock).mockResolvedValue(mockTokens);
 
       await listPersonalAccessTokens('user-123');
 
@@ -330,7 +330,7 @@ describe('PAT Service', () => {
     });
 
     it('should order tokens by creation date descending', async () => {
-      mockPrisma.personalAccessToken.findMany.mockResolvedValue(mockTokens);
+      ;(prisma.personalAccessToken.findMany as jest.Mock).mockResolvedValue(mockTokens);
 
       await listPersonalAccessTokens('user-123');
 
