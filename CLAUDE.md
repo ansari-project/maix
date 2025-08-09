@@ -469,15 +469,14 @@ it('should have correct CSS class', () => {
 })
 ```
 
-### Debugging Tips
-
-**Comprehensive Debugging Guide**: See `docs/protocol/debugging-playbook.md` for a systematic approach to debugging test failures and CI/CD issues, including common patterns, bulk fix operations, and proven strategies.
+### Test Debugging Tips
 
 **Schema Inspection**: When debugging database-related issues, read the Prisma schema file directly (`prisma/schema.prisma`) instead of starting Prisma Studio. This is faster and provides the exact field definitions and relationships.
 
 **Mock Carefully in Tests**: When mocking auth modules, only mock the specific functions you need (e.g., `requireAuth`), not the entire module. This prevents breaking other functions that your code depends on:
+
 ```javascript
-// Good - preserves other functions
+// ✅ GOOD - preserves other functions
 jest.mock('@/lib/auth-utils', () => ({
   ...jest.requireActual('@/lib/auth-utils'),
   requireAuth: jest.fn()
@@ -655,7 +654,19 @@ Our project uses two separate TypeScript configuration files to ensure correctne
   - **Scope**: Inherits from base `tsconfig.json` but explicitly **excludes** all test files (`**/*.test.ts`, etc.)
   - **Why**: Ensures CI type-check precisely matches what Next.js includes in production builds
 
-### Debugging CI/CD Issues Efficiently
+### Debugging Guide
+
+**📚 COMPREHENSIVE DEBUGGING PLAYBOOK**: For systematic debugging of test failures, CI/CD issues, and common development problems, see **`docs/protocol/debugging-playbook.md`**
+
+The playbook includes:
+- Test failure resolution strategies
+- Bulk fix operations for common patterns
+- CI/CD troubleshooting workflows
+- Mock configuration best practices
+- Database debugging techniques
+- Performance investigation methods
+
+#### Quick CI/CD Debugging with GitHub CLI
 
 When GitHub Actions jobs fail, use GitHub CLI (`gh`) for faster debugging:
 
@@ -685,6 +696,8 @@ When GitHub Actions jobs fail, use GitHub CLI (`gh`) for faster debugging:
 - Don't use `sleep` commands - work asynchronously and check periodically
 - Use `--log-failed` to get only the relevant error information
 - The `gh run view` command shows real-time status without repeatedly polling
+
+For more complex debugging scenarios, refer to the full debugging playbook.
 
 ---
 
