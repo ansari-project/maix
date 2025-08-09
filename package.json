@@ -13,6 +13,7 @@
     "test:unit": "jest --passWithNoTests --testPathIgnorePatterns='/tests/e2e|integration\\.test'",
     "test:watch": "jest --watch",
     "test:integration": "jest --config jest.integration.config.js --runInBand",
+    "test:integration:debug": "DEBUG=1 jest --config jest.integration.config.js --runInBand --verbose",
     "test:integration:safe": "./scripts/test-integration-safe.sh",
     "test:integration:watch": "jest --config jest.integration.config.js --watch --runInBand",
     "test:int": "./scripts/int_test.sh",
