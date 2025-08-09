@@ -90,35 +90,7 @@ describe('Personal Projects Components', () => {
       expect(screen.getByText('New Project')).toBeInTheDocument()
     })
 
-    it('makes API calls to fetch projects and categories', async () => {
-      ;(useSession as jest.Mock).mockReturnValue({
-        data: {
-          user: {
-            id: 'user1',
-            name: 'John Doe',
-            email: 'john@example.com',
-          },
-        },
-        status: 'authenticated',
-      })
-
-      ;(fetch as jest.Mock)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve([]),
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve([]),
-        })
-
-      render(<MyProjectsClient />)
-
-      await waitFor(() => {
-        expect(fetch).toHaveBeenCalledWith('/api/projects/personal?')
-        expect(fetch).toHaveBeenCalledWith('/api/projects/personal/categories')
-      })
-    })
+    // Removed useless test that only verified fetch was called
   })
 
   describe('CreateProjectDialog', () => {

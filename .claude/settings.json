@@ -4,6 +4,9 @@
       "npm test",
       "Bash(npm test:*)"
     ],
-    "deny": []
+    "deny": [
+      "Bash(git add -A)",
+      "Bash(git add .)"
+    ]
   }
 }
