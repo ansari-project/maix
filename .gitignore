@@ -160,3 +160,6 @@ db_backups/
 
 # But allow migration files
 !prisma/migrations/**/*.sql
+
+# Claude Code task file - project-specific task tracking
+.claude-task
