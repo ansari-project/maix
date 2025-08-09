@@ -1,3 +1,4 @@
+// TypeScript test fixes applied
 import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
@@ -23,13 +24,27 @@ describe('/api/auth/tokens', () => {
     id: 'user-123',
     email: 'test@example.com',
     name: 'Test User',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    isActive: true,
+    password: null,
+    specialty: null,
+    bio: null,
+    availability: null,
+    portfolioUrl: null,
+    linkedinUrl: null,
+    githubUrl: null,
+    skills: [],
+    lastActiveAt: new Date(),
+    lastDigestSentAt: null
   };
 
   const mockSession = {
     user: {
       email: 'test@example.com',
       name: 'Test User',
-    },
+    expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+  },
   };
 
   beforeEach(() => {

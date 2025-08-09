@@ -1,3 +1,5 @@
+// TypeScript test fixes applied
+import { TodoStatus, ProjectStatus } from '@prisma/client'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { useToast } from '@/hooks/use-toast'
 import MyTasksView from '../MyTasksView'
@@ -52,7 +54,7 @@ const mockProjectGroups = [
         id: '1',
         title: 'Standalone Task 1',
         description: 'A standalone task',
-        status: 'NOT_STARTED',
+        status: TodoStatus.NOT_STARTED,
         createdAt: '2024-01-01T00:00:00Z',
         updatedAt: '2024-01-01T00:00:00Z',
         creator: {
@@ -73,7 +75,7 @@ const mockProjectGroups = [
         id: '2',
         title: 'Project Task 1',
         description: 'A project task',
-        status: 'IN_PROGRESS',
+        status: ProjectStatus.IN_PROGRESS,
         createdAt: '2024-01-01T00:00:00Z',
         updatedAt: '2024-01-01T00:00:00Z',
         creator: {
@@ -91,7 +93,7 @@ const mockProjectGroups = [
         id: '3',
         title: 'Project Task 2',
         description: 'Another project task',
-        status: 'COMPLETED',
+        status: ProjectStatus.COMPLETED,
         createdAt: '2024-01-01T00:00:00Z',
         updatedAt: '2024-01-01T00:00:00Z',
         creator: {
@@ -113,7 +115,7 @@ const mockProjectGroups = [
         id: '4',
         title: 'Personal Task 1',
         description: 'A personal task',
-        status: 'NOT_STARTED',
+        status: TodoStatus.NOT_STARTED,
         createdAt: '2024-01-01T00:00:00Z',
         updatedAt: '2024-01-01T00:00:00Z',
         creator: {

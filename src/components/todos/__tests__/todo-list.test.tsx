@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { TodoList } from '../todo-list'
 import { TodoWithRelations } from '@/types/todo'
-import { TodoStatus } from '@prisma/client'
+import { TodoStatus, ProjectStatus } from '@prisma/client'
 
 // Mock child components
 jest.mock('../todo-card', () => ({
@@ -47,8 +47,8 @@ const createMockTodo = (overrides: Partial<TodoWithRelations> = {}): TodoWithRel
 describe('TodoList', () => {
   const mockTodos = [
     createMockTodo({ id: 'todo-1', title: 'Not Started Todo', status: TodoStatus.NOT_STARTED }),
-    createMockTodo({ id: 'todo-2', title: 'In Progress Todo', status: TodoStatus.IN_PROGRESS }),
-    createMockTodo({ id: 'todo-3', title: 'Completed Todo', status: TodoStatus.COMPLETED })
+    createMockTodo({ id: 'todo-2', title: 'In Progress Todo', status: ProjectStatus.IN_PROGRESS }),
+    createMockTodo({ id: 'todo-3', title: 'Completed Todo', status: ProjectStatus.COMPLETED })
   ]
 
   it('renders todos grouped by status when no filter applied', () => {
@@ -165,7 +165,7 @@ describe('TodoList', () => {
     
     // Create a list with no open todos
     const todosWithNoOpen = [
-      createMockTodo({ id: 'todo-1', title: 'Completed Todo', status: TodoStatus.COMPLETED })
+      createMockTodo({ id: 'todo-1', title: 'Completed Todo', status: ProjectStatus.COMPLETED })
     ]
     
     render(<TodoList todos={todosWithNoOpen} />)

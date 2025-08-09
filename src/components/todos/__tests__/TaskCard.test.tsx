@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { TaskCard } from '../TaskCard'
-import { TodoStatus } from '@prisma/client'
+import { TodoStatus, ProjectStatus } from '@prisma/client'
 
 // Mock DnD kit hooks
 jest.mock('@dnd-kit/sortable', () => ({
@@ -26,7 +26,7 @@ const mockTask = {
   id: 'task-1',
   title: 'Test Task',
   description: 'This is a test task description',
-  status: TodoStatus.IN_PROGRESS,
+  status: ProjectStatus.IN_PROGRESS,
   startDate: '2024-01-15T00:00:00Z',
   dueDate: '2024-01-20T00:00:00Z',
   createdAt: '2024-01-10T00:00:00Z',
@@ -134,7 +134,7 @@ describe('TaskCard', () => {
     const completedOverdueTask = {
       ...mockTask,
       dueDate: overdueDueDate.toISOString(),
-      status: TodoStatus.COMPLETED,
+      status: ProjectStatus.COMPLETED,
     }
     
     render(<TaskCard task={completedOverdueTask} projectName="Test Project" />)

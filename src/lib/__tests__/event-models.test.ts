@@ -1,3 +1,5 @@
+// TypeScript test fixes applied
+import { TodoStatus } from '@prisma/client'
 import { MaixEventStatus, RegistrationStatus } from '@prisma/client'
 
 // Mock Prisma
@@ -267,7 +269,7 @@ describe('Event Manager Models - Phase 1', () => {
         eventId: testEventId,
         projectId: null,
         creatorId: testUserId,
-        status: 'NOT_STARTED',
+        status: TodoStatus.NOT_STARTED,
         createdAt: new Date(),
         updatedAt: new Date()
       }
@@ -297,7 +299,7 @@ describe('Event Manager Models - Phase 1', () => {
         projectId,
         eventId: null,
         creatorId: testUserId,
-        status: 'NOT_STARTED',
+        status: TodoStatus.NOT_STARTED,
         createdAt: new Date(),
         updatedAt: new Date()
       }

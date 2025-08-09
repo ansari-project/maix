@@ -1,3 +1,4 @@
+// TypeScript test fixes applied
 /**
  * Tests for the unified project page with visibility controls
  */
@@ -69,7 +70,7 @@ describe('Project Page', () => {
         role: null
       })
 
-      const result = await ProjectPage({ params: mockParams })
+      const result = await ProjectPage({ params: Promise.resolve(mockParams) })
 
       expect(mockCanViewEntity).toHaveBeenCalledWith('project', 'project-1', undefined)
       expect(result).toBeDefined()
@@ -83,8 +84,25 @@ describe('Project Page', () => {
         visibility: 'PUBLIC',
         description: 'A public project'
       }
-      const mockUser = { id: 'user-1', name: 'Test User' }
-      const mockSession = { user: { id: 'user-1' } }
+      const mockUser = { id: 'user-1', name: 'Test User' ,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    isActive: true,
+    email: 'test@example.com',
+    password: null,
+    specialty: null,
+    bio: null,
+    availability: null,
+    portfolioUrl: null,
+    linkedinUrl: null,
+    githubUrl: null,
+    skills: [],
+    lastActiveAt: new Date(),
+    lastDigestSentAt: null
+  }
+      const mockSession = { user: { id: 'user-1' ,
+    expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+  } }
 
       mockGetServerSession.mockResolvedValue(mockSession)
       mockCanViewEntity.mockResolvedValue({
@@ -93,7 +111,7 @@ describe('Project Page', () => {
         role: 'ADMIN'
       })
 
-      const result = await ProjectPage({ params: mockParams })
+      const result = await ProjectPage({ params: Promise.resolve(mockParams) })
 
       expect(mockCanViewEntity).toHaveBeenCalledWith('project', 'project-1', 'user-1')
       expect(result).toBeDefined()
@@ -107,7 +125,7 @@ describe('Project Page', () => {
       mockCanViewEntity.mockRejectedValue(new NotFoundError('project not found'))
 
       try {
-        await ProjectPage({ params: mockParams })
+        await ProjectPage({ params: Promise.resolve(mockParams) })
       } catch (error) {
         // Expected to not reach here due to notFound() call
       }
@@ -117,13 +135,15 @@ describe('Project Page', () => {
     })
 
     it('should return 404 for private project accessed by unauthorized user', async () => {
-      const mockSession = { user: { id: 'user-1' } }
+      const mockSession = { user: { id: 'user-1' ,
+    expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+  } }
 
       mockGetServerSession.mockResolvedValue(mockSession)
       mockCanViewEntity.mockRejectedValue(new NotFoundError('project not found'))
 
       try {
-        await ProjectPage({ params: mockParams })
+        await ProjectPage({ params: Promise.resolve(mockParams) })
       } catch (error) {
         // Expected to not reach here due to notFound() call
       }
@@ -139,8 +159,25 @@ describe('Project Page', () => {
         visibility: 'PRIVATE',
         description: 'A private project'
       }
-      const mockUser = { id: 'user-1', name: 'Test User' }
-      const mockSession = { user: { id: 'user-1' } }
+      const mockUser = { id: 'user-1', name: 'Test User' ,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    isActive: true,
+    email: 'test@example.com',
+    password: null,
+    specialty: null,
+    bio: null,
+    availability: null,
+    portfolioUrl: null,
+    linkedinUrl: null,
+    githubUrl: null,
+    skills: [],
+    lastActiveAt: new Date(),
+    lastDigestSentAt: null
+  }
+      const mockSession = { user: { id: 'user-1' ,
+    expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+  } }
 
       mockGetServerSession.mockResolvedValue(mockSession)
       mockCanViewEntity.mockResolvedValue({
@@ -149,7 +186,7 @@ describe('Project Page', () => {
         role: 'ADMIN'
       })
 
-      const result = await ProjectPage({ params: mockParams })
+      const result = await ProjectPage({ params: Promise.resolve(mockParams) })
 
       expect(mockCanViewEntity).toHaveBeenCalledWith('project', 'project-1', 'user-1')
       expect(result).toBeDefined()
@@ -163,7 +200,7 @@ describe('Project Page', () => {
       mockCanViewEntity.mockRejectedValue(new NotFoundError('Project not found'))
 
       try {
-        await ProjectPage({ params: mockParams })
+        await ProjectPage({ params: Promise.resolve(mockParams) })
       } catch (error) {
         // Expected to not reach here due to notFound() call
       }
@@ -177,7 +214,7 @@ describe('Project Page', () => {
       mockGetServerSession.mockResolvedValue(null)
       mockCanViewEntity.mockRejectedValue(mockError)
 
-      await expect(ProjectPage({ params: mockParams })).rejects.toThrow('Database connection failed')
+      await expect(ProjectPage({ params: Promise.resolve(mockParams) })).rejects.toThrow('Database connection failed')
       expect(mockNotFound).not.toHaveBeenCalled()
     })
   })
@@ -189,8 +226,25 @@ describe('Project Page', () => {
         name: 'Test Project',
         visibility: 'PUBLIC'
       }
-      const mockUser = { id: 'user-1', name: 'Test User' }
-      const mockSession = { user: { id: 'user-1' } }
+      const mockUser = { id: 'user-1', name: 'Test User' ,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    isActive: true,
+    email: 'test@example.com',
+    password: null,
+    specialty: null,
+    bio: null,
+    availability: null,
+    portfolioUrl: null,
+    linkedinUrl: null,
+    githubUrl: null,
+    skills: [],
+    lastActiveAt: new Date(),
+    lastDigestSentAt: null
+  }
+      const mockSession = { user: { id: 'user-1' ,
+    expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+  } }
 
       mockGetServerSession.mockResolvedValue(mockSession)
       mockCanViewEntity.mockResolvedValue({
@@ -199,7 +253,7 @@ describe('Project Page', () => {
         role: 'ADMIN'
       })
 
-      const result = await ProjectPage({ params: mockParams })
+      const result = await ProjectPage({ params: Promise.resolve(mockParams) })
 
       expect(result).toBeDefined()
     })
@@ -210,8 +264,25 @@ describe('Project Page', () => {
         name: 'Test Project',
         visibility: 'PUBLIC'
       }
-      const mockUser = { id: 'user-1', name: 'Test User' }
-      const mockSession = { user: { id: 'user-1' } }
+      const mockUser = { id: 'user-1', name: 'Test User' ,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    isActive: true,
+    email: 'test@example.com',
+    password: null,
+    specialty: null,
+    bio: null,
+    availability: null,
+    portfolioUrl: null,
+    linkedinUrl: null,
+    githubUrl: null,
+    skills: [],
+    lastActiveAt: new Date(),
+    lastDigestSentAt: null
+  }
+      const mockSession = { user: { id: 'user-1' ,
+    expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+  } }
 
       mockGetServerSession.mockResolvedValue(mockSession)
       mockCanViewEntity.mockResolvedValue({
@@ -220,7 +291,7 @@ describe('Project Page', () => {
         role: null
       })
 
-      const result = await ProjectPage({ params: mockParams })
+      const result = await ProjectPage({ params: Promise.resolve(mockParams) })
 
       expect(result).toBeDefined()
     })
@@ -242,7 +313,7 @@ describe('Project Page', () => {
         role: null
       })
 
-      const result = await ProjectPage({ params: mockParams })
+      const result = await ProjectPage({ params: Promise.resolve(mockParams) })
 
       expect(mockCanViewEntity).toHaveBeenCalledWith('project', 'project-1', undefined)
       expect(result).toBeDefined()
@@ -254,7 +325,22 @@ describe('Project Page', () => {
         name: 'Public Project',
         visibility: 'PUBLIC'
       }
-      const mockUser = { id: 'user-1', name: 'Test User' }
+      const mockUser = { id: 'user-1', name: 'Test User' ,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    isActive: true,
+    email: 'test@example.com',
+    password: null,
+    specialty: null,
+    bio: null,
+    availability: null,
+    portfolioUrl: null,
+    linkedinUrl: null,
+    githubUrl: null,
+    skills: [],
+    lastActiveAt: new Date(),
+    lastDigestSentAt: null
+  }
 
       mockGetServerSession.mockResolvedValue({ user: { id: 'user-1' } })
       mockCanViewEntity.mockResolvedValue({
@@ -263,7 +349,7 @@ describe('Project Page', () => {
         role: 'ADMIN'
       })
 
-      const result = await ProjectPage({ params: mockParams })
+      const result = await ProjectPage({ params: Promise.resolve(mockParams) })
 
       expect(mockCanViewEntity).toHaveBeenCalledWith('project', 'project-1', 'user-1')
       expect(result).toBeDefined()

@@ -1,8 +1,10 @@
+// TypeScript test fixes applied
 /**
  * Integration tests for todo system within the project page
  * Tests the integration between TodoSection and TodoPostLink components
  */
 
+import { TodoStatus, ProjectStatus } from '@prisma/client'
 import React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { useSession } from 'next-auth/react'
@@ -28,7 +30,7 @@ const mockProject = {
   goal: 'Build an amazing app',
   description: 'A detailed description of the project',
   helpType: 'MVP',
-  status: 'IN_PROGRESS',
+  status: ProjectStatus.IN_PROGRESS,
   contactEmail: 'test@example.com',
   isActive: true,
   createdAt: '2024-01-01T00:00:00Z',
@@ -45,7 +47,7 @@ const mockTodos = [
     id: 'todo-1',
     title: 'Implement user authentication',
     description: 'Set up NextAuth.js with Google OAuth',
-    status: 'NOT_STARTED',
+    status: TodoStatus.NOT_STARTED,
     dueDate: null,
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
@@ -65,7 +67,7 @@ const mockTodos = [
     id: 'todo-2',
     title: 'Setup database schema',
     description: 'Create Prisma schema and run migrations',
-    status: 'IN_PROGRESS',
+    status: ProjectStatus.IN_PROGRESS,
     dueDate: null,
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
@@ -107,8 +109,21 @@ const mockProjectUpdates = [
 const mockUser = {
   id: 'owner-1',
   name: 'Project Owner',
-  email: 'owner@example.com'
-}
+  email: 'owner@example.com',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    isActive: true,
+    password: null,
+    specialty: null,
+    bio: null,
+    availability: null,
+    portfolioUrl: null,
+    linkedinUrl: null,
+    githubUrl: null,
+    skills: [],
+    lastActiveAt: new Date(),
+    lastDigestSentAt: null
+  }
 
 const mockVolunteerUser = {
   id: 'volunteer-1',

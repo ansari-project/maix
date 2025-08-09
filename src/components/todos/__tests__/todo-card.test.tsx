@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { TodoCard } from '../todo-card'
 import { TodoWithRelations } from '@/types/todo'
-import { TodoStatus } from '@prisma/client'
+import { TodoStatus, ProjectStatus } from '@prisma/client'
 
 // Mock the Markdown component
 jest.mock('@/components/ui/markdown', () => ({
@@ -111,7 +111,7 @@ describe('TodoCard', () => {
   })
 
   it('shows correct button text for IN_PROGRESS status', () => {
-    const inProgressTodo = { ...mockTodo, status: TodoStatus.IN_PROGRESS }
+    const inProgressTodo = { ...mockTodo, status: ProjectStatus.IN_PROGRESS }
     const mockOnStatusChange = jest.fn()
     render(<TodoCard todo={inProgressTodo} onStatusChange={mockOnStatusChange} />)
     
@@ -119,7 +119,7 @@ describe('TodoCard', () => {
   })
 
   it('does not show status button for COMPLETED todos', () => {
-    const completedTodo = { ...mockTodo, status: TodoStatus.COMPLETED }
+    const completedTodo = { ...mockTodo, status: ProjectStatus.COMPLETED }
     const mockOnStatusChange = jest.fn()
     render(<TodoCard todo={completedTodo} onStatusChange={mockOnStatusChange} />)
     

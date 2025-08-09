@@ -1,3 +1,4 @@
+// TypeScript test fixes applied
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useSession, signOut } from 'next-auth/react'
@@ -29,7 +30,7 @@ describe('Sidebar', () => {
           email: 'test@example.com', 
           name: 'Test User',
           username: 'testuser',
-          role: 'USER'
+          // role removed - not in User type
         },
         expires: '2024-01-01'
       },
@@ -101,7 +102,7 @@ describe('Sidebar', () => {
             email: 'waleedk@gmail.com', 
             name: 'Admin User',
             username: 'admin',
-            role: 'ADMIN'
+            // role removed - not in User type
           },
           expires: '2024-01-01'
         },

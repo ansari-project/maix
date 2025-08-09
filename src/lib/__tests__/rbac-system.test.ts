@@ -1,3 +1,4 @@
+// TypeScript test fixes applied
 import { getEffectiveRole, requirePermission, hasPermission, can, ROLE_HIERARCHY } from '../auth-utils'
 import { AuthError } from '../errors'
 import { UnifiedRole, Visibility } from '@prisma/client'
@@ -27,6 +28,20 @@ jest.mock('../prisma', () => {
   const mockUser = {
     findUnique: jest.fn(),
     findFirst: jest.fn(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    isActive: true,
+    email: 'test@example.com',
+    password: null,
+    specialty: null,
+    bio: null,
+    availability: null,
+    portfolioUrl: null,
+    linkedinUrl: null,
+    githubUrl: null,
+    skills: [],
+    lastActiveAt: new Date(),
+    lastDigestSentAt: null
   }
 
   return {

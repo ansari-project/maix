@@ -1,3 +1,5 @@
+// TypeScript test fixes applied
+import { TodoStatus } from '@prisma/client'
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals'
 import { PrismaClient } from '@prisma/client'
 import { cleanupTestDatabase, createTestUser, createTestOrganization } from '@/lib/test/db-test-utils'
@@ -23,7 +25,7 @@ describe('Personal Projects Integration Tests', () => {
       const todo = await prisma.todo.create({
         data: {
           title: 'Test Todo',
-          status: 'NOT_STARTED',
+          status: TodoStatus.NOT_STARTED,
           creatorId: testUser.id,
         }
       })
@@ -46,7 +48,7 @@ describe('Personal Projects Integration Tests', () => {
       const todo = await prisma.todo.create({
         data: {
           title: 'Future Task',
-          status: 'NOT_STARTED',
+          status: TodoStatus.NOT_STARTED,
           startDate: startDate,
           creatorId: testUser.id,
         }
@@ -81,7 +83,7 @@ describe('Personal Projects Integration Tests', () => {
       const standaloneTask = await prisma.todo.create({
         data: {
           title: 'Buy groceries',
-          status: 'NOT_STARTED',
+          status: TodoStatus.NOT_STARTED,
           creatorId: testUser.id,
           assigneeId: testUser.id,
           // No projectId - this is a standalone task

@@ -1,3 +1,4 @@
+// TypeScript test fixes applied
 import { NextRequest } from 'next/server'
 import { POST } from '../route'
 import { prisma } from '@/lib/prisma'
@@ -38,7 +39,19 @@ describe('/api/auth/signup', () => {
         username: validSignupData.username,
         email: validSignupData.email,
         password: 'hashed-password',
-      }
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    isActive: true,
+    specialty: null,
+    bio: null,
+    availability: null,
+    portfolioUrl: null,
+    linkedinUrl: null,
+    githubUrl: null,
+    skills: [],
+    lastActiveAt: new Date(),
+    lastDigestSentAt: null
+  }
 
       mockUserFindUnique
         .mockResolvedValueOnce(null) // First call for email check

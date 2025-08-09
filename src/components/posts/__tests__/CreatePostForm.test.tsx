@@ -1,3 +1,5 @@
+// TypeScript test fixes applied
+import { TodoStatus } from '@prisma/client'
 import { render, screen } from '@testing-library/react'
 import { CreatePostForm } from '../CreatePostForm'
 
@@ -11,7 +13,7 @@ jest.mock('next/navigation', () => ({
 
 describe('CreatePostForm', () => {
   const mockProjects = [
-    { id: 'proj-1', name: 'AI Assistant', ownerId: 'user-123', status: 'IN_PROGRESS' },
+    { id: 'proj-1', name: 'AI Assistant', ownerId: 'user-123', status: TodoStatus.IN_PROGRESS },
     { id: 'proj-2', name: 'ML Platform', ownerId: 'user-456', status: 'PLANNING' }
   ]
   

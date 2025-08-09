@@ -1,3 +1,5 @@
+// TypeScript test fixes applied
+import { TodoStatus, ProjectStatus } from '@prisma/client'
 import React from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
@@ -36,7 +38,7 @@ describe('FeedContainer - Celebration Display', () => {
             id: 'proj1',
             name: 'Test Project',
             description: 'A completed test project',
-            status: 'COMPLETED',
+            status: ProjectStatus.COMPLETED,
             helpType: 'MVP',
             isActive: false
           }
@@ -51,7 +53,7 @@ describe('FeedContainer - Celebration Display', () => {
             id: 'proj2',
             name: 'Active Project',
             description: 'An active project',
-            status: 'IN_PROGRESS',
+            status: ProjectStatus.IN_PROGRESS,
             helpType: 'MVP',
             isActive: true
           }
@@ -100,7 +102,7 @@ describe('FeedContainer - Celebration Display', () => {
             id: 'proj1',
             name: 'Recently Completed',
             description: 'Just completed',
-            status: 'COMPLETED',
+            status: ProjectStatus.COMPLETED,
             helpType: 'MVP'
           }
         },

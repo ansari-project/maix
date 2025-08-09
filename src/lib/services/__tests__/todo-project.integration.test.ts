@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals'
-import { TodoStatus } from '@prisma/client'
+import { TodoStatus, ProjectStatus } from '@prisma/client'
 import { cleanupTestDatabase, createTestUser } from '@/lib/test/db-test-utils'
 import {
   createTodo,

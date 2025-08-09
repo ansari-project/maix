@@ -1,3 +1,4 @@
+// TypeScript test fixes applied
 import React from 'react'
 import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { FeedContainer } from '../FeedContainer'
@@ -33,7 +34,8 @@ describe('FeedContainer', () => {
       id: 'user1',
       email: 'test@example.com',
       name: 'Test User',
-    },
+    expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+  },
   }
 
   beforeEach(() => {

@@ -1,3 +1,4 @@
+// TypeScript test fixes applied
 import { NextRequest } from 'next/server'
 
 // Mock all dependencies first before importing anything
@@ -40,13 +41,27 @@ describe('/api/questions/[id]/resolve', () => {
     id: 'ckl1234567890abcdefghijk1',
     email: 'john@example.com',
     name: 'John Doe',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    isActive: true,
+    password: null,
+    specialty: null,
+    bio: null,
+    availability: null,
+    portfolioUrl: null,
+    linkedinUrl: null,
+    githubUrl: null,
+    skills: [],
+    lastActiveAt: new Date(),
+    lastDigestSentAt: null
   }
 
   const mockSession = {
     user: {
       email: mockUser.email,
       name: mockUser.name,
-    },
+    expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+  },
   }
 
   const mockQuestion = {

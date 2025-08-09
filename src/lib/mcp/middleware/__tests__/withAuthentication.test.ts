@@ -1,3 +1,4 @@
+// TypeScript test fixes applied
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import { NextRequest } from 'next/server';
 import { authenticateRequest, withAuthentication } from '../withAuthentication';
@@ -18,6 +19,18 @@ describe('withAuthentication middleware', () => {
     email: 'test@example.com',
     name: 'Test User',
     isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    password: null,
+    specialty: null,
+    bio: null,
+    availability: null,
+    portfolioUrl: null,
+    linkedinUrl: null,
+    githubUrl: null,
+    skills: [],
+    lastActiveAt: new Date(),
+    lastDigestSentAt: null
   };
 
   const createMockRequest = (authHeader?: string) => {

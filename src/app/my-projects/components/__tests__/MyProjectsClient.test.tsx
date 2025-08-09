@@ -1,3 +1,5 @@
+// TypeScript test fixes applied
+import { TodoStatus } from '@prisma/client'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
@@ -30,6 +32,7 @@ const mockSession = {
     id: 'user1',
     name: 'John Doe',
     email: 'john@example.com',
+    expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
   },
 }
 
@@ -43,7 +46,7 @@ const mockProjects = [
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-15T00:00:00Z',
     isActive: true,
-    status: 'IN_PROGRESS',
+    status: TodoStatus.IN_PROGRESS,
     owner: {
       id: 'user1',
       name: 'John Doe',
@@ -64,7 +67,7 @@ const mockProjects = [
       {
         id: 'todo1',
         title: 'Complete React tutorial',
-        status: 'NOT_STARTED',
+        status: TodoStatus.NOT_STARTED,
       },
     ],
   },
@@ -77,7 +80,7 @@ const mockProjects = [
     createdAt: '2024-01-10T00:00:00Z',
     updatedAt: '2024-01-20T00:00:00Z',
     isActive: true,
-    status: 'COMPLETED',
+    status: TodoStatus.COMPLETED,
     owner: {
       id: 'user1',
       name: 'John Doe',
