@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -144,17 +145,19 @@ export default function ProfilePage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
+      <DashboardLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </DashboardLayout>
     )
   }
 
   if (!session) return null
 
   return (
-    <div className="bg-gradient-to-br from-primary to-accent px-4 py-2">
-      <div className="container mx-auto">
+    <DashboardLayout>
+      <div className="container mx-auto p-6">
         <Card className="max-w-2xl mx-auto">
           <CardHeader>
             <CardTitle className="text-2xl">Complete Your Profile</CardTitle>
@@ -325,6 +328,6 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </DashboardLayout>
   )
 }

@@ -22,7 +22,7 @@ export function CommunityPanel() {
         </div>
       </div>
       
-      <Card className="bg-gradient-to-br from-primary/5 to-accent/5">
+      <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg">What&apos;s happening</CardTitle>
         </CardHeader>

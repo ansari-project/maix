@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -81,21 +82,23 @@ export default function ProjectsPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
+      <DashboardLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </DashboardLayout>
     )
   }
 
   if (!session) return null
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary to-accent p-6">
-      <div className="container mx-auto px-4">
+    <DashboardLayout>
+      <div className="container mx-auto p-6">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-primary-foreground">Browse Projects</h1>
-            <p className="text-primary-foreground/80">Find AI/tech projects to contribute to</p>
+            <h1 className="text-3xl font-bold">Browse Projects</h1>
+            <p className="text-muted-foreground">Find AI/tech projects to contribute to</p>
           </div>
           <Button asChild>
             <Link href="/projects/new">Post Project</Link>
@@ -140,7 +143,7 @@ export default function ProjectsPage() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredProjects.length === 0 ? (
             <div className="col-span-full text-center py-12">
-              <div className="text-primary-foreground/60 mb-4">
+              <div className="text-muted-foreground mb-4">
                 {projects.length === 0 ? "No projects posted yet." : "No projects match your filters."}
               </div>
               <Button asChild>
@@ -223,6 +226,6 @@ export default function ProjectsPage() {
           )}
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   )
 }
