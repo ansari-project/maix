@@ -469,13 +469,27 @@ Before starting ANY new phase work (even exploratory edits):
 
 **Output**: Evaluation report with test results, metrics, and identified issues
 
-##### 6. Refine - Final Polish
+##### 6. Revise - Process Improvement & Documentation Updates
 
-**Purpose**: Address evaluation findings and prepare for production
+**Purpose**: Update project artifacts with implementation results and capture learnings for future projects
 
-**Process**: Fix identified issues, update documentation, optimize code, final quality checks
+**RENAMED FROM "REFINE"**: The "Revise" stage focuses specifically on updating documentation and capturing lessons learned, providing better clarity of purpose than "refine".
 
-**Output**: Production-ready release
+**Process**: 
+- **R1: Production Readiness** - Ensure production quality with measurable standards
+  - Address evaluation findings and prepare for production
+  - Fix identified issues, update documentation, optimize code, final quality checks
+  - Verify all production requirements met
+  
+- **R2: Process Learning & Documentation Updates** - Update artifacts and capture lessons learned
+  - **Update original design document** with implementation addendum showing final results
+  - **Update implementation plan** with project retrospective report analyzing what worked/didn't work
+  - **Add to lessons-learned.md** with cross-project insights and patterns for future reference
+  - **Document methodology improvements** discovered during the project
+
+**Key Principle**: **Update existing documents** rather than creating new ones to maintain coherent project history
+
+**Output**: Production-ready release with updated project artifacts and documented lessons learned
 
 #### Document Evolution
 
