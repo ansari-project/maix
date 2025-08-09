@@ -3,6 +3,8 @@ import { GET } from '../route'
 import { prisma } from '@/lib/prisma'
 import { filterPublicData } from '@/lib/public-data-filter'
 
+const mockPrisma = prisma as jest.Mocked<typeof prisma>
+
 // Mock dependencies
 jest.mock('@prisma/client', () => ({
   Prisma: {
@@ -44,7 +46,6 @@ jest.mock('@/lib/public-data-filter', () => ({
   filterPublicData: jest.fn((data) => data),
 }))
 
-const mockPrisma = prisma as jest.Mocked<typeof prisma>
 const mockFilterPublicData = filterPublicData as jest.MockedFunction<typeof filterPublicData>
 
 describe('/api/public/search', () => {
@@ -68,9 +69,9 @@ describe('/api/public/search', () => {
       })
 
       // Should not query database when no search query
-      expect(mockPrisma.project.findMany).not.toHaveBeenCalled()
-      expect(mockPrisma.product.findMany).not.toHaveBeenCalled()
-      expect(mockPrisma.post.findMany).not.toHaveBeenCalled()
+      expect(prisma.project.findMany).not.toHaveBeenCalled()
+      expect(prisma.product.findMany).not.toHaveBeenCalled()
+      expect(prisma.post.findMany).not.toHaveBeenCalled()
     })
 
     it('should search all content types by default', async () => {
@@ -125,7 +126,7 @@ describe('/api/public/search', () => {
       expect(data.total).toBe(3)
 
       // Verify search filters
-      expect(mockPrisma.project.findMany).toHaveBeenCalledWith({
+      expect(prisma.project.findMany).toHaveBeenCalledWith({
         where: {
           isActive: true,
           visibility: 'PUBLIC',
@@ -143,7 +144,7 @@ describe('/api/public/search', () => {
         },
       })
 
-      expect(mockPrisma.product.findMany).toHaveBeenCalledWith({
+      expect(prisma.product.findMany).toHaveBeenCalledWith({
         where: {
           visibility: 'PUBLIC',
           OR: [
@@ -159,7 +160,7 @@ describe('/api/public/search', () => {
         },
       })
 
-      expect(mockPrisma.post.findMany).toHaveBeenCalledWith({
+      expect(prisma.post.findMany).toHaveBeenCalledWith({
         where: {
           type: 'QUESTION',
           parentId: null,
@@ -199,9 +200,9 @@ describe('/api/public/search', () => {
       expect(data.products).toEqual([])
       expect(data.questions).toEqual([])
 
-      expect(mockPrisma.project.findMany).toHaveBeenCalled()
-      expect(mockPrisma.product.findMany).not.toHaveBeenCalled()
-      expect(mockPrisma.post.findMany).not.toHaveBeenCalled()
+      expect(prisma.project.findMany).toHaveBeenCalled()
+      expect(prisma.product.findMany).not.toHaveBeenCalled()
+      expect(prisma.post.findMany).not.toHaveBeenCalled()
     })
 
     it('should search only products when type=products', async () => {
@@ -218,9 +219,9 @@ describe('/api/public/search', () => {
       expect(data.products).toHaveLength(1)
       expect(data.questions).toEqual([])
 
-      expect(mockPrisma.project.findMany).not.toHaveBeenCalled()
-      expect(mockPrisma.product.findMany).toHaveBeenCalled()
-      expect(mockPrisma.post.findMany).not.toHaveBeenCalled()
+      expect(prisma.project.findMany).not.toHaveBeenCalled()
+      expect(prisma.product.findMany).toHaveBeenCalled()
+      expect(prisma.post.findMany).not.toHaveBeenCalled()
     })
 
     it('should search only questions when type=questions', async () => {
@@ -237,9 +238,9 @@ describe('/api/public/search', () => {
       expect(data.products).toEqual([])
       expect(data.questions).toHaveLength(1)
 
-      expect(mockPrisma.project.findMany).not.toHaveBeenCalled()
-      expect(mockPrisma.product.findMany).not.toHaveBeenCalled()
-      expect(mockPrisma.post.findMany).toHaveBeenCalled()
+      expect(prisma.project.findMany).not.toHaveBeenCalled()
+      expect(prisma.product.findMany).not.toHaveBeenCalled()
+      expect(prisma.post.findMany).toHaveBeenCalled()
     })
 
     it('should handle case-insensitive search', async () => {
@@ -269,13 +270,13 @@ describe('/api/public/search', () => {
       await GET(request)
 
       // Verify take: 20 was used for all queries
-      expect(mockPrisma.project.findMany).toHaveBeenCalledWith(
+      expect(prisma.project.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ take: 20 })
       )
-      expect(mockPrisma.product.findMany).toHaveBeenCalledWith(
+      expect(prisma.product.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ take: 20 })
       )
-      expect(mockPrisma.post.findMany).toHaveBeenCalledWith(
+      expect(prisma.post.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ take: 20 })
       )
     })

@@ -97,7 +97,7 @@ describe('manageProject tool', () => {
       expect(result.data).toEqual(mockProject);
       expect(result.message).toBe('Project "Test Project" created successfully');
       
-      expect(mockPrisma.$transaction).toHaveBeenCalled();
+      expect(prisma.$transaction).toHaveBeenCalled();
     });
 
     it('should require name for creation', async () => {
@@ -113,7 +113,7 @@ describe('manageProject tool', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('Validation error');
-      expect(mockPrisma.project.create).not.toHaveBeenCalled();
+      expect(prisma.project.create).not.toHaveBeenCalled();
     });
 
     it('should require all mandatory fields', async () => {
@@ -162,7 +162,7 @@ describe('manageProject tool', () => {
       expect(result.data).toEqual(mockProject);
       expect(result.message).toBe('Project "Test Project" updated successfully');
       
-      expect(mockPrisma.projectMember.findFirst).toHaveBeenCalledWith({
+      expect(prisma.projectMember.findFirst).toHaveBeenCalledWith({
         where: {
           projectId: 'project-123',
           userId: 'user-123',
@@ -170,7 +170,7 @@ describe('manageProject tool', () => {
         }
       });
       
-      expect(mockPrisma.project.update).toHaveBeenCalledWith({
+      expect(prisma.project.update).toHaveBeenCalledWith({
         where: { id: 'project-123' },
         data: {
           name: 'Updated Project Name',
@@ -242,7 +242,7 @@ describe('manageProject tool', () => {
       expect(result.success).toBe(true);
       expect(result.message).toBe('Project deleted successfully');
       
-      expect(mockPrisma.projectMember.findFirst).toHaveBeenCalledWith({
+      expect(prisma.projectMember.findFirst).toHaveBeenCalledWith({
         where: {
           projectId: 'project-123',
           userId: 'user-123',
@@ -250,7 +250,7 @@ describe('manageProject tool', () => {
         }
       });
       
-      expect(mockPrisma.project.delete).toHaveBeenCalledWith({
+      expect(prisma.project.delete).toHaveBeenCalledWith({
         where: { id: 'project-123' }
       });
     });
@@ -311,7 +311,7 @@ describe('manageProject tool', () => {
       expect(result.success).toBe(true);
       expect(result.data).toEqual(projectWithApplications);
       
-      expect(mockPrisma.project.findFirst).toHaveBeenCalledWith({
+      expect(prisma.project.findFirst).toHaveBeenCalledWith({
         where: { 
           id: 'project-123',
           OR: [
@@ -389,7 +389,7 @@ describe('manageProject tool', () => {
       expect(result.data).toEqual(projects);
       expect(result.message).toBe('Found 2 projects');
       
-      expect(mockPrisma.project.findMany).toHaveBeenCalledWith({
+      expect(prisma.project.findMany).toHaveBeenCalledWith({
         where: {
           OR: [
             // Direct project membership

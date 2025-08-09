@@ -11,6 +11,17 @@ import {
 } from '../invitation-utils';
 import { prisma } from '../prisma';
 
+// Mock prisma
+jest.mock('../prisma', () => ({
+  prisma: {
+    invitation: {
+      findFirst: jest.fn(),
+      findUnique: jest.fn(),
+      deleteMany: jest.fn(),
+    },
+  },
+}));
+
 const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 
 describe('invitation-utils', () => {
@@ -128,7 +139,7 @@ describe('invitation-utils', () => {
       const result = await isEmailAlreadyInvited('test@example.com', 'org-1');
 
       expect(result).toBe(true);
-      expect(mockPrisma.invitation.findFirst).toHaveBeenCalledWith({
+      expect(prisma.invitation.findFirst).toHaveBeenCalledWith({
         where: {
           email: 'test@example.com',
           status: 'PENDING',
@@ -178,7 +189,7 @@ describe('invitation-utils', () => {
         valid: false,
         error: 'NOT_FOUND'
       });
-      expect(mockPrisma.invitation.findUnique).toHaveBeenCalledWith({
+      expect(prisma.invitation.findUnique).toHaveBeenCalledWith({
         where: { hashedToken: hashInvitationToken(token) },
         include: expect.any(Object)
       });
@@ -302,7 +313,7 @@ describe('invitation-utils', () => {
       const result = await cleanupExpiredInvitations();
 
       expect(result).toBe(5);
-      expect(mockPrisma.invitation.deleteMany).toHaveBeenCalledWith({
+      expect(prisma.invitation.deleteMany).toHaveBeenCalledWith({
         where: {
           status: 'PENDING',
           expiresAt: { lt: expect.any(Date) }

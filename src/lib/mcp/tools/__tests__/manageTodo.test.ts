@@ -21,9 +21,9 @@ jest.mock('@/lib/permissions/todo-permissions', () => ({
   canViewTodos: jest.fn(),
 }))
 
-const mockPrisma = prisma as jest.Mocked<typeof prisma>
 const mockCanManageTodos = canManageTodos as jest.MockedFunction<typeof canManageTodos>
 const mockCanViewTodos = canViewTodos as jest.MockedFunction<typeof canViewTodos>
+const mockPrisma = prisma as jest.Mocked<typeof prisma>
 
 describe('handleManageTodo', () => {
   const mockUser: User = {
@@ -78,7 +78,7 @@ describe('handleManageTodo', () => {
       }, mockContext)
 
       expect(mockCanManageTodos).toHaveBeenCalledWith('user-1', 'project-1')
-      expect(mockPrisma.todo.create).toHaveBeenCalledWith({
+      expect(prisma.todo.create).toHaveBeenCalledWith({
         data: {
           title: 'Test Todo',
           description: 'Test description',

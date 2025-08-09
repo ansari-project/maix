@@ -17,6 +17,8 @@ jest.mock('@/lib/prisma', () => ({
 
 import { POST } from '../route'
 import { prisma } from '@/lib/prisma'
+
+const mockPrisma = prisma as jest.Mocked<typeof prisma>
 import { 
   mockRequireAuth, 
   mockUser,
@@ -25,7 +27,6 @@ import {
 } from '@/lib/test-utils'
 import { handleApiError, successResponse, parseRequestBody } from '@/lib/api-utils'
 
-const mockPrisma = prisma as jest.Mocked<typeof prisma>
 const mockHandleApiError = handleApiError as jest.MockedFunction<typeof handleApiError>
 const mockSuccessResponse = successResponse as jest.MockedFunction<typeof successResponse>
 const mockParseRequestBody = parseRequestBody as jest.MockedFunction<typeof parseRequestBody>
@@ -101,7 +102,7 @@ describe('/api/questions/[id]/resolve', () => {
       expect(data.bestAnswerId).toBe('ckl1234567890abcdefghijk3')
       expect(data.isResolved).toBe(true)
 
-      expect(mockPrisma.post.update).toHaveBeenCalledWith({
+      expect(prisma.post.update).toHaveBeenCalledWith({
         where: { id: 'ckl1234567890abcdefghijk2' },
         data: { 
           isResolved: true,
@@ -148,7 +149,7 @@ describe('/api/questions/[id]/resolve', () => {
       const response = await POST(request, { params: Promise.resolve({ id: 'ckl1234567890abcdefghijk2' }) })
 
       expect(response.status).toBe(403)
-      expect(mockPrisma.post.update).not.toHaveBeenCalled()
+      expect(prisma.post.update).not.toHaveBeenCalled()
     })
 
     it('should reject if question does not exist', async () => {
@@ -172,7 +173,7 @@ describe('/api/questions/[id]/resolve', () => {
       const response = await POST(request, { params: Promise.resolve({ id: 'non-existent' }) })
 
       expect(response.status).toBe(404)
-      expect(mockPrisma.post.update).not.toHaveBeenCalled()
+      expect(prisma.post.update).not.toHaveBeenCalled()
     })
 
     it('should reject if post is not a question', async () => {
@@ -204,7 +205,7 @@ describe('/api/questions/[id]/resolve', () => {
       const response = await POST(request, { params: Promise.resolve({ id: 'update-123' }) })
 
       expect(response.status).toBe(400)
-      expect(mockPrisma.post.update).not.toHaveBeenCalled()
+      expect(prisma.post.update).not.toHaveBeenCalled()
     })
 
     it('should reject if answer does not exist', async () => {
@@ -231,7 +232,7 @@ describe('/api/questions/[id]/resolve', () => {
       const response = await POST(request, { params: Promise.resolve({ id: 'ckl1234567890abcdefghijk2' }) })
 
       expect(response.status).toBe(400)
-      expect(mockPrisma.post.update).not.toHaveBeenCalled()
+      expect(prisma.post.update).not.toHaveBeenCalled()
     })
 
     it('should reject if answer is not an answer to this question', async () => {
@@ -263,7 +264,7 @@ describe('/api/questions/[id]/resolve', () => {
       const response = await POST(request, { params: Promise.resolve({ id: 'ckl1234567890abcdefghijk2' }) })
 
       expect(response.status).toBe(400)
-      expect(mockPrisma.post.update).not.toHaveBeenCalled()
+      expect(prisma.post.update).not.toHaveBeenCalled()
     })
 
     it('should require authentication', async () => {
@@ -287,7 +288,7 @@ describe('/api/questions/[id]/resolve', () => {
       const response = await POST(request, { params: Promise.resolve({ id: 'ckl1234567890abcdefghijk2' }) })
 
       expect(response.status).toBe(401)
-      expect(mockPrisma.post.update).not.toHaveBeenCalled()
+      expect(prisma.post.update).not.toHaveBeenCalled()
     })
 
     it('should validate request body', async () => {
@@ -312,7 +313,7 @@ describe('/api/questions/[id]/resolve', () => {
       const response = await POST(request, { params: Promise.resolve({ id: 'ckl1234567890abcdefghijk2' }) })
 
       expect(response.status).toBe(400)
-      expect(mockPrisma.post.update).not.toHaveBeenCalled()
+      expect(prisma.post.update).not.toHaveBeenCalled()
     })
 
     it('should allow updating best answer to a different answer', async () => {
@@ -356,7 +357,7 @@ describe('/api/questions/[id]/resolve', () => {
       const response = await POST(request, { params: Promise.resolve({ id: 'ckl1234567890abcdefghijk2' }) })
 
       expect(response.status).toBe(200)
-      expect(mockPrisma.post.update).toHaveBeenCalledWith({
+      expect(prisma.post.update).toHaveBeenCalledWith({
         where: { id: 'ckl1234567890abcdefghijk2' },
         data: { 
           isResolved: true,

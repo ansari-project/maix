@@ -28,7 +28,6 @@ import {
 } from '@/lib/test-utils'
 import { handleApiError, successResponse, parseRequestBody } from '@/lib/api-utils'
 
-const mockPrisma = prisma as jest.Mocked<typeof prisma>
 const mockHandleApiError = handleApiError as jest.MockedFunction<typeof handleApiError>
 const mockSuccessResponse = successResponse as jest.MockedFunction<typeof successResponse>
 const mockParseRequestBody = parseRequestBody as jest.MockedFunction<typeof parseRequestBody>
@@ -87,9 +86,9 @@ describe('/api/projects/[id]/apply', () => {
     test('should create application with valid data', async () => {
       mockRequireAuth.mockResolvedValue(mockUser as any)
       mockParseRequestBody.mockResolvedValue(validApplicationData)
-      mockPrisma.project.findUnique.mockResolvedValue(mockProject as any)
-      mockPrisma.application.findUnique.mockResolvedValue(null)
-      mockPrisma.application.create.mockResolvedValue(mockApplication as any)
+      ;(prisma.project.findUnique as jest.Mock).mockResolvedValue(mockProject as any)
+      ;(prisma.application.findUnique as jest.Mock).mockResolvedValue(null)
+      ;(prisma.application.create as jest.Mock).mockResolvedValue(mockApplication as any)
       mockSuccessResponse.mockReturnValue(
         mockApiSuccessResponse(mockApplication, 201) as any
       )
@@ -100,7 +99,7 @@ describe('/api/projects/[id]/apply', () => {
 
       expect(response.status).toBe(201)
       expect(responseData.message).toBe(validApplicationData.message)
-      expect(mockPrisma.application.create).toHaveBeenCalledWith({
+      expect(prisma.application.create).toHaveBeenCalledWith({
         data: {
           message: validApplicationData.message,
           userId: mockUser.id,
@@ -158,7 +157,7 @@ describe('/api/projects/[id]/apply', () => {
     test('should return 404 for non-existent project', async () => {
       mockRequireAuth.mockResolvedValue(mockUser as any)
       mockParseRequestBody.mockResolvedValue(validApplicationData)
-      mockPrisma.project.findUnique.mockResolvedValue(null)
+      ;(prisma.project.findUnique as jest.Mock).mockResolvedValue(null)
       mockHandleApiError.mockReturnValue(
         mockApiErrorResponse('Project not found', 404) as any
       )
@@ -180,8 +179,8 @@ describe('/api/projects/[id]/apply', () => {
 
       mockRequireAuth.mockResolvedValue(mockUser as any)
       mockParseRequestBody.mockResolvedValue(validApplicationData)
-      mockPrisma.project.findUnique.mockResolvedValue(mockProject as any)
-      mockPrisma.application.findUnique.mockResolvedValue(existingApplication as any)
+      ;(prisma.project.findUnique as jest.Mock).mockResolvedValue(mockProject as any)
+      ;(prisma.application.findUnique as jest.Mock).mockResolvedValue(existingApplication as any)
       mockHandleApiError.mockReturnValue(
         mockApiErrorResponse('You have already applied to this project', 400) as any
       )
@@ -202,8 +201,8 @@ describe('/api/projects/[id]/apply', () => {
 
       mockRequireAuth.mockResolvedValue(mockUser as any)
       mockParseRequestBody.mockResolvedValue(validApplicationData)
-      mockPrisma.project.findUnique.mockResolvedValue(inactiveProject as any)
-      mockPrisma.application.findUnique.mockResolvedValue(null)
+      ;(prisma.project.findUnique as jest.Mock).mockResolvedValue(inactiveProject as any)
+      ;(prisma.application.findUnique as jest.Mock).mockResolvedValue(null)
       mockHandleApiError.mockReturnValue(
         mockApiErrorResponse('This project is not accepting applications', 400) as any
       )
@@ -301,9 +300,9 @@ describe('/api/projects/[id]/apply', () => {
     test('should check for existing application with correct composite key', async () => {
       mockRequireAuth.mockResolvedValue(mockUser as any)
       mockParseRequestBody.mockResolvedValue(validApplicationData)
-      mockPrisma.project.findUnique.mockResolvedValue(mockProject as any)
-      mockPrisma.application.findUnique.mockResolvedValue(null)
-      mockPrisma.application.create.mockResolvedValue(mockApplication as any)
+      ;(prisma.project.findUnique as jest.Mock).mockResolvedValue(mockProject as any)
+      ;(prisma.application.findUnique as jest.Mock).mockResolvedValue(null)
+      ;(prisma.application.create as jest.Mock).mockResolvedValue(mockApplication as any)
       mockSuccessResponse.mockReturnValue(
         mockApiSuccessResponse(mockApplication, 201) as any
       )
@@ -311,7 +310,7 @@ describe('/api/projects/[id]/apply', () => {
       const request = createMockRequest(validApplicationData)
       const response = await POST(request, { params: mockParams })
 
-      expect(mockPrisma.application.findUnique).toHaveBeenCalledWith({
+      expect(prisma.application.findUnique).toHaveBeenCalledWith({
         where: {
           userId_projectId: {
             userId: mockUser.id,
@@ -340,7 +339,7 @@ describe('/api/projects/[id]/apply', () => {
     test('should handle database errors during project lookup', async () => {
       mockRequireAuth.mockResolvedValue(mockUser as any)
       mockParseRequestBody.mockResolvedValue(validApplicationData)
-      mockPrisma.project.findUnique.mockRejectedValue(new Error('Database error'))
+      ;(prisma.project.findUnique as jest.Mock).mockRejectedValue(new Error('Database error'))
       mockHandleApiError.mockReturnValue(
         mockApiErrorResponse('Internal server error', 500) as any
       )
@@ -356,9 +355,9 @@ describe('/api/projects/[id]/apply', () => {
     test('should handle database errors during application creation', async () => {
       mockRequireAuth.mockResolvedValue(mockUser as any)
       mockParseRequestBody.mockResolvedValue(validApplicationData)
-      mockPrisma.project.findUnique.mockResolvedValue(mockProject as any)
-      mockPrisma.application.findUnique.mockResolvedValue(null)
-      mockPrisma.application.create.mockRejectedValue(new Error('Database error'))
+      ;(prisma.project.findUnique as jest.Mock).mockResolvedValue(mockProject as any)
+      ;(prisma.application.findUnique as jest.Mock).mockResolvedValue(null)
+      ;(prisma.application.create as jest.Mock).mockRejectedValue(new Error('Database error'))
       mockHandleApiError.mockReturnValue(
         mockApiErrorResponse('Internal server error', 500) as any
       )
@@ -374,9 +373,9 @@ describe('/api/projects/[id]/apply', () => {
     test('should include project info in application details', async () => {
       mockRequireAuth.mockResolvedValue(mockUser as any)
       mockParseRequestBody.mockResolvedValue(validApplicationData)
-      mockPrisma.project.findUnique.mockResolvedValue(mockProject as any)
-      mockPrisma.application.findUnique.mockResolvedValue(null)
-      mockPrisma.application.create.mockResolvedValue(mockApplication as any)
+      ;(prisma.project.findUnique as jest.Mock).mockResolvedValue(mockProject as any)
+      ;(prisma.application.findUnique as jest.Mock).mockResolvedValue(null)
+      ;(prisma.application.create as jest.Mock).mockResolvedValue(mockApplication as any)
       mockSuccessResponse.mockReturnValue(
         mockApiSuccessResponse(mockApplication, 201) as any
       )
@@ -384,7 +383,7 @@ describe('/api/projects/[id]/apply', () => {
       const request = createMockRequest(validApplicationData)
       const response = await POST(request, { params: mockParams })
 
-      expect(mockPrisma.project.findUnique).toHaveBeenCalledWith({
+      expect(prisma.project.findUnique).toHaveBeenCalledWith({
         where: { id: mockParams.id },
         include: {
           applications: true,

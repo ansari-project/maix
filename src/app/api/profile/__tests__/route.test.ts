@@ -14,6 +14,8 @@ jest.mock('@/lib/prisma', () => ({
 
 import { GET, PUT } from '../route'
 import { prisma } from '@/lib/prisma'
+
+const mockPrisma = prisma as jest.Mocked<typeof prisma>
 import { 
   mockRequireAuth, 
   mockAuthenticatedUser, 
@@ -38,7 +40,6 @@ jest.mock('@prisma/client', () => ({
   },
 }))
 
-const mockPrisma = prisma as jest.Mocked<typeof prisma>
 const mockHandleApiError = handleApiError as jest.MockedFunction<typeof handleApiError>
 const mockSuccessResponse = successResponse as jest.MockedFunction<typeof successResponse>
 const mockParseRequestBody = parseRequestBody as jest.MockedFunction<typeof parseRequestBody>
@@ -160,7 +161,7 @@ describe('/api/profile', () => {
 
       expect(response.status).toBe(200)
       expect(responseData.name).toBe('Jane Doe')
-      expect(mockPrisma.user.update).toHaveBeenCalled()
+      expect(prisma.user.update).toHaveBeenCalled()
     })
 
     test('should return 401 for unauthenticated user', async () => {
@@ -249,7 +250,7 @@ describe('/api/profile', () => {
       const response = await PUT(request)
 
       expect(response.status).toBe(200)
-      expect(mockPrisma.user.update).toHaveBeenCalled()
+      expect(prisma.user.update).toHaveBeenCalled()
     })
 
     test('should validate specialty enum', async () => {
@@ -347,7 +348,7 @@ describe('/api/profile', () => {
       const response = await PUT(request)
 
       expect(response.status).toBe(200)
-      expect(mockPrisma.user.update).toHaveBeenCalled()
+      expect(prisma.user.update).toHaveBeenCalled()
     })
   })
 })

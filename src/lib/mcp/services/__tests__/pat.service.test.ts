@@ -105,7 +105,7 @@ describe('PAT Service', () => {
       const result = await validatePersonalAccessToken(token);
 
       expect(result).toBeNull();
-      expect(mockPrisma.personalAccessToken.findUnique).toHaveBeenCalledWith({
+      expect(prisma.personalAccessToken.findUnique).toHaveBeenCalledWith({
         where: { tokenHash: hashToken(token) },
         include: { user: true },
       });
@@ -133,7 +133,7 @@ describe('PAT Service', () => {
       const result = await validatePersonalAccessToken(token);
 
       expect(result).toEqual(mockUser);
-      expect(mockPrisma.personalAccessToken.update).toHaveBeenCalledWith({
+      expect(prisma.personalAccessToken.update).toHaveBeenCalledWith({
         where: { id: 'token-123' },
         data: { lastUsedAt: expect.any(Date) },
       });
@@ -198,7 +198,7 @@ describe('PAT Service', () => {
 
       expect(result.token).toMatch(/^maix_pat_[a-f0-9]{64}$/);
       expect(result.tokenRecord).toEqual(mockTokenRecord);
-      expect(mockPrisma.personalAccessToken.create).toHaveBeenCalledWith({
+      expect(prisma.personalAccessToken.create).toHaveBeenCalledWith({
         data: {
           userId: 'user-123',
           name: 'Test Token',
@@ -222,7 +222,7 @@ describe('PAT Service', () => {
 
       expect(result.token).toMatch(/^maix_pat_[a-f0-9]{64}$/);
       expect(result.tokenRecord).toEqual(tokenRecordWithExpiry);
-      expect(mockPrisma.personalAccessToken.create).toHaveBeenCalledWith({
+      expect(prisma.personalAccessToken.create).toHaveBeenCalledWith({
         data: {
           userId: 'user-123',
           name: 'Test Token',
@@ -252,7 +252,7 @@ describe('PAT Service', () => {
       const result = await revokePersonalAccessToken('token-123', 'user-123');
 
       expect(result).toBe(true);
-      expect(mockPrisma.personalAccessToken.delete).toHaveBeenCalledWith({
+      expect(prisma.personalAccessToken.delete).toHaveBeenCalledWith({
         where: {
           id: 'token-123',
           userId: 'user-123',
@@ -274,7 +274,7 @@ describe('PAT Service', () => {
 
       await revokePersonalAccessToken('token-123', 'user-456');
 
-      expect(mockPrisma.personalAccessToken.delete).toHaveBeenCalledWith({
+      expect(prisma.personalAccessToken.delete).toHaveBeenCalledWith({
         where: {
           id: 'token-123',
           userId: 'user-456', // Should use the provided userId
@@ -307,7 +307,7 @@ describe('PAT Service', () => {
       const result = await listPersonalAccessTokens('user-123');
 
       expect(result).toEqual(mockTokens);
-      expect(mockPrisma.personalAccessToken.findMany).toHaveBeenCalledWith({
+      expect(prisma.personalAccessToken.findMany).toHaveBeenCalledWith({
         where: { userId: 'user-123' },
         select: {
           id: true,

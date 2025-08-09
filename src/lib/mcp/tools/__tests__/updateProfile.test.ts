@@ -67,7 +67,7 @@ describe('updateProfile tool', () => {
     expect(result.data).toEqual(mockUpdatedUser);
     expect(result.message).toBe('Profile updated successfully for test@example.com');
     
-    expect(mockPrisma.user.update).toHaveBeenCalledWith({
+    expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: 'user-123' },
       data: params,
       select: {
@@ -99,7 +99,7 @@ describe('updateProfile tool', () => {
     const result = await updateProfileTool.handler(params, mockContext);
 
     expect(result.success).toBe(true);
-    expect(mockPrisma.user.update).toHaveBeenCalledWith({
+    expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: 'user-123' },
       data: {
         name: 'Updated Name',
@@ -119,7 +119,7 @@ describe('updateProfile tool', () => {
 
     expect(result.success).toBe(false);
     expect(result.error).toContain('Validation error');
-    expect(mockPrisma.user.update).not.toHaveBeenCalled();
+    expect(prisma.user.update).not.toHaveBeenCalled();
   });
 
   it('should handle database errors', async () => {
@@ -181,7 +181,7 @@ describe('updateProfile tool', () => {
     const result = await updateProfileTool.handler(params, mockContext);
 
     expect(result.success).toBe(true);
-    expect(mockPrisma.user.update).toHaveBeenCalledWith({
+    expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: 'user-123' },
       data: {},
       select: expect.any(Object),

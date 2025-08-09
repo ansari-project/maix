@@ -19,7 +19,6 @@ jest.mock('@/lib/permissions/todo-permissions', () => ({
   canViewTodos: jest.fn(),
 }))
 
-const mockPrisma = prisma as jest.Mocked<typeof prisma>
 const mockCanViewTodos = canViewTodos as jest.MockedFunction<typeof canViewTodos>
 
 describe('handleSearchTodos', () => {
@@ -70,14 +69,14 @@ describe('handleSearchTodos', () => {
         }
       ]
 
-      mockPrisma.todo.findMany.mockResolvedValue(mockTodos)
+      ;(prisma.todo.findMany as jest.Mock).mockResolvedValue(mockTodos)
 
       const result = await handleSearchTodos({
         projectId: 'project-1'
       }, mockContext)
 
       expect(mockCanViewTodos).toHaveBeenCalledWith('user-1', 'project-1')
-      expect(mockPrisma.todo.findMany).toHaveBeenCalledWith({
+      expect(prisma.todo.findMany).toHaveBeenCalledWith({
         where: { projectId: 'project-1' },
         include: {
           creator: { select: { name: true, email: true } },
@@ -126,12 +125,12 @@ describe('handleSearchTodos', () => {
         }
       ]
 
-      mockPrisma.project.findMany.mockResolvedValue(mockProjects)
-      mockPrisma.todo.findMany.mockResolvedValue(mockTodos)
+      ;(prisma.project.findMany as jest.Mock).mockResolvedValue(mockProjects)
+      ;(prisma.todo.findMany as jest.Mock).mockResolvedValue(mockTodos)
 
       const result = await handleSearchTodos({}, mockContext)
 
-      expect(mockPrisma.project.findMany).toHaveBeenCalledWith({
+      expect(prisma.project.findMany).toHaveBeenCalledWith({
         where: {
           OR: [
             { ownerId: 'user-1' },
@@ -148,7 +147,7 @@ describe('handleSearchTodos', () => {
         select: { id: true }
       })
 
-      expect(mockPrisma.todo.findMany).toHaveBeenCalledWith({
+      expect(prisma.todo.findMany).toHaveBeenCalledWith({
         where: {
           projectId: {
             in: ['project-1', 'project-2']
@@ -173,7 +172,7 @@ describe('handleSearchTodos', () => {
     })
 
     it('should return message when user has no accessible projects', async () => {
-      mockPrisma.project.findMany.mockResolvedValue([])
+      ;(prisma.project.findMany as jest.Mock).mockResolvedValue([])
 
       const result = await handleSearchTodos({}, mockContext)
 
@@ -184,17 +183,17 @@ describe('handleSearchTodos', () => {
   describe('search with filters', () => {
     beforeEach(() => {
       const mockProjects = [{ id: 'project-1' }]
-      mockPrisma.project.findMany.mockResolvedValue(mockProjects)
+      ;(prisma.project.findMany as jest.Mock).mockResolvedValue(mockProjects)
     })
 
     it('should filter by status', async () => {
-      mockPrisma.todo.findMany.mockResolvedValue([])
+      ;(prisma.todo.findMany as jest.Mock).mockResolvedValue([])
 
       await handleSearchTodos({
         status: ['OPEN', 'IN_PROGRESS']
       }, mockContext)
 
-      expect(mockPrisma.todo.findMany).toHaveBeenCalledWith(
+      expect(prisma.todo.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             status: { in: ['OPEN', 'IN_PROGRESS'] }
@@ -204,13 +203,13 @@ describe('handleSearchTodos', () => {
     })
 
     it('should filter by assignee', async () => {
-      mockPrisma.todo.findMany.mockResolvedValue([])
+      ;(prisma.todo.findMany as jest.Mock).mockResolvedValue([])
 
       await handleSearchTodos({
         assigneeId: 'assignee-1'
       }, mockContext)
 
-      expect(mockPrisma.todo.findMany).toHaveBeenCalledWith(
+      expect(prisma.todo.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             assigneeId: 'assignee-1'
@@ -220,13 +219,13 @@ describe('handleSearchTodos', () => {
     })
 
     it('should filter by creator', async () => {
-      mockPrisma.todo.findMany.mockResolvedValue([])
+      ;(prisma.todo.findMany as jest.Mock).mockResolvedValue([])
 
       await handleSearchTodos({
         creatorId: 'creator-1'
       }, mockContext)
 
-      expect(mockPrisma.todo.findMany).toHaveBeenCalledWith(
+      expect(prisma.todo.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             creatorId: 'creator-1'
@@ -236,13 +235,13 @@ describe('handleSearchTodos', () => {
     })
 
     it('should filter by query text', async () => {
-      mockPrisma.todo.findMany.mockResolvedValue([])
+      ;(prisma.todo.findMany as jest.Mock).mockResolvedValue([])
 
       await handleSearchTodos({
         query: 'test search'
       }, mockContext)
 
-      expect(mockPrisma.todo.findMany).toHaveBeenCalledWith(
+      expect(prisma.todo.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             OR: [
@@ -255,7 +254,7 @@ describe('handleSearchTodos', () => {
     })
 
     it('should filter todos due soon', async () => {
-      mockPrisma.todo.findMany.mockResolvedValue([])
+      ;(prisma.todo.findMany as jest.Mock).mockResolvedValue([])
 
       const now = new Date()
       const nextWeek = new Date()
@@ -265,19 +264,19 @@ describe('handleSearchTodos', () => {
         dueSoon: true
       }, mockContext)
 
-      const callArgs = mockPrisma.todo.findMany.mock.calls[0][0]
+      const callArgs = (prisma.todo.findMany as jest.Mock).mock.calls[0][0]
       expect(callArgs.where.dueDate).toHaveProperty('gte')
       expect(callArgs.where.dueDate).toHaveProperty('lte')
     })
 
     it('should filter overdue todos', async () => {
-      mockPrisma.todo.findMany.mockResolvedValue([])
+      ;(prisma.todo.findMany as jest.Mock).mockResolvedValue([])
 
       await handleSearchTodos({
         overdue: true
       }, mockContext)
 
-      const callArgs = mockPrisma.todo.findMany.mock.calls[0][0]
+      const callArgs = (prisma.todo.findMany as jest.Mock).mock.calls[0][0]
       expect(callArgs.where.dueDate).toHaveProperty('lt')
       expect(callArgs.where.status).toEqual({ not: "COMPLETED" })
     })
@@ -286,8 +285,8 @@ describe('handleSearchTodos', () => {
   describe('pagination', () => {
     beforeEach(() => {
       const mockProjects = [{ id: 'project-1' }]
-      mockPrisma.project.findMany.mockResolvedValue(mockProjects)
-      mockPrisma.todo.findMany.mockResolvedValue([])
+      ;(prisma.project.findMany as jest.Mock).mockResolvedValue(mockProjects)
+      ;(prisma.todo.findMany as jest.Mock).mockResolvedValue([])
     })
 
     it('should apply limit and offset', async () => {
@@ -296,7 +295,7 @@ describe('handleSearchTodos', () => {
         offset: 5
       }, mockContext)
 
-      expect(mockPrisma.todo.findMany).toHaveBeenCalledWith(
+      expect(prisma.todo.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           take: 10,
           skip: 5
@@ -307,7 +306,7 @@ describe('handleSearchTodos', () => {
     it('should use default limit when not specified', async () => {
       await handleSearchTodos({}, mockContext)
 
-      expect(mockPrisma.todo.findMany).toHaveBeenCalledWith(
+      expect(prisma.todo.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           take: 20,
           skip: 0
@@ -319,7 +318,7 @@ describe('handleSearchTodos', () => {
   describe('result formatting', () => {
     beforeEach(() => {
       const mockProjects = [{ id: 'project-1' }]
-      mockPrisma.project.findMany.mockResolvedValue(mockProjects)
+      ;(prisma.project.findMany as jest.Mock).mockResolvedValue(mockProjects)
     })
 
     it('should format overdue todos with warning', async () => {
@@ -338,7 +337,7 @@ describe('handleSearchTodos', () => {
         }
       ]
 
-      mockPrisma.todo.findMany.mockResolvedValue(mockTodos)
+      ;(prisma.todo.findMany as jest.Mock).mockResolvedValue(mockTodos)
 
       const result = await handleSearchTodos({}, mockContext)
 
@@ -346,7 +345,7 @@ describe('handleSearchTodos', () => {
     })
 
     it('should return appropriate message when no todos found with filters', async () => {
-      mockPrisma.todo.findMany.mockResolvedValue([])
+      ;(prisma.todo.findMany as jest.Mock).mockResolvedValue([])
 
       const result = await handleSearchTodos({
         query: 'nonexistent',

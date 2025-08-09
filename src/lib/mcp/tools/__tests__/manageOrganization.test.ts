@@ -77,7 +77,7 @@ describe('manageOrganization MCP Tool', () => {
         aiEngagement: params.aiEngagement,
       })
 
-      expect(mockPrisma.organization.create).toHaveBeenCalledWith({
+      expect(prisma.organization.create).toHaveBeenCalledWith({
         data: {
           name: params.name,
           slug: params.slug,
@@ -119,7 +119,7 @@ describe('manageOrganization MCP Tool', () => {
       const result = await manageOrganizationTool.handler(params, mockContext)
 
       expect(result.success).toBe(true)
-      expect(mockPrisma.organization.create).toHaveBeenCalledWith({
+      expect(prisma.organization.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           name: params.name,
           slug: params.slug,
@@ -205,7 +205,7 @@ describe('manageOrganization MCP Tool', () => {
         aiEngagement: params.aiEngagement,
       })
 
-      expect(mockPrisma.organization.update).toHaveBeenCalledWith({
+      expect(prisma.organization.update).toHaveBeenCalledWith({
         where: { id: 'org-123' },
         data: {
           name: params.name,
@@ -248,7 +248,7 @@ describe('manageOrganization MCP Tool', () => {
       const result = await manageOrganizationTool.handler(params, mockContext)
 
       expect(result.success).toBe(true)
-      expect(mockPrisma.organization.update).toHaveBeenCalledWith({
+      expect(prisma.organization.update).toHaveBeenCalledWith({
         where: { id: 'org-123' },
         data: {
           name: 'Updated Name Only',
@@ -287,7 +287,7 @@ describe('manageOrganization MCP Tool', () => {
 
       expect(result.success).toBe(false)
       expect(result.error).toContain('Only organization owners')
-      expect(mockPrisma.organization.update).not.toHaveBeenCalled()
+      expect(prisma.organization.update).not.toHaveBeenCalled()
     })
   })
 

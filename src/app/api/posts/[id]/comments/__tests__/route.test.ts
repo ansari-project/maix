@@ -26,7 +26,7 @@ import {
 } from '@/lib/test-utils'
 import { handleApiError, successResponse, parseRequestBody } from '@/lib/api-utils'
 
-const mockPrisma = prisma as jest.Mocked<typeof prisma>
+// Cast Prisma methods as jest.Mock for proper typing
 const mockHandleApiError = handleApiError as jest.MockedFunction<typeof handleApiError>
 const mockSuccessResponse = successResponse as jest.MockedFunction<typeof successResponse>
 const mockParseRequestBody = parseRequestBody as jest.MockedFunction<typeof parseRequestBody>
@@ -81,8 +81,8 @@ describe('/api/posts/[id]/comments', () => {
       mockParseRequestBody.mockResolvedValue({
         content: 'Great question! I had the same issue.'
       })
-      mockPrisma.post.findUnique.mockResolvedValue(mockPost)
-      mockPrisma.comment.create.mockResolvedValue(mockComment)
+      ;(prisma.post.findUnique as jest.Mock).mockResolvedValue(mockPost)
+      ;(prisma.comment.create as jest.Mock).mockResolvedValue(mockComment)
       mockSuccessResponse.mockReturnValue(
         mockApiSuccessResponse(mockComment, 201) as any
       )
@@ -105,7 +105,7 @@ describe('/api/posts/[id]/comments', () => {
       expect(data.postId).toBe('post-123')
       expect(data.authorId).toBe('user-123')
 
-      expect(mockPrisma.comment.create).toHaveBeenCalledWith({
+      expect(prisma.comment.create).toHaveBeenCalledWith({
         data: {
           content: 'Great question! I had the same issue.',
           authorId: 'user-123',
@@ -124,7 +124,7 @@ describe('/api/posts/[id]/comments', () => {
       mockParseRequestBody.mockResolvedValue({
         content: 'This should fail'
       })
-      mockPrisma.post.findUnique.mockResolvedValue(null)
+      ;(prisma.post.findUnique as jest.Mock).mockResolvedValue(null)
       mockHandleApiError.mockReturnValue(
         mockApiErrorResponse('Post not found', 404) as any
       )
@@ -142,7 +142,7 @@ describe('/api/posts/[id]/comments', () => {
       const response = await POST(request, { params: Promise.resolve({ id: 'non-existent' }) })
 
       expect(response.status).toBe(404)
-      expect(mockPrisma.comment.create).not.toHaveBeenCalled()
+      expect(prisma.comment.create).not.toHaveBeenCalled()
     })
 
     it('should require authentication', async () => {
@@ -166,7 +166,7 @@ describe('/api/posts/[id]/comments', () => {
       const response = await POST(request, { params: Promise.resolve({ id: 'post-123' }) })
 
       expect(response.status).toBe(401)
-      expect(mockPrisma.comment.create).not.toHaveBeenCalled()
+      expect(prisma.comment.create).not.toHaveBeenCalled()
     })
 
     it('should validate comment content', async () => {
@@ -191,7 +191,7 @@ describe('/api/posts/[id]/comments', () => {
       const response = await POST(request, { params: Promise.resolve({ id: 'post-123' }) })
 
       expect(response.status).toBe(400)
-      expect(mockPrisma.comment.create).not.toHaveBeenCalled()
+      expect(prisma.comment.create).not.toHaveBeenCalled()
     })
   })
 
@@ -214,8 +214,8 @@ describe('/api/posts/[id]/comments', () => {
         }
       ]
 
-      mockPrisma.comment.findMany.mockResolvedValue(mockComments)
-      mockPrisma.comment.count.mockResolvedValue(2)
+      ;(prisma.comment.findMany as jest.Mock).mockResolvedValue(mockComments)
+      ;(prisma.comment.count as jest.Mock).mockResolvedValue(2)
       mockSuccessResponse.mockReturnValue(
         mockApiSuccessResponse({
           comments: mockComments,
@@ -232,7 +232,7 @@ describe('/api/posts/[id]/comments', () => {
       expect(data.pagination.total).toBe(2)
 
       // Verify query structure
-      expect(mockPrisma.comment.findMany).toHaveBeenCalledWith({
+      expect(prisma.comment.findMany).toHaveBeenCalledWith({
         where: {
           postId: 'post-123',
           parentId: null
@@ -251,8 +251,8 @@ describe('/api/posts/[id]/comments', () => {
     })
 
     it('should handle pagination parameters', async () => {
-      mockPrisma.comment.findMany.mockResolvedValue([])
-      mockPrisma.comment.count.mockResolvedValue(0)
+      ;(prisma.comment.findMany as jest.Mock).mockResolvedValue([])
+      ;(prisma.comment.count as jest.Mock).mockResolvedValue(0)
       mockSuccessResponse.mockReturnValue(
         mockApiSuccessResponse({
           comments: [],
@@ -263,7 +263,7 @@ describe('/api/posts/[id]/comments', () => {
       const request = new NextRequest('http://localhost:3000/api/posts/post-123/comments?take=10&skip=20')
       await GET(request, { params: Promise.resolve({ id: 'post-123' }) })
 
-      expect(mockPrisma.comment.findMany).toHaveBeenCalledWith(
+      expect(prisma.comment.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           take: 10,
           skip: 20
@@ -272,8 +272,8 @@ describe('/api/posts/[id]/comments', () => {
     })
 
     it('should include author information', async () => {
-      mockPrisma.comment.findMany.mockResolvedValue([])
-      mockPrisma.comment.count.mockResolvedValue(0)
+      ;(prisma.comment.findMany as jest.Mock).mockResolvedValue([])
+      ;(prisma.comment.count as jest.Mock).mockResolvedValue(0)
       mockSuccessResponse.mockReturnValue(
         mockApiSuccessResponse({
           comments: [],
@@ -284,7 +284,7 @@ describe('/api/posts/[id]/comments', () => {
       const request = new NextRequest('http://localhost:3000/api/posts/post-123/comments')
       await GET(request, { params: Promise.resolve({ id: 'post-123' }) })
 
-      expect(mockPrisma.comment.findMany).toHaveBeenCalledWith(
+      expect(prisma.comment.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           include: expect.objectContaining({
             author: {
@@ -296,8 +296,8 @@ describe('/api/posts/[id]/comments', () => {
     })
 
     it('should only return top-level comments (no nested replies)', async () => {
-      mockPrisma.comment.findMany.mockResolvedValue([])
-      mockPrisma.comment.count.mockResolvedValue(0)
+      ;(prisma.comment.findMany as jest.Mock).mockResolvedValue([])
+      ;(prisma.comment.count as jest.Mock).mockResolvedValue(0)
       mockSuccessResponse.mockReturnValue(
         mockApiSuccessResponse({
           comments: [],
@@ -308,7 +308,7 @@ describe('/api/posts/[id]/comments', () => {
       const request = new NextRequest('http://localhost:3000/api/posts/post-123/comments')
       await GET(request, { params: Promise.resolve({ id: 'post-123' }) })
 
-      expect(mockPrisma.comment.findMany).toHaveBeenCalledWith(
+      expect(prisma.comment.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             parentId: null
