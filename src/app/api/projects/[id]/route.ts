@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { hasResourceAccess } from "@/lib/ownership-utils"
 import { logger } from "@/lib/logger"
+import { deleteProject } from "@/lib/services/project.service"
 
 export async function GET(
   request: Request,
@@ -71,5 +72,37 @@ export async function GET(
   } catch (error) {
     logger.error("Project fetch error", error, { projectId: (await params).id })
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id: projectId } = await params
+
+    if (!projectId) {
+      return NextResponse.json({ error: 'Project ID is required' }, { status: 400 })
+    }
+
+    await deleteProject(projectId, session.user.id)
+    return NextResponse.json({ message: 'Project deleted successfully' }, { status: 200 })
+  } catch (error) {
+    logger.error("Project delete error", error, { projectId: (await params).id })
+    if (error instanceof Error) {
+      if (error.message === 'Project not found') {
+        return NextResponse.json({ error: error.message }, { status: 404 })
+      }
+      if (error.message === 'Only the owner can delete a project') {
+        return NextResponse.json({ error: error.message }, { status: 403 })
+      }
+    }
+    return NextResponse.json({ error: 'Failed to delete project' }, { status: 500 })
   }
 }

@@ -15,6 +15,7 @@ import { manageOrganizationTool } from "@/lib/mcp/tools/manageOrganization";
 import { manageOrganizationMemberTool } from "@/lib/mcp/tools/manageOrganizationMember";
 import { handleManageTodo, ManageTodoSchema } from "@/lib/mcp/tools/manageTodo";
 import { handleSearchTodos, SearchTodosSchema } from "@/lib/mcp/tools/searchTodos";
+import { handleManagePersonalProject, ManagePersonalProjectSchema } from "@/lib/mcp/tools/managePersonalProject";
 
 // Type definitions for type safety
 type MaixAuthInfo = {
@@ -526,6 +527,28 @@ const mcpHandler = createMcpHandler(
           console.error("Failed to search todos:", error);
           return {
             content: [{ type: "text", text: error instanceof Error ? error.message : "An error occurred while searching todos." }],
+          };
+        }
+      }
+    );
+
+    // Tool: Manage personal projects
+    server.tool(
+      "maix_manage_personal_project",
+      "Manages personal projects with CRUD operations and sharing",
+      ManagePersonalProjectSchema.shape,
+      async (params, extra) => {
+        try {
+          const user = (extra.authInfo as MaixAuthInfo).extra.user;
+          const context = { user };
+          const result = await handleManagePersonalProject(params, context);
+          return {
+            content: [{ type: "text", text: result }],
+          };
+        } catch (error) {
+          console.error("Failed to manage personal project:", error);
+          return {
+            content: [{ type: "text", text: error instanceof Error ? error.message : "An error occurred while managing personal project." }],
           };
         }
       }

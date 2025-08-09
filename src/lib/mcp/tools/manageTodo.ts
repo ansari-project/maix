@@ -6,12 +6,12 @@ import type { User } from "@prisma/client";
 
 // Zod schema for todo management parameters
 export const ManageTodoSchema = z.object({
-  action: z.enum(["create", "update", "delete", "get", "list"]).describe("The operation to perform"),
+  action: z.enum(["create", "update", "delete", "get", "list", "list-standalone"]).describe("The operation to perform"),
   todoId: z.string().optional().describe("The ID of the todo (required for update, delete, get actions)"),
-  projectId: z.string().optional().describe("The ID of the project (required for create and list actions)"),
+  projectId: z.string().optional().describe("The ID of the project (optional for create, required for list actions - use list-standalone for personal todos)"),
   title: z.string().min(1).max(255).optional().describe("Todo title"),
   description: z.string().optional().describe("Todo description"),
-  status: z.enum(["OPEN", "IN_PROGRESS", "COMPLETED"]).optional().describe("Todo status"),
+  status: z.enum(["NOT_STARTED", "OPEN", "IN_PROGRESS", "WAITING_FOR", "COMPLETED", "DONE"]).optional().describe("Todo status"),
   assigneeId: z.string().nullable().optional().describe("ID of user to assign the todo to"),
   dueDate: z.string().optional().describe("Due date in ISO format (YYYY-MM-DD)")
 });
@@ -27,22 +27,25 @@ export async function handleManageTodo(params: ManageTodoParams, context: Contex
 
   switch (params.action) {
     case "create": {
-      if (!params.projectId || !params.title) {
-        throw new Error("Project ID and title are required for creating a todo.");
+      if (!params.title) {
+        throw new Error("Title is required for creating a todo.");
       }
 
-      // Check permissions
-      const canManage = await canManageTodos(user.id, params.projectId);
-      if (!canManage) {
-        throw new Error("You don't have permission to create todos for this project.");
+      // Check permissions for project todos
+      if (params.projectId) {
+        const canManage = await canManageTodos(user.id, params.projectId);
+        if (!canManage) {
+          throw new Error("You don't have permission to create todos for this project.");
+        }
       }
+      // For standalone/personal todos, user can always create their own
 
       const todo = await prisma.todo.create({
         data: {
           title: params.title,
           description: params.description,
-          status: params.status || "OPEN",
-          projectId: params.projectId,
+          status: params.status || "NOT_STARTED",
+          projectId: params.projectId || null,
           creatorId: user.id,
           assigneeId: params.assigneeId || null,
           dueDate: params.dueDate ? new Date(params.dueDate) : null,
@@ -62,8 +65,11 @@ export async function handleManageTodo(params: ManageTodoParams, context: Contex
         ? ` (due ${todo.dueDate.toLocaleDateString()})`
         : "";
 
-      const projectName = todo.project?.name || "Event";
-      return `Todo "${todo.title}" created successfully in project "${projectName}"${assigneeText}${dueDateText}. ID: ${todo.id}`;
+      const projectText = todo.project?.name 
+        ? ` in project "${todo.project.name}"`
+        : " as personal todo";
+      
+      return `Todo "${todo.title}" created successfully${projectText}${assigneeText}${dueDateText}. ID: ${todo.id}`;
     }
 
     case "list": {
@@ -102,13 +108,55 @@ export async function handleManageTodo(params: ManageTodoParams, context: Contex
           ? ` - Due: ${todo.dueDate.toLocaleDateString()}`
           : "";
         
-        const statusIcon = todo.status === "COMPLETED" ? "✅" : 
-                          todo.status === "IN_PROGRESS" ? "🔄" : "⭕";
+        const statusIcon = (todo.status === "COMPLETED" || todo.status === "DONE") ? "✅" : 
+                          todo.status === "IN_PROGRESS" ? "🔄" : 
+                          todo.status === "WAITING_FOR" ? "⏳" :
+                          todo.status === "OPEN" ? "🔵" : "⭕";
         
         return `  ${statusIcon} ${todo.title}${assigneeText}${dueDateText} [${todo.id}]`;
       }).join("\n");
 
       return `Todos for project:\n${todoList}`;
+    }
+
+    case "list-standalone": {
+      const todos = await prisma.todo.findMany({
+        where: { 
+          creatorId: user.id,
+          projectId: null // Standalone todos have no project
+        },
+        include: {
+          creator: { select: { name: true, email: true } },
+          assignee: { select: { name: true, email: true } },
+        },
+        orderBy: [
+          { status: "asc" },
+          { createdAt: "desc" }
+        ]
+      });
+
+      if (todos.length === 0) {
+        return "No standalone personal todos found.";
+      }
+
+      const todoList = todos.map(todo => {
+        const assigneeText = todo.assignee 
+          ? ` (assigned to ${todo.assignee.name || todo.assignee.email})`
+          : " (unassigned)";
+        
+        const dueDateText = todo.dueDate 
+          ? ` - Due: ${todo.dueDate.toLocaleDateString()}`
+          : "";
+        
+        const statusIcon = (todo.status === "COMPLETED" || todo.status === "DONE") ? "✅" : 
+                          todo.status === "IN_PROGRESS" ? "🔄" : 
+                          todo.status === "WAITING_FOR" ? "⏳" :
+                          todo.status === "OPEN" ? "🔵" : "⭕";
+        
+        return `  ${statusIcon} ${todo.title}${assigneeText}${dueDateText} [${todo.id}]`;
+      }).join("\n");
+
+      return `Your standalone personal todos:\n${todoList}`;
     }
 
     case "get": {
@@ -129,14 +177,18 @@ export async function handleManageTodo(params: ManageTodoParams, context: Contex
         throw new Error("Todo not found.");
       }
 
-      // Check permissions - for now, todos must have a projectId
-      // Event todos will be handled separately in Phase 4
-      if (!todo.projectId) {
-        throw new Error("Todo must belong to a project.");
-      }
-      const canView = await canViewTodos(user.id, todo.projectId);
-      if (!canView) {
-        throw new Error("You don't have permission to view this todo.");
+      // Check permissions
+      if (todo.projectId) {
+        // Project todo - check project permissions
+        const canView = await canViewTodos(user.id, todo.projectId);
+        if (!canView) {
+          throw new Error("You don't have permission to view this todo.");
+        }
+      } else {
+        // Standalone personal todo - only creator can view
+        if (todo.creatorId !== user.id) {
+          throw new Error("You don't have permission to view this personal todo.");
+        }
       }
 
       const assigneeText = todo.assignee 
@@ -147,12 +199,15 @@ export async function handleManageTodo(params: ManageTodoParams, context: Contex
         ? `Due Date: ${todo.dueDate.toLocaleDateString()}\n`
         : "Due Date: Not set\n";
 
+      const projectText = todo.project?.name 
+        ? `Project: ${todo.project.name}\n`
+        : "Type: Personal todo\n";
+
       return `Todo Details:
 Title: ${todo.title}
 Description: ${todo.description || "No description"}
 Status: ${todo.status}
-${assigneeText}${dueDateText}Project: ${todo.project?.name || "Event"}
-Created by: ${todo.creator.name || todo.creator.email}
+${assigneeText}${dueDateText}${projectText}Created by: ${todo.creator.name || todo.creator.email}
 Created: ${todo.createdAt.toLocaleDateString()}
 ID: ${todo.id}`;
     }
@@ -172,14 +227,18 @@ ID: ${todo.id}`;
         throw new Error("Todo not found.");
       }
 
-      // Check permissions - for now, todos must have a projectId
-      // Event todos will be handled separately in Phase 4
-      if (!existingTodo.projectId) {
-        throw new Error("Todo must belong to a project.");
-      }
-      const canManage = await canManageTodos(user.id, existingTodo.projectId);
-      if (!canManage) {
-        throw new Error("You don't have permission to update this todo.");
+      // Check permissions
+      if (existingTodo.projectId) {
+        // Project todo - check project permissions
+        const canManage = await canManageTodos(user.id, existingTodo.projectId);
+        if (!canManage) {
+          throw new Error("You don't have permission to update this todo.");
+        }
+      } else {
+        // Standalone personal todo - only creator can update
+        if (existingTodo.creatorId !== user.id) {
+          throw new Error("You don't have permission to update this personal todo.");
+        }
       }
 
       const updateData: any = {};
@@ -200,8 +259,10 @@ ID: ${todo.id}`;
         }
       });
 
-      const projectName = updatedTodo.project?.name || "Event";
-      return `Todo "${updatedTodo.title}" updated successfully in project "${projectName}".`;
+      const projectText = updatedTodo.project?.name 
+        ? ` in project "${updatedTodo.project.name}"`
+        : " (personal todo)";
+      return `Todo "${updatedTodo.title}" updated successfully${projectText}.`;
     }
 
     case "delete": {
@@ -219,25 +280,58 @@ ID: ${todo.id}`;
         throw new Error("Todo not found.");
       }
 
-      // Check permissions - for now, todos must have a projectId
-      // Event todos will be handled separately in Phase 4
-      if (!existingTodo.projectId) {
-        throw new Error("Todo must belong to a project.");
-      }
-      const canManage = await canManageTodos(user.id, existingTodo.projectId);
-      if (!canManage) {
-        throw new Error("You don't have permission to delete this todo.");
+      // Check permissions
+      if (existingTodo.projectId) {
+        // Project todo - check project permissions
+        const canManage = await canManageTodos(user.id, existingTodo.projectId);
+        if (!canManage) {
+          throw new Error("You don't have permission to delete this todo.");
+        }
+      } else {
+        // Standalone personal todo - only creator can delete
+        if (existingTodo.creatorId !== user.id) {
+          throw new Error("You don't have permission to delete this personal todo.");
+        }
       }
 
       await prisma.todo.delete({
         where: { id: params.todoId }
       });
 
-      const projectName = existingTodo.project?.name || "Event";
-      return `Todo "${existingTodo.title}" deleted successfully from project "${projectName}".`;
+      const projectText = existingTodo.project?.name 
+        ? ` from project "${existingTodo.project.name}"`
+        : " (personal todo)";
+      return `Todo "${existingTodo.title}" deleted successfully${projectText}.`;
     }
 
     default:
-      throw new Error("Invalid action. Use: create, update, get, list, or delete.");
+      throw new Error("Invalid action. Use: create, update, get, list, list-standalone, or delete.");
   }
 }
+
+export const manageTodoTool = {
+  name: 'maix_manage_todo',
+  description: `Manages todos with full CRUD operations, supporting both project and personal/standalone todos.
+Examples:
+- Create project todo: 
+  { 
+    "action": "create",
+    "title": "Set up database schema",
+    "description": "Create initial database tables for user management",
+    "projectId": "proj123",
+    "status": "NOT_STARTED",
+    "dueDate": "2024-03-15"
+  }
+- Create personal todo: 
+  { 
+    "action": "create",
+    "title": "Review React documentation",
+    "description": "Study hooks and context API",
+    "status": "NOT_STARTED"
+  }
+- List personal todos: { "action": "list-standalone" }
+- Update todo status: { "action": "update", "todoId": "todo123", "status": "IN_PROGRESS" }
+- Get todo details: { "action": "get", "todoId": "todo123" }`,
+  inputSchema: ManageTodoSchema,
+  handler: handleManageTodo,
+};

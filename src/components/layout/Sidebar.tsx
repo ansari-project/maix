@@ -25,7 +25,8 @@ import {
   HelpCircle,
   Shield,
   Megaphone,
-  CheckSquare
+  CheckSquare,
+  BookOpen
 } from "lucide-react"
 
 interface NavigationItem {
@@ -89,6 +90,12 @@ export function Sidebar({ isCollapsed = false, onToggle, currentPath }: SidebarP
       href: "/my-todos",
       icon: CheckSquare,
       isActive: pathname === "/my-todos"
+    },
+    {
+      name: "My Projects",
+      href: "/my-projects",
+      icon: BookOpen,
+      isActive: pathname === "/my-projects"
     },
     {
       name: "Organizations",

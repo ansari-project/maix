@@ -6,6 +6,9 @@ import { manageOrganizationMemberTool } from './manageOrganizationMember';
 import { eventTools } from './manageEvent';
 import { registrationTools } from './manageRegistration';
 import { eventTaskTools } from './manageEventTasks';
+import { manageTodoTool } from './manageTodo';
+import { searchTodosTool } from './searchTodos';
+import { managePersonalProjectTool } from './managePersonalProject';
 
 /**
  * Export all MCP tools for registration
@@ -16,6 +19,9 @@ export const tools = [
   manageProductTool,
   manageOrganizationTool,
   manageOrganizationMemberTool,
+  manageTodoTool,
+  searchTodosTool,
+  managePersonalProjectTool,
   ...Object.values(eventTools),
   ...Object.values(registrationTools),
   ...Object.values(eventTaskTools),
@@ -30,6 +36,9 @@ export {
   manageProductTool,
   manageOrganizationTool,
   manageOrganizationMemberTool,
+  manageTodoTool,
+  searchTodosTool,
+  managePersonalProjectTool,
   eventTools,
   registrationTools,
   eventTaskTools

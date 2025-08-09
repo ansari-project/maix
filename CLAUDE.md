@@ -424,7 +424,9 @@ R - Refine    : Polish for production
 
 **Commits**: No "Generated with Claude Code", descriptive messages, use `git add [specific-files]` never `git add .`
 
-**CRITICAL SECURITY**: **NEVER use `git add -A`** - This can cause security issues by accidentally adding sensitive files
+**CRITICAL SECURITY**: 
+- **NEVER use `git add -A`** - This can cause security issues by accidentally adding sensitive files
+- **NEVER use `git add .`** - Always use specific file paths with `git add [specific-files]`
 
 **Pushing**: Never force push, always `git fetch origin && git status` first, if rejected STOP and ask user
 

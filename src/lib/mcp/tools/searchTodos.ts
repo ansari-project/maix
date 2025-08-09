@@ -6,7 +6,8 @@ import type { User } from "@prisma/client";
 // Zod schema for todo search parameters
 export const SearchTodosSchema = z.object({
   projectId: z.string().optional().describe("Filter todos by project ID"),
-  status: z.array(z.enum(["OPEN", "IN_PROGRESS", "COMPLETED"])).optional().describe("Filter by todo status"),
+  includePersonal: z.boolean().optional().describe("Include personal/standalone todos (todos without a project)"),
+  status: z.array(z.enum(["NOT_STARTED", "OPEN", "IN_PROGRESS", "WAITING_FOR", "COMPLETED", "DONE"])).optional().describe("Filter by todo status"),
   assigneeId: z.string().optional().describe("Filter by assignee user ID"),
   creatorId: z.string().optional().describe("Filter by creator user ID"),
   query: z.string().optional().describe("Search text in title and description"),
@@ -37,8 +38,10 @@ export async function handleSearchTodos(params: SearchTodosParams, context: Cont
     }
     where.projectId = params.projectId;
   } else {
+    // Build OR conditions for projects and personal todos
+    const orConditions: any[] = [];
+
     // Get all projects the user can view todos for
-    // This is a simplified approach - in a real scenario, you might want to optimize this
     const userProjects = await prisma.project.findMany({
       where: {
         OR: [
@@ -56,13 +59,25 @@ export async function handleSearchTodos(params: SearchTodosParams, context: Cont
       select: { id: true }
     });
 
-    if (userProjects.length === 0) {
-      return "No todos found - you don't have access to any projects.";
+    if (userProjects.length > 0) {
+      orConditions.push({
+        projectId: { in: userProjects.map(p => p.id) }
+      });
     }
 
-    where.projectId = {
-      in: userProjects.map(p => p.id)
-    };
+    // Include personal todos if requested
+    if (params.includePersonal) {
+      orConditions.push({
+        projectId: null,
+        creatorId: user.id
+      });
+    }
+
+    if (orConditions.length === 0) {
+      return "No todos found - you don't have access to any projects and personal todos were not requested.";
+    }
+
+    where.OR = orConditions;
   }
 
   if (params.status && params.status.length > 0) {
@@ -100,7 +115,7 @@ export async function handleSearchTodos(params: SearchTodosParams, context: Cont
       lt: now
     };
     // Overdue todos should not be completed
-    where.status = { not: "COMPLETED" };
+    where.status = { notIn: ["COMPLETED", "DONE"] };
   }
 
   const todos = await prisma.todo.findMany({
@@ -136,18 +151,38 @@ export async function handleSearchTodos(params: SearchTodosParams, context: Cont
     const dueDateText = todo.dueDate ? ` - Due: ${todo.dueDate.toLocaleDateString()}` : "";
     
     let statusIcon = "⭕";
-    if (todo.status === "COMPLETED") statusIcon = "✅";
+    if (todo.status === "COMPLETED" || todo.status === "DONE") statusIcon = "✅";
     else if (todo.status === "IN_PROGRESS") statusIcon = "🔄";
+    else if (todo.status === "WAITING_FOR") statusIcon = "⏳";
+    else if (todo.status === "OPEN") statusIcon = "🔵";
     
     // Mark overdue todos
-    const isOverdue = todo.dueDate && todo.dueDate < now && todo.status !== "COMPLETED";
+    const isOverdue = todo.dueDate && todo.dueDate < now && 
+                      todo.status !== "COMPLETED" && todo.status !== "DONE";
     const overdueText = isOverdue ? " 🚨 OVERDUE" : "";
     
-    const projectName = todo.project?.name || "Event";
+    const projectInfo = todo.project?.name 
+      ? `Project: ${todo.project.name}`
+      : "Personal todo";
+    
     return `  ${statusIcon} ${todo.title}${assigneeText}${dueDateText}${overdueText}
-    Project: ${projectName} | ID: ${todo.id}`;
+    ${projectInfo} | ID: ${todo.id}`;
   }).join("\n");
 
   const totalText = todos.length === (params.limit || 20) ? ` (showing first ${todos.length})` : "";
   return `Found ${todos.length} todo(s)${totalText}:\n\n${todoList}`;
 }
+
+export const searchTodosTool = {
+  name: 'maix_search_todos',
+  description: `Search todos with advanced filtering options, supporting both project and personal todos.
+Examples:
+- Search all accessible todos: { }
+- Search with personal todos: { "includePersonal": true }
+- Search by status: { "status": ["IN_PROGRESS", "WAITING_FOR"] }
+- Search overdue todos: { "overdue": true, "includePersonal": true }
+- Search by text: { "query": "database", "includePersonal": true }
+- Search project todos: { "projectId": "proj123" }`,
+  inputSchema: SearchTodosSchema,
+  handler: handleSearchTodos,
+};
