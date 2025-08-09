@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { memo, useCallback } from 'react'
 import Link from 'next/link'
 import { useLayout } from '@/contexts/LayoutContext'
 import { 
@@ -27,9 +27,17 @@ const mobileNavItems: NavItem[] = [
   { label: 'Apps', href: '/apps', icon: Grid3x3 },
 ]
 
-export function MobileNav() {
+export const MobileNav = memo(function MobileNav() {
   const { isActivePath } = useLayout()
   const [showMore, setShowMore] = React.useState(false)
+  
+  const toggleMore = useCallback(() => {
+    setShowMore(prev => !prev)
+  }, [])
+  
+  const closeMore = useCallback(() => {
+    setShowMore(false)
+  }, [])
   
   return (
     <>
@@ -61,7 +69,7 @@ export function MobileNav() {
           {/* More Menu */}
           <li className="flex-1">
             <button
-              onClick={() => setShowMore(!showMore)}
+              onClick={toggleMore}
               className="flex flex-col items-center gap-1 py-2 px-2 text-gray-600 hover:text-blue-600 transition-colors w-full"
               aria-label="More options"
             >
@@ -77,27 +85,27 @@ export function MobileNav() {
         <>
           <div 
             className="fixed inset-0 bg-black bg-opacity-50 z-40"
-            onClick={() => setShowMore(false)}
+            onClick={closeMore}
           />
           <div className="fixed bottom-16 left-4 right-4 bg-white rounded-lg shadow-lg z-50 p-2">
             <Link
               href="/profile"
               className="block px-4 py-3 hover:bg-gray-100 rounded-md transition-colors"
-              onClick={() => setShowMore(false)}
+              onClick={closeMore}
             >
               Profile
             </Link>
             <Link
               href="/search"
               className="block px-4 py-3 hover:bg-gray-100 rounded-md transition-colors"
-              onClick={() => setShowMore(false)}
+              onClick={closeMore}
             >
               Search
             </Link>
             <Link
               href="/settings"
               className="block px-4 py-3 hover:bg-gray-100 rounded-md transition-colors"
-              onClick={() => setShowMore(false)}
+              onClick={closeMore}
             >
               Settings
             </Link>
@@ -105,14 +113,14 @@ export function MobileNav() {
             <Link
               href="/apps/causemon"
               className="block px-4 py-3 hover:bg-gray-100 rounded-md transition-colors"
-              onClick={() => setShowMore(false)}
+              onClick={closeMore}
             >
               Causemon
             </Link>
             <Link
               href="/apps/events"
               className="block px-4 py-3 hover:bg-gray-100 rounded-md transition-colors"
-              onClick={() => setShowMore(false)}
+              onClick={closeMore}
             >
               Event Manager
             </Link>
@@ -121,4 +129,4 @@ export function MobileNav() {
       )}
     </>
   )
-}
+})

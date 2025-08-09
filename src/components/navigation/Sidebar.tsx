@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { memo, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useSession } from 'next-auth/react'
@@ -42,7 +42,7 @@ const appItems: NavItem[] = [
   { label: 'Event Manager', href: '/apps/events', icon: Calendar },
 ]
 
-export function Sidebar() {
+export const Sidebar = memo(function Sidebar() {
   const { data: session } = useSession()
   const { 
     isSidebarCollapsed, 
@@ -50,6 +50,28 @@ export function Sidebar() {
     isActivePath,
     isMobile 
   } = useLayout()
+  
+  // Memoize user avatar to prevent re-renders
+  const userAvatar = useMemo(() => {
+    if (session?.user?.image) {
+      return (
+        <Image
+          src={session.user.image}
+          alt={session.user.name || 'User'}
+          width={32}
+          height={32}
+          className="rounded-full"
+        />
+      )
+    }
+    return (
+      <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
+        <span className="text-sm font-medium">
+          {session?.user?.name?.[0]?.toUpperCase() || 'U'}
+        </span>
+      </div>
+    )
+  }, [session?.user?.image, session?.user?.name])
   
   // Don't render on mobile - we'll use bottom navigation instead
   if (isMobile) {
@@ -66,21 +88,7 @@ export function Sidebar() {
       {/* User Section */}
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center gap-3">
-          {session?.user?.image ? (
-            <Image
-              src={session.user.image}
-              alt={session.user.name || 'User'}
-              width={32}
-              height={32}
-              className="rounded-full"
-            />
-          ) : (
-            <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
-              <span className="text-sm font-medium">
-                {session?.user?.name?.[0]?.toUpperCase() || 'U'}
-              </span>
-            </div>
-          )}
+          {userAvatar}
           {!isSidebarCollapsed && (
             <span className="text-sm font-medium truncate">
               {session?.user?.name || 'User'}
@@ -194,4 +202,4 @@ export function Sidebar() {
       </button>
     </aside>
   )
-}
+})

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useCallback, ReactNode, useMemo } from 'react'
 import { usePathname } from 'next/navigation'
 
 interface LayoutContextType {
@@ -91,7 +91,8 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isAIExpanded, toggleAI, setAIExpanded])
   
-  const value: LayoutContextType = {
+  // Memoize the context value to prevent unnecessary re-renders
+  const value = useMemo<LayoutContextType>(() => ({
     isSidebarCollapsed,
     toggleSidebar,
     setSidebarCollapsed,
@@ -102,7 +103,18 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
     isActivePath,
     isMobile,
     setIsMobile,
-  }
+  }), [
+    isSidebarCollapsed,
+    toggleSidebar,
+    setSidebarCollapsed,
+    isAIExpanded,
+    toggleAI,
+    setAIExpanded,
+    pathname,
+    isActivePath,
+    isMobile,
+    setIsMobile,
+  ])
   
   return (
     <LayoutContext.Provider value={value}>

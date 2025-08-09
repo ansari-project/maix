@@ -1,18 +1,30 @@
 'use client'
 
-import React, { ReactNode } from 'react'
+import React, { ReactNode, Suspense, lazy, memo } from 'react'
 import { LayoutProvider, useLayout } from '@/contexts/LayoutContext'
 import { Sidebar } from '@/components/navigation/Sidebar'
-import { AIAssistant } from '@/components/ai/AIAssistant'
 import { MobileNav } from '@/components/navigation/MobileNav'
 import { cn } from '@/lib/utils'
+
+// Lazy load AI Assistant for better initial load performance
+const AIAssistant = lazy(() => import('@/components/ai/AIAssistant').then(module => ({ default: module.AIAssistant })))
+
+// AI Assistant loading fallback
+const AIAssistantSkeleton = () => (
+  <div className="h-12 bg-gray-100 border-t flex items-center px-4">
+    <div className="animate-pulse flex items-center space-x-2">
+      <div className="h-6 w-6 bg-gray-300 rounded"></div>
+      <div className="h-4 w-32 bg-gray-300 rounded"></div>
+    </div>
+  </div>
+)
 
 interface DashboardLayoutProps {
   children: ReactNode
   className?: string
 }
 
-function DashboardLayoutContent({ children, className }: DashboardLayoutProps) {
+const DashboardLayoutContent = memo(function DashboardLayoutContent({ children, className }: DashboardLayoutProps) {
   const { isMobile, isAIExpanded } = useLayout()
   
   return (
@@ -33,15 +45,17 @@ function DashboardLayoutContent({ children, className }: DashboardLayoutProps) {
           {children}
         </main>
         
-        {/* AI Assistant - Present on all pages */}
-        <AIAssistant />
+        {/* AI Assistant - Lazy loaded with suspense */}
+        <Suspense fallback={<AIAssistantSkeleton />}>
+          <AIAssistant />
+        </Suspense>
       </div>
       
       {/* Mobile Navigation - Mobile only */}
       {isMobile && <MobileNav />}
     </div>
   )
-}
+})
 
 export function DashboardLayout({ children, className }: DashboardLayoutProps) {
   return (

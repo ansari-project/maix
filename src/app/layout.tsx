@@ -10,6 +10,15 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'Maix - Meaningful AI Exchange',
   description: 'A platform connecting volunteers with AI projects to advance humanity',
+  keywords: 'AI, machine learning, volunteers, projects, collaboration, technology',
+  authors: [{ name: 'Maix Team' }],
+  viewport: 'width=device-width, initial-scale=1',
+  robots: 'index, follow',
+  // Performance optimizations
+  other: {
+    'color-scheme': 'light dark',
+    'theme-color': '#3b82f6',
+  }
 }
 
 export default function RootLayout({
