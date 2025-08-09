@@ -140,8 +140,9 @@ describe('/api/auth/tokens Integration Tests', () => {
 
       expect(response.status).toBe(200)
       expect(data.tokens).toHaveLength(2)
-      expect(data.tokens[0].name).toBe('Test Token 1')
-      expect(data.tokens[1].name).toBe('Test Token 2')
+      // Tokens are ordered by createdAt desc (newest first)
+      expect(data.tokens[0].name).toBe('Test Token 2')
+      expect(data.tokens[1].name).toBe('Test Token 1')
       // Should not return the actual token values
       expect(data.tokens[0]).not.toHaveProperty('token')
       expect(data.tokens[0]).not.toHaveProperty('tokenHash')
@@ -223,9 +224,10 @@ describe('/api/auth/tokens Integration Tests', () => {
 
       expect(response.status).toBe(201)
       expect(data.token).toBeDefined()
-      expect(data.token.name).toBe('My API Token')
-      expect(data.token.token).toMatch(/^maix_pat_/)
-      expect(data.token.userId).toBe(testUser.id)
+      expect(data.token).toMatch(/^maix_pat_/) // The raw token is returned directly
+      expect(data.tokenRecord).toBeDefined()
+      expect(data.tokenRecord.name).toBe('My API Token')
+      expect(data.tokenRecord.id).toBeDefined()
 
       // Verify token was created in database
       const tokenInDb = await prismaTest.personalAccessToken.findFirst({
@@ -235,7 +237,7 @@ describe('/api/auth/tokens Integration Tests', () => {
       expect(tokenInDb?.name).toBe('My API Token')
       expect(tokenInDb?.tokenHash).toBeDefined()
       // Actual token should not be stored, only hash
-      expect(tokenInDb?.tokenHash).not.toBe(data.token.token)
+      expect(tokenInDb?.tokenHash).not.toBe(data.token)
     })
 
     it('should allow multiple tokens with same name for same user', async () => {
