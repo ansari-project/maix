@@ -97,7 +97,7 @@ export default function ProductsPage() {
 
   if (!session) return null
 
-  const userProducts = products.filter(product => product.owner.email === session.user?.email)
+  const userProducts = products.filter(product => product.owner?.email === session.user?.email)
   const displayProducts = showMyProducts ? userProducts : products
 
   return (
