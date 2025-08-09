@@ -18,7 +18,20 @@ export function AppLayout({ children }: AppLayoutProps) {
   // Don't show sidebar on public pages
   const publicPages = ["/", "/auth/signin", "/auth/signup"]
   const isPublicPage = publicPages.includes(pathname) || pathname.startsWith("/public")
-  const showSidebar = session && !isPublicPage
+  
+  // Pages using the new DashboardLayout
+  const newLayoutPages = [
+    "/dashboard/home",
+    "/news",
+    "/search", 
+    "/todos",
+    "/apps",
+    "/apps/causemon",
+    "/apps/events"
+  ]
+  const usesNewLayout = newLayoutPages.includes(pathname) || newLayoutPages.some(page => pathname.startsWith(page + "/"))
+  
+  const showSidebar = session && !isPublicPage && !usesNewLayout
 
   if (!showSidebar) {
     return <>{children}</>

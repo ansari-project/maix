@@ -68,7 +68,30 @@ See `docs/guides/prisma.md` for comprehensive safety guidelines.
 
 ## Project Overview
 
-Maix (Meaningful AI Exchange) is a Next.js 15 application that connects skilled volunteers with meaningful AI/tech projects. See README.md for detailed technology stack and setup instructions.
+Maix (Meaningful AI Exchange) is an **AI-accelerated not-for-profit action and collaboration platform** built on Next.js 15. We connect skilled volunteers with meaningful AI/tech projects to advance communities through collaborative innovation. See README.md for detailed technology stack and setup instructions.
+
+### 🤖 AI-Native Platform Philosophy
+
+**Maix is fundamentally AI-native** - unlike platforms that retrofit AI features onto existing paradigms, we're built from the ground up with AI as the primary interface and collaboration mechanism.
+
+**Mission**: We're a not-for-profit organization using AI acceleration to maximize the impact of volunteer contributions to meaningful technology projects.
+
+**Core Focus Areas:**
+- **ACTION** 🎯 - Getting things done efficiently with AI assistance
+- **COMMUNITY** 👥 - Doing it together, AI-facilitated collaboration  
+- **AI ASSISTANCE** ⚡ - Every workflow enhanced by intelligent automation
+
+**What Makes Us AI-Native:**
+- AI-first navigation and discovery (not traditional menus + AI addon)
+- Intelligent project/task matching based on skills and context
+- AI-assisted onboarding, contribution guidance, and code reviews
+- Natural language interfaces for complex platform interactions
+- Proactive suggestions and contextual assistance throughout workflows
+
+**Competitive Differentiation:**
+While GitHub, Linear, and other platforms add AI features to existing UX patterns, Maix is designed as an AI-native experience where artificial intelligence is the primary way users interact with projects, discover opportunities, and collaborate with others.
+
+This is not about having an AI chatbot - it's about reimagining how technical collaboration platforms work when AI is the foundation, not an addition.
 
 **Key Technology Notes**:
 - For Google Gemini: ALWAYS use `@google/genai` package (see `/docs/guides/google-genai-sdk-usage.md`)
@@ -91,6 +114,52 @@ maix/
     ├── guides/           # How-to guides
     ├── designs/          # Feature designs
     └── howtos/           # User instructions
+```
+
+## Development Guidelines
+
+### Testing Philosophy (CRITICAL - Updated January 9, 2025)
+
+#### Quality Over Quantity Testing
+**FUNDAMENTAL PRINCIPLE**: A small number of well-thought-out tests is better than a large number of poor tests. Focus on testing behavior, not implementation details.
+
+**Testing Principles:**
+- **No CSS-only tests**: Don't test that a component has a specific class or style
+- **Test behavior, not implementation**: Test what users see and do, not how code works internally
+- **Meaningful assertions**: Each test should verify actual functionality
+- **Avoid snapshot testing**: Brittle and provides little value
+- **Integration over unit tests**: Test how components work together
+
+**What to Test (Priority Order):**
+1. Critical User Paths (30%) - Can users complete core workflows?
+2. Data Operations (30%) - CRUD operations work correctly?
+3. Edge Cases & Error States (20%) - Graceful failure handling?
+4. Business Logic (20%) - Complex calculations and rules?
+
+**What NOT to Test:**
+- ❌ CSS classes or styles (unless they affect functionality)
+- ❌ Third-party library internals
+- ❌ Simple prop passing or state updates
+- ❌ Implementation details that might change
+- ❌ Mock-heavy unit tests that don't reflect reality
+
+**Good Test Example:**
+```typescript
+// ✅ GOOD: Tests actual user behavior
+it('should create a new project when form is submitted', async () => {
+  const user = await createTestUser()
+  const result = await createProject({
+    name: 'Test Project',
+    ownerId: user.id
+  })
+  expect(result.name).toBe('Test Project')
+  expect(result.status).toBe('AWAITING_VOLUNTEERS')
+})
+
+// ❌ BAD: Tests implementation details
+it('should have correct CSS class', () => {
+  expect(component.className).toContain('btn-primary')
+})
 ```
 
 ## Development Guidelines
@@ -243,29 +312,61 @@ Before: **Awaiting Decision**
 After:  **[ACCEPTED]** - Simplicity outweighs audit granularity
 ```
 
-##### 3. Plan - Phase-Based Implementation Plan
+##### 3. Plan - Phase-Based Implementation Plan with ITRC Structure
 
-**Purpose**: Break aligned design into executable phases
+**Purpose**: Break aligned design into executable phases with structured ITRC sub-tasks
 
 **Process**: 
 - Convert design into sequential phases that each deliver working functionality
-- Define clear success criteria for each phase
+- **MANDATORY**: Each phase MUST be broken down into ITRC sub-tasks:
+  - **I (Implement)**: Build the functionality
+  - **T (Test)**: Write and run tests
+  - **R (Review)**: Code review with mcp__zen__codereview
+  - **C (Commit)**: Git commit after ITRC complete
+- Define clear success criteria for each ITRC step
 - **MANDATORY**: Get expert review from multiple models (e.g., O4 and Gemini Pro) before proceeding
 - Incorporate review feedback into final plan
 
-**Output**: Numbered phase plan with deliverables, dependencies, success criteria, and expert review confirmation
+**Output**: Phase plan with ITRC-structured todos, deliverables, dependencies, success criteria, and expert review confirmation
 
-##### 4. Produce - Iterative Development (ITR Cycle with Evidence-Based Enforcement)
+**Example Phase Structure**:
+```
+Phase 2: Implement User Authentication
+  ├─ Phase 2-I: Implement - Build auth components and API
+  ├─ Phase 2-T: Test - Write and run auth tests
+  ├─ Phase 2-R: Review - Code review with continuation_id
+  └─ Phase 2-C: Commit - Git commit with ITRC evidence
+```
+
+##### 4. Produce - Iterative Development (ITRC Cycle with Evidence-Based Enforcement)
 
 **Purpose**: Execute the implementation plan with verifiable completion
 
-**MANDATORY Process** - For EACH phase, you MUST complete the ITR cycle:
-1. **Implement**: Build the code for current phase
-2. **Test**: Write and run tests for the implementation IMMEDIATELY after implementing
-3. **Review**: Code review using `mcp__zen__codereview`
-4. **Update**: Update plan document with progress
+**MANDATORY Process** - For EACH phase, you MUST complete the ITRC cycle:
+1. **I - Implement**: Build the code for current phase
+2. **T - Test**: Write and run tests for the implementation IMMEDIATELY after implementing
+3. **R - Review**: Code review using `mcp__zen__codereview`
+4. **C - Commit**: Git commit with ITRC evidence in commit message
 
-**CRITICAL**: Testing is NOT a separate phase - it happens WITHIN each phase as part of the ITR cycle. Every phase must have its own tests before moving to the next phase.
+**CRITICAL**: Testing is NOT a separate phase - it happens WITHIN each phase as part of the ITRC cycle. Every phase must have its own tests before moving to the next phase.
+
+**TodoWrite Integration**: When creating todos for phases, ALWAYS use the ITRC structure:
+```typescript
+// CORRECT: Explicit ITRC structure
+todos = [
+  { content: "Phase 1: Build Core Layout", status: "pending" },
+  { content: "Phase 1-I: Implement - Create layout components", status: "pending" },
+  { content: "Phase 1-T: Test - Write and run layout tests", status: "pending" },
+  { content: "Phase 1-R: Review - Code review", status: "pending" },
+  { content: "Phase 1-C: Commit - Git commit", status: "pending" }
+]
+
+// WRONG: Missing ITRC structure
+todos = [
+  { content: "Phase 1: Build Core Layout", status: "pending" },
+  { content: "Phase 2: Add Features", status: "pending" }
+]
+```
 
 **⚠️ CRITICAL ENFORCEMENT - EVIDENCE-BASED COMPLETION**:
 - **NEVER mark a todo as complete without evidence of execution**
@@ -306,9 +407,38 @@ Status: CANNOT mark complete ✗
 - **DO NOT**: Batch-mark multiple todos complete without individual evidence
 - **DO NOT**: Proceed to next phase without completing ALL ITR steps with evidence
 
+**⚠️ PHASE TRANSITION BLOCKER - AUTOMATIC ENFORCEMENT**:
+Before starting ANY new phase work (even exploratory edits):
+1. **CHECK**: Are all current phase ITR steps complete WITH evidence?
+   - ❌ If NO: STOP. Complete ITR first.
+   - ✅ If YES: Proceed to next phase
+2. **EVIDENCE AUDIT**: Can you show:
+   - Test execution logs? (Must show PASSING tests)
+   - Code review continuation_id?
+   - Git commit hash for phase completion?
+3. **VIOLATION DETECTION**: If you find yourself:
+   - Editing files for next phase before ITR complete → STOP
+   - Creating new components for next phase → STOP
+   - Even reading/exploring next phase code → Complete ITR first
+
+**Example Violation (What just happened)**:
+```
+❌ WRONG: Phase 1 implementation done → Jump to Phase 2 implementation
+✅ RIGHT: Phase 1 implementation → Tests → Review → Commit → THEN Phase 2
+```
+
 **Phase Completion Requirement**:
-- **MANDATORY**: Commit at the end of EVERY phase after completing ITR cycle
+- **MANDATORY**: Commit at the end of EVERY phase after completing ITRC cycle
 - Each phase must be a complete, working unit that can be committed
+- Commit message MUST include ITRC evidence:
+  ```
+  feat: Phase X - [Description]
+  
+  - Implementation: [What was built]
+  - Tests: X/Y passing
+  - Review: continuation_id: [UUID]
+  - ITRC cycle complete: I✓ T✓ R✓ C✓
+  ```
 - This ensures incremental progress and prevents large, risky commits
 - If a phase cannot be committed, it's too large - break it down further
 
