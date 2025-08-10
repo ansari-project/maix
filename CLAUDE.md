@@ -1,74 +1,5 @@
 # CLAUDE.md - Maix Project Instructions
 
-## ⚠️ CRITICAL SAFETY PROTOCOLS ⚠️
-
-### Git Safety - READ BEFORE EVERY GIT OPERATION
-
-1. **NEVER FORCE PUSH** - This can permanently delete other people's work
-2. **ALWAYS CHECK FOR REMOTE CHANGES** before pushing: `git fetch origin && git log HEAD..origin/main --oneline`
-3. **IF PUSH FAILS** - STOP and ask the user how to proceed. DO NOT make decisions independently.
-4. **This is a COLLABORATIVE repository** - Other developers' work must be protected
-5. **NEVER use `git add -A` or `git add .`** - Always use specific file paths with `git add [specific-files]`
-
-### Database Safety - READ BEFORE ANY PRISMA OPERATION
-
-#### Migration Best Practices (AI Agent Compatible)
-
-1. **NEVER use `npx prisma db push`** - This command is destructive and will drop/recreate tables
-   - ❌ `npx prisma db push` - NEVER USE THIS on any shared database
-   - ❌ `npx prisma migrate dev` - Interactive only, breaks AI agents
-   - ✅ `npm run db:migrate:new` - Safe, non-interactive migration creation
-   - ✅ `npm run db:migrate:apply` - Apply migrations safely
-
-2. **AI Agent Compatible Workflow (migrate diff + deploy)**:
-   ```bash
-   # Step 1: Create migration from schema changes (no prompts!)
-   npm run db:migrate:new descriptive_name
-   
-   # Step 2: Review the generated SQL
-   cat prisma/migrations/*/migration.sql
-   
-   # Step 3: Apply when ready
-   npm run db:migrate:apply
-   ```
-
-3. **Environment Safety Protocol**:
-   - ALWAYS use npm scripts (they auto-load .env correctly)
-   - Scripts show which database you're targeting before running
-   - Production requires explicit confirmation
-   - Use `npm run db:migrate:status` to verify current state
-
-4. **ALWAYS backup before migrations**:
-   ```bash
-   npm run db:backup
-   ```
-
-5. **Available Safe Commands**:
-   ```bash
-   npm run db:migrate:new migration_name  # Create migration using migrate diff
-   npm run db:migrate:apply               # Apply pending migrations using deploy
-   npm run db:migrate:status              # Check migration status
-   npm run db:backup                      # Backup database with table counts
-   npm run db:health                      # Comprehensive database health check
-   npm run db:studio                      # Open Prisma Studio (read-only recommended)
-   ```
-
-**How It Works Under the Hood**:
-- `db:migrate:new` runs `./scripts/create-migration.sh` which uses `prisma migrate diff`
-- This generates SQL by comparing your schema to the current database state
-- `db:migrate:apply` uses `prisma migrate deploy` (production-safe, non-interactive)
-- No TTY detection issues, no interactive prompts, works perfectly with AI agents
-
-This warning exists because:
-- `db push` destroyed production data multiple times in July 2025
-- Interactive `migrate dev` breaks AI agents and CI/CD
-- Environment variable confusion led to wrong database targeting
-- Prisma's design assumes human developers, not automation
-
-See `docs/guides/prisma.md` for comprehensive safety guidelines.
-
----
-
 ## Project Overview
 
 Maix (Meaningful AI Exchange) is an **AI-accelerated not-for-profit action and collaboration platform** built on Next.js 15. We connect skilled volunteers with meaningful AI/tech projects to advance communities through collaborative innovation.
@@ -95,7 +26,7 @@ Maix (Meaningful AI Exchange) is an **AI-accelerated not-for-profit action and c
 - **Framework**: Next.js 15 with App Router
 - **Database**: Neon PostgreSQL with pgvector extension
 - **Auth**: NextAuth.js with Google OAuth
-- **AI**: Google Gemini via `@google/genai` package (see `/docs/guides/google-genai-sdk-usage.md`)
+- **AI**: Google Gemini via `@google/genai` package (see `/dev_docs/ref/google-genai-sdk-usage.md`)
 - **UI**: shadcn/ui components
 
 ### Project Structure
@@ -111,11 +42,17 @@ maix/
 ├── tests/                # Test files
 ├── scripts/              # Build and utility scripts
 │   └── tmp/             # Temporary/one-off scripts
-└── docs/                 # Documentation
-    ├── guides/           # How-to guides
-    ├── designs/          # Feature designs
-    └── howtos/           # User instructions
+└── dev_docs/             # Development documentation (NOT user-facing)
+    ├── ref/              # Reference material (APIs, schemas, etc.)
+    ├── designs/          # Feature designs (DAPPER Design phase)
+    └── plans/            # Implementation plans (DAPPER Plan phase)
 ```
+
+**Community Values**: 
+- Community benefit over profit
+- Knowledge sharing
+- Transparency
+- Collaboration
 
 ---
 
@@ -124,119 +61,6 @@ maix/
 **DAPPER** - Our structured development workflow: Design, Align, Plan, Produce, Evaluate, Revise
 
 DAPPER ensures thoughtful design, human alignment, and high-quality implementation through two key documents that maintain complete history of proposals, decisions, and rationale.
-
-### ⚠️ CRITICAL DAPPER ENFORCEMENT RULES ⚠️
-
-**MANDATORY EARLY-STAGE COMPLIANCE** - Claude Code MUST NOT write ANY implementation code until:
-
-#### DESIGN PHASE REQUIREMENTS (STRICT)
-1. **COMPREHENSIVE DESIGN DOCUMENT** - MUST include ALL of:
-   - [ ] Multiple architecture options with pros/cons
-   - [ ] **Simplification Options section** with 5-8 concrete options (MANDATORY)
-   - [ ] Open questions categorized by tier (Critical/Important/Deferrable)
-   - [ ] Risk assessment matrix
-   - [ ] Alternative approaches considered
-   - [ ] Comparison table of different approaches
-   - [ ] Success metrics defined
-2. **NO PREMATURE SOLUTIONS** - Do NOT:
-   - Start coding "to explore"
-   - Create "quick prototypes" 
-   - Write "example implementations"
-   - Make architecture decisions (that's for Align phase)
-3. **EXPERT ANALYSIS REQUIRED** - Use mcp__zen__consensus or mcp__zen__thinkdeep for design validation
-
-**Design Phase Checklist** (ALL must be ✅ before proceeding):
-- [ ] Created comprehensive design document
-- [ ] Listed 5+ simplification options as OPTIONS (not decisions)
-- [ ] Categorized all open questions by tier
-- [ ] Obtained expert review from multiple models
-- [ ] Updated design with expert feedback
-- [ ] Document clearly states "Awaiting Decision" for all options
-
-#### ALIGN PHASE REQUIREMENTS (STRICT)
-1. **HUMAN MUST EXPLICITLY DECIDE** - Cannot proceed without:
-   - ALL Tier 1 questions answered with `[DECIDED: ...]`
-   - Simplifications marked `[ACCEPTED]` or `[REJECTED]`
-   - Architecture choice confirmed
-   - Written approval to proceed to Plan
-2. **NO ASSUMPTIONS** - If human says "looks good" or "proceed", CLARIFY:
-   ```
-   "Before I continue, I need explicit decisions on:
-   - Question 1: [state question] - Your decision?
-   - Question 2: [state question] - Your decision?
-   Please respond with your specific choices."
-   ```
-3. **DOCUMENT MUST BE UPDATED** - The design document MUST show all decisions
-
-#### AUTOMATIC STOP CONDITIONS
-**Claude Code MUST STOP and refuse to continue if:**
-- User asks to "implement" but no design exists → "I need to create a DAPPER design first"
-- User says "go ahead" but questions unanswered → "I need your decisions on these questions first"
-- User requests code but Align incomplete → "We haven't completed the Align phase yet"
-- Design exists but no expert review → "I need to get expert analysis of this design"
-
-#### ENFORCEMENT EXAMPLES
-
-**WRONG** (Common Deviation):
-```
-User: "Build an AI assistant"
-Claude: "I'll create a basic implementation to get started..." [STARTS CODING]
-```
-
-**CORRECT**:
-```
-User: "Build an AI assistant"
-Claude: "I'll follow DAPPER methodology. First, I need to create a comprehensive design document.
-Let me start by exploring different architecture options...
-[CREATES DESIGN DOCUMENT WITH OPTIONS AND QUESTIONS]
-The design is ready for your review. Please make decisions on the critical questions before we proceed."
-```
-
-**WRONG** (Premature Progression):
-```
-User: "Looks good"
-Claude: "Great! I'll start implementing..." [PROCEEDS TO PLAN/PRODUCE]
-```
-
-**CORRECT**:
-```
-User: "Looks good"
-Claude: "Thank you! Before proceeding, I need your explicit decisions on:
-1. Should the AI have write access? (Options: read-only vs full CRUD)
-2. How should we handle conversation history? (Options: session-only vs persistent)
-3. What's the monthly Gemini API budget?
-Please provide your specific choices for each."
-```
-
-**Document Flow**:
-```
-[feature-name]-design.md (Phases D → A)
-├─ Design: Initial proposals, questions, alternatives
-└─ Align: Decisions marked [ACCEPTED]/[REJECTED], rationale added
-         ↓
-    [Plan Phase creates Implementation Plan]
-         ↓
-[feature-name]-plan.md (Phases P → P → E → R)  
-├─ Plan: Phases with ITRC structure defined
-├─ Produce: Progress tracking, evidence trail added
-├─ Evaluate: Test results, metrics incorporated
-└─ Revise: Retrospective report + Updates to both docs with lessons learned
-```
-
-**Example**: For complete interface redesign:
-- `complete-interface-redesign-design.md` → Design & Align phases
-- `complete-interface-redesign-plan.md` → Plan through Revise phases
-
-**Note**: Both documents MUST share the same prefix for clarity and traceability.
-
-### DAPPER Configuration
-
-**Expert Review Models**: When expert review is required (particularly in the Plan stage), use the following models:
-- **Primary Models**: GPT-5 and Gemini Pro
-- **Alternative Models**: O3, Claude Opus, or other high-capability models as available
-- **Minimum Requirement**: At least two different expert models for critical reviews
-
-This configuration applies to all DAPPER expert review requirements mentioned throughout this document.
 
 ### When to Use DAPPER
 
@@ -252,34 +76,15 @@ This configuration applies to all DAPPER expert review requirements mentioned th
 - Configuration updates
 - Straightforward dependency updates
 
-### Staying on Track - Plan Adherence Rules
+### DAPPER Quick Reference
 
-**CRITICAL**: Once a DAPPER plan is approved, Claude Code MUST:
-
-1. **FOLLOW THE PLAN EXACTLY** - Do not deviate from the approved implementation plan
-2. **CHECK TODOS CONSTANTLY** - Use TodoWrite to track current phase and sub-tasks
-3. **NO SCOPE CREEP** - If user requests features not in plan, respond:
-   ```
-   "This feature isn't in our current plan. We should either:
-   1. Complete the current phase first, or
-   2. Update the plan document with this change and get approval"
-   ```
-4. **PHASE BOUNDARIES** - Complete ALL ITRC tasks for current phase before moving to next
-5. **DOCUMENT UPDATES** - Any plan changes MUST be reflected in the plan document
-
-**Plan Deviation Protocol**:
-- If deviation needed → Update plan document
-- Get human approval for changes
-- Update todos to reflect new plan
-- Only then proceed with implementation
-
-**Example Enforcement**:
 ```
-User: "While you're at it, can you also add voice input?"
-Claude: "Voice input is not in our current Phase 1 plan for the AI Assistant.
-Current phase focuses on: [lists current phase objectives]
-We should complete this phase first, then we can add voice input to Phase 4.
-Would you like to continue with the current plan or revise it?"
+D - Design    : AI explores and proposes
+A - Align     : Human decides and aligns  
+P - Plan      : Break into executable phases with ITRC
+P - Produce   : Build, test, review, commit & push
+E - Evaluate  : Comprehensive validation
+R - Revise    : Update docs and capture lessons
 ```
 
 ### The Six Stages
@@ -568,6 +373,36 @@ When you have open questions during Align, categorize them:
 - Future enhancements
 - Optimization details
 
+### Staying on Track - Plan Adherence Rules
+
+**CRITICAL**: Once a DAPPER plan is approved, Claude Code MUST:
+
+1. **FOLLOW THE PLAN EXACTLY** - Do not deviate from the approved implementation plan
+2. **CHECK TODOS CONSTANTLY** - Use TodoWrite to track current phase and sub-tasks
+3. **NO SCOPE CREEP** - If user requests features not in plan, respond:
+   ```
+   "This feature isn't in our current plan. We should either:
+   1. Complete the current phase first, or
+   2. Update the plan document with this change and get approval"
+   ```
+4. **PHASE BOUNDARIES** - Complete ALL ITRC tasks for current phase before moving to next
+5. **DOCUMENT UPDATES** - Any plan changes MUST be reflected in the plan document
+
+**Plan Deviation Protocol**:
+- If deviation needed → Update plan document
+- Get human approval for changes
+- Update todos to reflect new plan
+- Only then proceed with implementation
+
+**Example Enforcement**:
+```
+User: "While you're at it, can you also add voice input?"
+Claude: "Voice input is not in our current Phase 1 plan for the AI Assistant.
+Current phase focuses on: [lists current phase objectives]
+We should complete this phase first, then we can add voice input to Phase 4.
+Would you like to continue with the current plan or revise it?"
+```
+
 ### Common DAPPER Pitfalls to Avoid
 
 1. **Premature Planning**: Moving to Plan before answering Tier 1 questions
@@ -579,16 +414,272 @@ When you have open questions during Align, categorize them:
 7. **Incoherent Plans**: Phase objectives must match their tasks
 8. **Marking Without Evidence**: NEVER mark ITRC steps complete without proof of execution
 
-### DAPPER Quick Reference
+### DAPPER Configuration
 
+**Expert Review Models**: When expert review is required (particularly in the Plan stage), use the following models:
+- **Primary Models**: GPT-5 and Gemini Pro
+- **Alternative Models**: O3, Claude Opus, or other high-capability models as available
+- **Minimum Requirement**: At least two different expert models for critical reviews
+
+This configuration applies to all DAPPER expert review requirements mentioned throughout this document.
+
+### ⚠️ CRITICAL DAPPER ENFORCEMENT RULES ⚠️
+
+**MANDATORY EARLY-STAGE COMPLIANCE** - Claude Code MUST NOT write ANY implementation code until:
+
+#### DESIGN PHASE REQUIREMENTS (STRICT)
+1. **COMPREHENSIVE DESIGN DOCUMENT** - MUST include ALL of:
+   - [ ] Multiple architecture options with pros/cons
+   - [ ] **Simplification Options section** with 5-8 concrete options (MANDATORY)
+   - [ ] Open questions categorized by tier (Critical/Important/Deferrable)
+   - [ ] Risk assessment matrix
+   - [ ] Alternative approaches considered
+   - [ ] Comparison table of different approaches
+   - [ ] Success metrics defined
+2. **NO PREMATURE SOLUTIONS** - Do NOT:
+   - Start coding "to explore"
+   - Create "quick prototypes" 
+   - Write "example implementations"
+   - Make architecture decisions (that's for Align phase)
+3. **EXPERT ANALYSIS REQUIRED** - Use mcp__zen__consensus or mcp__zen__thinkdeep for design validation
+
+**Design Phase Checklist** (ALL must be ✅ before proceeding):
+- [ ] Created comprehensive design document
+- [ ] Listed 5+ simplification options as OPTIONS (not decisions)
+- [ ] Categorized all open questions by tier
+- [ ] Obtained expert review from multiple models
+- [ ] Updated design with expert feedback
+- [ ] Document clearly states "Awaiting Decision" for all options
+
+#### ALIGN PHASE REQUIREMENTS (STRICT)
+1. **HUMAN MUST EXPLICITLY DECIDE** - Cannot proceed without:
+   - ALL Tier 1 questions answered with `[DECIDED: ...]`
+   - Simplifications marked `[ACCEPTED]` or `[REJECTED]`
+   - Architecture choice confirmed
+   - Written approval to proceed to Plan
+2. **NO ASSUMPTIONS** - If human says "looks good" or "proceed", CLARIFY:
+   ```
+   "Before I continue, I need explicit decisions on:
+   - Question 1: [state question] - Your decision?
+   - Question 2: [state question] - Your decision?
+   Please respond with your specific choices."
+   ```
+3. **DOCUMENT MUST BE UPDATED** - The design document MUST show all decisions
+
+#### AUTOMATIC STOP CONDITIONS
+**Claude Code MUST STOP and refuse to continue if:**
+- User asks to "implement" but no design exists → "I need to create a DAPPER design first"
+- User says "go ahead" but questions unanswered → "I need your decisions on these questions first"
+- User requests code but Align incomplete → "We haven't completed the Align phase yet"
+- Design exists but no expert review → "I need to get expert analysis of this design"
+
+#### ENFORCEMENT EXAMPLES
+
+**WRONG** (Common Deviation):
 ```
-D - Design    : AI explores and proposes
-A - Align     : Human decides and aligns  
-P - Plan      : Break into executable phases with ITRC
-P - Produce   : Build, test, review, commit & push
-E - Evaluate  : Comprehensive validation
-R - Revise    : Update docs and capture lessons
+User: "Build an AI assistant"
+Claude: "I'll create a basic implementation to get started..." [STARTS CODING]
 ```
+
+**CORRECT**:
+```
+User: "Build an AI assistant"
+Claude: "I'll follow DAPPER methodology. First, I need to create a comprehensive design document.
+Let me start by exploring different architecture options...
+[CREATES DESIGN DOCUMENT WITH OPTIONS AND QUESTIONS]
+The design is ready for your review. Please make decisions on the critical questions before we proceed."
+```
+
+**WRONG** (Premature Progression):
+```
+User: "Looks good"
+Claude: "Great! I'll start implementing..." [PROCEEDS TO PLAN/PRODUCE]
+```
+
+**CORRECT**:
+```
+User: "Looks good"
+Claude: "Thank you! Before proceeding, I need your explicit decisions on:
+1. Should the AI have write access? (Options: read-only vs full CRUD)
+2. How should we handle conversation history? (Options: session-only vs persistent)
+3. What's the monthly Gemini API budget?
+Please provide your specific choices for each."
+```
+
+**Document Flow**:
+```
+[feature-name]-design.md (Phases D → A)
+├─ Design: Initial proposals, questions, alternatives
+└─ Align: Decisions marked [ACCEPTED]/[REJECTED], rationale added
+         ↓
+    [Plan Phase creates Implementation Plan]
+         ↓
+[feature-name]-plan.md (Phases P → P → E → R)  
+├─ Plan: Phases with ITRC structure defined
+├─ Produce: Progress tracking, evidence trail added
+├─ Evaluate: Test results, metrics incorporated
+└─ Revise: Retrospective report + Updates to both docs with lessons learned
+```
+
+**Example**: For complete interface redesign:
+- `complete-interface-redesign-design.md` → Design & Align phases
+- `complete-interface-redesign-plan.md` → Plan through Revise phases
+
+**Note**: Both documents MUST share the same prefix for clarity and traceability.
+
+---
+
+## Development Guidelines
+
+### Claude Commands
+
+**Available Custom Commands:**
+
+#### `/gcm` - Git Commit with Message
+- **Usage**: `/gcm` (interactive) or `/gcm <commit message>` 
+- **Purpose**: Creates git commits while automatically updating the statusline task
+- **Behavior**: 
+  - Calls `scripts/gcm.sh` which commits changes and updates `.claude-task`
+  - If no message provided, prompts for input
+  - Updates statusline with the first line of commit message
+- **Example**: `/gcm feat: Add user authentication`
+
+#### `/slt` - Set Line Task
+- **Usage**: `/slt <task description>` or `/slt` (auto-summarize)
+- **Purpose**: Updates the statusline task display for the current project
+- **Behavior**:
+  - With arguments: Sets task to exact text provided
+  - Without arguments: Claude auto-summarizes current work (5-10 words)
+  - Updates `.claude-task` file in project root
+- **Examples**: 
+  - `/slt Fixing database migration issues`
+  - `/slt` → Claude writes: "Implementing user auth flow"
+
+**Note**: Commands are defined in `.claude/commands/` directory and call scripts in `scripts/`
+
+### Project Management
+- **Phase-Based Development**: We organize work into phases based on functionality, not time
+- **Phases represent logical completion points**: Each phase delivers working functionality
+- **No time estimates**: Phases are defined by deliverables, not duration
+- **Sequential phases**: Complete one phase before moving to the next
+
+### Git Guidelines
+
+**Commits**: 
+- Do not use `git commit -m`. Instead use `/gcm`
+- No "Generated with Claude Code"
+- Descriptive messages explaining the purpose of changes
+- Use `git add [specific-files]` - NEVER `git add .` or `git add -A`
+
+**Pushing**: 
+- Never force push
+- Always `git fetch origin && git status` first
+- If rejected, STOP and ask user
+
+**Pre-Commit Checklist**:
+1. **Include dependencies**: Both `package.json` AND `package-lock.json` if changed
+2. **Validate locally**: Run `npm run build` and `npm run test`
+3. **Review significant changes**: Use `mcp__zen__codereview` for features
+
+### Script Organization
+- **Keep scripts organized**: Do not scatter .js and .py files throughout the codebase
+- **Use scripts/tmp/**: Place temporary or one-off scripts in `scripts/tmp/` directory
+- **Main scripts directory**: Production scripts go in `scripts/`
+- **Clear naming**: Use descriptive names that indicate the script's purpose
+- **Documentation**: Add comments at the top of scripts explaining their purpose
+- **Environment variables**: Do not set env vars directly on the command line. Create a script that sets the env vars internally
+
+### Simplicity and Pragmatism
+
+- **Bias towards simple solutions**: Address problems we currently have, not hypothetical future scaling issues
+- **Avoid premature optimization**: Don't implement complex patterns for problems that don't exist yet
+- **Use straightforward Prisma queries**: Query existing models directly rather than complex abstraction layers
+- **Focus on current scale**: Design for the data and usage patterns we have today
+- **Iterative complexity**: Add architectural complexity only when simple solutions prove insufficient
+
+#### Example: Keeping Things Simple
+
+**Avatar Photos**: Display user names instead of complex image handling. Eliminates storage, uploads, and UI complexity while providing essential identification. Similar approach for performance (optimize only when needed) and moderation (add only if abuse occurs).
+
+### Performance and Security Priorities
+
+#### Threat Model Context
+- **What we are**: A community platform for volunteer matching
+- **What we're NOT**: A financial service, healthcare system, or sensitive data processor
+- **No money exchanged**: No payment processing, no financial transactions
+- **Low-value target**: Not attractive to sophisticated attackers
+- **Data sensitivity**: Public profiles and project information (not PII-heavy)
+
+#### Security Approach
+- **Focus on basics**: Input validation (already implemented with Zod)
+- **Skip security theater**: No complex CSRF tokens, rate limiting, or audit logs
+- **Pragmatic protection**: Prevent SQL injection (Prisma handles this), XSS (React handles this)
+- **Authentication**: Basic session management with NextAuth is sufficient
+- **Priority**: User experience and functionality over restrictive controls
+
+### Technical Standards
+
+- **Database**: Use Prisma for all operations, transactions for multi-table, proper error handling
+- **Auth**: NextAuth.js for protected routes, role-based access, validate sessions on API routes  
+- **UI/UX**: Clean design, WCAG 2.1 AA accessibility, semantic HTML, Markdown support via `<Markdown>` component
+
+### TypeScript Configuration Strategy
+
+Our project uses two separate TypeScript configuration files to ensure correctness for both development and production builds:
+
+- **`tsconfig.json` (The Base Config)**
+  - **Purpose**: Primary configuration used for local development by editors (VS Code) and for running our test suite via Jest (`ts-jest`)
+  - **Scope**: Configured to understand the entire codebase, including application source code, test files, and test-specific libraries (Jest globals)
+
+- **`tsconfig.build.json` (The Build Config)**
+  - **Purpose**: Used exclusively by CI/CD pipeline for build validation (`npx tsc --noEmit -p tsconfig.build.json`)
+  - **Scope**: Inherits from base `tsconfig.json` but explicitly **excludes** all test files (`**/*.test.ts`, etc.)
+  - **Why**: Ensures CI type-check precisely matches what Next.js includes in production builds
+
+### Debugging Guide
+
+**📚 COMPREHENSIVE DEBUGGING PLAYBOOK**: For systematic debugging of test failures, CI/CD issues, and common development problems, see **`dev_docs/ref/debugging-playbook.md`**
+
+The playbook includes:
+- Test failure resolution strategies
+- Bulk fix operations for common patterns
+- CI/CD troubleshooting workflows
+- Mock configuration best practices
+- Database debugging techniques
+- Performance investigation methods
+
+#### Quick CI/CD Debugging with GitHub CLI
+
+When GitHub Actions jobs fail, use GitHub CLI (`gh`) for faster debugging:
+
+**Core Workflow**:
+
+1. **Check Status**: List recent runs to find failures
+   ```bash
+   gh run list --limit 5
+   ```
+
+2. **View Detailed Status**: Get job breakdown for a specific run
+   ```bash
+   gh run view <RUN_ID>
+   ```
+
+3. **Get Failed Logs**: View logs for failed jobs
+   ```bash
+   gh run view --log-failed --job=<JOB_ID>
+   ```
+
+4. **Monitor Progress**: Check status periodically while working on other tasks
+   ```bash
+   gh run view <RUN_ID>
+   ```
+
+**Pro Tips**:
+- Don't use `sleep` commands - work asynchronously and check periodically
+- Use `--log-failed` to get only the relevant error information
+- The `gh run view` command shows real-time status without repeatedly polling
+
+For more complex debugging scenarios, refer to the full debugging playbook.
 
 ---
 
@@ -738,135 +829,7 @@ npm run test:all         # Runs both unit and integration tests
 - Run `npm run build` after EVERY schema change
 - No phase is complete without TypeScript compilation passing
 
-See `docs/guides/integration-testing.md` and `docs/guides/testing-strategy.md` for detailed guides.
-
----
-
-## Development Guidelines
-
-### Project Management
-- **Phase-Based Development**: We organize work into phases based on functionality, not time
-- **Phases represent logical completion points**: Each phase delivers working functionality
-- **No time estimates**: Phases are defined by deliverables, not duration
-- **Sequential phases**: Complete one phase before moving to the next
-
-### Git Guidelines
-
-**Commits**: 
-- Do not use `git commit -m`. Instead use `/gcm`
-- No "Generated with Claude Code"
-- Descriptive messages explaining the purpose of changes
-- Use `git add [specific-files]` - NEVER `git add .` or `git add -A`
-
-**Pushing**: 
-- Never force push
-- Always `git fetch origin && git status` first
-- If rejected, STOP and ask user
-
-**Pre-Commit Checklist**:
-1. **Include dependencies**: Both `package.json` AND `package-lock.json` if changed
-2. **Validate locally**: Run `npm run build` and `npm run test`
-3. **Review significant changes**: Use `mcp__zen__codereview` for features
-
-### Script Organization
-- **Keep scripts organized**: Do not scatter .js and .py files throughout the codebase
-- **Use scripts/tmp/**: Place temporary or one-off scripts in `scripts/tmp/` directory
-- **Main scripts directory**: Production scripts go in `scripts/`
-- **Clear naming**: Use descriptive names that indicate the script's purpose
-- **Documentation**: Add comments at the top of scripts explaining their purpose
-- **Environment variables**: Do not set env vars directly on the command line. Create a script that sets the env vars internally
-
-### Simplicity and Pragmatism
-
-- **Bias towards simple solutions**: Address problems we currently have, not hypothetical future scaling issues
-- **Avoid premature optimization**: Don't implement complex patterns for problems that don't exist yet
-- **Use straightforward Prisma queries**: Query existing models directly rather than complex abstraction layers
-- **Focus on current scale**: Design for the data and usage patterns we have today
-- **Iterative complexity**: Add architectural complexity only when simple solutions prove insufficient
-
-#### Example: Keeping Things Simple
-
-**Avatar Photos**: Display user names instead of complex image handling. Eliminates storage, uploads, and UI complexity while providing essential identification. Similar approach for performance (optimize only when needed) and moderation (add only if abuse occurs).
-
-### Performance and Security Priorities
-
-#### Threat Model Context
-- **What we are**: A community platform for volunteer matching
-- **What we're NOT**: A financial service, healthcare system, or sensitive data processor
-- **No money exchanged**: No payment processing, no financial transactions
-- **Low-value target**: Not attractive to sophisticated attackers
-- **Data sensitivity**: Public profiles and project information (not PII-heavy)
-
-#### Security Approach
-- **Focus on basics**: Input validation (already implemented with Zod)
-- **Skip security theater**: No complex CSRF tokens, rate limiting, or audit logs
-- **Pragmatic protection**: Prevent SQL injection (Prisma handles this), XSS (React handles this)
-- **Authentication**: Basic session management with NextAuth is sufficient
-- **Priority**: User experience and functionality over restrictive controls
-
-### Technical Standards
-
-- **Database**: Use Prisma for all operations, transactions for multi-table, proper error handling
-- **Auth**: NextAuth.js for protected routes, role-based access, validate sessions on API routes  
-- **UI/UX**: Clean design, WCAG 2.1 AA accessibility, semantic HTML, Markdown support via `<Markdown>` component
-
-### TypeScript Configuration Strategy
-
-Our project uses two separate TypeScript configuration files to ensure correctness for both development and production builds:
-
-- **`tsconfig.json` (The Base Config)**
-  - **Purpose**: Primary configuration used for local development by editors (VS Code) and for running our test suite via Jest (`ts-jest`)
-  - **Scope**: Configured to understand the entire codebase, including application source code, test files, and test-specific libraries (Jest globals)
-
-- **`tsconfig.build.json` (The Build Config)**
-  - **Purpose**: Used exclusively by CI/CD pipeline for build validation (`npx tsc --noEmit -p tsconfig.build.json`)
-  - **Scope**: Inherits from base `tsconfig.json` but explicitly **excludes** all test files (`**/*.test.ts`, etc.)
-  - **Why**: Ensures CI type-check precisely matches what Next.js includes in production builds
-
-### Debugging Guide
-
-**📚 COMPREHENSIVE DEBUGGING PLAYBOOK**: For systematic debugging of test failures, CI/CD issues, and common development problems, see **`docs/protocol/debugging-playbook.md`**
-
-The playbook includes:
-- Test failure resolution strategies
-- Bulk fix operations for common patterns
-- CI/CD troubleshooting workflows
-- Mock configuration best practices
-- Database debugging techniques
-- Performance investigation methods
-
-#### Quick CI/CD Debugging with GitHub CLI
-
-When GitHub Actions jobs fail, use GitHub CLI (`gh`) for faster debugging:
-
-**Core Workflow**:
-
-1. **Check Status**: List recent runs to find failures
-   ```bash
-   gh run list --limit 5
-   ```
-
-2. **View Detailed Status**: Get job breakdown for a specific run
-   ```bash
-   gh run view <RUN_ID>
-   ```
-
-3. **Get Failed Logs**: View logs for failed jobs
-   ```bash
-   gh run view --log-failed --job=<JOB_ID>
-   ```
-
-4. **Monitor Progress**: Check status periodically while working on other tasks
-   ```bash
-   gh run view <RUN_ID>
-   ```
-
-**Pro Tips**:
-- Don't use `sleep` commands - work asynchronously and check periodically
-- Use `--log-failed` to get only the relevant error information
-- The `gh run view` command shows real-time status without repeatedly polling
-
-For more complex debugging scenarios, refer to the full debugging playbook.
+See `dev_docs/ref/integration-testing.md` and `dev_docs/ref/testing-strategy.md` for detailed guides.
 
 ---
 
@@ -878,13 +841,13 @@ Projects use a dual status system:
 - **`status`**: Tracks lifecycle phase (AWAITING_VOLUNTEERS → PLANNING → IN_PROGRESS → COMPLETED)
 - **`isActive`**: Controls volunteer recruitment (can be true even when IN_PROGRESS)
 
-For detailed schema information, see `prisma/schema.prisma` and `docs/guides/maix-data-model.md`.
+For detailed schema information, see `prisma/schema.prisma` and `dev_docs/ref/maix-data-model.md`.
 
 ---
 
 ## Feature Documentation
 
-For new features, use `docs/designs/FEATURE-DESIGN-TEMPLATE.md`. Focus on architecture, define phases by functionality not duration.
+For new features, use `dev_docs/designs/FEATURE-DESIGN-TEMPLATE.md`. Focus on architecture, define phases by functionality not duration.
 
 Directory structure: `experimental/` → `planned/` → `active/` → `shipped/`
 
@@ -905,24 +868,87 @@ npm outdated                       # Update only if needed
 
 **Key Docs**: 
 - README.md (setup and getting started)
-- docs/guides/testing-strategy.md (comprehensive testing philosophy)
-- docs/guides/maix-data-model.md (database schema documentation)
-- docs/guides/google-genai-sdk-usage.md (AI integration guide)
+- dev_docs/ref/testing-strategy.md (comprehensive testing philosophy)
+- dev_docs/ref/maix-data-model.md (database schema documentation)
+- dev_docs/ref/google-genai-sdk-usage.md (AI integration guide)
 - lessons-learned.md (cumulative project insights)
-
-**Community Values**: 
-- Community benefit over profit
-- Knowledge sharing
-- Transparency
-- Collaboration
 
 ---
 
 ## Key Reminders for Claude Code
 
-1. **Safety First**: Follow git and database safety protocols above
-2. **Keep It Simple**: Bias towards simple solutions for current problems
-3. **Use DAPPER**: Design, Align, Plan, Produce, Evaluate, Revise
-4. **Test Pragmatically**: Integration-first with real database
-5. **Track Progress**: Use TodoWrite tool for task management
-6. **No Claude Suffixes**: Never add "Generated with Claude Code" to commits
+1. **Keep It Simple**: Bias towards simple solutions for current problems
+2. **Use DAPPER**: Design, Align, Plan, Produce, Evaluate, Revise
+3. **Test Pragmatically**: Integration-first with real database
+4. **Track Progress**: Use TodoWrite tool for task management
+5. **No Claude Suffixes**: Never add "Generated with Claude Code" to commits
+6. **Safety Protocols**: Follow git and database safety protocols (see below)
+
+---
+
+## ⚠️ CRITICAL SAFETY PROTOCOLS ⚠️
+
+### Git Safety - READ BEFORE EVERY GIT OPERATION
+
+1. **NEVER FORCE PUSH** - This can permanently delete other people's work
+2. **ALWAYS CHECK FOR REMOTE CHANGES** before pushing: `git fetch origin && git log HEAD..origin/main --oneline`
+3. **IF PUSH FAILS** - STOP and ask the user how to proceed. DO NOT make decisions independently.
+4. **This is a COLLABORATIVE repository** - Other developers' work must be protected
+5. **NEVER use `git add -A` or `git add .`** - Always use specific file paths with `git add [specific-files]`
+
+### Database Safety - READ BEFORE ANY PRISMA OPERATION
+
+#### Migration Best Practices (AI Agent Compatible)
+
+1. **NEVER use `npx prisma db push`** - This command is destructive and will drop/recreate tables
+   - ❌ `npx prisma db push` - NEVER USE THIS on any shared database
+   - ❌ `npx prisma migrate dev` - Interactive only, breaks AI agents
+   - ✅ `npm run db:migrate:new` - Safe, non-interactive migration creation
+   - ✅ `npm run db:migrate:apply` - Apply migrations safely
+
+2. **AI Agent Compatible Workflow (migrate diff + deploy)**:
+   ```bash
+   # Step 1: Create migration from schema changes (no prompts!)
+   npm run db:migrate:new descriptive_name
+   
+   # Step 2: Review the generated SQL
+   cat prisma/migrations/*/migration.sql
+   
+   # Step 3: Apply when ready
+   npm run db:migrate:apply
+   ```
+
+3. **Environment Safety Protocol**:
+   - ALWAYS use npm scripts (they auto-load .env correctly)
+   - Scripts show which database you're targeting before running
+   - Production requires explicit confirmation
+   - Use `npm run db:migrate:status` to verify current state
+
+4. **ALWAYS backup before migrations**:
+   ```bash
+   npm run db:backup
+   ```
+
+5. **Available Safe Commands**:
+   ```bash
+   npm run db:migrate:new migration_name  # Create migration using migrate diff
+   npm run db:migrate:apply               # Apply pending migrations using deploy
+   npm run db:migrate:status              # Check migration status
+   npm run db:backup                      # Backup database with table counts
+   npm run db:health                      # Comprehensive database health check
+   npm run db:studio                      # Open Prisma Studio (read-only recommended)
+   ```
+
+**How It Works Under the Hood**:
+- `db:migrate:new` runs `./scripts/create-migration.sh` which uses `prisma migrate diff`
+- This generates SQL by comparing your schema to the current database state
+- `db:migrate:apply` uses `prisma migrate deploy` (production-safe, non-interactive)
+- No TTY detection issues, no interactive prompts, works perfectly with AI agents
+
+This warning exists because:
+- `db push` destroyed production data multiple times in July 2025
+- Interactive `migrate dev` breaks AI agents and CI/CD
+- Environment variable confusion led to wrong database targeting
+- Prisma's design assumes human developers, not automation
+
+See `dev_docs/ref/prisma.md` for comprehensive safety guidelines.
