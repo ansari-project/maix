@@ -384,7 +384,125 @@ export const createMockMcpServer = () => {
 }
 ```
 
-### 1.13 Open Questions for Alignment
+### 1.13 Proposed Simplification Options
+
+**IMPORTANT**: These are OPTIONS to prevent over-engineering. Each must be explicitly ACCEPTED or REJECTED during the Align phase.
+
+#### Simplification Option 1: No Conversation Persistence
+- **Proposal**: Keep all conversations session-only, no database storage
+- **Pros**: 
+  - Eliminates privacy concerns
+  - No database schema changes needed
+  - Reduces storage costs
+  - Simpler implementation (no conversation ID management)
+- **Cons**: 
+  - Users lose context on page refresh
+  - Can't resume conversations later
+  - No conversation history for debugging
+- **Awaiting Decision**: [ ] ACCEPT or [ ] REJECT
+
+#### Simplification Option 2: Single Model Only (Gemini Flash)
+- **Proposal**: Use only gemini-1.5-flash, no model selection
+- **Pros**:
+  - 10x cheaper than Pro model
+  - Faster responses (optimized for speed)
+  - Simpler configuration
+  - Predictable costs
+- **Cons**:
+  - Less capable for complex reasoning
+  - May struggle with nuanced requests
+  - No upgrade path without code changes
+- **Awaiting Decision**: [ ] ACCEPT or [ ] REJECT
+
+#### Simplification Option 3: No Streaming Responses
+- **Proposal**: Return complete responses instead of streaming
+- **Pros**:
+  - Simpler client implementation
+  - Easier error handling
+  - No WebSocket/SSE complexity
+  - Better for caching
+- **Cons**:
+  - Worse perceived performance
+  - Users wait longer for first content
+  - Less engaging UX
+- **Awaiting Decision**: [ ] ACCEPT or [ ] REJECT
+
+#### Simplification Option 4: Fixed Context Window (Last 5 Messages)
+- **Proposal**: Only send last 5 message pairs to Gemini
+- **Pros**:
+  - Predictable token usage
+  - Lower costs
+  - Faster processing
+  - Simpler context management
+- **Cons**:
+  - AI loses earlier context
+  - May repeat questions
+  - Less coherent long conversations
+- **Awaiting Decision**: [ ] ACCEPT or [ ] REJECT
+
+#### Simplification Option 5: No MCP Tool Explanations
+- **Proposal**: AI never mentions which MCP tools it's using
+- **Pros**:
+  - Cleaner responses
+  - Less technical jargon
+  - Simpler prompt engineering
+  - Users focus on outcomes not process
+- **Cons**:
+  - Less transparency
+  - Harder to debug issues
+  - Users can't learn the system
+- **Awaiting Decision**: [ ] ACCEPT or [ ] REJECT
+
+#### Simplification Option 6: No Caching Layer
+- **Proposal**: Always fetch fresh data from MCP, no caching
+- **Pros**:
+  - Always up-to-date information
+  - No cache invalidation complexity
+  - Simpler architecture
+  - Less memory usage
+- **Cons**:
+  - Higher latency
+  - More MCP server load
+  - Repeated identical queries
+- **Awaiting Decision**: [ ] ACCEPT or [ ] REJECT
+
+#### Simplification Option 7: No Rate Limiting Initially
+- **Proposal**: Launch without rate limits, add if abused
+- **Pros**:
+  - Simpler initial implementation
+  - Better user experience
+  - No false positives blocking legitimate use
+- **Cons**:
+  - Risk of cost overruns
+  - Potential for abuse
+  - Harder to add retroactively
+- **Awaiting Decision**: [ ] ACCEPT or [ ] REJECT
+
+#### Simplification Option 8: No Custom Error Recovery
+- **Proposal**: If MCP fails, show generic error message
+- **Pros**:
+  - Much simpler error handling
+  - Consistent behavior
+  - Less code to maintain
+- **Cons**:
+  - Worse user experience during failures
+  - No graceful degradation
+  - Users don't know what went wrong
+- **Awaiting Decision**: [ ] ACCEPT or [ ] REJECT
+
+#### Meta-Simplification: Start with ALL Simplifications
+- **Proposal**: Accept all simplifications for MVP, add complexity only when proven necessary
+- **Pros**:
+  - Fastest path to working product
+  - Learn from real usage
+  - Avoid premature optimization
+- **Cons**:
+  - May disappoint early users
+  - Technical debt if many need reversal
+  - Could limit initial adoption
+- **Awaiting Decision**: [ ] ACCEPT or [ ] REJECT
+
+### 1.14 Open Questions for Alignment
 
 #### Tier 1: Critical (Must answer before Plan phase)
 
@@ -466,6 +584,61 @@ export const createMockMcpServer = () => {
 | Future Features | Reimplement each | Automatically available |
 
 **Decision**: MCP Integration is the correct approach for long-term maintainability
+
+### 1.17 Expert Review Results
+
+**Date**: January 10, 2025  
+**Models Consulted**: Gemini-2.5-Pro (neutral stance), O3 (against stance)
+
+#### Consensus Summary
+
+Both expert models **endorsed the architecture** with high confidence:
+- **Gemini-2.5-Pro**: 8/10 confidence - "Technically sound and strategically aligned"
+- **O3**: 7.5/10 confidence - "Strong user value proposition with manageable technical risks"
+
+#### Key Points of Agreement
+
+1. **Architecture is Industry Standard**
+   - Follows same pattern as GitHub Copilot and Notion AI
+   - Server-side LLM integration is proven approach
+   - Event-driven pattern provides excellent extensibility
+
+2. **Technical Feasibility**
+   - No fundamental blockers identified
+   - All components (PAT, MCP, Events) exist in codebase
+   - Reusing infrastructure reduces risk
+
+3. **Critical Success Factors**
+   - **Cost Management**: Implement budget controls from day one
+   - **User Experience**: Success depends on interaction quality
+   - **Prompt Engineering**: Requires iterative refinement
+   - **Performance**: Keep response under 800ms with streaming
+
+#### Key Expert Recommendations
+
+1. **Cost Controls** (CRITICAL):
+   - Implement per-user quotas as MVP feature
+   - Average cost: ~$0.015 per session (6k tokens)
+   - Caching can reduce costs by 20-30%
+
+2. **Architecture**:
+   - Build provider abstraction layer immediately
+   - Pre-serialize context to reduce latency
+   - Use streaming for better perceived performance
+
+3. **Risks to Mitigate**:
+   - Token limits: Gemini ~32k hard cap
+   - Event pattern adds ~40ms latency
+   - Operational costs are biggest risk
+
+#### Expert Verdict
+
+**PROCEED WITH IMPLEMENTATION** with conditions:
+1. Start read-only (Phase 1)
+2. Cost controls upfront
+3. Provider abstraction from day one
+4. Internal beta first
+5. Focus on 2-3 killer use cases
 
 ---
 

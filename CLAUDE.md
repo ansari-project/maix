@@ -130,18 +130,28 @@ DAPPER ensures thoughtful design, human alignment, and high-quality implementati
 **MANDATORY EARLY-STAGE COMPLIANCE** - Claude Code MUST NOT write ANY implementation code until:
 
 #### DESIGN PHASE REQUIREMENTS (STRICT)
-1. **COMPREHENSIVE DESIGN DOCUMENT** - MUST include:
-   - Multiple architecture options with pros/cons
-   - Open questions categorized by tier (Critical/Important/Deferrable)
-   - Risk assessment matrix
-   - Proposed simplifications as OPTIONS (not decisions)
-   - Alternative approaches considered
+1. **COMPREHENSIVE DESIGN DOCUMENT** - MUST include ALL of:
+   - [ ] Multiple architecture options with pros/cons
+   - [ ] **Simplification Options section** with 5-8 concrete options (MANDATORY)
+   - [ ] Open questions categorized by tier (Critical/Important/Deferrable)
+   - [ ] Risk assessment matrix
+   - [ ] Alternative approaches considered
+   - [ ] Comparison table of different approaches
+   - [ ] Success metrics defined
 2. **NO PREMATURE SOLUTIONS** - Do NOT:
    - Start coding "to explore"
    - Create "quick prototypes" 
    - Write "example implementations"
    - Make architecture decisions (that's for Align phase)
-3. **EXPERT ANALYSIS REQUIRED** - Use mcp__zen__thinkdeep or similar for design validation
+3. **EXPERT ANALYSIS REQUIRED** - Use mcp__zen__consensus or mcp__zen__thinkdeep for design validation
+
+**Design Phase Checklist** (ALL must be ✅ before proceeding):
+- [ ] Created comprehensive design document
+- [ ] Listed 5+ simplification options as OPTIONS (not decisions)
+- [ ] Categorized all open questions by tier
+- [ ] Obtained expert review from multiple models
+- [ ] Updated design with expert feedback
+- [ ] Document clearly states "Awaiting Decision" for all options
 
 #### ALIGN PHASE REQUIREMENTS (STRICT)
 1. **HUMAN MUST EXPLICITLY DECIDE** - Cannot proceed without:
@@ -285,10 +295,19 @@ Would you like to continue with the current plan or revise it?"
 
 **Process**:
 - Multiple AI agents collaborate to explore technical solutions
-- Identify and PROPOSE simplifications as OPTIONS (not decisions) to prevent over-engineering
-- Present simplifications with pros/cons for human to choose
+- **MANDATORY**: Identify and PROPOSE simplifications as OPTIONS (not decisions) to prevent over-engineering
+- Present simplifications with clear pros/cons for human to choose
+- Each simplification must be a concrete option that can be ACCEPTED or REJECTED
 - Surface trade-offs and alternative approaches
 - Flag unresolved questions requiring human input
+
+**Required Sections in Design Document**:
+1. Architecture proposals with multiple approaches
+2. **Simplification Options** (MANDATORY) - At least 5-8 concrete simplifications
+3. Open questions tiered by priority (Critical/Important/Deferrable)
+4. Risk assessment matrix
+5. Alternative approaches considered
+6. Expert review results (after obtaining)
 
 **Output**: Design document with architecture proposals, simplification OPTIONS (not decisions), alternatives, open questions, and risk analysis
 
