@@ -3,6 +3,16 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { TodoStatus } from "@prisma/client"
+import { z } from "zod"
+
+const createTodoSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().optional().default(""),
+  status: z.enum(["NOT_STARTED", "IN_PROGRESS", "WAITING_FOR", "COMPLETED"]).default("NOT_STARTED"),
+  startDate: z.string().optional(),
+  dueDate: z.string().optional(),
+  projectId: z.string().optional(),
+})
 
 export async function GET(request: NextRequest) {
   try {
@@ -109,6 +119,62 @@ export async function GET(request: NextRequest) {
     console.error("Error in GET /api/user/todos:", error)
     return NextResponse.json(
       { error: "Failed to fetch todos" },
+      { status: 500 }
+    )
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const validatedData = createTodoSchema.parse(body)
+
+    // Create the todo
+    const todo = await prisma.todo.create({
+      data: {
+        title: validatedData.title,
+        description: validatedData.description,
+        status: validatedData.status,
+        startDate: validatedData.startDate ? new Date(validatedData.startDate) : new Date(),
+        dueDate: validatedData.dueDate ? new Date(validatedData.dueDate) : null,
+        projectId: validatedData.projectId || null,
+        creatorId: session.user.id,
+        assigneeId: session.user.id,
+      },
+      include: {
+        project: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        creator: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    })
+
+    return NextResponse.json(todo, { status: 201 })
+  } catch (error) {
+    console.error("Error in POST /api/user/todos:", error)
+    
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Invalid input", details: error.errors },
+        { status: 400 }
+      )
+    }
+
+    return NextResponse.json(
+      { error: "Failed to create todo" },
       { status: 500 }
     )
   }
