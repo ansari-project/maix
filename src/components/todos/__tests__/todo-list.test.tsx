@@ -83,7 +83,8 @@ describe('TodoList', () => {
   it('shows empty state when no todos', () => {
     render(<TodoList todos={[]} />)
     
-    expect(screen.getByText('No todos yet')).toBeInTheDocument()
+    expect(screen.getByText('Ready to get started?')).toBeInTheDocument()
+    expect(screen.getByText('Create your first todo to begin tracking progress')).toBeInTheDocument()
   })
 
   it('shows create button when canManage is true', () => {

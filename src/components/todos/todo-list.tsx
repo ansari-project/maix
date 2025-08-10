@@ -125,17 +125,21 @@ export function TodoList({
 
       {/* Todo lists by status */}
       {filteredTodos.length === 0 && (!canManage || !onQuickAdd) ? (
-        <div className="text-center py-8 border-2 border-dashed rounded-lg">
-          <p className="text-muted-foreground">
-            {todos.length === 0 ? "No todos yet" : "No todos match your filters"}
+        <div className="text-center py-12 border-2 border-dashed rounded-lg bg-muted/5">
+          <p className="text-lg font-medium mb-2">
+            {todos.length === 0 ? "Ready to get started?" : "No todos match your filters"}
+          </p>
+          <p className="text-muted-foreground mb-4">
+            {todos.length === 0 ? "Create your first todo to begin tracking progress" : "Try adjusting your filters above"}
           </p>
           {todos.length === 0 && canManage && onCreateClick && (
             <Button 
-              variant="link" 
               onClick={onCreateClick}
+              size="default"
               className="mt-2"
             >
-              Create the first todo
+              <Plus className="w-4 h-4 mr-2" />
+              Create Your First Todo
             </Button>
           )}
         </div>
