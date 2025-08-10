@@ -20,7 +20,7 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   testTimeout: 10000, // Reduced from 30s - most DB operations should complete in 1-2s
-  maxWorkers: 2, // Run 2 tests in parallel (was 1)
+  maxWorkers: 1, // Run tests sequentially to avoid database conflicts
   globalSetup: '<rootDir>/jest.integration.globalSetup.js',
   globalTeardown: '<rootDir>/jest.integration.globalTeardown.js',
   
