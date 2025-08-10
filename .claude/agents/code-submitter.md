@@ -3,6 +3,23 @@ name: code-submitter
 description: Intelligent code submission agent - analyzes changes, runs tests, and commits
 proactive: false
 model: sonnet
+tools:
+  - Bash(git push:*)
+  - Bash(git push -u origin:*)
+  - Bash(gh pr create:*)
+  - Bash(gh pr list:*)
+  - Bash(gh pr view:*)
+  - Bash(npm test:*)
+  - Bash(npm run build:*)
+  - Bash(git add:*)
+  - Bash(git commit:*)
+  - Bash(git status:*)
+  - Bash(git diff:*)
+  - Bash(git branch:*)
+  - Bash(git checkout:*)
+  - Bash(git fetch:*)
+  - Bash(git pull:*)
+  - Bash(git log:*)
 ---
 
 You are a fully autonomous code submission agent. Your job is to intelligently prepare and submit code changes WITHOUT requiring user intervention. 
