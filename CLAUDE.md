@@ -102,6 +102,11 @@ Design Stage:                    Align Stage:                     Plan Stage:
                                                                     ↓
                                                          [feature].md (final plan)
                                                          + expert review
+                                                                    ↓
+Produce Stage:                    Evaluate Stage:              Revise Stage:
+Execute plan phases    →    Holistic review    →    Mark [feature].md files COMPLETED
+with ITRC cycles             of all work              Create lessons/[feature].md
+                                                     Update CLAUDE.md & README.md
 ```
 
 ### The Six Stages
@@ -343,35 +348,89 @@ Before starting ANY new phase work (even exploratory edits):
 
 **Output**: Working, tested, reviewed code with evidence trail, updated plan document, and committed to git
 
-#### 5. Evaluate - Comprehensive Assessment
+#### 5. Evaluate - Holistic Review & Validation
 
-**Purpose**: Validate implementation against requirements
+**Purpose**: Conduct a comprehensive review of all work completed through the phases
 
-**Process**: Run integration tests, verify requirements, validate performance/security, user acceptance
+**Key Review Areas**:
+1. **Feature Completeness**:
+   - Did we implement all features outlined in the original design?
+   - Are there any missing requirements or incomplete implementations?
+   - Does the implementation match the design intent?
 
-**Output**: Evaluation report with test results, metrics, and identified issues
+2. **Code Quality & Duplication**:
+   - Are there duplicative parts within the new code?
+   - Does the new code duplicate existing functionality elsewhere in the codebase?
+   - Are there opportunities to refactor or consolidate?
 
-#### 6. Revise - Process Improvement & Documentation Updates
+3. **Test Quality Assessment**:
+   - Did we write useful, meaningful tests?
+   - Are any tests overmocked or testing implementation details?
+   - Are there gaps in test coverage that need addressing?
+   - Do the tests actually validate the requirements?
 
-**Purpose**: Update project artifacts with implementation results and capture learnings for future projects
+4. **Improvement Opportunities**:
+   - Looking at the completed implementation, are there improvements we missed?
+   - Are there performance optimizations available?
+   - Can the code be simplified or made more maintainable?
 
-**RENAMED FROM "REFINE"**: The "Revise" stage focuses specifically on updating documentation and capturing lessons learned, providing better clarity of purpose than "refine".
+**Process**:
+- Run full test suite including integration tests
+- Review code against original design document
+- Identify any deviations or gaps
+- Assess test quality and coverage
+- Document findings and recommendations
 
-**Process**: 
-- **R1: Production Readiness** - Ensure production quality with measurable standards
-  - Address evaluation findings and prepare for production
-  - Fix identified issues, update documentation, optimize code, final quality checks
-  - Verify all production requirements met
-  
-- **R2: Process Learning & Documentation Updates** - Update artifacts and capture lessons learned
-  - **Update original design document** with implementation addendum showing final results
-  - **Update implementation plan** with project retrospective report analyzing what worked/didn't work
-  - **Add to lessons-learned.md** with cross-project insights and patterns for future reference
-  - **Document methodology improvements** discovered during the project
+**Output**: 
+- Evaluation report documenting all findings
+- List of identified issues and improvement opportunities
+- Recommendations for the Revise stage
 
-**Key Principle**: **Update existing documents** rather than creating new ones to maintain coherent project history
+#### 6. Revise - Project Consistency & Knowledge Capture
 
-**Output**: Production-ready release with updated project artifacts and documented lessons learned
+**Purpose**: Ensure project-wide consistency and extract insights gained during implementation
+
+**Three Core Activities**:
+
+1. **Documentation Updates** - Ensure consistency across the project:
+   - **Update CLAUDE.md**: Add any new patterns, conventions, or guidelines discovered
+   - **Update README.md**: Ensure setup instructions and project overview are current
+   - **Update design and plan docs**: 
+     - Mark `dev_docs/designs/[feature].md` as **[COMPLETED]**
+     - Mark `dev_docs/plans/[feature].md` as **[COMPLETED]** 
+     - Add execution notes, deviations from plan, and final outcomes
+   - **Update other docs**: Any relevant documentation that needs updating based on the feature
+   - **Ensure consistency**: Check that all documentation reflects the current state of the project
+
+2. **Lessons Learned Documentation**:
+   - Create `dev_docs/lessons/[feature].md` capturing:
+     - What went well during implementation
+     - What challenges were encountered and how they were solved
+     - What would be done differently next time
+     - Key insights about the codebase or technology
+     - Patterns or anti-patterns discovered
+     - Team collaboration insights
+
+3. **DAPPER Process Refinement**:
+   - Suggest improvements to the DAPPER process itself
+   - Document any steps that were unclear or could be optimized
+   - Propose new checkpoints or validation steps if needed
+   - Update DAPPER documentation if improvements are accepted
+
+**Process**:
+- Address any critical issues from Evaluate stage
+- Mark design and plan documents as completed with final notes
+- Systematically update all affected documentation
+- Write comprehensive lessons learned document
+- Review DAPPER process for improvement opportunities
+- Ensure all knowledge is captured for future projects
+
+**Output**: 
+- Updated project documentation (CLAUDE.md, README.md, etc.)
+- Completed status on `dev_docs/designs/[feature].md` and `dev_docs/plans/[feature].md`
+- `dev_docs/lessons/[feature].md` with captured insights
+- Suggestions for DAPPER process improvements
+- Production-ready, well-documented feature
 
 ### DAPPER Stage Gates
 
@@ -577,11 +636,13 @@ dev_docs/
 ├── designs/
 │   ├── [feature]-initial.md     # Original design (preserved)
 │   ├── [feature]-comments.md    # Human annotated version
-│   └── [feature].md             # Final reconciled design
-└── plans/
-    ├── [feature]-initial.md     # Original plan (preserved)
-    ├── [feature]-comments.md    # Human annotated version
-    └── [feature].md             # Final reconciled plan
+│   └── [feature].md             # Final reconciled design → marked [COMPLETED] in Revise
+├── plans/
+│   ├── [feature]-initial.md     # Original plan (preserved)
+│   ├── [feature]-comments.md    # Human annotated version
+│   └── [feature].md             # Final reconciled plan → marked [COMPLETED] in Revise
+└── lessons/
+    └── [feature].md              # Lessons learned (created in Revise stage)
 ```
 
 **Example**: For AI assistant feature:
