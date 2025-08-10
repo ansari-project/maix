@@ -125,6 +125,79 @@ maix/
 
 DAPPER ensures thoughtful design, human alignment, and high-quality implementation through two key documents that maintain complete history of proposals, decisions, and rationale.
 
+### ⚠️ CRITICAL DAPPER ENFORCEMENT RULES ⚠️
+
+**MANDATORY EARLY-STAGE COMPLIANCE** - Claude Code MUST NOT write ANY implementation code until:
+
+#### DESIGN PHASE REQUIREMENTS (STRICT)
+1. **COMPREHENSIVE DESIGN DOCUMENT** - MUST include:
+   - Multiple architecture options with pros/cons
+   - Open questions categorized by tier (Critical/Important/Deferrable)
+   - Risk assessment matrix
+   - Proposed simplifications as OPTIONS (not decisions)
+   - Alternative approaches considered
+2. **NO PREMATURE SOLUTIONS** - Do NOT:
+   - Start coding "to explore"
+   - Create "quick prototypes" 
+   - Write "example implementations"
+   - Make architecture decisions (that's for Align phase)
+3. **EXPERT ANALYSIS REQUIRED** - Use mcp__zen__thinkdeep or similar for design validation
+
+#### ALIGN PHASE REQUIREMENTS (STRICT)
+1. **HUMAN MUST EXPLICITLY DECIDE** - Cannot proceed without:
+   - ALL Tier 1 questions answered with `[DECIDED: ...]`
+   - Simplifications marked `[ACCEPTED]` or `[REJECTED]`
+   - Architecture choice confirmed
+   - Written approval to proceed to Plan
+2. **NO ASSUMPTIONS** - If human says "looks good" or "proceed", CLARIFY:
+   ```
+   "Before I continue, I need explicit decisions on:
+   - Question 1: [state question] - Your decision?
+   - Question 2: [state question] - Your decision?
+   Please respond with your specific choices."
+   ```
+3. **DOCUMENT MUST BE UPDATED** - The design document MUST show all decisions
+
+#### AUTOMATIC STOP CONDITIONS
+**Claude Code MUST STOP and refuse to continue if:**
+- User asks to "implement" but no design exists → "I need to create a DAPPER design first"
+- User says "go ahead" but questions unanswered → "I need your decisions on these questions first"
+- User requests code but Align incomplete → "We haven't completed the Align phase yet"
+- Design exists but no expert review → "I need to get expert analysis of this design"
+
+#### ENFORCEMENT EXAMPLES
+
+**WRONG** (Common Deviation):
+```
+User: "Build an AI assistant"
+Claude: "I'll create a basic implementation to get started..." [STARTS CODING]
+```
+
+**CORRECT**:
+```
+User: "Build an AI assistant"
+Claude: "I'll follow DAPPER methodology. First, I need to create a comprehensive design document.
+Let me start by exploring different architecture options...
+[CREATES DESIGN DOCUMENT WITH OPTIONS AND QUESTIONS]
+The design is ready for your review. Please make decisions on the critical questions before we proceed."
+```
+
+**WRONG** (Premature Progression):
+```
+User: "Looks good"
+Claude: "Great! I'll start implementing..." [PROCEEDS TO PLAN/PRODUCE]
+```
+
+**CORRECT**:
+```
+User: "Looks good"
+Claude: "Thank you! Before proceeding, I need your explicit decisions on:
+1. Should the AI have write access? (Options: read-only vs full CRUD)
+2. How should we handle conversation history? (Options: session-only vs persistent)
+3. What's the monthly Gemini API budget?
+Please provide your specific choices for each."
+```
+
 **Document Flow**:
 ```
 [feature-name]-design.md (Phases D → A)
@@ -169,11 +242,46 @@ This configuration applies to all DAPPER expert review requirements mentioned th
 - Configuration updates
 - Straightforward dependency updates
 
+### Staying on Track - Plan Adherence Rules
+
+**CRITICAL**: Once a DAPPER plan is approved, Claude Code MUST:
+
+1. **FOLLOW THE PLAN EXACTLY** - Do not deviate from the approved implementation plan
+2. **CHECK TODOS CONSTANTLY** - Use TodoWrite to track current phase and sub-tasks
+3. **NO SCOPE CREEP** - If user requests features not in plan, respond:
+   ```
+   "This feature isn't in our current plan. We should either:
+   1. Complete the current phase first, or
+   2. Update the plan document with this change and get approval"
+   ```
+4. **PHASE BOUNDARIES** - Complete ALL ITRC tasks for current phase before moving to next
+5. **DOCUMENT UPDATES** - Any plan changes MUST be reflected in the plan document
+
+**Plan Deviation Protocol**:
+- If deviation needed → Update plan document
+- Get human approval for changes
+- Update todos to reflect new plan
+- Only then proceed with implementation
+
+**Example Enforcement**:
+```
+User: "While you're at it, can you also add voice input?"
+Claude: "Voice input is not in our current Phase 1 plan for the AI Assistant.
+Current phase focuses on: [lists current phase objectives]
+We should complete this phase first, then we can add voice input to Phase 4.
+Would you like to continue with the current plan or revise it?"
+```
+
 ### The Six Stages
 
 #### 1. Design - Collaborative AI Design
 
 **Purpose**: Create comprehensive design exploring multiple approaches
+
+**CRITICAL RULES**:
+- **NEVER MAKE DECISIONS** - Only present OPTIONS with pros/cons
+- **NO DEFAULT CHOICES** - Don't mark anything as "recommended" or "selected"
+- **QUESTIONS NOT ANSWERS** - End with questions for human, not conclusions
 
 **Process**:
 - Multiple AI agents collaborate to explore technical solutions
@@ -183,6 +291,14 @@ This configuration applies to all DAPPER expert review requirements mentioned th
 - Flag unresolved questions requiring human input
 
 **Output**: Design document with architecture proposals, simplification OPTIONS (not decisions), alternatives, open questions, and risk analysis
+
+**ANTI-PATTERN TO AVOID**:
+```markdown
+❌ WRONG: "We will use server-side architecture for security"
+✅ RIGHT: "Option A: Server-side (Pros: secure, Cons: latency) 
+          Option B: Client-side (Pros: fast, Cons: API key exposure)
+          Which architecture should we use?"
+```
 
 #### 2. Align - Human Alignment & Decisions
 
