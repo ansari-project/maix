@@ -219,6 +219,7 @@ model PersonalAccessToken {
   createdAt         DateTime         @default(now())
   lastUsedAt        DateTime?
   expiresAt         DateTime?
+  encryptedToken    String?          @db.Text // Encrypted token for AI Assistant retrieval
   user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   userPreferences   UserPreferences?
 

@@ -5,8 +5,8 @@ import { experimental_createMCPClient } from 'ai'
  * Uses Vercel AI SDK's experimental MCP client with SSE transport
  */
 export class McpClientService {
-  private clientCache: any = null
-  private toolsCache: any = null
+  private clientCache: Map<string, any> = new Map() // Cache per PAT
+  private toolsCache: Map<string, any> = new Map() // Tools cache per PAT
   private baseUrl: string
 
   constructor() {
@@ -17,23 +17,22 @@ export class McpClientService {
   }
 
   /**
-   * Get or create MCP client
+   * Get or create MCP client for a specific PAT
    */
-  private async getClient() {
-    if (this.clientCache) {
-      return this.clientCache
+  private async getClient(pat: string) {
+    // Check cache for this PAT
+    if (this.clientCache.has(pat)) {
+      return this.clientCache.get(pat)
     }
 
     try {
-      // Get PAT from environment for server-side MCP authentication
-      const pat = process.env.MAIX_PAT
       if (!pat) {
-        console.error('MAIX_PAT environment variable not set')
+        console.error('No PAT provided for MCP client')
         return null
       }
 
       // Create MCP client with SSE transport to our MCP server
-      this.clientCache = await experimental_createMCPClient({
+      const client = await experimental_createMCPClient({
         transport: {
           type: 'sse',
           url: `${this.baseUrl}/api/mcp`,
@@ -43,7 +42,9 @@ export class McpClientService {
         }
       })
       
-      return this.clientCache
+      // Cache the client for this PAT
+      this.clientCache.set(pat, client)
+      return client
     } catch (error) {
       console.error('Failed to create MCP client:', error)
       // Fallback to empty tools if MCP client fails
@@ -53,47 +54,62 @@ export class McpClientService {
 
   /**
    * Get MCP tools using AI SDK's built-in conversion
+   * @param pat - Personal Access Token for the user
    */
-  async getTools() {
-    if (this.toolsCache) {
-      return this.toolsCache
+  async getTools(pat?: string) {
+    // If no PAT provided, try environment variable as fallback
+    const token = pat || process.env.MAIX_PAT
+    
+    if (!token) {
+      console.warn('No PAT available for MCP tools')
+      return {}
+    }
+
+    // Check tools cache for this PAT
+    if (this.toolsCache.has(token)) {
+      return this.toolsCache.get(token)
     }
 
     try {
-      const client = await this.getClient()
+      const client = await this.getClient(token)
       
       if (!client) {
         console.warn('MCP client unavailable, returning empty tools')
-        this.toolsCache = {}
-        return this.toolsCache
+        return {}
       }
 
       // Use AI SDK's built-in tool conversion
       const tools = await client.tools()
       
-      this.toolsCache = tools
+      // Cache tools for this PAT
+      this.toolsCache.set(token, tools)
       return tools
     } catch (error) {
       console.error('Failed to get MCP tools:', error)
       // Return empty object if MCP client fails
-      this.toolsCache = {}
-      return this.toolsCache
+      return {}
     }
   }
 
   /**
-   * Clear the cache and close client
+   * Clear the cache and close all clients
    */
   async clearCache() {
-    if (this.clientCache) {
+    // Close all cached clients
+    const clients = Array.from(this.clientCache.entries())
+    for (const [pat, client] of clients) {
       try {
-        await this.clientCache.close()
+        if (client && typeof client.close === 'function') {
+          await client.close()
+        }
       } catch (error) {
-        console.error('Error closing MCP client:', error)
+        console.error(`Error closing MCP client for PAT ${pat}:`, error)
       }
     }
-    this.clientCache = null
-    this.toolsCache = null
+    
+    // Clear the caches
+    this.clientCache.clear()
+    this.toolsCache.clear()
   }
 }
 

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { aiConversationService } from '@/lib/services/ai-conversation.service'
 import { mcpClientService } from '@/lib/services/mcp-client.service'
+import { getOrCreateEncryptedAIAssistantPat } from '@/lib/mcp/services/encrypted-pat.service'
 import { streamText } from 'ai'
 import { google } from '@ai-sdk/google'
 
@@ -27,10 +28,13 @@ export async function POST(request: NextRequest) {
       session.user.id
     )
 
-    // 4. Get dynamic MCP tools
-    const tools = await mcpClientService.getTools()
+    // 4. Get or create AI Assistant PAT for this user
+    const userPat = await getOrCreateEncryptedAIAssistantPat(session.user.id)
 
-    // 5. Stream AI response using Gemini with MCP tools
+    // 5. Get dynamic MCP tools with user's PAT
+    const tools = await mcpClientService.getTools(userPat)
+
+    // 6. Stream AI response using Gemini with MCP tools
     const stream = await streamText({
       model: google('gemini-2.0-flash'),
       messages: messages,
