@@ -4,7 +4,12 @@
       "npm test",
       "Bash(npm test:*)",
       "Bash(git commit:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(echo * > .claude-task)",
+      "Bash(printf:*)",
+      "Write(.claude-task)",
+      "Read(.claude-task)",
+      "Bash(scripts/set_slt.sh:*)"
     ],
     "deny": [
       "Bash(git add -A)",
