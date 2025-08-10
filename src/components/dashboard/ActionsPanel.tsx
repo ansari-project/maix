@@ -8,12 +8,8 @@ import {
   CheckSquare, 
   Calendar, 
   MessageCircle,
-  User,
-  Settings,
-  TrendingUp,
   Users,
-  Package,
-  HelpCircle
+  Package
 } from "lucide-react"
 
 export function ActionsPanel() {
@@ -68,83 +64,25 @@ export function ActionsPanel() {
           </CardContent>
         </Card>
 
-        {/* Your Activities Section */}
-        <Card className="mb-4">
-          <CardHeader>
-            <CardTitle>Your Activities</CardTitle>
-            <CardDescription>Recent actions and updates</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <Link href="/my-projects" className="block">
-                <div className="flex items-center justify-between p-3 rounded-lg hover:bg-accent transition-colors">
-                  <div className="flex items-center gap-3">
-                    <FolderOpen className="w-5 h-5 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">My Projects</p>
-                      <p className="text-sm text-muted-foreground">Manage your projects</p>
-                    </div>
-                  </div>
-                  <span className="text-sm text-muted-foreground">→</span>
-                </div>
-              </Link>
-              <Link href="/volunteering" className="block">
-                <div className="flex items-center justify-between p-3 rounded-lg hover:bg-accent transition-colors">
-                  <div className="flex items-center gap-3">
-                    <User className="w-5 h-5 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">My Volunteering</p>
-                      <p className="text-sm text-muted-foreground">Track contributions</p>
-                    </div>
-                  </div>
-                  <span className="text-sm text-muted-foreground">→</span>
-                </div>
-              </Link>
-              <Link href="/my-todos" className="block">
-                <div className="flex items-center justify-between p-3 rounded-lg hover:bg-accent transition-colors">
-                  <div className="flex items-center gap-3">
-                    <CheckSquare className="w-5 h-5 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">My Todos</p>
-                      <p className="text-sm text-muted-foreground">View all tasks</p>
-                    </div>
-                  </div>
-                  <span className="text-sm text-muted-foreground">→</span>
-                </div>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Quick Stats */}
+        {/* My Todos Section */}
         <Card>
           <CardHeader>
-            <CardTitle>Your Impact</CardTitle>
-            <CardDescription>Track your contributions</CardDescription>
+            <CardTitle>My Todos</CardTitle>
+            <CardDescription>Your tasks and priorities</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-3 bg-accent/50 rounded-lg">
-                <TrendingUp className="w-6 h-6 mx-auto mb-1 text-primary" />
-                <p className="text-2xl font-bold">0</p>
-                <p className="text-sm text-muted-foreground">Projects</p>
+            <Link href="/my-todos" className="block">
+              <div className="flex items-center justify-between p-3 rounded-lg hover:bg-accent transition-colors">
+                <div className="flex items-center gap-3">
+                  <CheckSquare className="w-5 h-5 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">View All Tasks</p>
+                    <p className="text-sm text-muted-foreground">Manage your todos and priorities</p>
+                  </div>
+                </div>
+                <span className="text-sm text-muted-foreground">→</span>
               </div>
-              <div className="text-center p-3 bg-accent/50 rounded-lg">
-                <Users className="w-6 h-6 mx-auto mb-1 text-primary" />
-                <p className="text-2xl font-bold">0</p>
-                <p className="text-sm text-muted-foreground">Collaborations</p>
-              </div>
-              <div className="text-center p-3 bg-accent/50 rounded-lg">
-                <CheckSquare className="w-6 h-6 mx-auto mb-1 text-primary" />
-                <p className="text-2xl font-bold">0</p>
-                <p className="text-sm text-muted-foreground">Tasks Done</p>
-              </div>
-              <div className="text-center p-3 bg-accent/50 rounded-lg">
-                <HelpCircle className="w-6 h-6 mx-auto mb-1 text-primary" />
-                <p className="text-2xl font-bold">0</p>
-                <p className="text-sm text-muted-foreground">Questions</p>
-              </div>
-            </div>
+            </Link>
           </CardContent>
         </Card>
       </div>

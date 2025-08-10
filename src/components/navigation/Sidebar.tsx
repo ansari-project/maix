@@ -65,7 +65,7 @@ export const Sidebar = memo(function Sidebar() {
       )
     }
     return (
-      <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
+      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
         <span className="text-sm font-medium">
           {session?.user?.name?.[0]?.toUpperCase() || 'U'}
         </span>
@@ -81,12 +81,12 @@ export const Sidebar = memo(function Sidebar() {
   return (
     <aside
       className={cn(
-        'relative flex flex-col bg-white border-r border-gray-200 transition-all duration-300',
+        'relative flex flex-col bg-background dark:bg-background border-r border-border transition-all duration-300',
         isSidebarCollapsed ? 'w-16' : 'w-[200px]'
       )}
     >
       {/* User Section */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-border">
         <div className="flex items-center gap-3">
           {userAvatar}
           {!isSidebarCollapsed && (
@@ -110,7 +110,7 @@ export const Sidebar = memo(function Sidebar() {
                   href={item.href}
                   className={cn(
                     'flex items-center gap-3 px-3 py-2 rounded-md transition-colors',
-                    'hover:bg-gray-100',
+                    'hover:bg-muted/50',
                     isActive && 'bg-blue-50 text-blue-600',
                     isSidebarCollapsed && 'justify-center'
                   )}
@@ -132,9 +132,9 @@ export const Sidebar = memo(function Sidebar() {
         </ul>
         
         {/* Apps Section */}
-        <div className="mt-6 pt-6 border-t border-gray-200">
+        <div className="mt-6 pt-6 border-t border-border">
           {!isSidebarCollapsed && (
-            <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+            <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
               Apps
             </h3>
           )}
@@ -149,7 +149,7 @@ export const Sidebar = memo(function Sidebar() {
                     href={item.href}
                     className={cn(
                       'flex items-center gap-3 px-3 py-2 rounded-md transition-colors',
-                      'hover:bg-gray-100',
+                      'hover:bg-muted/50',
                       isActive && 'bg-blue-50 text-blue-600',
                       isSidebarCollapsed && 'justify-center'
                     )}
@@ -174,7 +174,7 @@ export const Sidebar = memo(function Sidebar() {
               <button
                 className={cn(
                   'flex items-center gap-3 px-3 py-2 rounded-md transition-colors w-full',
-                  'hover:bg-gray-100 text-gray-600',
+                  'hover:bg-muted/50 text-muted-foreground',
                   isSidebarCollapsed && 'justify-center'
                 )}
               >
@@ -191,7 +191,7 @@ export const Sidebar = memo(function Sidebar() {
       {/* Collapse Toggle */}
       <button
         onClick={toggleSidebar}
-        className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors"
+        className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-background border border-border rounded-full flex items-center justify-center hover:bg-muted/50 transition-colors"
         aria-label={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       >
         {isSidebarCollapsed ? (

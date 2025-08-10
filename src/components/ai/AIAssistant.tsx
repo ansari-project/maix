@@ -125,7 +125,7 @@ export function AIAssistant() {
   return (
     <div
       className={cn(
-        'fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 transition-all duration-300 z-40',
+        'fixed bottom-0 left-0 right-0 bg-background border-t border-border transition-all duration-300 z-40',
         isAIExpanded ? 'h-[25vh] min-h-[200px]' : 'h-12'
       )}
     >
@@ -133,13 +133,13 @@ export function AIAssistant() {
       {!isAIExpanded && (
         <button
           onClick={toggleAI}
-          className="w-full h-full flex items-center gap-3 px-6 hover:bg-gray-50 transition-colors group"
+          className="w-full h-full flex items-center gap-3 px-6 hover:bg-muted/50 transition-colors group"
         >
-          <Bot className="w-5 h-5 text-gray-600 group-hover:text-blue-600" />
-          <span className="text-gray-600 group-hover:text-gray-900">
+          <Bot className="w-5 h-5 text-muted-foreground group-hover:text-blue-600" />
+          <span className="text-muted-foreground group-hover:text-foreground">
             {getPlaceholder()}
           </span>
-          <span className="ml-auto text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+          <span className="ml-auto text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
             Cmd+K
           </span>
         </button>
@@ -149,23 +149,23 @@ export function AIAssistant() {
       {isAIExpanded && (
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-2 border-b border-gray-200">
+          <div className="flex items-center justify-between px-6 py-2 border-b border-border">
             <div className="flex items-center gap-2">
               <Bot className="w-5 h-5 text-blue-600" />
               <span className="font-medium">AI Assistant</span>
-              <span className="text-sm text-gray-500">- {currentPath === '/' ? 'Home' : currentPath.slice(1)}</span>
+              <span className="text-sm text-muted-foreground">- {currentPath === '/' ? 'Home' : currentPath.slice(1)}</span>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={toggleAI}
-                className="p-1 hover:bg-gray-100 rounded transition-colors"
+                className="p-1 hover:bg-muted/50 rounded transition-colors"
                 aria-label="Minimize"
               >
                 <Minimize2 className="w-4 h-4" />
               </button>
               <button
                 onClick={toggleAI}
-                className="p-1 hover:bg-gray-100 rounded transition-colors"
+                className="p-1 hover:bg-muted/50 rounded transition-colors"
                 aria-label="Close"
               >
                 <X className="w-4 h-4" />
@@ -176,7 +176,7 @@ export function AIAssistant() {
           {/* Messages */}
           <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
             {messages.length === 0 ? (
-              <div className="text-gray-500 text-sm">
+              <div className="text-muted-foreground text-sm">
                 <p>👋 Hi! I&apos;m your AI assistant. I can help you:</p>
                 <ul className="mt-2 space-y-1">
                   <li>• Find and create projects</li>
@@ -200,7 +200,7 @@ export function AIAssistant() {
                       'max-w-[70%] rounded-lg px-4 py-2',
                       message.role === 'user'
                         ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-900'
+                        : 'bg-muted text-foreground'
                     )}
                   >
                     <p className="whitespace-pre-wrap">{message.content}</p>
@@ -210,7 +210,7 @@ export function AIAssistant() {
             )}
             {isLoading && (
               <div className="flex gap-3 justify-start">
-                <div className="bg-gray-100 rounded-lg px-4 py-2">
+                <div className="bg-muted rounded-lg px-4 py-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
                 </div>
               </div>
@@ -219,7 +219,7 @@ export function AIAssistant() {
           </div>
 
           {/* Input */}
-          <form onSubmit={handleSubmit} className="border-t border-gray-200 px-6 py-3">
+          <form onSubmit={handleSubmit} className="border-t border-border px-6 py-3">
             <div className="flex gap-2">
               <input
                 ref={inputRef}
@@ -227,7 +227,7 @@ export function AIAssistant() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={getPlaceholder()}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-4 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 disabled={isLoading}
               />
               <button
@@ -237,7 +237,7 @@ export function AIAssistant() {
                   'px-4 py-2 rounded-lg transition-colors',
                   input.trim() && !isLoading
                     ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-muted text-muted-foreground cursor-not-allowed'
                 )}
               >
                 <Send className="w-4 h-4" />
