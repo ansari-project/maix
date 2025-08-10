@@ -1,9 +1,10 @@
 import React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { TodoDetailsPanel } from '../components/TodoDetailsPanel'
+import { Todo } from '../types'
 
 describe('TodoDetailsPanel', () => {
-  const mockTodo = {
+  const mockTodo: Todo = {
     id: '1',
     title: 'Test Todo',
     description: 'Test description',

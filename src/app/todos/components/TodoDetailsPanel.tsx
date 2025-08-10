@@ -9,40 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { MessageSquare, Send } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import { format } from "date-fns"
-
-interface Todo {
-  id: string
-  title: string
-  description: string | null
-  status: string
-  dueDate: Date | null
-  createdAt: Date
-  updatedAt: Date
-  projectId: string | null
-  creatorId: string
-  assigneeId: string | null
-  project?: {
-    id: string
-    name: string
-  }
-  assignee?: {
-    id: string
-    name: string | null
-    email: string
-  }
-  comments?: Comment[]
-}
-
-interface Comment {
-  id: string
-  content: string
-  createdAt: Date
-  author?: {
-    id: string
-    name: string | null
-    email: string
-  }
-}
+import { Todo, Comment } from "../types"
 
 interface TodoDetailsPanelProps {
   todo: Todo | null
@@ -55,6 +22,7 @@ export function TodoDetailsPanel({ todo, onUpdate, onCommentAdd, readonly = fals
   const [editedTodo, setEditedTodo] = useState<Todo | null>(null)
   const [newComment, setNewComment] = useState("")
   const [isSaving, setIsSaving] = useState(false)
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false)
   const saveTimeoutRef = useRef<NodeJS.Timeout>()
 
   useEffect(() => {
@@ -99,8 +67,13 @@ export function TodoDetailsPanel({ todo, onUpdate, onCommentAdd, readonly = fals
     e.preventDefault()
     if (!todo || !newComment.trim()) return
 
-    await onCommentAdd(todo.id, newComment)
-    setNewComment("")
+    setIsSubmittingComment(true)
+    try {
+      await onCommentAdd(todo.id, newComment)
+      setNewComment("")
+    } finally {
+      setIsSubmittingComment(false)
+    }
   }
 
   if (!todo || !editedTodo) {
@@ -238,8 +211,12 @@ export function TodoDetailsPanel({ todo, onUpdate, onCommentAdd, readonly = fals
                     onChange={(e) => setNewComment(e.target.value)}
                     className="flex-1"
                   />
-                  <Button type="submit" size="icon" disabled={!newComment.trim()}>
-                    <Send className="h-4 w-4" />
+                  <Button type="submit" size="icon" disabled={!newComment.trim() || isSubmittingComment}>
+                    {isSubmittingComment ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
                   </Button>
                 </form>
               )}

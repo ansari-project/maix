@@ -5,28 +5,7 @@ import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { TodoListPane } from "./components/TodoListPane"
 import { TodoDetailsPanel } from "./components/TodoDetailsPanel"
-
-interface Todo {
-  id: string
-  title: string
-  description: string | null
-  status: string
-  dueDate: Date | null
-  createdAt: Date
-  updatedAt: Date
-  projectId: string | null
-  creatorId: string
-  assigneeId: string | null
-  project?: {
-    id: string
-    name: string
-  }
-  assignee?: {
-    id: string
-    name: string | null
-    email: string
-  }
-}
+import { Todo, parseTodo, serializeTodo } from "./types"
 
 export default function TodosPage() {
   const { data: session, status } = useSession()
@@ -34,6 +13,7 @@ export default function TodosPage() {
   const [todos, setTodos] = useState<Todo[]>([])
   const [selectedTodo, setSelectedTodo] = useState<Todo | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -42,19 +22,26 @@ export default function TodosPage() {
   }, [status, router])
 
   useEffect(() => {
-    if (session) {
+    if (status === "authenticated") {
       fetchTodos()
     }
-  }, [session])
+  }, [status])
 
   const fetchTodos = async () => {
     try {
       const response = await fetch("/api/user/todos")
       if (response.ok) {
         const data = await response.json()
-        setTodos(data.todos || [])
+        // Parse dates from API response
+        const parsedTodos = (data.todos || []).map(parseTodo)
+        setTodos(parsedTodos)
+        setError(null)
+      } else {
+        setError("Failed to load todos. Please try again.")
+        console.error("Failed to fetch todos:", response.statusText)
       }
     } catch (error) {
+      setError("Failed to load todos. Please check your connection.")
       console.error("Error fetching todos:", error)
     } finally {
       setLoading(false)
@@ -67,29 +54,35 @@ export default function TodosPage() {
 
   const handleTodoUpdate = async (updatedTodo: Todo) => {
     try {
-      const response = await fetch(`/api/todos/${updatedTodo.id}`, {
+      const response = await fetch(`/api/user/todos/${updatedTodo.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(updatedTodo),
+        body: JSON.stringify(serializeTodo(updatedTodo)),
       })
 
       if (response.ok) {
         const data = await response.json()
-        setTodos(prev => prev.map(t => t.id === data.id ? data : t))
-        if (selectedTodo?.id === data.id) {
-          setSelectedTodo(data)
+        const parsedData = parseTodo(data)
+        setTodos(prev => prev.map(t => t.id === parsedData.id ? parsedData : t))
+        if (selectedTodo?.id === parsedData.id) {
+          setSelectedTodo(parsedData)
         }
+        setError(null)
+      } else {
+        setError("Failed to update todo. Please try again.")
+        console.error("Failed to update todo:", response.statusText)
       }
     } catch (error) {
+      setError("Failed to update todo. Please check your connection.")
       console.error("Error updating todo:", error)
     }
   }
 
   const handleCommentAdd = async (todoId: string, comment: string) => {
     try {
-      const response = await fetch(`/api/todos/${todoId}/comments`, {
+      const response = await fetch(`/api/user/todos/${todoId}/comments`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -100,14 +93,19 @@ export default function TodosPage() {
       if (response.ok) {
         // Refresh the selected todo to get new comments
         if (selectedTodo?.id === todoId) {
-          const todoResponse = await fetch(`/api/todos/${todoId}`)
+          const todoResponse = await fetch(`/api/user/todos/${todoId}`)
           if (todoResponse.ok) {
             const updatedTodo = await todoResponse.json()
-            setSelectedTodo(updatedTodo)
+            setSelectedTodo(parseTodo(updatedTodo))
           }
         }
+        setError(null)
+      } else {
+        setError("Failed to add comment. Please try again.")
+        console.error("Failed to add comment:", response.statusText)
       }
     } catch (error) {
+      setError("Failed to add comment. Please check your connection.")
       console.error("Error adding comment:", error)
     }
   }
@@ -123,9 +121,26 @@ export default function TodosPage() {
   if (!session) return null
 
   return (
-    <div className="h-screen grid grid-cols-2 gap-0">
-      {/* Left Pane - Todo List */}
-      <div className="border-r border-border overflow-hidden">
+    <div className="h-screen flex flex-col">
+      {/* Error Banner */}
+      {error && (
+        <div className="bg-red-50 border-b border-red-200 px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center">
+            <span className="text-red-800 text-sm">{error}</span>
+          </div>
+          <button
+            onClick={() => setError(null)}
+            className="text-red-600 hover:text-red-800 text-sm font-medium"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+      
+      {/* Main Grid */}
+      <div className="flex-1 grid grid-cols-2 gap-0">
+        {/* Left Pane - Todo List */}
+        <div className="border-r border-border overflow-hidden">
         <TodoListPane 
           todos={todos}
           selectedTodo={selectedTodo}
@@ -133,13 +148,14 @@ export default function TodosPage() {
         />
       </div>
 
-      {/* Right Pane - Todo Details */}
-      <div className="overflow-hidden">
-        <TodoDetailsPanel
-          todo={selectedTodo}
-          onUpdate={handleTodoUpdate}
-          onCommentAdd={handleCommentAdd}
-        />
+        {/* Right Pane - Todo Details */}
+        <div className="overflow-hidden">
+          <TodoDetailsPanel
+            todo={selectedTodo}
+            onUpdate={handleTodoUpdate}
+            onCommentAdd={handleCommentAdd}
+          />
+        </div>
       </div>
     </div>
   )

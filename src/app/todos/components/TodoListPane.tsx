@@ -4,28 +4,7 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle2, Circle, Clock, Pause } from "lucide-react"
 import { format } from "date-fns"
-
-interface Todo {
-  id: string
-  title: string
-  description: string | null
-  status: string
-  dueDate: Date | null
-  createdAt: Date
-  updatedAt: Date
-  projectId: string | null
-  creatorId: string
-  assigneeId: string | null
-  project?: {
-    id: string
-    name: string
-  }
-  assignee?: {
-    id: string
-    name: string | null
-    email: string
-  }
-}
+import { Todo } from "../types"
 
 interface TodoListPaneProps {
   todos: Todo[]
