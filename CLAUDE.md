@@ -125,6 +125,89 @@ maix/
 
 DAPPER ensures thoughtful design, human alignment, and high-quality implementation through two key documents that maintain complete history of proposals, decisions, and rationale.
 
+### ⚠️ CRITICAL DAPPER ENFORCEMENT RULES ⚠️
+
+**MANDATORY EARLY-STAGE COMPLIANCE** - Claude Code MUST NOT write ANY implementation code until:
+
+#### DESIGN PHASE REQUIREMENTS (STRICT)
+1. **COMPREHENSIVE DESIGN DOCUMENT** - MUST include ALL of:
+   - [ ] Multiple architecture options with pros/cons
+   - [ ] **Simplification Options section** with 5-8 concrete options (MANDATORY)
+   - [ ] Open questions categorized by tier (Critical/Important/Deferrable)
+   - [ ] Risk assessment matrix
+   - [ ] Alternative approaches considered
+   - [ ] Comparison table of different approaches
+   - [ ] Success metrics defined
+2. **NO PREMATURE SOLUTIONS** - Do NOT:
+   - Start coding "to explore"
+   - Create "quick prototypes" 
+   - Write "example implementations"
+   - Make architecture decisions (that's for Align phase)
+3. **EXPERT ANALYSIS REQUIRED** - Use mcp__zen__consensus or mcp__zen__thinkdeep for design validation
+
+**Design Phase Checklist** (ALL must be ✅ before proceeding):
+- [ ] Created comprehensive design document
+- [ ] Listed 5+ simplification options as OPTIONS (not decisions)
+- [ ] Categorized all open questions by tier
+- [ ] Obtained expert review from multiple models
+- [ ] Updated design with expert feedback
+- [ ] Document clearly states "Awaiting Decision" for all options
+
+#### ALIGN PHASE REQUIREMENTS (STRICT)
+1. **HUMAN MUST EXPLICITLY DECIDE** - Cannot proceed without:
+   - ALL Tier 1 questions answered with `[DECIDED: ...]`
+   - Simplifications marked `[ACCEPTED]` or `[REJECTED]`
+   - Architecture choice confirmed
+   - Written approval to proceed to Plan
+2. **NO ASSUMPTIONS** - If human says "looks good" or "proceed", CLARIFY:
+   ```
+   "Before I continue, I need explicit decisions on:
+   - Question 1: [state question] - Your decision?
+   - Question 2: [state question] - Your decision?
+   Please respond with your specific choices."
+   ```
+3. **DOCUMENT MUST BE UPDATED** - The design document MUST show all decisions
+
+#### AUTOMATIC STOP CONDITIONS
+**Claude Code MUST STOP and refuse to continue if:**
+- User asks to "implement" but no design exists → "I need to create a DAPPER design first"
+- User says "go ahead" but questions unanswered → "I need your decisions on these questions first"
+- User requests code but Align incomplete → "We haven't completed the Align phase yet"
+- Design exists but no expert review → "I need to get expert analysis of this design"
+
+#### ENFORCEMENT EXAMPLES
+
+**WRONG** (Common Deviation):
+```
+User: "Build an AI assistant"
+Claude: "I'll create a basic implementation to get started..." [STARTS CODING]
+```
+
+**CORRECT**:
+```
+User: "Build an AI assistant"
+Claude: "I'll follow DAPPER methodology. First, I need to create a comprehensive design document.
+Let me start by exploring different architecture options...
+[CREATES DESIGN DOCUMENT WITH OPTIONS AND QUESTIONS]
+The design is ready for your review. Please make decisions on the critical questions before we proceed."
+```
+
+**WRONG** (Premature Progression):
+```
+User: "Looks good"
+Claude: "Great! I'll start implementing..." [PROCEEDS TO PLAN/PRODUCE]
+```
+
+**CORRECT**:
+```
+User: "Looks good"
+Claude: "Thank you! Before proceeding, I need your explicit decisions on:
+1. Should the AI have write access? (Options: read-only vs full CRUD)
+2. How should we handle conversation history? (Options: session-only vs persistent)
+3. What's the monthly Gemini API budget?
+Please provide your specific choices for each."
+```
+
 **Document Flow**:
 ```
 [feature-name]-design.md (Phases D → A)
@@ -169,33 +252,100 @@ This configuration applies to all DAPPER expert review requirements mentioned th
 - Configuration updates
 - Straightforward dependency updates
 
+### Staying on Track - Plan Adherence Rules
+
+**CRITICAL**: Once a DAPPER plan is approved, Claude Code MUST:
+
+1. **FOLLOW THE PLAN EXACTLY** - Do not deviate from the approved implementation plan
+2. **CHECK TODOS CONSTANTLY** - Use TodoWrite to track current phase and sub-tasks
+3. **NO SCOPE CREEP** - If user requests features not in plan, respond:
+   ```
+   "This feature isn't in our current plan. We should either:
+   1. Complete the current phase first, or
+   2. Update the plan document with this change and get approval"
+   ```
+4. **PHASE BOUNDARIES** - Complete ALL ITRC tasks for current phase before moving to next
+5. **DOCUMENT UPDATES** - Any plan changes MUST be reflected in the plan document
+
+**Plan Deviation Protocol**:
+- If deviation needed → Update plan document
+- Get human approval for changes
+- Update todos to reflect new plan
+- Only then proceed with implementation
+
+**Example Enforcement**:
+```
+User: "While you're at it, can you also add voice input?"
+Claude: "Voice input is not in our current Phase 1 plan for the AI Assistant.
+Current phase focuses on: [lists current phase objectives]
+We should complete this phase first, then we can add voice input to Phase 4.
+Would you like to continue with the current plan or revise it?"
+```
+
 ### The Six Stages
 
 #### 1. Design - Collaborative AI Design
 
 **Purpose**: Create comprehensive design exploring multiple approaches
 
+**CRITICAL RULES**:
+- **NEVER MAKE DECISIONS** - Only present OPTIONS with pros/cons
+- **NO DEFAULT CHOICES** - Don't mark anything as "recommended" or "selected"
+- **QUESTIONS NOT ANSWERS** - End with questions for human, not conclusions
+
 **Process**:
 - Multiple AI agents collaborate to explore technical solutions
-- Identify and PROPOSE simplifications as OPTIONS (not decisions) to prevent over-engineering
-- Present simplifications with pros/cons for human to choose
+- **MANDATORY**: Identify and PROPOSE simplifications as OPTIONS (not decisions) to prevent over-engineering
+- Present simplifications with clear pros/cons for human to choose
+- Each simplification must be a concrete option that can be ACCEPTED or REJECTED
 - Surface trade-offs and alternative approaches
 - Flag unresolved questions requiring human input
 
+**Required Sections in Design Document**:
+1. Architecture proposals with multiple approaches
+2. **Simplification Options** (MANDATORY) - At least 5-8 concrete simplifications
+3. Open questions tiered by priority (Critical/Important/Deferrable)
+4. Risk assessment matrix
+5. Alternative approaches considered
+6. Expert review results (after obtaining)
+
 **Output**: Design document with architecture proposals, simplification OPTIONS (not decisions), alternatives, open questions, and risk analysis
+
+**ANTI-PATTERN TO AVOID**:
+```markdown
+❌ WRONG: "We will use server-side architecture for security"
+✅ RIGHT: "Option A: Server-side (Pros: secure, Cons: latency) 
+          Option B: Client-side (Pros: fast, Cons: API key exposure)
+          Which architecture should we use?"
+```
 
 #### 2. Align - Human Alignment & Decisions
 
 **Purpose**: Review AI proposals and make strategic decisions
 
 **Process**:
-- Review each proposed simplification OPTION
-- Choose which simplifications to accept or reject
-- Make decisions on all open questions
-- Provide additional constraints if needed
-- Document rationale for decisions
+1. **Document Preparation** (Claude Code does this):
+   - Generate `[feature-name]-design-initial.md` - Clean copy of original design
+   - Generate `[feature-name]-design-comments.md` - Version with human comments integrated
+   - Both files preserve complete design for reference
 
-**Output**: SAME document updated with decisions marked `[ACCEPTED]`, `[REJECTED]`, or `[DECIDED: choice + rationale]`, plus new "Alignment Outcomes" section
+2. **Human Review**:
+   - Add comments directly in original design document (prefix with initials, e.g., "MWK:")
+   - Review each proposed simplification OPTION
+   - Choose which simplifications to accept or reject
+   - Make decisions on all open questions
+   - Provide additional constraints if needed
+
+3. **Reconciliation** (Claude Code + Human):
+   - Work together to merge initial design + comments into final `[feature-name]-design.md`
+   - Resolve conflicts between original proposals and human feedback
+   - Document rationale for decisions
+   - Ensure all comments are addressed
+
+**Output**: 
+- `[feature-name]-design.md` - Final reconciled design with all decisions marked
+- Decisions marked as `[ACCEPTED]`, `[REJECTED]`, or `[DECIDED: choice + rationale]`
+- New "Alignment Outcomes" section documenting key decisions
 
 **Example transformation**:
 ```markdown
@@ -207,18 +357,36 @@ After:  **[ACCEPTED]** - Simplicity outweighs audit granularity
 
 **Purpose**: Break aligned design into executable phases with structured ITRC sub-tasks
 
-**Process**: 
-- Convert design into sequential phases that each deliver working functionality
-- **MANDATORY**: Each phase MUST be broken down into ITRC sub-tasks:
-  - **I (Implement)**: Build the functionality
-  - **T (Test)**: Write and run tests
-  - **R (Review)**: Code review with mcp__zen__codereview
-  - **C (Commit & Push)**: Git commit and push after ITRC complete
-- Define clear success criteria for each ITRC step
-- **MANDATORY**: Get expert review from multiple models (see DAPPER Configuration above) before proceeding
-- Incorporate review feedback into final plan
+**Process**:
+1. **Plan Generation** (Claude Code does this):
+   - Generate `[feature-name]-plan-initial.md` - Clean implementation plan
+   - Convert design into sequential phases that deliver working functionality
+   - **MANDATORY**: Each phase MUST be broken down into ITRC sub-tasks:
+     - **I (Implement)**: Build the functionality
+     - **T (Test)**: Write and run tests
+     - **R (Review)**: Code review with mcp__zen__codereview
+     - **C (Commit & Push)**: Git commit and push after ITRC complete
+   - Define clear success criteria for each ITRC step
+   - **MANDATORY**: Get expert review from multiple models before proceeding
 
-**Output**: Phase plan with ITRC-structured todos, deliverables, dependencies, success criteria, and expert review confirmation
+2. **Human Plan Review**:
+   - Generate `[feature-name]-plan-comments.md` - Copy for human annotations
+   - Human adds comments directly (prefix with initials, e.g., "MWK:")
+   - Review phase structure and ITRC breakdown
+   - Adjust priorities, dependencies, success criteria
+   - Provide additional constraints or requirements
+
+3. **Plan Reconciliation** (Claude Code + Human):
+   - Work together to merge initial + comments into final `[feature-name]-plan.md`
+   - Resolve conflicts between initial plan and human feedback
+   - Ensure ITRC structure is maintained
+   - Incorporate expert review feedback
+   - Document final phase priorities and dependencies
+
+**Output**: 
+- `[feature-name]-plan.md` - Final reconciled implementation plan
+- Phase plan with ITRC-structured todos, deliverables, dependencies, success criteria
+- Expert review confirmation and human alignment documented
 
 **Example Phase Structure**:
 ```
@@ -588,6 +756,7 @@ See `docs/guides/integration-testing.md` and `docs/guides/testing-strategy.md` f
 - No "Generated with Claude Code"
 - Descriptive messages explaining the purpose of changes
 - Use `git add [specific-files]` - NEVER `git add .` or `git add -A`
+- **Use `./scripts/gcm.sh` for commits** - Simplified commit script
 
 **Pushing**: 
 - Never force push

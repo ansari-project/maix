@@ -1,47 +1,62 @@
 echo "🔍 Running pre-commit checks..."
 
-# Step 1: Prisma Schema Validation
-echo "🗄️  Validating Prisma schema..."
-npx prisma validate
-if [ $? -ne 0 ]; then
-  echo "❌ Prisma schema is invalid. Please fix schema errors before committing."
-  exit 1
+# Step 1: Check what types of files are being committed
+STAGED_FILES=$(git diff --cached --name-only)
+CODE_FILES=$(echo "$STAGED_FILES" | grep -E "\.(ts|tsx|js|jsx|json|prisma)$" | grep -v -E "\.md$|^docs/|^README|package-lock\.json$" || true)
+PRISMA_FILES=$(echo "$STAGED_FILES" | grep -E "prisma/schema\.prisma|prisma/migrations/" || true)
+
+# If only documentation files changed, skip all checks
+if [ -z "$CODE_FILES" ] && [ -z "$PRISMA_FILES" ]; then
+  echo "📝 Only documentation files changed - skipping all checks"
+  echo "✅ All pre-commit checks passed!"
+  exit 0
 fi
 
-# Step 2: Check if schema and client are in sync
-echo "🔄 Checking Prisma client sync..."
-# Check if client exists and was generated recently
-if [ ! -d "node_modules/.prisma/client" ] || [ "prisma/schema.prisma" -nt "node_modules/.prisma/client" ]; then
-  echo "❌ Prisma client may be out of sync. Run 'npx prisma generate' first."
-  exit 1
-fi
+# Step 2: Prisma Schema Validation (only if Prisma files changed)
+if [ ! -z "$PRISMA_FILES" ]; then
+  echo "🗄️  Validating Prisma schema..."
+  npx prisma validate
+  if [ $? -ne 0 ]; then
+    echo "❌ Prisma schema is invalid. Please fix schema errors before committing."
+    exit 1
+  fi
 
-# Step 3: Migration status check (only if .env exists and DATABASE_URL is set)
-if [ -f .env ]; then
-  source .env
-  if [ ! -z "$DATABASE_URL" ]; then
-    echo "📊 Checking migration status..."
-    npm run db:migrate:status > /dev/null 2>&1
-    MIGRATION_STATUS=$?
-    if [ $MIGRATION_STATUS -ne 0 ]; then
-      echo "⚠️  Warning: Database has pending migrations or connection issues"
-      echo "💡 Run 'npm run db:migrate:status' to check manually"
-      # Don't fail the commit for migration issues - just warn
+  # Check if schema and client are in sync
+  echo "🔄 Checking Prisma client sync..."
+  if [ ! -d "node_modules/.prisma/client" ] || [ "prisma/schema.prisma" -nt "node_modules/.prisma/client" ]; then
+    echo "❌ Prisma client may be out of sync. Run 'npx prisma generate' first."
+    exit 1
+  fi
+
+  # Migration status check (only if .env exists and DATABASE_URL is set)
+  if [ -f .env ]; then
+    source .env
+    if [ ! -z "$DATABASE_URL" ]; then
+      echo "📊 Checking migration status..."
+      npm run db:migrate:status > /dev/null 2>&1
+      MIGRATION_STATUS=$?
+      if [ $MIGRATION_STATUS -ne 0 ]; then
+        echo "⚠️  Warning: Database has pending migrations or connection issues"
+        echo "💡 Run 'npm run db:migrate:status' to check manually"
+        # Don't fail the commit for migration issues - just warn
+      fi
     fi
+  fi
+
+  # Ensure migration files are included when schema changes
+  SCHEMA_CHANGED=$(echo "$PRISMA_FILES" | grep -E "prisma/schema.prisma" || true)
+  MIGRATIONS_CHANGED=$(echo "$PRISMA_FILES" | grep -E "prisma/migrations/.*\.sql" || true)
+  if [ ! -z "$SCHEMA_CHANGED" ] && [ -z "$MIGRATIONS_CHANGED" ]; then
+    echo "⚠️  Warning: Schema changed but no migration files staged"
+    echo "💡 Did you forget to run 'npm run db:migrate:new migration_name'?"
+    echo "💡 Or stage the migration files with 'git add prisma/migrations/'"
+    # Don't fail - this might be intentional (like comments/formatting)
   fi
 fi
 
-# Step 4: Ensure migration files are included when schema changes
-SCHEMA_CHANGED=$(git diff --cached --name-only | grep -E "prisma/schema.prisma" || true)
-MIGRATIONS_CHANGED=$(git diff --cached --name-only | grep -E "prisma/migrations/.*\.sql" || true)
-if [ ! -z "$SCHEMA_CHANGED" ] && [ -z "$MIGRATIONS_CHANGED" ]; then
-  echo "⚠️  Warning: Schema changed but no migration files staged"
-  echo "💡 Did you forget to run 'npm run db:migrate:new migration_name'?"
-  echo "💡 Or stage the migration files with 'git add prisma/migrations/'"
-  # Don't fail - this might be intentional (like comments/formatting)
-fi
-
-# Step 5: Build check
+# Step 3: Build and test checks (only if code files changed)
+if [ ! -z "$CODE_FILES" ]; then
+  # Build check
 echo "📦 Running build check..."
 npm run build
 if [ $? -ne 0 ]; then
@@ -49,12 +64,13 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-# Step 6: Unit tests (excluding integration tests and e2e tests)
+# Step 7: Unit tests (only if code files changed)
 echo "🧪 Running unit tests..."
 npm run test:unit -- --silent
 if [ $? -ne 0 ]; then
   echo "❌ Unit tests failed. Please fix failing tests before committing."
   exit 1
+fi
 fi
 
 echo "✅ All pre-commit checks passed!"
