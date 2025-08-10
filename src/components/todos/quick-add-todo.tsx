@@ -166,7 +166,7 @@ export function QuickAddTodo({
             <div className="flex gap-2 items-center">
               <label className="text-sm text-muted-foreground w-20">Project:</label>
               <Select value={selectedProject} onValueChange={setSelectedProject}>
-                <SelectTrigger className="flex-1">
+                <SelectTrigger className="flex-1" aria-label="Project">
                   <SelectValue placeholder="Select project" />
                 </SelectTrigger>
                 <SelectContent>
@@ -185,7 +185,7 @@ export function QuickAddTodo({
           <div className="flex gap-2 items-center">
             <label className="text-sm text-muted-foreground w-20">Status:</label>
             <Select value={selectedStatus} onValueChange={(val) => setSelectedStatus(val as TodoStatus)}>
-              <SelectTrigger className="flex-1">
+              <SelectTrigger className="flex-1" aria-label="Status">
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
