@@ -1,15 +1,14 @@
 /**
  * Jest configuration for integration tests
  * Uses real test database instead of mocks
+ * 
+ * Optimizations:
+ * - Removed Next.js compilation overhead (not needed for API tests)
+ * - Reduced timeout from 30s to 10s
+ * - Enabled parallel execution with 2 workers
  */
 
-const nextJest = require('next/jest')
-
-const createJestConfig = nextJest({
-  dir: './',
-})
-
-const customJestConfig = {
+module.exports = {
   displayName: 'integration',
   testEnvironment: 'node',
   setupFilesAfterEnv: ['<rootDir>/jest.integration.setup.js'],
@@ -20,10 +19,42 @@ const customJestConfig = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
-  testTimeout: 30000, // Longer timeout for database operations
-  maxWorkers: 1, // Run tests sequentially to avoid database conflicts
+  testTimeout: 10000, // Reduced from 30s - most DB operations should complete in 1-2s
+  maxWorkers: 2, // Run 2 tests in parallel (was 1)
   globalSetup: '<rootDir>/jest.integration.globalSetup.js',
   globalTeardown: '<rootDir>/jest.integration.globalTeardown.js',
+  
+  // Transform TypeScript files without Next.js overhead
+  transform: {
+    '^.+\\.(t|j)sx?$': ['@swc/jest', {
+      jsc: {
+        parser: {
+          syntax: 'typescript',
+          tsx: true,
+          decorators: false,
+          dynamicImport: true,
+        },
+        transform: {
+          react: {
+            runtime: 'automatic',
+          },
+        },
+        target: 'es2017',
+      },
+      module: {
+        type: 'commonjs',
+      },
+    }],
+  },
+  
+  // Ignore patterns
+  transformIgnorePatterns: [
+    '/node_modules/(?!(@dnd-kit|@radix-ui|@hookform|framer-motion)/)',
+  ],
+  
+  // Add roots to speed up file discovery
+  roots: ['<rootDir>/src'],
+  
+  // Disable coverage collection during normal test runs (speeds up tests)
+  collectCoverage: false,
 }
-
-module.exports = createJestConfig(customJestConfig)

@@ -130,7 +130,8 @@ const handlePost = withAuth(async (request: AuthenticatedRequest) => {
         description: validatedData.description,
         url: validatedData.url || null,
         visibility: validatedData.visibility || 'PUBLIC',
-        organizationId: validatedData.organizationId
+        organizationId: validatedData.organizationId,
+        ownerId: request.user.id
       }
     })
 
