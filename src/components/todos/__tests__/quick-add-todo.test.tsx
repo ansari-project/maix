@@ -92,9 +92,12 @@ describe('QuickAddTodo', () => {
       expect(screen.queryByText('Status:')).not.toBeInTheDocument()
     })
 
-    it('expands on Tab key press', async () => {
+    it('expands on Tab key press when there is content', async () => {
       render(<QuickAddTodo onSubmit={mockOnSubmit} />)
       const input = screen.getByPlaceholderText('Add a new todo...')
+      
+      // Type some content first
+      await userEvent.type(input, 'Test todo')
       
       // Focus input and press Tab
       input.focus()
@@ -292,9 +295,10 @@ describe('QuickAddTodo', () => {
       await userEvent.click(screen.getByRole('button', { name: /expand options/i }))
       
       // Should show hints
-      expect(screen.getByText(/Press Enter to add/)).toBeInTheDocument()
-      expect(screen.getByText(/Tab to expand/)).toBeInTheDocument()
-      expect(screen.getByText(/Cmd\+Shift\+A to toggle/)).toBeInTheDocument()
+      expect(screen.getByText('Enter: Add')).toBeInTheDocument()
+      expect(screen.getByText('Tab: Expand')).toBeInTheDocument()
+      expect(screen.getByText('Esc: Close')).toBeInTheDocument()
+      expect(screen.getByText('Cmd+Shift+A: Toggle')).toBeInTheDocument()
     })
   })
 })
