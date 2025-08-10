@@ -37,7 +37,8 @@ export class McpClientService {
           type: 'sse',
           url: `${this.baseUrl}/api/mcp`,
           headers: {
-            'Authorization': `Bearer ${pat}`
+            'Authorization': `Bearer ${pat}`,
+            'Accept': 'application/json, text/event-stream'
           }
         }
       })

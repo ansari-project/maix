@@ -570,87 +570,133 @@ const authenticatedHandler = withMcpAuth(mcpHandler, verifyToken, {
   required: true, // Enforce authentication for all tools
 });
 
-// Add error handling wrapper
-const wrappedHandler = async (req: Request) => {
+// Export Node.js runtime for SSE support
+export const runtime = 'nodejs';
+
+// --- POST Handler (Works as intended) ---
+export async function POST(req: Request): Promise<Response> {
   try {
-    console.log('MCP: Incoming request', { 
-      method: req.method, 
-      url: req.url, 
-      headers: Object.fromEntries(req.headers.entries()),
-      contentType: req.headers.get('content-type')
+    console.log('MCP: POST request', { 
+      url: req.url,
+      contentType: req.headers.get('content-type'),
+      accept: req.headers.get('accept')
     });
     
-    // Log request body for debugging
-    if (req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH') {
-      try {
-        const body = await req.text();
-        console.log('MCP: Request body:', body);
-        
-        // Parse the JSON to check if it's an initialize request
-        let jsonBody;
-        try {
-          jsonBody = JSON.parse(body);
-        } catch {
-          jsonBody = null;
-        }
-        
-        // For initialize requests, temporarily allow without authentication
-        if (jsonBody && jsonBody.method === 'initialize') {
-          console.log('MCP: Initialize request detected, allowing without auth');
-          // Create a new request with the body since we consumed it
-          const newReq = new Request(req.url, {
-            method: req.method,
-            headers: req.headers,
-            body: body
-          });
-          const result = await mcpHandler(newReq);
-          console.log('MCP: Initialize request completed successfully', { 
-            status: result.status, 
-            headers: Object.fromEntries(result.headers.entries()) 
-          });
-          return result;
-        }
-        
-        // For all other requests, use authentication
-        const newReq = new Request(req.url, {
-          method: req.method,
-          headers: req.headers,
-          body: body
-        });
-        const result = await authenticatedHandler(newReq);
-        console.log('MCP: Request completed successfully');
-        return result;
-      } catch (bodyError) {
-        console.log('MCP: Could not read request body:', bodyError);
-      }
+    // Read the body to check for initialize requests
+    const body = await req.text();
+    let jsonBody;
+    try {
+      jsonBody = JSON.parse(body);
+    } catch {
+      jsonBody = null;
     }
     
-    const result = await authenticatedHandler(req);
-    console.log('MCP: Request completed successfully');
+    // For initialize requests, temporarily allow without authentication
+    if (jsonBody && jsonBody.method === 'initialize') {
+      console.log('MCP: Initialize request detected, allowing without auth');
+      const newReq = new Request(req.url, {
+        method: req.method,
+        headers: req.headers,
+        body: body
+      });
+      const result = await mcpHandler(newReq);
+      console.log('MCP: Initialize request completed', { status: result.status });
+      return result;
+    }
+    
+    // For all other requests, use authentication
+    const newReq = new Request(req.url, {
+      method: req.method,
+      headers: req.headers,
+      body: body
+    });
+    const result = await authenticatedHandler(newReq);
+    console.log('MCP: POST request completed');
     return result;
   } catch (error) {
-    console.error('MCP: Request failed:', error);
-    
-    // Return proper error response
+    console.error('MCP: POST request failed:', error);
     return new Response(
       JSON.stringify({ 
         error: 'MCP server error', 
-        message: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString()
+        message: error instanceof Error ? error.message : 'Unknown error'
       }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      }
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
-};
+}
 
-export { 
-  wrappedHandler as GET, 
-  wrappedHandler as POST,
-  wrappedHandler as PUT,
-  wrappedHandler as PATCH,
-  wrappedHandler as DELETE,
-  wrappedHandler as OPTIONS
-};
+// --- GET Handler (Workaround for mcp-handler bug - still present in v1.0.1) ---
+// The Vercel AI SDK sends GET to establish SSE connection
+// mcp-handler v1.0.0 and v1.0.1 both return 405 for GET requests
+// We handle this manually as a workaround
+export async function GET(req: Request): Promise<Response> {
+  try {
+    console.log('MCP: GET request for SSE', {
+      url: req.url,
+      accept: req.headers.get('accept'),
+      hasAuth: !!req.headers.get('authorization')
+    });
+    
+    const acceptHeader = req.headers.get('accept') || '';
+    const authHeader = req.headers.get('authorization') || '';
+    
+    // Only handle SSE requests
+    if (!acceptHeader.includes('text/event-stream')) {
+      return new Response('Method Not Allowed', { status: 405 });
+    }
+    
+    // Verify authentication
+    if (!authHeader.startsWith('Bearer ')) {
+      return new Response('Unauthorized', { status: 401 });
+    }
+    
+    const token = authHeader.slice(7); // Remove "Bearer " prefix
+    const user = await validatePersonalAccessToken(token);
+    
+    if (!user) {
+      console.log('MCP: GET authentication failed - invalid token');
+      return new Response('Unauthorized', { status: 401 });
+    }
+    
+    console.log('MCP: GET authentication successful for user', user.id);
+    
+    // Create a simple SSE stream that stays open
+    // The AI SDK will then send actual requests via POST
+    const stream = new ReadableStream({
+      start(controller) {
+        console.log('MCP: SSE stream established for GET request');
+        // Send an initial comment to establish the connection
+        const encoder = new TextEncoder();
+        controller.enqueue(encoder.encode(': connected\n\n'));
+      },
+      cancel() {
+        console.log('MCP: SSE client disconnected');
+      }
+    });
+    
+    return new Response(stream, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'X-SSE-Content-Type': 'text/event-stream'
+      }
+    });
+  } catch (error) {
+    console.error('MCP: GET request failed:', error);
+    return new Response('Internal Server Error', { status: 500 });
+  }
+}
+
+// OPTIONS handler for CORS preflight
+export async function OPTIONS(req: Request): Promise<Response> {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept'
+    }
+  });
+}
