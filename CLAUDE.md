@@ -87,12 +87,21 @@ E - Evaluate  : Comprehensive overall evaluations
 R - Revise    : Update docs and capture lessons
 ```
 
-**Document Evolution Through DAPPER:**
+**Document Flow Through DAPPER:**
 ```
-Initial Design → [Align] → Aligned Design → [Plan] → Phase Plan → [Produce] → Progress Tracking
-     ↓                           ↓                        ↓                          ↓
-Requirements &            Decisions Made         Phases Defined            Phases Completed
-Open Questions                                   with ITRC                 with Evidence
+Design Stage:                    Align Stage:                     Plan Stage:
+[feature]-initial.md    →    Human adds comments    →    [feature].md (reconciled)    →    
+[feature]-comments.md        to -comments.md             with decisions                     
+(identical copies)           + reconciliation             + expert review                    
+                                                                    ↓
+                                                         [feature]-initial.md
+                                                         [feature]-comments.md
+                                                         (plan documents)
+                                                                    ↓
+                                                         Human comments → Reconciliation
+                                                                    ↓
+                                                         [feature].md (final plan)
+                                                         + expert review
 ```
 
 ### The Six Stages
@@ -122,7 +131,10 @@ Open Questions                                   with ITRC                 with 
 5. Alternative approaches considered
 6. Expert review results (after obtaining)
 
-**Output**: Design document with architecture proposals, simplification OPTIONS (not decisions), alternatives, open questions
+**Output**: 
+- `dev_docs/designs/[feature]-initial.md` - Original design document
+- `dev_docs/designs/[feature]-comments.md` - Identical copy for human annotations
+Both files contain architecture proposals, simplification OPTIONS (not decisions), alternatives, and open questions
 
 **ANTI-PATTERN TO AVOID**:
 ```markdown
@@ -134,31 +146,32 @@ Open Questions                                   with ITRC                 with 
 
 #### 2. Align - Human Alignment & Decisions
 
-**Purpose**: Review AI proposals and make strategic decisions
+**Purpose**: Reconcile design documents through human review and collaborative decision-making
 
 **Process**:
-1. **Document Preparation** (Claude Code does this):
-   - Generate `[feature-name]-design-initial.md` - Clean copy of original design
-   - Generate `[feature-name]-design-comments.md` - Version with human comments integrated
-   - Both files preserve complete design for reference
+1. **Human Review Phase**:
+   - Human reviews `dev_docs/designs/[feature]-comments.md`
+   - Adds comments throughout the document (prefix with initials, e.g., "MWK:")
+   - Reviews each proposed simplification OPTION
+   - Makes decisions on all open questions
+   - Provides additional constraints if needed
 
-2. **Human Review**:
-   - Add comments directly in original design document (prefix with initials, e.g., "MWK:")
-   - Review each proposed simplification OPTION
-   - Choose which simplifications to accept or reject
-   - Make decisions on all open questions
-   - Provide additional constraints if needed
+2. **Reconciliation Phase** (Claude Code + Human):
+   - Claude Code reads both `-initial.md` and `-comments.md` files
+   - Discusses comments and decisions with human
+   - Works together to resolve conflicts and clarify decisions
+   - Creates reconciled design incorporating all feedback
 
-3. **Reconciliation** (Claude Code + Human):
-   - Work together to merge initial design + comments into final `[feature-name]-design.md`
-   - Resolve conflicts between original proposals and human feedback
-   - Document rationale for decisions
-   - Ensure all comments are addressed
+3. **Expert Review Phase**:
+   - Expert agents review the reconciled design
+   - Provide validation and additional insights
+   - Final adjustments based on expert feedback
 
 **Output**: 
-- `[feature-name]-design.md` - Final reconciled design with all decisions marked
-- Decisions marked as `[ACCEPTED]`, `[REJECTED]`, or `[DECIDED: choice + rationale]`
+- `dev_docs/designs/[feature].md` - Final reconciled and reviewed design
+- All decisions marked as `[ACCEPTED]`, `[REJECTED]`, or `[DECIDED: choice + rationale]`
 - New "Alignment Outcomes" section documenting key decisions
+- Expert review confirmation included
 
 **Example transformation**:
 ```markdown
@@ -171,8 +184,8 @@ After:  **[ACCEPTED]** - Simplicity outweighs audit granularity
 **Purpose**: Break aligned design into executable phases with structured ITRC sub-tasks
 
 **Process**:
-1. **Plan Generation** (Claude Code does this):
-   - Generate `[feature-name]-plan-initial.md` - Clean implementation plan
+1. **Initial Plan Creation** (Claude Code):
+   - Read final design from `dev_docs/designs/[feature].md`
    - Convert design into sequential phases that deliver working functionality
    - **MANDATORY**: Each phase MUST be broken down into ITRC sub-tasks:
      - **I (Implement)**: Build the functionality
@@ -180,26 +193,39 @@ After:  **[ACCEPTED]** - Simplicity outweighs audit granularity
      - **R (Review)**: Code review with mcp__zen__codereview
      - **C (Commit & Push)**: Git commit and push after ITRC complete
    - Define clear success criteria for each ITRC step
-   - **MANDATORY**: Get expert review from multiple models before proceeding
 
-2. **Human Plan Review**:
-   - Generate `[feature-name]-plan-comments.md` - Copy for human annotations
-   - Human adds comments directly (prefix with initials, e.g., "MWK:")
-   - Review phase structure and ITRC breakdown
-   - Adjust priorities, dependencies, success criteria
-   - Provide additional constraints or requirements
+2. **Initial Expert Review**:
+   - Expert agents review the initial plan
+   - Validate feasibility and completeness
+   - Suggest improvements and identify risks
 
-3. **Plan Reconciliation** (Claude Code + Human):
-   - Work together to merge initial + comments into final `[feature-name]-plan.md`
-   - Resolve conflicts between initial plan and human feedback
-   - Ensure ITRC structure is maintained
-   - Incorporate expert review feedback
-   - Document final phase priorities and dependencies
+3. **Document Generation**:
+   - Generate `dev_docs/plans/[feature]-initial.md` - Original plan
+   - Generate `dev_docs/plans/[feature]-comments.md` - Identical copy for human annotations
+
+4. **Human Review Phase**:
+   - Human reviews `dev_docs/plans/[feature]-comments.md`
+   - Adds comments directly (prefix with initials, e.g., "MWK:")
+   - Reviews phase structure and ITRC breakdown
+   - Adjusts priorities, dependencies, success criteria
+   - Provides additional constraints or requirements
+
+5. **Reconciliation Phase** (Claude Code + Human):
+   - Claude Code reads both plan files
+   - Discusses comments and adjustments with human
+   - Works together to resolve conflicts
+   - Creates reconciled plan incorporating all feedback
+
+6. **Final Expert Review**:
+   - Expert agents review the final reconciled plan
+   - Confirm readiness for production
+   - Final validation before Produce stage
 
 **Output**: 
-- `[feature-name]-plan.md` - Final reconciled implementation plan
+- `dev_docs/plans/[feature].md` - Final reconciled and expert-reviewed plan
 - Phase plan with ITRC-structured todos, deliverables, dependencies, success criteria
-- Expert review confirmation and human alignment documented
+- Expert review confirmations documented
+- Ready for Produce stage execution
 
 **Example Phase Structure**:
 ```
@@ -545,26 +571,24 @@ Claude: "Thank you! Before proceeding, I need your explicit decisions on:
 Please provide your specific choices for each."
 ```
 
-**Document Flow**:
+**Document Structure**:
 ```
-[feature-name]-design.md (Phases D → A)
-├─ Design: Initial proposals, questions, alternatives
-└─ Align: Decisions marked [ACCEPTED]/[REJECTED], rationale added
-         ↓
-    [Plan Phase creates Implementation Plan]
-         ↓
-[feature-name]-plan.md (Phases P → P → E → R)  
-├─ Plan: Phases with ITRC structure defined
-├─ Produce: Progress tracking, evidence trail added
-├─ Evaluate: Test results, metrics incorporated
-└─ Revise: Retrospective report + Updates to both docs with lessons learned
+dev_docs/
+├── designs/
+│   ├── [feature]-initial.md     # Original design (preserved)
+│   ├── [feature]-comments.md    # Human annotated version
+│   └── [feature].md             # Final reconciled design
+└── plans/
+    ├── [feature]-initial.md     # Original plan (preserved)
+    ├── [feature]-comments.md    # Human annotated version
+    └── [feature].md             # Final reconciled plan
 ```
 
-**Example**: For complete interface redesign:
-- `complete-interface-redesign-design.md` → Design & Align phases
-- `complete-interface-redesign-plan.md` → Plan through Revise phases
+**Example**: For AI assistant feature:
+- Design: `dev_docs/designs/ai-assistant-initial.md`, `ai-assistant-comments.md` → `ai-assistant.md`
+- Plan: `dev_docs/plans/ai-assistant-initial.md`, `ai-assistant-comments.md` → `ai-assistant.md`
 
-**Note**: Both documents MUST share the same prefix for clarity and traceability.
+**Note**: Feature name MUST be consistent across all documents for traceability.
 
 ---
 
