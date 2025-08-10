@@ -10,7 +10,6 @@ import {
   FolderOpen, 
   CheckSquare, 
   Search, 
-  Newspaper, 
   User, 
   Settings,
   ChevronLeft,
@@ -32,7 +31,6 @@ const mainNavItems: NavItem[] = [
   { label: 'Projects', href: '/projects', icon: FolderOpen },
   { label: 'Todos', href: '/todos', icon: CheckSquare },
   { label: 'Search', href: '/search', icon: Search },
-  { label: 'News', href: '/news', icon: Newspaper },
   { label: 'Profile', href: '/profile', icon: User },
   { label: 'Settings', href: '/settings', icon: Settings },
 ]

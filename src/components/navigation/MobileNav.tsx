@@ -7,7 +7,6 @@ import {
   Home, 
   FolderOpen, 
   CheckSquare, 
-  Newspaper,
   Grid3x3,
   MoreHorizontal
 } from 'lucide-react'
@@ -23,7 +22,6 @@ const mobileNavItems: NavItem[] = [
   { label: 'Home', href: '/', icon: Home },
   { label: 'Projects', href: '/projects', icon: FolderOpen },
   { label: 'Todos', href: '/todos', icon: CheckSquare },
-  { label: 'News', href: '/news', icon: Newspaper },
   { label: 'Apps', href: '/apps', icon: Grid3x3 },
 ]
 
