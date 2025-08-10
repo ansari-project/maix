@@ -10,9 +10,9 @@ export class McpClientService {
   private baseUrl: string
 
   constructor() {
-    // Use environment variable or default to current domain
-    this.baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
-                   (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000')
+    // In production, use the deployed URL; in development use localhost
+    // NEXT_PUBLIC_URL should be set to https://maix.io in production
+    this.baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'
   }
 
   /**
@@ -24,11 +24,21 @@ export class McpClientService {
     }
 
     try {
+      // Get PAT from environment for server-side MCP authentication
+      const pat = process.env.MAIX_PAT
+      if (!pat) {
+        console.error('MAIX_PAT environment variable not set')
+        return null
+      }
+
       // Create MCP client with SSE transport to our MCP server
       this.clientCache = await experimental_createMCPClient({
         transport: {
           type: 'sse',
-          url: `${this.baseUrl}/api/mcp`
+          url: `${this.baseUrl}/api/mcp`,
+          headers: {
+            'Authorization': `Bearer ${pat}`
+          }
         }
       })
       
