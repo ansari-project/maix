@@ -79,7 +79,7 @@ export class OfficialMcpClientService {
       // Convert MCP tool to AI SDK tool format
       tools[mcpTool.name] = {
         description: mcpTool.description || '',
-        parameters: mcpTool.inputSchema || { type: 'object', properties: {} },
+        inputSchema: mcpTool.inputSchema || { type: 'object', properties: {} },
         execute: async (args: any) => {
           // This will be called by the AI SDK when the tool is invoked
           // We need to forward it to the MCP client
