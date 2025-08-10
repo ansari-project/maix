@@ -83,23 +83,26 @@ D - Design    : AI explores and proposes
 A - Align     : Human decides and aligns  
 P - Plan      : Break into executable phases with ITRC
 P - Produce   : Build, test, review, commit & push
-E - Evaluate  : Comprehensive validation
+E - Evaluate  : Comprehensive overall evaluations
 R - Revise    : Update docs and capture lessons
+```
+
+**Document Evolution Through DAPPER:**
+```
+Initial Design → [Align] → Aligned Design → [Plan] → Phase Plan → [Produce] → Progress Tracking
+     ↓                           ↓                        ↓                          ↓
+Requirements &            Decisions Made         Phases Defined            Phases Completed
+Open Questions                                   with ITRC                 with Evidence
 ```
 
 ### The Six Stages
 
 #### 1. Design - Collaborative AI Design
 
-**Purpose**: Create comprehensive design exploring multiple approaches
-
-**CRITICAL RULES**:
-- **NEVER MAKE DECISIONS** - Only present OPTIONS with pros/cons
-- **NO DEFAULT CHOICES** - Don't mark anything as "recommended" or "selected"
-- **QUESTIONS NOT ANSWERS** - End with questions for human, not conclusions
+**Purpose**: Create comprehensive design exploring multiple approaches, seek clarifications in areas of ambiguity and identify potential simplifications. 
 
 **Process**:
-- Multiple AI agents collaborate to explore technical solutions
+- Claude Code begins the design process, outlines the requirements and the high level design. It then iterates with other expert agents to refine the design, determine potential simplifications as well as open questions that are underspecified. 
 - **MANDATORY**: Identify and PROPOSE simplifications as OPTIONS (not decisions) to prevent over-engineering
 - Present simplifications with clear pros/cons for human to choose
 - Each simplification must be a concrete option that can be ACCEPTED or REJECTED
@@ -107,14 +110,19 @@ R - Revise    : Update docs and capture lessons
 - Flag unresolved questions requiring human input
 
 **Required Sections in Design Document**:
-1. Architecture proposals with multiple approaches
-2. **Simplification Options** (MANDATORY) - At least 5-8 concrete simplifications
-3. Open questions tiered by priority (Critical/Important/Deferrable)
-4. Risk assessment matrix
+1. **Problem Statement & Requirements** (MANDATORY FIRST SECTION)
+   - Nature of the problem we're solving
+   - Why this problem needs solving  
+   - Functional requirements
+   - Non-functional requirements (performance, security, etc.)
+   - Success criteria and metrics
+2. Architecture proposals with multiple approaches
+3. **Simplification Options** (MANDATORY) - At least 3 concrete simplifications
+4. **Open Questions** - Unresolved questions that materially impact the design that would benefit from user input
 5. Alternative approaches considered
 6. Expert review results (after obtaining)
 
-**Output**: Design document with architecture proposals, simplification OPTIONS (not decisions), alternatives, open questions, and risk analysis
+**Output**: Design document with architecture proposals, simplification OPTIONS (not decisions), alternatives, open questions
 
 **ANTI-PATTERN TO AVOID**:
 ```markdown
@@ -250,6 +258,35 @@ todos = [
 | **Test** | Test execution output with PASSING tests | `npm test` results showing "Tests: 42 passed" |
 | **Review** | Code review tool output | `continuation_id` from mcp__zen__codereview |
 | **Commit & Push** | Git operations complete | `git push` output showing success |
+
+**Evidence Examples:**
+
+✅ **CORRECT TODO COMPLETION:**
+```
+Todo: "Phase 2-T: Write tests"
+Evidence: Test output showing "Test Suites: 5 passed, Tests: 42 passed"
+Status: Can mark complete ✓
+```
+
+❌ **INCORRECT TODO COMPLETION:**
+```
+Todo: "Phase 2-R: Code review"
+Evidence: None (tool not run)
+Status: CANNOT mark complete ✗
+```
+
+**Verification Checklist Before Marking ITRC Steps Complete:**
+- [ ] Did I actually run the tool/command?
+- [ ] Do I have output/results to prove it?
+- [ ] Can I provide the continuation_id or execution proof?
+- [ ] Would an audit find evidence this step was done?
+
+**Anti-Pattern Prevention:**
+- **DO NOT**: Mark review todos complete without running mcp__zen__codereview
+- **DO NOT**: Mark test todos complete without showing test results
+- **DO NOT**: Skip steps due to perceived time pressure
+- **DO NOT**: Batch-mark multiple todos complete without individual evidence
+- **DO NOT**: Proceed to next phase without completing ALL ITRC steps with evidence
 
 **Process Integrity Rule**: If you cannot provide evidence, the step is NOT complete.
 
@@ -429,8 +466,9 @@ This configuration applies to all DAPPER expert review requirements mentioned th
 
 #### DESIGN PHASE REQUIREMENTS (STRICT)
 1. **COMPREHENSIVE DESIGN DOCUMENT** - MUST include ALL of:
+   - [ ] **Problem Statement & Requirements** section (MANDATORY FIRST)
    - [ ] Multiple architecture options with pros/cons
-   - [ ] **Simplification Options section** with 5-8 concrete options (MANDATORY)
+   - [ ] **Simplification Options section** with at least 3 concrete options (MANDATORY)
    - [ ] Open questions categorized by tier (Critical/Important/Deferrable)
    - [ ] Risk assessment matrix
    - [ ] Alternative approaches considered
@@ -444,8 +482,9 @@ This configuration applies to all DAPPER expert review requirements mentioned th
 3. **EXPERT ANALYSIS REQUIRED** - Use mcp__zen__consensus or mcp__zen__thinkdeep for design validation
 
 **Design Phase Checklist** (ALL must be ✅ before proceeding):
+- [ ] Documented problem statement and requirements
 - [ ] Created comprehensive design document
-- [ ] Listed 5+ simplification options as OPTIONS (not decisions)
+- [ ] Listed 3+ simplification options as OPTIONS (not decisions)
 - [ ] Categorized all open questions by tier
 - [ ] Obtained expert review from multiple models
 - [ ] Updated design with expert feedback
