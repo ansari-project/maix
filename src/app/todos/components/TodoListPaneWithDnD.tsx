@@ -5,7 +5,10 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { CheckCircle2, Circle, Clock, Pause, ChevronDown, ChevronRight, GripVertical } from "lucide-react"
+import { QuickAddTodo } from "@/components/todos/quick-add-todo"
 import { format } from "date-fns"
+import { TodoStatus } from "@prisma/client"
+import { useRouter } from "next/navigation"
 import { 
   DndContext, 
   closestCenter,
@@ -126,6 +129,15 @@ export function TodoListPaneWithDnD({
   const [groupBy, setGroupBy] = useState<GroupBy>('status')
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
   const groupedTodos = useGroupedTodos(todos, groupBy)
+  const router = useRouter()
+  
+  // Status mapping for group IDs to TodoStatus
+  const statusMap: Record<string, TodoStatus> = {
+    'not-started': 'NOT_STARTED',
+    'in-progress': 'IN_PROGRESS',
+    'waiting-for': 'WAITING_FOR',
+    'completed': 'COMPLETED'
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -296,6 +308,42 @@ export function TodoListPaneWithDnD({
                         />
                       ))}
                     </SortableContext>
+                    {/* Quick Add Todo for status groups */}
+                    {groupBy === 'status' && (
+                      <QuickAddTodo
+                        initialStatus={statusMap[group.id] || 'NOT_STARTED'}
+                        onSubmit={async (data) => {
+                          // Create new todo via API
+                          const response = await fetch('/api/user/todos', {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                              title: data.title,
+                              description: '',
+                              status: data.status,
+                              startDate: data.startDate?.toISOString(),
+                              dueDate: data.dueDate?.toISOString(),
+                              projectId: data.projectId
+                            }),
+                          })
+                          
+                          if (!response.ok) {
+                            let message = 'Failed to create todo'
+                            try {
+                              const err = await response.json()
+                              message = err.error || err.message || message
+                            } catch {}
+                            throw new Error(message)
+                          }
+                          
+                          // Refresh data without full page reload
+                          router.refresh()
+                        }}
+                        className="mt-2"
+                      />
+                    )}
                     {/* Drop zone indicator for empty groups */}
                     {group.todos.length === 0 && (
                       <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 text-center">
@@ -309,8 +357,44 @@ export function TodoListPaneWithDnD({
               </div>
             ))}
             {todos.length === 0 && (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">No todos yet</p>
+              <div className="py-8">
+                <div className="text-center mb-6">
+                  <p className="text-muted-foreground mb-2">No todos yet</p>
+                  <p className="text-sm text-muted-foreground">Get started by creating your first todo</p>
+                </div>
+                <div className="max-w-md mx-auto">
+                  <QuickAddTodo
+                    onSubmit={async (data) => {
+                      // Create new todo via API
+                      const response = await fetch('/api/user/todos', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          title: data.title,
+                          description: '',
+                          status: data.status || 'NOT_STARTED',
+                          startDate: data.startDate?.toISOString(),
+                          dueDate: data.dueDate?.toISOString(),
+                          projectId: data.projectId
+                        }),
+                      })
+                      
+                      if (!response.ok) {
+                        let message = 'Failed to create todo'
+                        try {
+                          const err = await response.json()
+                          message = err.error || err.message || message
+                        } catch {}
+                        throw new Error(message)
+                      }
+                      
+                      // Refresh data without full page reload
+                      router.refresh()
+                    }}
+                  />
+                </div>
               </div>
             )}
           </div>

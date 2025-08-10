@@ -19,6 +19,7 @@ interface Project {
 interface QuickAddTodoProps {
   projectId?: string
   projects?: Project[]
+  initialStatus?: TodoStatus
   onSubmit: (data: {
     title: string
     projectId?: string
@@ -32,13 +33,14 @@ interface QuickAddTodoProps {
 export function QuickAddTodo({ 
   projectId, 
   projects = [], 
+  initialStatus,
   onSubmit,
   className 
 }: QuickAddTodoProps) {
   const [title, setTitle] = useState("")
   const [isExpanded, setIsExpanded] = useState(false)
   const [selectedProject, setSelectedProject] = useState(projectId || "uncategorized")
-  const [selectedStatus, setSelectedStatus] = useState<TodoStatus>("NOT_STARTED")
+  const [selectedStatus, setSelectedStatus] = useState<TodoStatus>(initialStatus || "NOT_STARTED")
   const [startDate, setStartDate] = useState<Date>(new Date())
   const [dueDate, setDueDate] = useState<Date | undefined>()
   const [isLoading, setIsLoading] = useState(false)

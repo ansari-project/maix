@@ -3,6 +3,13 @@ import { render, screen } from '@testing-library/react'
 import { TodoListPaneWithDnD } from '../components/TodoListPaneWithDnD'
 import { Todo } from '../types'
 
+// Mock next/navigation
+jest.mock('next/navigation', () => ({
+  useRouter: jest.fn(() => ({
+    refresh: jest.fn(),
+  })),
+}))
+
 // Mock the DnD-kit components
 jest.mock('@dnd-kit/core', () => ({
   DndContext: ({ children }: any) => <div>{children}</div>,
@@ -37,6 +44,21 @@ jest.mock('@dnd-kit/utilities', () => ({
       toString: jest.fn(() => '')
     }
   }
+}))
+
+// Mock DroppableGroup component
+jest.mock('../components/DroppableGroup', () => ({
+  DroppableGroup: ({ children }: any) => <div>{children}</div>,
+}))
+
+// Mock useDragAndDrop hook
+jest.mock('../hooks/useDragAndDrop', () => ({
+  useDragAndDrop: () => ({
+    handleDragStart: jest.fn(),
+    handleDragOver: jest.fn(),
+    handleDragEnd: jest.fn(),
+    activeId: null,
+  }),
 }))
 
 describe('TodoListPaneWithDnD', () => {
