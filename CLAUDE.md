@@ -756,6 +756,7 @@ See `docs/guides/integration-testing.md` and `docs/guides/testing-strategy.md` f
 - No "Generated with Claude Code"
 - Descriptive messages explaining the purpose of changes
 - Use `git add [specific-files]` - NEVER `git add .` or `git add -A`
+- **Use `./scripts/gcm.sh` for commits** - Simplified commit script
 
 **Pushing**: 
 - Never force push
