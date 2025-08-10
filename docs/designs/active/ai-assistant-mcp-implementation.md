@@ -425,7 +425,7 @@ export const createMockMcpServer = () => {
   - Worse perceived performance
   - Users wait longer for first content
   - Less engaging UX
-- **Awaiting Decision**: [ ] ACCEPT or [ ] REJECT
+- **Decision**: [X] **REJECTED** - Streaming is required for good UX
 
 #### Simplification Option 4: Fixed Context Window (Last 5 Messages)
 - **Proposal**: Only send last 5 message pairs to Gemini
@@ -588,13 +588,14 @@ export const createMockMcpServer = () => {
 ### 1.17 Expert Review Results
 
 **Date**: January 10, 2025  
-**Models Consulted**: Gemini-2.5-Pro (neutral stance), O3 (against stance)
+**Models Consulted**: Gemini-2.5-Pro (neutral), O3 (against), GPT-5 (neutral)
 
 #### Consensus Summary
 
-Both expert models **endorsed the architecture** with high confidence:
+All three expert models **endorsed the architecture** with high confidence:
 - **Gemini-2.5-Pro**: 8/10 confidence - "Technically sound and strategically aligned"
 - **O3**: 7.5/10 confidence - "Strong user value proposition with manageable technical risks"
+- **GPT-5**: Strong endorsement with critical implementation corrections needed
 
 #### Key Points of Agreement
 
@@ -639,6 +640,35 @@ Both expert models **endorsed the architecture** with high confidence:
 3. Provider abstraction from day one
 4. Internal beta first
 5. Focus on 2-3 killer use cases
+
+#### GPT-5 Critical Corrections
+
+**CRITICAL IMPLEMENTATION ISSUES IDENTIFIED**:
+
+1. **PAT Storage Inconsistency** (MUST FIX):
+   - Design shows hashing PATs (one-way) but tries to decrypt them later
+   - Solution: Either use in-process tools (no PAT needed) OR store encrypted tokens
+
+2. **Streaming Implementation Gap**:
+   - Current design uses non-streaming `generateContent` call
+   - Solution: Use Vercel AI SDK's `streamText` like Event Assistant does
+
+3. **Tool Calling Pattern Mismatch**:
+   - AI Assistant plans manual JSON parsing + MCP HTTP calls
+   - Event Assistant uses Vercel AI SDK with in-process tools
+   - Solution: Align both assistants to same pattern
+
+**GPT-5 Simplification Recommendations**:
+- ✅ ACCEPT: Session-only, Single model, Fixed context, No explanations, No caching
+- ❌ REJECT: No streaming (already rejected), No rate limiting (need minimal quotas), No error recovery (need retry for reads)
+- ❌ REJECT: Accept ALL simplifications (use curated set above)
+
+**GPT-5 Implementation Priorities**:
+1. Clone Event Assistant route structure to `/api/ai/chat`
+2. Fix PAT inconsistency (in-process vs HTTP decision)
+3. Implement minimal quotas immediately ($300/month cap suggested)
+4. Add read-only scope guard for Phase 1
+5. Use sliding window for context management
 
 ---
 
