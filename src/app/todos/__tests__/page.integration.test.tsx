@@ -10,6 +10,23 @@ import TodosPage from '../page'
 jest.mock('next-auth/react')
 jest.mock('next/navigation')
 
+// Mock the LayoutContext to avoid issues with undefined currentPath
+jest.mock('@/contexts/LayoutContext', () => ({
+  LayoutProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  useLayout: () => ({
+    isMobile: false,
+    isAIExpanded: false,
+    toggleAI: jest.fn(),
+    currentPath: '/todos',
+    isActivePath: jest.fn(() => false)
+  })
+}))
+
+// Mock the AI Assistant to avoid issues in tests
+jest.mock('@/components/ai/AIAssistant', () => ({
+  AIAssistant: () => null
+}))
+
 // Mock fetch globally
 global.fetch = jest.fn()
 

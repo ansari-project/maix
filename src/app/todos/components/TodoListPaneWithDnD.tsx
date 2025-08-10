@@ -229,7 +229,7 @@ export function TodoListPaneWithDnD({
           
           {/* Group By Selector */}
           <Select value={groupBy} onValueChange={(value) => setGroupBy(value as GroupBy)}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full" aria-label="Group by">
               <SelectValue placeholder="Group by..." />
             </SelectTrigger>
             <SelectContent>

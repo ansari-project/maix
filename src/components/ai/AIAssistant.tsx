@@ -74,7 +74,7 @@ export function AIAssistant() {
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: getContextualResponse(input, currentPath),
+        content: getContextualResponse(input, currentPath || ''),
         timestamp: new Date()
       }
       setMessages(prev => [...prev, aiMessage])
@@ -84,6 +84,9 @@ export function AIAssistant() {
 
   // Context-aware placeholder based on current page
   const getPlaceholder = () => {
+    if (!currentPath) {
+      return 'Ask me anything or describe what you need...'
+    }
     if (currentPath.includes('projects')) {
       return 'Ask about projects, find tasks, or create new...'
     }
@@ -100,7 +103,7 @@ export function AIAssistant() {
   const getContextualResponse = (query: string, path: string): string => {
     const lowerQuery = query.toLowerCase()
     
-    if (path.includes('projects')) {
+    if (path && path.includes('projects')) {
       if (lowerQuery.includes('create') || lowerQuery.includes('new')) {
         return "I can help you create a new project. What type of project are you planning? I can guide you through setting up the details."
       }
@@ -109,7 +112,7 @@ export function AIAssistant() {
       }
     }
     
-    if (path.includes('todos')) {
+    if (path && path.includes('todos')) {
       if (lowerQuery.includes('priority') || lowerQuery.includes('urgent')) {
         return "Here are your highest priority tasks:\n1. Review PR feedback (Due today)\n2. Update documentation (Due tomorrow)\n3. Team meeting prep (Due this week)"
       }

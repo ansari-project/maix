@@ -2,6 +2,9 @@
  * Jest setup for integration tests
  */
 
+// Import jest-dom for extended matchers like toBeInTheDocument
+import '@testing-library/jest-dom'
+
 // Set test environment
 process.env.NODE_ENV = 'test'
 process.env.IS_TEST_ENV = 'true'
