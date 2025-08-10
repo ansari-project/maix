@@ -117,6 +117,7 @@ model User {
   eventsCreated           MaixEvent[]             @relation("EventsCreated")
   registrations           Registration[]
   eventConversations      EventConversation[]
+  aiConversations         AIConversation[]
   userPreferences         UserPreferences?
 
   @@index([skills], type: Gin)
@@ -634,6 +635,22 @@ model EventConversation {
 
   @@unique([eventId, userId])
   @@map("event_conversations")
+}
+
+model AIConversation {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String?  // Auto-generated from first message
+  messages    Json     // Array of messages with roles
+  metadata    Json?    // Tool usage stats, etc.
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lastActiveAt DateTime @default(now())
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, lastActiveAt])
+  @@map("ai_conversations")
 }
 
 model UserPreferences {
