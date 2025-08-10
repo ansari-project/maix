@@ -1,0 +1,1 @@
+Call scripts/set_slt.sh with $ARGUMENT if at least one word, or with a summary of what we're working on of 5-10 words.
