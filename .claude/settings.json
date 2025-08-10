@@ -4,7 +4,8 @@
       "npm test",
       "Bash(npm test:*)",
       "Bash(git commit:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(./scripts/set_slt.sh:*)"
     ],
     "deny": [
       "Bash(git add -A)",

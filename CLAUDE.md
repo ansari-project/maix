@@ -9,6 +9,7 @@
 3. **IF PUSH FAILS** - STOP and ask the user how to proceed. DO NOT make decisions independently.
 4. **This is a COLLABORATIVE repository** - Other developers' work must be protected
 5. **NEVER use `git add -A` or `git add .`** - Always use specific file paths with `git add [specific-files]`
+6. **Do not use `git commit -m`** - Instead use `/gcm` command for commits
 
 ### Database Safety - READ BEFORE ANY PRISMA OPERATION
 
