@@ -34,7 +34,7 @@ function NewProjectForm() {
     helpType: "",
     contactEmail: "",
     targetCompletionDate: "",
-    productId: "",
+    productId: "none",  // Changed from "" to "none" to avoid Select.Item empty value error
     organizationId: "",
     visibility: "PUBLIC" as "PUBLIC" | "PRIVATE"  // Default to PUBLIC
   })
@@ -77,7 +77,7 @@ function NewProjectForm() {
     try {
       const requestData = {
         ...project,
-        productId: project.productId || undefined,
+        productId: project.productId === "none" ? undefined : project.productId || undefined,
         organizationId: project.organizationId || undefined
       }
 
@@ -203,7 +203,7 @@ function NewProjectForm() {
                     <SelectValue placeholder={productsLoading ? "Loading products..." : "Select a product (optional)"} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No product association</SelectItem>
+                    <SelectItem value="none">No product association</SelectItem>
                     {products.map((product) => (
                       <SelectItem key={product.id} value={product.id}>
                         {product.name}
