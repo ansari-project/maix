@@ -275,76 +275,37 @@ todos = [
 
 ##### Evidence-Based Completion Requirements
 
-**⚠️ CRITICAL ENFORCEMENT**:
-- **NEVER mark a todo as complete without evidence of execution**
-- **Test step**: Must show actual test output (npm test results showing PASSING tests)
-- **Review step**: Must capture continuation_id from mcp__zen__codereview tool
-- **Each phase**: Cannot proceed to next phase until all ITRC evidence is documented
+**⚠️ NEVER mark complete without evidence:**
 
-**Every ITRC step requires documented evidence before marking complete:**
+| Step | Evidence Required |
+|------|------------------|
+| **Implement** | `git status` showing files modified |
+| **Test** | Test output showing PASSING tests |
+| **Review** | `continuation_id` from mcp__zen__codereview |
+| **Commit & Push** | `git push` output showing success |
 
-| Step | Evidence Required | Example |
-|------|------------------|---------|
-| **Implement** | Code changes staged/committed | `git status` showing files modified |
-| **Test** | Test execution output with PASSING tests | `npm test` results showing "Tests: 42 passed" |
-| **Review** | Code review tool output | `continuation_id` from mcp__zen__codereview |
-| **Commit & Push** | Git operations complete | `git push` output showing success |
+**Before marking complete, verify:**
+- Did I run the tool/command?
+- Do I have output to prove it?
+- Can I provide the continuation_id?
 
-**Evidence Examples:**
+**Rule**: If you cannot provide evidence, the step is NOT complete.
 
-✅ **CORRECT TODO COMPLETION:**
+##### Phase Transitions
+
+Before starting new phase:
+1. **CHECK**: All ITRC steps complete WITH evidence?
+2. **VERIFY**: Tests passing? Review done? Pushed?
+
+**Commit Format**:
 ```
-Todo: "Phase 2-T: Write tests"
-Evidence: Test output showing "Test Suites: 5 passed, Tests: 42 passed"
-Status: Can mark complete ✓
+feat: Phase X - [Description]
+
+- Implementation: [What was built]
+- Tests: X/Y passing
+- Review: continuation_id: [UUID]
+- ITRC complete: I✓ T✓ R✓ C✓
 ```
-
-❌ **INCORRECT TODO COMPLETION:**
-```
-Todo: "Phase 2-R: Code review"
-Evidence: None (tool not run)
-Status: CANNOT mark complete ✗
-```
-
-**Verification Checklist Before Marking ITRC Steps Complete:**
-- [ ] Did I actually run the tool/command?
-- [ ] Do I have output/results to prove it?
-- [ ] Can I provide the continuation_id or execution proof?
-- [ ] Would an audit find evidence this step was done?
-
-**Anti-Pattern Prevention:**
-- **DO NOT**: Mark review todos complete without running mcp__zen__codereview
-- **DO NOT**: Mark test todos complete without showing test results
-- **DO NOT**: Skip steps due to perceived time pressure
-- **DO NOT**: Batch-mark multiple todos complete without individual evidence
-- **DO NOT**: Proceed to next phase without completing ALL ITRC steps with evidence
-
-**Process Integrity Rule**: If you cannot provide evidence, the step is NOT complete.
-
-##### Phase Transition Enforcement
-
-**⚠️ PHASE TRANSITION BLOCKER**:
-Before starting ANY new phase work (even exploratory edits):
-1. **CHECK**: Are all current phase ITRC steps complete WITH evidence?
-   - ❌ If NO: STOP. Complete ITRC first.
-   - ✅ If YES: Proceed to next phase
-2. **EVIDENCE AUDIT**: Can you show:
-   - Test execution logs? (Must show PASSING tests)
-   - Code review continuation_id?
-   - Git commit hash AND successful push?
-
-**Phase Completion Requirement**:
-- **MANDATORY**: Commit AND PUSH at the end of EVERY phase after completing ITRC cycle
-- Each phase must be a complete, working unit that can be committed and pushed
-- Commit message MUST include ITRC evidence:
-  ```
-  feat: Phase X - [Description]
-  
-  - Implementation: [What was built]
-  - Tests: X/Y passing
-  - Review: continuation_id: [UUID]
-  - ITRC cycle complete: I✓ T✓ R✓ C✓
-  ```
 
 **Output**: Working, tested, reviewed code with evidence trail, updated plan document, and committed to git
 
@@ -495,34 +456,19 @@ When you have open questions during Align, categorize them:
 - Future enhancements
 - Optimization details
 
-### Staying on Track - Plan Adherence Rules
+### Plan Adherence Rules
 
-**CRITICAL**: Once a DAPPER plan is approved, Claude Code MUST:
+Once DAPPER plan approved:
+1. **FOLLOW PLAN EXACTLY** - No deviations
+2. **CHECK TODOS CONSTANTLY** - Track current phase
+3. **NO SCOPE CREEP** - New features need plan update
+4. **COMPLETE ALL ITRC** - With evidence before next phase
 
-1. **FOLLOW THE PLAN EXACTLY** - Do not deviate from the approved implementation plan
-2. **CHECK TODOS CONSTANTLY** - Use TodoWrite to track current phase and sub-tasks
-3. **NO SCOPE CREEP** - If user requests features not in plan, respond:
-   ```
-   "This feature isn't in our current plan. We should either:
-   1. Complete the current phase first, or
-   2. Update the plan document with this change and get approval"
-   ```
-4. **PHASE BOUNDARIES** - Complete ALL ITRC tasks for current phase before moving to next
-5. **DOCUMENT UPDATES** - Any plan changes MUST be reflected in the plan document
-
-**Plan Deviation Protocol**:
-- If deviation needed → Update plan document
-- Get human approval for changes
-- Update todos to reflect new plan
-- Only then proceed with implementation
-
-**Example Enforcement**:
+If user requests unplanned features:
 ```
-User: "While you're at it, can you also add voice input?"
-Claude: "Voice input is not in our current Phase 1 plan for the AI Assistant.
-Current phase focuses on: [lists current phase objectives]
-We should complete this phase first, then we can add voice input to Phase 4.
-Would you like to continue with the current plan or revise it?"
+"This isn't in our current plan. We should either:
+1. Complete current phase first, or
+2. Update the plan document and get approval"
 ```
 
 ### Common DAPPER Pitfalls to Avoid
@@ -545,89 +491,25 @@ Would you like to continue with the current plan or revise it?"
 
 This configuration applies to all DAPPER expert review requirements mentioned throughout this document.
 
-### ⚠️ CRITICAL DAPPER ENFORCEMENT RULES ⚠️
+### ⚠️ DAPPER Enforcement Rules
 
-**MANDATORY EARLY-STAGE COMPLIANCE** - Claude Code MUST NOT write ANY implementation code until:
+**MANDATORY**: Cannot write implementation code until proper DAPPER process followed.
 
-#### DESIGN PHASE REQUIREMENTS (STRICT)
-1. **COMPREHENSIVE DESIGN DOCUMENT** - MUST include ALL of:
-   - [ ] **Problem Statement & Requirements** section (MANDATORY FIRST)
-   - [ ] Multiple architecture options with pros/cons
-   - [ ] **Simplification Options section** with at least 3 concrete options (MANDATORY)
-   - [ ] Open questions categorized by tier (Critical/Important/Deferrable)
-   - [ ] Risk assessment matrix
-   - [ ] Alternative approaches considered
-   - [ ] Comparison table of different approaches
-   - [ ] Success metrics defined
-2. **NO PREMATURE SOLUTIONS** - Do NOT:
-   - Start coding "to explore"
-   - Create "quick prototypes" 
-   - Write "example implementations"
-   - Make architecture decisions (that's for Align phase)
-3. **EXPERT ANALYSIS REQUIRED** - Use mcp__zen__consensus or mcp__zen__thinkdeep for design validation
+#### Required Before Proceeding:
+- **Design Phase**: All sections complete, 3+ simplification OPTIONS, expert review done
+- **Align Phase**: ALL Tier 1 questions answered, simplifications marked, written approval
+- **Plan Phase**: ITRC structure defined, expert review complete
 
-**Design Phase Checklist** (ALL must be ✅ before proceeding):
-- [ ] Documented problem statement and requirements
-- [ ] Created comprehensive design document
-- [ ] Listed 3+ simplification options as OPTIONS (not decisions)
-- [ ] Categorized all open questions by tier
-- [ ] Obtained expert review from multiple models
-- [ ] Updated design with expert feedback
-- [ ] Document clearly states "Awaiting Decision" for all options
+#### Automatic Stop Conditions:
+- User asks to implement without design → "I need to create a DAPPER design first"
+- Questions unanswered → "I need your decisions on critical questions first" 
+- No expert review → "I need to get expert analysis of this design"
 
-#### ALIGN PHASE REQUIREMENTS (STRICT)
-1. **HUMAN MUST EXPLICITLY DECIDE** - Cannot proceed without:
-   - ALL Tier 1 questions answered with `[DECIDED: ...]`
-   - Simplifications marked `[ACCEPTED]` or `[REJECTED]`
-   - Architecture choice confirmed
-   - Written approval to proceed to Plan
-2. **NO ASSUMPTIONS** - If human says "looks good" or "proceed", CLARIFY:
-   ```
-   "Before I continue, I need explicit decisions on:
-   - Question 1: [state question] - Your decision?
-   - Question 2: [state question] - Your decision?
-   Please respond with your specific choices."
-   ```
-3. **DOCUMENT MUST BE UPDATED** - The design document MUST show all decisions
-
-#### AUTOMATIC STOP CONDITIONS
-**Claude Code MUST STOP and refuse to continue if:**
-- User asks to "implement" but no design exists → "I need to create a DAPPER design first"
-- User says "go ahead" but questions unanswered → "I need your decisions on these questions first"
-- User requests code but Align incomplete → "We haven't completed the Align phase yet"
-- Design exists but no expert review → "I need to get expert analysis of this design"
-
-#### ENFORCEMENT EXAMPLES
-
-**WRONG** (Common Deviation):
+If user says "looks good" without specifics, CLARIFY:
 ```
-User: "Build an AI assistant"
-Claude: "I'll create a basic implementation to get started..." [STARTS CODING]
-```
-
-**CORRECT**:
-```
-User: "Build an AI assistant"
-Claude: "I'll follow DAPPER methodology. First, I need to create a comprehensive design document.
-Let me start by exploring different architecture options...
-[CREATES DESIGN DOCUMENT WITH OPTIONS AND QUESTIONS]
-The design is ready for your review. Please make decisions on the critical questions before we proceed."
-```
-
-**WRONG** (Premature Progression):
-```
-User: "Looks good"
-Claude: "Great! I'll start implementing..." [PROCEEDS TO PLAN/PRODUCE]
-```
-
-**CORRECT**:
-```
-User: "Looks good"
-Claude: "Thank you! Before proceeding, I need your explicit decisions on:
-1. Should the AI have write access? (Options: read-only vs full CRUD)
-2. How should we handle conversation history? (Options: session-only vs persistent)
-3. What's the monthly Gemini API budget?
-Please provide your specific choices for each."
+"Before proceeding, I need explicit decisions on:
+- Question 1: [state question] - Your decision?
+- Question 2: [state question] - Your decision?"
 ```
 
 **Document Structure**:

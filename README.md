@@ -10,7 +10,25 @@ MAIX is deployed and available at **maix.io** - this is the official, canonical 
 
 ## Overview
 
-MAIX (Meaningful AI Exchange) serves as a bridge between skilled volunteers and impactful AI/technology projects. Our platform facilitates intelligent project matching, enabling people to collaborate on meaningful initiatives that create positive change in the world.
+MAIX (Meaningful AI Exchange) is an **AI-accelerated not-for-profit action and collaboration platform** built on Next.js 15. We connect skilled volunteers with meaningful AI/tech projects to advance communities through collaborative innovation.
+
+### Core Focus Areas
+- **ACTION** 🎯 - Getting things done efficiently with AI assistance
+- **COMMUNITY** 👥 - Doing it together, AI-facilitated collaboration  
+- **AI ASSISTANCE** ⚡ - Every workflow enhanced by intelligent automation
+
+### AI-Native Platform Philosophy
+
+**MAIX is fundamentally AI-native** - unlike platforms that retrofit AI features onto existing paradigms, we're built from the ground up with AI as the primary interface and collaboration mechanism.
+
+**What Makes Us AI-Native:**
+- AI-first navigation and discovery (not traditional menus + AI addon)
+- Intelligent project/task matching based on skills and context
+- AI-assisted onboarding, contribution guidance, and code reviews
+- Natural language interfaces for complex platform interactions
+- Proactive suggestions and contextual assistance throughout workflows
+
+**Competitive Differentiation:** While GitHub, Linear, and other platforms add AI features to existing UX patterns, MAIX is designed as an AI-native experience where artificial intelligence is the primary way users interact with projects, discover opportunities, and collaborate with others.
 
 ## Goals
 
@@ -48,32 +66,34 @@ MAIX is built around three core principles:
 ## Technology Stack
 
 ### Core Technologies
-- **Frontend**: Next.js 14 with TypeScript and Tailwind CSS
-- **Database**: Neon (Serverless PostgreSQL with pgvector)
+- **Framework**: Next.js 15 with App Router
+- **Database**: Neon PostgreSQL with pgvector extension
 - **Authentication**: NextAuth.js with Google OAuth
+- **AI**: Google Gemini via `@google/genai` package
+- **UI Components**: shadcn/ui (Radix UI + Tailwind)
 - **Deployment**: Vercel for seamless scaling
-- **AI/ML**: Claude Sonnet 4 API for embeddings and semantic search
 
 ### Key Libraries
-- **UI Components**: shadcn/ui (Radix UI + Tailwind) for accessibility
 - **Animations**: Framer Motion for smooth interactions
 - **Forms**: React Hook Form with Zod validation
 - **Real-time**: Pusher/Ably for WebSocket connections
 - **Icons**: Lucide React for consistency
+- **TypeScript**: Full type safety throughout
 
 ## Getting Started
 
 ### Prerequisites
 - Node.js 18+ and npm
+- Docker (for test database)
 - Neon database account
 - Google Cloud Console project (for OAuth)
-- Anthropic API key for Claude
+- Google Gemini API key
 
 ### Installation
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-username/maix.git
+   git clone https://github.com/ansari-project/maix.git
    cd maix
    ```
 
@@ -100,29 +120,175 @@ MAIX is built around three core principles:
    GOOGLE_CLIENT_ID="your-google-client-id"
    GOOGLE_CLIENT_SECRET="your-google-client-secret"
    
-   # Claude API
-   ANTHROPIC_API_KEY="your-anthropic-api-key"
+   # Google Gemini API
+   GOOGLE_GENAI_API_KEY="your-gemini-api-key"
    ```
 
-4. **Set up shadcn/ui**
+4. **Set up the database**
    ```bash
-   npx shadcn@latest init
-   npx shadcn@latest add button card form dialog input label select textarea
+   npm run db:migrate:apply  # Apply migrations safely
+   npm run db:seed          # Optional: seed with sample data
    ```
 
-5. **Set up the database**
-   ```bash
-   npx prisma db push
-   npx prisma db seed
-   ```
-
-6. **Start the development server**
+5. **Start the development server**
    ```bash
    npm run dev
    ```
 
-7. **Open your browser**
+6. **Open your browser**
    Navigate to `http://localhost:3000`
+
+## Project Structure
+
+```
+maix/
+├── src/
+│   ├── app/              # Next.js App Router
+│   ├── components/       # UI components (shadcn/ui based)
+│   ├── lib/              # Utilities and configs
+│   ├── hooks/            # Custom React hooks
+│   └── types/            # TypeScript definitions
+├── prisma/               # Database schema
+├── tests/                # Test files
+├── scripts/              # Build and utility scripts
+│   └── tmp/             # Temporary/one-off scripts
+└── dev_docs/             # Development documentation (NOT user-facing)
+    ├── ref/              # Reference material (APIs, schemas, etc.)
+    ├── designs/          # Feature designs (DAPPER Design phase)
+    ├── plans/            # Implementation plans (DAPPER Plan phase)
+    └── lessons/          # Lessons learned from features
+```
+
+## Development Methodology: DAPPER
+
+MAIX follows the **DAPPER** methodology for structured development:
+
+### DAPPER Overview
+```
+D - Design    : AI explores and proposes multiple approaches
+A - Align     : Human decides and aligns on direction
+P - Plan      : Break into executable phases with ITRC structure
+P - Produce   : Build, test, review, commit & push
+E - Evaluate  : Comprehensive review of all work
+R - Revise    : Update docs and capture lessons learned
+```
+
+### When to Use DAPPER
+**Use for:** New features, complex refactoring, architecture changes, significant complexity  
+**Skip for:** Simple bug fixes, text changes, configuration updates, straightforward dependencies
+
+### ITRC Development Cycle
+Each development phase follows the **ITRC** structure:
+- **I (Implement)**: Build the functionality
+- **T (Test)**: Write and run tests immediately
+- **R (Review)**: Code review for quality
+- **C (Commit & Push)**: Version control with clear messages
+
+For detailed DAPPER documentation, see `CLAUDE.md` (for AI agents) or `dev_docs/ref/dapper-methodology.md` (for humans).
+
+## Testing Strategy
+
+### Testing Philosophy
+**FUNDAMENTAL PRINCIPLE**: A small number of well-thought-out tests is better than a large number of poor tests. Focus on testing behavior, not implementation details.
+
+### Testing Priorities
+1. **Integration Tests (60%)** - Real database, real constraints
+2. **Unit Tests (30%)** - Only for pure business logic  
+3. **E2E Tests (10%)** - Critical user paths
+
+### Test Database Setup (Docker)
+```bash
+# Start test database (port 5433)
+npm run test:db:start
+
+# Run tests
+npm run test:integration  # Integration tests with real DB
+npm run test:unit        # Unit tests only
+npm run test:all         # Both suites
+
+# Stop test database
+npm run test:db:stop
+```
+
+**Test Database Configuration:**
+- Runs on port 5433 (production uses 5432)
+- Database: `maix_test`, User: `testuser`, Password: `testpass`
+- Real database operations, not mocks
+- Database cleaned between tests
+
+### Available Test Commands
+- `npm test` - All tests (unit + integration if DB running)
+- `npm run test:unit` - Unit tests only
+- `npm run test:integration` - Integration tests with real database
+- `npm run test:watch` - Watch mode for development
+- `npm run test:db:start` - Start Docker test database
+- `npm run test:db:stop` - Stop Docker test database
+
+## Development Guidelines
+
+### Development Principles
+
+#### Simplicity and Pragmatism
+- **Bias towards simple solutions**: Address current problems, not hypothetical future ones
+- **Avoid premature optimization**: Don't implement complex patterns for problems that don't exist
+- **Use straightforward Prisma queries**: Direct queries rather than complex abstraction layers
+- **Focus on current scale**: Design for today's usage patterns
+- **Iterative complexity**: Add complexity only when simple solutions prove insufficient
+
+#### Security Model
+**Context**: Community platform for volunteer matching
+- **What we are**: A community platform, non-profit focused
+- **What we're NOT**: Financial service, healthcare system, or PII-heavy
+- **Security Approach**: 
+  - Focus on basics (input validation with Zod)
+  - Skip security theater (no complex CSRF, rate limiting)
+  - Pragmatic protection (Prisma prevents SQL injection, React prevents XSS)
+  - Basic session management with NextAuth
+
+### Database Management
+
+#### Safe Migration Workflow (AI-Compatible)
+```bash
+# Step 1: Create migration (non-interactive)
+npm run db:migrate:new descriptive_name
+
+# Step 2: Review generated SQL
+cat prisma/migrations/*/migration.sql
+
+# Step 3: Apply when ready
+npm run db:migrate:apply
+```
+
+**NEVER use:**
+- `npx prisma db push` - Destructive, drops/recreates tables
+- `npx prisma migrate dev` - Interactive, breaks AI agents
+
+**Safe Commands:**
+- `db:migrate:new` - Create migration via migrate diff
+- `db:migrate:apply` - Apply migrations via deploy
+- `db:migrate:status` - Check migration status
+- `db:backup` - Backup database
+- `db:health` - Health check
+- `db:studio` - Prisma Studio (read-only recommended)
+
+### Code Quality
+
+**Quick health check:**
+```bash
+npm audit --audit-level=moderate  # Fix Critical/High only
+grep -r "console\." src/ | wc -l  # Should trend down
+npm outdated                       # Update only if needed
+npm run lint                       # ESLint checks
+npm run type-check                # TypeScript validation
+npm run build                     # Build validation
+```
+
+### Git Best Practices
+- Use descriptive commit messages explaining purpose
+- Use `git add [specific-files]` - never `git add .` or `git add -A`
+- Always check remote before pushing: `git fetch origin && git status`
+- Never force push to shared branches
+- If push fails, stop and investigate
 
 ## Claude Code Integration
 
@@ -144,95 +310,21 @@ MAIX provides a remote MCP (Model Context Protocol) server that allows you to ma
 
 For detailed setup instructions, see [docs/howtos/claude-code-setup.md](docs/howtos/claude-code-setup.md).
 
-### Database Setup
+## Debugging Guide
 
-MAIX uses Neon as the PostgreSQL database with pgvector extension for semantic search capabilities.
-
-1. **Create a Neon account** at [neon.tech](https://neon.tech)
-2. **Create a new project** with PostgreSQL
-3. **Enable pgvector extension** in your database
-4. **Copy the connection string** to your `.env.local` file
-
-### Google OAuth Setup
-
-1. **Go to** [Google Cloud Console](https://console.cloud.google.com)
-2. **Create a new project** or select existing one
-3. **Enable Google OAuth2 API**
-4. **Create OAuth 2.0 credentials** (Web application)
-5. **Add authorized redirect URIs**: `http://localhost:3000/api/auth/callback/google`
-6. **Copy Client ID and Secret** to your `.env.local` file
-
-### Authentication System
-
-MAIX uses a dual-key authentication system:
-
-- **Email**: Primary login credential (users sign in with email + password)
-- **Username**: Unique handle for public identification and display (e.g., @johndoe)
-- **ID**: Internal primary key (CUID) for database relationships
-
-Both email and username are unique across the platform. Users create a username during signup, which is displayed in the sidebar and used for profile identification.
-
-## Development
-
-### Available Scripts
-
+### Quick CI/CD Debugging with GitHub CLI
 ```bash
-# Development
-npm run dev          # Start development server
-npm run build        # Build production bundle
-npm run start        # Start production server
-
-# Code Quality
-npm run lint         # Run ESLint
-npm run type-check   # Run TypeScript checks
-
-# Testing
-npm run test         # Run unit tests (240 comprehensive tests)
-npm run test:watch   # Run tests in watch mode
-npm run test:e2e     # Run end-to-end tests
-
-# Database
-npm run db:push      # Push schema changes
-npm run db:studio    # Open Prisma Studio
-npm run db:seed      # Seed database with sample data
+gh run list --limit 5              # Check recent runs
+gh run view <RUN_ID>               # View run details
+gh run view --log-failed --job=<ID> # Get error logs
 ```
 
-### Project Structure
+**Pro Tips:**
+- Don't use `sleep` commands - work asynchronously
+- Use `--log-failed` for relevant error information
+- Check status periodically while working on other tasks
 
-```
-maix/
-├── src/
-│   ├── app/              # Next.js 14 app router
-│   │   ├── api/          # API routes
-│   │   ├── auth/         # Authentication pages
-│   │   ├── dashboard/    # User dashboard
-│   │   ├── projects/     # Project pages
-│   │   └── search/       # Search functionality
-│   ├── components/       # Reusable UI components
-│   │   ├── ui/           # Basic UI components
-│   │   ├── forms/        # Form components
-│   │   └── layout/       # Layout components
-│   ├── lib/              # Utilities and configurations
-│   │   ├── auth.ts       # NextAuth configuration
-│   │   ├── db.ts         # Database connection
-│   │   └── claude.ts     # Claude API client setup
-│   ├── hooks/            # Custom React hooks
-│   ├── types/            # TypeScript type definitions
-│   └── styles/           # Global styles and themes
-├── prisma/               # Database schema and seeds
-├── public/               # Static assets
-├── tests/                # Test files
-└── docs/                 # Documentation
-    ├── plans/            # Execution plans and roadmaps
-    ├── guides/           # Extracted wisdom on how to use tools and features
-    ├── howtos/           # Step-by-step instructions for users
-    ├── faqs/             # Frequently asked questions
-    ├── ideas/            # Feature ideas and proposals
-    │   ├── done/         # Completed features
-    │   ├── inprogress-*  # Currently being worked on
-    │   └── todo-*        # Future features to implement
-    └── ref/              # Reference material and API documentation
-```
+For comprehensive debugging strategies, see `dev_docs/ref/debugging-playbook.md`.
 
 ## Core Features
 
@@ -247,16 +339,10 @@ maix/
 - **MVP**: Minimum viable product development
 - **Complete Product**: Full product development projects
 
-### Specialties
-- **AI**: Artificial Intelligence and Machine Learning
-- **Full Stack**: Web and mobile development
-- **Program Manager**: Project coordination and management
-
-### Experience Levels
-- **Hobbyist**: Personal projects and learning
-- **Intern**: Currently in internship or entry-level position
-- **New Grad**: Recent graduate with 0-2 years experience
-- **Senior**: 3+ years of professional experience
+### Project Lifecycle
+Projects use a dual status system:
+- **`status`**: Tracks lifecycle (AWAITING_VOLUNTEERS → PLANNING → IN_PROGRESS → COMPLETED)
+- **`isActive`**: Controls volunteer recruitment (can be true even when IN_PROGRESS)
 
 ## Contributing
 
@@ -264,9 +350,9 @@ We welcome contributions from the global tech community! Here's how you can help
 
 ### Code Contributions
 1. **Fork the repository** and create a feature branch
-2. **Make your changes** following our coding standards
-3. **Write tests** for new functionality
-4. **Submit a pull request** with a clear description
+2. **Follow DAPPER methodology** for significant features
+3. **Write tests** following our integration-first strategy
+4. **Submit a pull request** with clear description
 
 ### Community Contributions
 - **Report bugs** and suggest improvements
@@ -274,70 +360,32 @@ We welcome contributions from the global tech community! Here's how you can help
 - **Suggest new features** that benefit the community
 - **Help with documentation** and translations
 
-### Development Guidelines
-- Focus on creating positive social impact through technology
-- Maintain code quality with TypeScript and ESLint
-- Write comprehensive tests for new features
-- Follow our commit message conventions
-- Ensure accessibility and inclusive design principles
+### Development Standards
+- **TypeScript**: Full type safety with dual config strategy
+- **Testing**: Integration-first with real database
+- **Accessibility**: WCAG 2.1 AA compliance
+- **UI/UX**: Clean design, semantic HTML, Markdown support
 
-## Deployment
+## Community Values
 
-### Vercel Deployment (Recommended)
-1. **Connect your repository** to Vercel
-2. **Configure environment variables** in Vercel dashboard
-3. **Deploy automatically** on push to main branch
+MAIX is built on these core values:
+- **Community benefit over profit**: Non-profit focus
+- **Knowledge sharing**: Open learning and skill development
+- **Transparency**: Open processes and clear communication
+- **Collaboration**: Welcome contributors from all backgrounds
+- **Ethical AI**: Ensuring AI serves humanity responsibly
+- **Inclusive**: Accessible to those who need it most
 
-### Manual Deployment
-```bash
-npm run build
-npm run start
-```
+## Documentation
 
-## Community
-
-### Getting Help
-- **Documentation**: Check our documentation in the `docs/` directory
-  - **Plans**: Execution plans and roadmaps in `docs/plans/`
-  - **Guides**: Feature usage guides in `docs/guides/`
-  - **How-tos**: Step-by-step instructions in `docs/howtos/`
-  - **FAQs**: Common questions in `docs/faqs/`
-  - **Ideas**: Ideas still in incubation in `docs/ideas/`
-  - **Reference**: API and technical reference in `docs/ref/`
-- **Issues**: Report bugs and feature requests on GitHub
-- **Discussions**: Join community discussions in GitHub Discussions
-
-### Community Values
-MAIX is built with positive social impact in mind:
-- **Meaningful Projects**: All projects should create positive value for communities
-- **Community First**: Prioritizing social benefit over profit
-- **Knowledge Sharing**: Promoting open learning and skill development
-- **Ethical AI**: Ensuring AI development serves humanity responsibly
-- **Inclusive Collaboration**: Welcome contributors from all backgrounds and experience levels
-- **Transparency**: Open processes and clear communication in all interactions
-
-## Roadmap
-
-### Phase 1: Foundation (Weeks 1-4)
-- ✅ Project setup and basic authentication
-- ✅ Database schema and initial UI components
-- ✅ User registration and profile management
-- ✅ Username system with unique handles and display
-
-### Phase 2: Core Features (Weeks 5-8)
-- 🔄 Project creation and management
-- 🔄 Basic matching and application system
-- 🔄 Search functionality
-
-### Phase 3: Advanced Features (Weeks 9-12)
-- ⏳ AI-powered semantic search
-- ⏳ Real-time messaging system
-- ⏳ Review and rating system
-
-### Phase 4: Community Features (Weeks 13-16)
-- ⏳ Community forums and discussions
-- ⏳ Mobile optimization
-- ⏳ Analytics and reporting
+### Key Documentation
+- **README.md** - This file, setup and overview
+- **CLAUDE.md** - AI agent instructions and enforcement rules
+- **dev_docs/ref/** - Technical reference documentation
+- **dev_docs/designs/** - Feature designs (DAPPER methodology)
+- **dev_docs/plans/** - Implementation plans
+- **dev_docs/lessons/** - Lessons learned from features
+- **lessons-learned.md** - Cumulative project insights
 
 ## License
 
