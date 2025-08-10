@@ -13,6 +13,9 @@ jest.mock('@/contexts/LayoutContext', () => ({
   useLayout: jest.fn()
 }))
 
+// Mock fetch for AI API calls
+global.fetch = jest.fn()
+
 describe('AI Assistant Component', () => {
   const mockToggleAI = jest.fn()
   
@@ -22,6 +25,30 @@ describe('AI Assistant Component', () => {
       isAIExpanded: false,
       toggleAI: mockToggleAI,
       currentPath: '/'
+    })
+
+    // Mock AI API response - simulate streaming without ReadableStream
+    const mockResponse = 'AI response from real backend'
+    const mockReader = {
+      read: jest.fn()
+        .mockResolvedValueOnce({
+          done: false,
+          value: new TextEncoder().encode(mockResponse)
+        })
+        .mockResolvedValueOnce({
+          done: true,
+          value: undefined
+        })
+    }
+
+    ;(global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      headers: {
+        get: (key: string) => key === 'X-Conversation-ID' ? 'test-conversation-id' : null
+      },
+      body: {
+        getReader: () => mockReader
+      }
     })
   })
 
@@ -128,13 +155,43 @@ describe('AI Assistant Component', () => {
       // Check user message appears
       expect(screen.getByText('Show my priorities')).toBeInTheDocument()
       
-      // Wait for AI response (mocked with setTimeout)
+      // Wait for AI response from mocked API
       await waitFor(() => {
-        expect(screen.getByText(/I understand you're asking about/)).toBeInTheDocument()
+        expect(screen.getByText('AI response from real backend')).toBeInTheDocument()
       }, { timeout: 1500 })
     })
 
     it('disables input while loading', async () => {
+      // Create a delayed mock to capture the loading state
+      let resolveFirstRead: any
+      let resolveSecondRead: any
+      let readCallCount = 0
+
+      const mockReader = {
+        read: jest.fn().mockImplementation(() => {
+          readCallCount++
+          if (readCallCount === 1) {
+            return new Promise(resolve => {
+              resolveFirstRead = resolve
+            })
+          } else {
+            return new Promise(resolve => {
+              resolveSecondRead = resolve
+            })
+          }
+        })
+      }
+
+      ;(global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        headers: {
+          get: (key: string) => key === 'X-Conversation-ID' ? 'test-conversation-id' : null
+        },
+        body: {
+          getReader: () => mockReader
+        }
+      })
+
       const user = userEvent.setup()
       render(<AIAssistant />)
       
@@ -147,7 +204,21 @@ describe('AI Assistant Component', () => {
       // Input should be disabled while loading
       expect(input).toBeDisabled()
       
-      // Wait for response
+      // Resolve the first read (with data)
+      resolveFirstRead({
+        done: false,
+        value: new TextEncoder().encode('Test response')
+      })
+      
+      // Resolve the second read (done)
+      setTimeout(() => {
+        resolveSecondRead({
+          done: true,
+          value: undefined
+        })
+      }, 10)
+      
+      // Wait for response and check input is enabled again
       await waitFor(() => {
         expect(input).not.toBeDisabled()
       }, { timeout: 1500 })
@@ -167,7 +238,7 @@ describe('AI Assistant Component', () => {
       expect(input.value).toBe('')
     })
 
-    it('provides contextual responses based on page and query', async () => {
+    it('calls AI API and displays response', async () => {
       // Mock projects page
       ;(useLayout as jest.Mock).mockReturnValue({
         isAIExpanded: true,
@@ -182,8 +253,20 @@ describe('AI Assistant Component', () => {
       await user.type(input, 'create new project')
       await user.click(screen.getByRole('button', { name: '' }))
       
+      // Verify API was called with correct data
       await waitFor(() => {
-        expect(screen.getByText(/help you create a new project/)).toBeInTheDocument()
+        expect(global.fetch).toHaveBeenCalledWith('/api/ai/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: expect.stringContaining('create new project')
+        })
+      })
+      
+      // Verify the mocked response appears
+      await waitFor(() => {
+        expect(screen.getByText('AI response from real backend')).toBeInTheDocument()
       }, { timeout: 1500 })
     })
   })

@@ -50,7 +50,11 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    return stream.toTextStreamResponse()
+    // Add conversation ID to response headers
+    const response = stream.toTextStreamResponse()
+    response.headers.set('X-Conversation-ID', conversation.id)
+    
+    return response
 
   } catch (error) {
     console.error('AI Chat API Error:', error)

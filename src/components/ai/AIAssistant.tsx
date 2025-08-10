@@ -23,6 +23,7 @@ export function AIAssistant() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [conversationId, setConversationId] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -69,17 +70,76 @@ export function AIAssistant() {
     setInput('')
     setIsLoading(true)
 
-    // Simulate AI response (replace with actual API call)
-    setTimeout(() => {
+    try {
+      // Call the real AI API
+      const response = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [...messages, userMessage].map(msg => ({
+            role: msg.role,
+            content: msg.content
+          })),
+          conversationId: conversationId,
+          // Include context about current page  
+          context: {
+            currentPath: currentPath || '/'
+          }
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to get AI response')
+      }
+
+      // Extract conversation ID from headers for future requests
+      const newConversationId = response.headers.get('X-Conversation-ID')
+      if (newConversationId && !conversationId) {
+        setConversationId(newConversationId)
+      }
+
+      // Handle streaming response
+      const reader = response.body?.getReader()
+      const decoder = new TextDecoder()
+      let assistantContent = ''
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          
+          const chunk = decoder.decode(value)
+          assistantContent += chunk
+          
+          // Update the message progressively (optional - for streaming effect)
+          // For now, we'll just accumulate and show at the end
+        }
+      }
+
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: getContextualResponse(input, currentPath || ''),
+        content: assistantContent || 'I apologize, but I couldn\'t generate a response. Please try again.',
         timestamp: new Date()
       }
+      
       setMessages(prev => [...prev, aiMessage])
+    } catch (error) {
+      console.error('Error getting AI response:', error)
+      
+      // Fallback message on error
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: 'I apologize, but I encountered an error. Please try again later.',
+        timestamp: new Date()
+      }
+      setMessages(prev => [...prev, errorMessage])
+    } finally {
       setIsLoading(false)
-    }, 1000)
+    }
   }
 
   // Context-aware placeholder based on current page
@@ -99,31 +159,6 @@ export function AIAssistant() {
     return 'Ask me anything or describe what you need...'
   }
 
-  // Mock contextual responses based on page
-  const getContextualResponse = (query: string, path: string): string => {
-    const lowerQuery = query.toLowerCase()
-    
-    if (path && path.includes('projects')) {
-      if (lowerQuery.includes('create') || lowerQuery.includes('new')) {
-        return "I can help you create a new project. What type of project are you planning? I can guide you through setting up the details."
-      }
-      if (lowerQuery.includes('find') || lowerQuery.includes('search')) {
-        return "I'll help you find relevant projects. You can search by skills, technology stack, or impact area. What are you looking for?"
-      }
-    }
-    
-    if (path && path.includes('todos')) {
-      if (lowerQuery.includes('priority') || lowerQuery.includes('urgent')) {
-        return "Here are your highest priority tasks:\n1. Review PR feedback (Due today)\n2. Update documentation (Due tomorrow)\n3. Team meeting prep (Due this week)"
-      }
-      if (lowerQuery.includes('add') || lowerQuery.includes('create')) {
-        return "I'll help you add a new task. What would you like to add to your todo list?"
-      }
-    }
-    
-    // Default response
-    return "I understand you're asking about: " + query + ". I'm here to help with projects, tasks, and navigation. What specific information do you need?"
-  }
 
   return (
     <div
