@@ -41,7 +41,17 @@ if [ ! -z "$SCHEMA_CHANGED" ] && [ -z "$MIGRATIONS_CHANGED" ]; then
   # Don't fail - this might be intentional (like comments/formatting)
 fi
 
-# Step 5: Build check
+# Step 5: Check if we have code changes that require build/test checks
+STAGED_FILES=$(git diff --cached --name-only)
+CODE_FILES=$(echo "$STAGED_FILES" | grep -E "\.(ts|tsx|js|jsx|json|prisma)$" | grep -v -E "\.md$|^docs/|^README|package-lock\.json$" || true)
+
+if [ -z "$CODE_FILES" ]; then
+  echo "📝 Only documentation/config files changed - skipping build and test checks"
+  echo "✅ All pre-commit checks passed!"
+  exit 0
+fi
+
+# Step 6: Build check (only if code files changed)
 echo "📦 Running build check..."
 npm run build
 if [ $? -ne 0 ]; then
@@ -49,7 +59,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-# Step 6: Unit tests (excluding integration tests and e2e tests)
+# Step 7: Unit tests (only if code files changed)
 echo "🧪 Running unit tests..."
 npm run test:unit -- --silent
 if [ $? -ne 0 ]; then
