@@ -13,6 +13,7 @@ export class McpClientService {
     // In production, use the deployed URL; in development use localhost
     // NEXT_PUBLIC_URL should be set to https://maix.io in production
     this.baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'
+    console.log('MCP Client: Using base URL:', this.baseUrl)
   }
 
   /**
