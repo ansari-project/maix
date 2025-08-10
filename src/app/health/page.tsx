@@ -146,7 +146,14 @@ export default async function HealthPage() {
           <h2 className="text-lg font-semibold mb-3">🔍 MCP Client Configuration</h2>
           <div className="space-y-1 font-mono text-sm">
             <div>Expected MCP URL: {process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/api/mcp</div>
-            <div>PAT Available: {process.env.MAIX_PAT ? '✅ Yes' : '❌ No'}</div>
+            <div>Static PAT (env var): {process.env.MAIX_PAT ? '✅ Yes' : '❌ No'}</div>
+            <div>Dynamic PAT (AI Assistant): {
+              isLoggedIn 
+                ? userPats.some(pat => pat.name === 'AI Assistant (Auto-generated)') 
+                  ? '✅ Yes' 
+                  : '❌ No'
+                : '⚠️ Not logged in'
+            }</div>
             <div>Google AI Key: {process.env.GOOGLE_GENERATIVE_AI_API_KEY ? '✅ Yes' : '❌ No'}</div>
           </div>
         </section>
