@@ -738,6 +738,15 @@ it('should have correct CSS class', () => {
 
 **Schema Inspection**: When debugging database-related issues, read the Prisma schema file directly (`prisma/schema.prisma`) instead of starting Prisma Studio. This is faster and provides the exact field definitions and relationships.
 
+**React Component Tests**: Always add `@jest-environment jsdom` directive at the top of React component test files that use DOM APIs:
+```javascript
+/**
+ * @jest-environment jsdom
+ */
+import React from 'react'
+import { render, screen } from '@testing-library/react'
+```
+
 **Mock Carefully in Tests**: When mocking auth modules, only mock the specific functions you need (e.g., `requireAuth`), not the entire module. This prevents breaking other functions that your code depends on:
 
 ```javascript
