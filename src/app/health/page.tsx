@@ -1,6 +1,22 @@
 import { headers } from 'next/headers'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { listPersonalAccessTokens } from '@/lib/mcp/services/pat.service'
 
 export default async function HealthPage() {
+  // Get authentication status
+  const session = await getServerSession(authOptions)
+  const isLoggedIn = !!session?.user
+  
+  // Get user's PATs if logged in
+  let userPats: any[] = []
+  if (session?.user?.id) {
+    try {
+      userPats = await listPersonalAccessTokens(session.user.id)
+    } catch (error) {
+      console.error('Failed to fetch PATs:', error)
+    }
+  }
   // Get environment variables (server-side only)
   const envVars = {
     // Public environment variables
@@ -44,6 +60,68 @@ export default async function HealthPage() {
       <h1 className="text-2xl font-bold mb-6">Health Check & Environment</h1>
       
       <div className="space-y-6">
+        <section className="bg-muted/50 rounded-lg p-4">
+          <h2 className="text-lg font-semibold mb-3">👤 Authentication Status</h2>
+          <div className="space-y-2 font-mono text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Logged In:</span>
+              <span className={isLoggedIn ? 'text-green-500' : 'text-red-500'}>
+                {isLoggedIn ? '✅ Yes' : '❌ No'}
+              </span>
+            </div>
+            {isLoggedIn && session?.user && (
+              <>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Email:</span>
+                  <span>{session.user.email || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">User ID:</span>
+                  <span className="text-xs">{session.user.id}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Name:</span>
+                  <span>{session.user.name || 'N/A'}</span>
+                </div>
+              </>
+            )}
+          </div>
+          
+          {isLoggedIn && userPats.length > 0 && (
+            <div className="mt-4">
+              <h3 className="text-sm font-semibold mb-2">Personal Access Tokens ({userPats.length})</h3>
+              <div className="space-y-2">
+                {userPats.map((pat) => (
+                  <div key={pat.id} className="bg-background/50 rounded p-2 text-xs">
+                    <div className="flex justify-between">
+                      <span className="font-medium">{pat.name}</span>
+                      <span className="text-muted-foreground">
+                        {pat.lastUsedAt 
+                          ? `Last used: ${new Date(pat.lastUsedAt).toLocaleDateString()}`
+                          : 'Never used'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between mt-1 text-muted-foreground">
+                      <span>Created: {new Date(pat.createdAt).toLocaleDateString()}</span>
+                      {pat.expiresAt && (
+                        <span className={new Date(pat.expiresAt) < new Date() ? 'text-red-500' : ''}>
+                          Expires: {new Date(pat.expiresAt).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {isLoggedIn && userPats.length === 0 && (
+            <div className="mt-4 text-sm text-muted-foreground">
+              No Personal Access Tokens found
+            </div>
+          )}
+        </section>
+
         <section className="bg-muted/50 rounded-lg p-4">
           <h2 className="text-lg font-semibold mb-3">🌐 URLs & Routing</h2>
           <div className="space-y-1 font-mono text-sm">
