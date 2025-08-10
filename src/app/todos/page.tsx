@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { TodoListPaneWithDnD } from "./components/TodoListPaneWithDnD"
-import { TodoDetailsPanel } from "./components/TodoDetailsPanel"
+import { TodoDetailsPanelEnhanced } from "./components/TodoDetailsPanelEnhanced"
+import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts"
 import { Todo, parseTodo, serializeTodo } from "./types"
 
 export default function TodosPage() {
@@ -12,8 +13,11 @@ export default function TodosPage() {
   const router = useRouter()
   const [todos, setTodos] = useState<Todo[]>([])
   const [selectedTodo, setSelectedTodo] = useState<Todo | null>(null)
+  const [selectedIndex, setSelectedIndex] = useState<number>(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showDetailsPanel, setShowDetailsPanel] = useState(true)
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -110,6 +114,100 @@ export default function TodosPage() {
     }
   }
 
+  const handleTodoDelete = async (todoId: string) => {
+    try {
+      const response = await fetch(`/api/user/todos/${todoId}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        setTodos(prev => prev.filter(t => t.id !== todoId))
+        if (selectedTodo?.id === todoId) {
+          setSelectedTodo(null)
+        }
+        setError(null)
+      } else {
+        setError("Failed to delete todo. Please try again.")
+        console.error("Failed to delete todo:", response.statusText)
+      }
+    } catch (error) {
+      setError("Failed to delete todo. Please check your connection.")
+      console.error("Error deleting todo:", error)
+    }
+  }
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    onSearch: () => {
+      // Focus search input in TodoListPaneWithDnD
+      const searchInput = document.querySelector('input[placeholder*="Search"]') as HTMLInputElement
+      searchInput?.focus()
+    },
+    onNewTodo: async () => {
+      // Create a new todo
+      const newTodo = {
+        title: "New Todo",
+        description: "",
+        status: "NOT_STARTED",
+      }
+      
+      try {
+        const response = await fetch("/api/user/todos", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(newTodo),
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          const parsedTodo = parseTodo(data)
+          setTodos(prev => [parsedTodo, ...prev])
+          setSelectedTodo(parsedTodo)
+        }
+      } catch (error) {
+        console.error("Error creating todo:", error)
+      }
+    },
+    onToggleDetails: () => {
+      setShowDetailsPanel(prev => !prev)
+    },
+    onNavigateUp: () => {
+      if (todos.length === 0) return
+      const newIndex = Math.max(0, selectedIndex - 1)
+      setSelectedIndex(newIndex)
+      setSelectedTodo(todos[newIndex])
+    },
+    onNavigateDown: () => {
+      if (todos.length === 0) return
+      const newIndex = Math.min(todos.length - 1, selectedIndex + 1)
+      setSelectedIndex(newIndex)
+      setSelectedTodo(todos[newIndex])
+    },
+    onDelete: () => {
+      if (selectedTodo) {
+        handleTodoDelete(selectedTodo.id)
+      }
+    },
+    onToggleComplete: () => {
+      if (selectedTodo) {
+        const newStatus = selectedTodo.status === "COMPLETED" ? "NOT_STARTED" : "COMPLETED"
+        handleTodoUpdate({ ...selectedTodo, status: newStatus })
+      }
+    }
+  })
+
+  // Sync selected index when todo is selected
+  useEffect(() => {
+    if (selectedTodo) {
+      const index = todos.findIndex(t => t.id === selectedTodo.id)
+      if (index !== -1) {
+        setSelectedIndex(index)
+      }
+    }
+  }, [selectedTodo, todos])
+
   if (status === "loading" || loading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -138,25 +236,28 @@ export default function TodosPage() {
       )}
       
       {/* Main Grid */}
-      <div className="flex-1 grid grid-cols-2 gap-0">
+      <div className={`flex-1 grid ${showDetailsPanel ? 'grid-cols-2' : 'grid-cols-1'} gap-0 transition-all duration-300`}>
         {/* Left Pane - Todo List */}
-        <div className="border-r border-border overflow-hidden">
-        <TodoListPaneWithDnD 
-          todos={todos}
-          selectedTodo={selectedTodo}
-          onTodoSelect={handleTodoSelect}
-          onTodoUpdate={handleTodoUpdate}
-        />
-      </div>
-
-        {/* Right Pane - Todo Details */}
-        <div className="overflow-hidden">
-          <TodoDetailsPanel
-            todo={selectedTodo}
-            onUpdate={handleTodoUpdate}
-            onCommentAdd={handleCommentAdd}
+        <div className={`${showDetailsPanel ? 'border-r border-border' : ''} overflow-hidden`}>
+          <TodoListPaneWithDnD 
+            todos={todos}
+            selectedTodo={selectedTodo}
+            onTodoSelect={handleTodoSelect}
+            onTodoUpdate={handleTodoUpdate}
           />
         </div>
+
+        {/* Right Pane - Todo Details (conditionally rendered) */}
+        {showDetailsPanel && (
+          <div className="overflow-hidden">
+            <TodoDetailsPanelEnhanced
+              todo={selectedTodo}
+              onUpdate={handleTodoUpdate}
+              onCommentAdd={handleCommentAdd}
+              onDelete={handleTodoDelete}
+            />
+          </div>
+        )}
       </div>
     </div>
   )
