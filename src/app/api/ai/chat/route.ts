@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { aiConversationService } from '@/lib/services/ai-conversation.service'
+import { mcpClientService } from '@/lib/services/mcp-client.service'
+import { streamText } from 'ai'
+import { google } from '@ai-sdk/google'
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,17 +27,30 @@ export async function POST(request: NextRequest) {
       session.user.id
     )
 
-    // TODO Phase 2: Add dynamic MCP tool discovery
-    // TODO Phase 3: Add streaming implementation with Vercel AI SDK
-    // TODO Phase 4: Add simple context management
-    // TODO Phase 5: Add error handling
+    // 4. Get dynamic MCP tools
+    const tools = await mcpClientService.getTools()
 
-    // Placeholder response for Phase 1
-    return NextResponse.json({
-      message: 'AI Assistant API route created - Phase 1 complete',
-      conversationId: conversation.id,
-      status: 'ready_for_phase_2'
+    // 5. Stream AI response using Gemini with MCP tools
+    const stream = await streamText({
+      model: google('gemini-2.0-flash'),
+      messages: messages,
+      tools,
+      toolChoice: 'auto',
+      onFinish: async (result) => {
+        // Add turn to conversation after streaming completes
+        const userMessage = messages[messages.length - 1]
+        const assistantContent = result.text || 'Response generated with tool calls'
+        
+        await aiConversationService.addTurn(
+          conversation.id,
+          userMessage.content || '',
+          assistantContent,
+          result.toolCalls?.map(tc => tc.toolName) || []
+        )
+      },
     })
+
+    return stream.toTextStreamResponse()
 
   } catch (error) {
     console.error('AI Chat API Error:', error)

@@ -8,6 +8,34 @@ jest.mock('next-auth', () => ({
   getServerSession: jest.fn(),
 }))
 
+// Mock MCP client service to avoid external dependencies
+jest.mock('@/lib/services/mcp-client.service', () => ({
+  mcpClientService: {
+    getTools: jest.fn().mockResolvedValue({
+      'maix_update_profile': {
+        description: 'Updates user profile',
+        parameters: { type: 'object', properties: {} }
+      }
+    })
+  }
+}))
+
+// Mock AI SDK streaming to avoid Gemini API calls in tests
+jest.mock('ai', () => ({
+  streamText: jest.fn().mockImplementation(() => ({
+    toTextStreamResponse: jest.fn().mockReturnValue(
+      new Response('Mocked AI response stream', {
+        headers: { 'Content-Type': 'text/plain' }
+      })
+    )
+  }))
+}))
+
+// Mock Google AI SDK
+jest.mock('@ai-sdk/google', () => ({
+  google: jest.fn().mockReturnValue('mocked-model')
+}))
+
 const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>
 
 describe('/api/ai/chat Integration Tests', () => {
@@ -51,7 +79,7 @@ describe('/api/ai/chat Integration Tests', () => {
       mockGetServerSession.mockReset()
     })
 
-    it('should create new conversation when no conversationId provided', async () => {
+    it('should create new conversation and return streaming response', async () => {
       const request = new NextRequest('http://localhost:3000/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -61,18 +89,17 @@ describe('/api/ai/chat Integration Tests', () => {
       })
 
       const response = await POST(request)
-      const data = await response.json()
 
       expect(response.status).toBe(200)
-      expect(data.conversationId).toBeDefined()
-      expect(data.status).toBe('ready_for_phase_2')
+      expect(response.headers.get('Content-Type')).toBe('text/plain')
+      expect(response.body).toBeDefined()
 
       // Verify conversation was created in database
-      const conversation = await prismaTest.aIConversation.findUnique({
-        where: { id: data.conversationId }
+      const conversations = await prismaTest.aIConversation.findMany({
+        where: { userId: testUserId }
       })
-      expect(conversation).toBeDefined()
-      expect(conversation?.userId).toBe(testUserId)
+      expect(conversations).toHaveLength(1)
+      expect(conversations[0].userId).toBe(testUserId)
     })
 
     it('should use existing conversation when conversationId provided', async () => {
@@ -96,10 +123,16 @@ describe('/api/ai/chat Integration Tests', () => {
       })
 
       const response = await POST(request)
-      const data = await response.json()
 
       expect(response.status).toBe(200)
-      expect(data.conversationId).toBe(conversation.id)
+      expect(response.body).toBeDefined()
+
+      // Verify we still have only one conversation (existing one was used)
+      const conversations = await prismaTest.aIConversation.findMany({
+        where: { userId: testUserId }
+      })
+      expect(conversations).toHaveLength(1)
+      expect(conversations[0].id).toBe(conversation.id)
     })
 
     it('should return 401 when user not authenticated', async () => {
@@ -145,6 +178,33 @@ describe('/api/ai/chat Integration Tests', () => {
 
       expect(response.status).toBe(400)
       expect(data.error).toBe('Messages array is required')
+    })
+
+    it('should integrate MCP tools in streaming response', async () => {
+      // Verify MCP tools are loaded and passed to streamText
+      const { streamText } = require('ai')
+      const { mcpClientService } = require('@/lib/services/mcp-client.service')
+
+      const request = new NextRequest('http://localhost:3000/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: 'Update my profile' }]
+        })
+      })
+
+      const response = await POST(request)
+
+      expect(response.status).toBe(200)
+      expect(mcpClientService.getTools).toHaveBeenCalled()
+      expect(streamText).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tools: expect.objectContaining({
+            'maix_update_profile': expect.any(Object)
+          }),
+          toolChoice: 'auto'
+        })
+      )
     })
   })
 
