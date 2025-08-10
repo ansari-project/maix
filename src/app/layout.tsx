@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { NextAuthProvider } from '@/components/providers/session-provider'
@@ -12,13 +12,17 @@ export const metadata: Metadata = {
   description: 'A platform connecting volunteers with AI projects to advance humanity',
   keywords: 'AI, machine learning, volunteers, projects, collaboration, technology',
   authors: [{ name: 'Maix Team' }],
-  viewport: 'width=device-width, initial-scale=1',
   robots: 'index, follow',
   // Performance optimizations
   other: {
     'color-scheme': 'light dark',
     'theme-color': '#3b82f6',
   }
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
 }
 
 export default function RootLayout({
