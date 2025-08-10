@@ -22,6 +22,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   // Pages using the new DashboardLayout
   const newLayoutPages = [
     "/dashboard/home",
+    "/my-todos",
     "/news",
     "/search", 
     "/todos",
