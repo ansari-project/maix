@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { TodoListPaneWithDnD } from "./components/TodoListPaneWithDnD"
 import { TodoDetailsPanelEnhanced } from "./components/TodoDetailsPanelEnhanced"
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts"
@@ -219,46 +220,48 @@ export default function TodosPage() {
   if (!session) return null
 
   return (
-    <div className="h-screen flex flex-col">
-      {/* Error Banner */}
-      {error && (
-        <div className="bg-red-50 border-b border-red-200 px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center">
-            <span className="text-red-800 text-sm">{error}</span>
-          </div>
-          <button
-            onClick={() => setError(null)}
-            className="text-red-600 hover:text-red-800 text-sm font-medium"
-          >
-            Dismiss
-          </button>
-        </div>
-      )}
-      
-      {/* Main Grid */}
-      <div className={`flex-1 grid ${showDetailsPanel ? 'grid-cols-2' : 'grid-cols-1'} gap-0 transition-all duration-300`}>
-        {/* Left Pane - Todo List */}
-        <div className={`${showDetailsPanel ? 'border-r border-border' : ''} overflow-hidden`}>
-          <TodoListPaneWithDnD 
-            todos={todos}
-            selectedTodo={selectedTodo}
-            onTodoSelect={handleTodoSelect}
-            onTodoUpdate={handleTodoUpdate}
-          />
-        </div>
-
-        {/* Right Pane - Todo Details (conditionally rendered) */}
-        {showDetailsPanel && (
-          <div className="overflow-hidden">
-            <TodoDetailsPanelEnhanced
-              todo={selectedTodo}
-              onUpdate={handleTodoUpdate}
-              onCommentAdd={handleCommentAdd}
-              onDelete={handleTodoDelete}
-            />
+    <DashboardLayout>
+      <div className="h-full flex flex-col">
+        {/* Error Banner */}
+        {error && (
+          <div className="bg-red-50 border-b border-red-200 px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center">
+              <span className="text-red-800 text-sm">{error}</span>
+            </div>
+            <button
+              onClick={() => setError(null)}
+              className="text-red-600 hover:text-red-800 text-sm font-medium"
+            >
+              Dismiss
+            </button>
           </div>
         )}
+        
+        {/* Main Grid */}
+        <div className={`flex-1 grid ${showDetailsPanel ? 'grid-cols-2' : 'grid-cols-1'} gap-0 transition-all duration-300`}>
+          {/* Left Pane - Todo List */}
+          <div className={`${showDetailsPanel ? 'border-r border-border' : ''} overflow-hidden`}>
+            <TodoListPaneWithDnD 
+              todos={todos}
+              selectedTodo={selectedTodo}
+              onTodoSelect={handleTodoSelect}
+              onTodoUpdate={handleTodoUpdate}
+            />
+          </div>
+
+          {/* Right Pane - Todo Details (conditionally rendered) */}
+          {showDetailsPanel && (
+            <div className="overflow-hidden">
+              <TodoDetailsPanelEnhanced
+                todo={selectedTodo}
+                onUpdate={handleTodoUpdate}
+                onCommentAdd={handleCommentAdd}
+                onDelete={handleTodoDelete}
+              />
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </DashboardLayout>
   )
 }
