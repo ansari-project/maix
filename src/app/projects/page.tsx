@@ -80,7 +80,7 @@ export default function ProjectsPage() {
     return matchesSearch && matchesHelp
   })
 
-  if (status === "loading" || loading) {
+  if (status === "loading" || (status === "authenticated" && loading)) {
     return (
       <DashboardLayout>
         <div className="min-h-screen flex items-center justify-center">
@@ -90,7 +90,13 @@ export default function ProjectsPage() {
     )
   }
 
-  if (!session) return null
+  if (status === "unauthenticated") {
+    return null // Let useEffect handle redirect
+  }
+
+  if (!session) {
+    return null
+  }
 
   return (
     <DashboardLayout>
