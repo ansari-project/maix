@@ -35,6 +35,8 @@ User Input → AI Assistant UI → /api/ai/chat endpoint
                                   Return to UI
 ```
 
+MWK: Streaming is a requirement. 
+
 ### 1.4 PAT Management Strategy
 
 Based on the Event Manager implementation:
@@ -109,6 +111,8 @@ export async function getOrCreateAIAssistantPat(userId: string) {
 - `maix_update_profile` - Update user profile
 - `maix_manage_personal_project` - Personal projects
 
+MWK: I want ALL the MCP tools available
+
 ### 1.6 Gemini Integration with MCP
 
 #### Tool Calling Strategy
@@ -116,6 +120,8 @@ export async function getOrCreateAIAssistantPat(userId: string) {
 **Option 1: Gemini Function Calling → MCP Tools** ❌
 - Complex mapping layer
 - Double abstraction
+
+MWK: Is there no way we can connect MCP to Gemini directly? Can you check if Anthropic is any better? 
 
 **Option 2: Intent Detection → Direct MCP Calls** ✅ (SELECTED)
 ```typescript
@@ -137,6 +143,8 @@ switch(intent.action) {
 }
 ```
 
+MWK: BAD idea. Dont doo this. 
+
 **Option 3: Hybrid with Tool Descriptions** ✅ (RECOMMENDED)
 ```typescript
 // Provide MCP tool descriptions to Gemini
@@ -157,6 +165,8 @@ Respond with JSON: {
 }
 `
 ```
+
+MWK: Bad idea. 
 
 ### 1.7 Conversation Management
 
@@ -189,6 +199,8 @@ model AIConversation {
   user User @relation(fields: [userId], references: [id])
 }
 ```
+
+MWK: We should merge the two designs. Events should adopt the AIConversation stack. 
 
 ### 1.8 API Endpoint Design
 
@@ -235,6 +247,8 @@ export async function POST(request: NextRequest) {
       maxOutputTokens: 2048,
     }
   })
+
+  MWK: Don't forget streaming! 
   
   // 7. Parse AI response and execute MCP tools if needed
   const aiResponse = parseAIResponse(result.text)
@@ -266,6 +280,9 @@ export async function POST(request: NextRequest) {
 1. **Automatic PATs are encrypted** - Use existing encryption service
 2. **Never expose PATs to client** - Server-side only
 3. **Auto-expire after 90 days** - With renewal logic
+
+I don't really care about this. 
+
 4. **Separate from user PATs** - Different naming convention
 5. **Audit trail** - Log all MCP operations
 
@@ -282,6 +299,8 @@ const sanitizeUserInput = (input: string): string => {
   return cleaned
 }
 ```
+
+MWK: Overkill for MVP. Remove prompt injection. 
 
 #### Rate Limiting
 ```typescript
@@ -308,6 +327,8 @@ const checkRateLimit = (userId: string): boolean => {
   return true
 }
 ```
+
+MWK: Overkill for mvp. Remove Rate limiting. 
 
 ### 1.10 Context Enrichment Strategy
 
@@ -343,6 +364,8 @@ const enrichContext = async (mcpClient: McpClient, userId: string) => {
 }
 ```
 
+MWK: Not required for MVP. REmove. 
+
 ### 1.11 Simplified MVP Scope
 
 #### Phase 1: Read-Only Assistant
@@ -362,6 +385,8 @@ const enrichContext = async (mcpClient: McpClient, userId: string) => {
 - Complex workflows
 - Multi-step operations
 - Proactive suggestions
+
+MWK: Go straight to Phase 3. 
 
 ### 1.12 Testing Strategy
 
@@ -401,6 +426,8 @@ export const createMockMcpServer = () => {
   - No conversation history for debugging
 - **Awaiting Decision**: [ ] ACCEPT or [ ] REJECT
 
+REJECT. 
+
 #### Simplification Option 2: Single Model Only (Gemini Flash)
 - **Proposal**: Use only gemini-1.5-flash, no model selection
 - **Pros**:
@@ -414,6 +441,8 @@ export const createMockMcpServer = () => {
   - No upgrade path without code changes
 - **Awaiting Decision**: [ ] ACCEPT or [ ] REJECT
 
+ACCEPT Single model, but that model should be GEMINI-2.5-Flash. 
+
 #### Simplification Option 3: No Streaming Responses
 - **Proposal**: Return complete responses instead of streaming
 - **Pros**:
@@ -425,7 +454,9 @@ export const createMockMcpServer = () => {
   - Worse perceived performance
   - Users wait longer for first content
   - Less engaging UX
-- **Decision**: [X] **REJECTED** - Streaming is required for good UX
+- **Awaiting Decision**: [ ] ACCEPT or [ ] REJECT
+
+REJECT. Streaming required. 
 
 #### Simplification Option 4: Fixed Context Window (Last 5 Messages)
 - **Proposal**: Only send last 5 message pairs to Gemini
@@ -440,6 +471,8 @@ export const createMockMcpServer = () => {
   - Less coherent long conversations
 - **Awaiting Decision**: [ ] ACCEPT or [ ] REJECT
 
+REJECT. 
+
 #### Simplification Option 5: No MCP Tool Explanations
 - **Proposal**: AI never mentions which MCP tools it's using
 - **Pros**:
@@ -452,6 +485,8 @@ export const createMockMcpServer = () => {
   - Harder to debug issues
   - Users can't learn the system
 - **Awaiting Decision**: [ ] ACCEPT or [ ] REJECT
+
+REJECT 
 
 #### Simplification Option 6: No Caching Layer
 - **Proposal**: Always fetch fresh data from MCP, no caching
@@ -466,6 +501,8 @@ export const createMockMcpServer = () => {
   - Repeated identical queries
 - **Awaiting Decision**: [ ] ACCEPT or [ ] REJECT
 
+ACCEPT. 
+
 #### Simplification Option 7: No Rate Limiting Initially
 - **Proposal**: Launch without rate limits, add if abused
 - **Pros**:
@@ -477,6 +514,8 @@ export const createMockMcpServer = () => {
   - Potential for abuse
   - Harder to add retroactively
 - **Awaiting Decision**: [ ] ACCEPT or [ ] REJECT
+- 
+ACCEPT. 
 
 #### Simplification Option 8: No Custom Error Recovery
 - **Proposal**: If MCP fails, show generic error message
@@ -490,6 +529,8 @@ export const createMockMcpServer = () => {
   - Users don't know what went wrong
 - **Awaiting Decision**: [ ] ACCEPT or [ ] REJECT
 
+REJECT. 
+
 #### Meta-Simplification: Start with ALL Simplifications
 - **Proposal**: Accept all simplifications for MVP, add complexity only when proven necessary
 - **Pros**:
@@ -502,6 +543,8 @@ export const createMockMcpServer = () => {
   - Could limit initial adoption
 - **Awaiting Decision**: [ ] ACCEPT or [ ] REJECT
 
+REJECT. 
+
 ### 1.14 Open Questions for Alignment
 
 #### Tier 1: Critical (Must answer before Plan phase)
@@ -511,11 +554,15 @@ export const createMockMcpServer = () => {
    - Option B: Full access from day one (riskier)
    - **Awaiting Decision**
 
+B. 
+
 2. **Q: How should we handle MCP tool failures?**
    - Option A: Fail gracefully with user-friendly message
    - Option B: Retry with exponential backoff
    - Option C: Fallback to direct database queries (breaks abstraction)
    - **Awaiting Decision**
+
+A. 
 
 3. **Q: Should conversations persist across sessions?**
    - Option A: Session-only (simpler, more private) ✅ (RECOMMENDED)
@@ -523,27 +570,47 @@ export const createMockMcpServer = () => {
    - Option C: Always persist (needs clear privacy policy)
    - **Awaiting Decision**
 
+C. 
+
+
+
 4. **Q: Monthly Gemini API budget?**
    - Affects model selection (flash vs pro)
    - Impacts rate limiting strategy
    - **Awaiting Decision**
+
+Don't worry about it. 
 
 #### Tier 2: Important
 
 1. **Q: Should AI explain which MCP tools it's using?**
    - Transparency vs simplicity trade-off
 
+Yes. 
+
 2. **Q: How many conversation turns to keep in context?**
    - Token usage vs context quality
+
+After 20 turns, summarize. 
 
 3. **Q: Should we cache MCP responses?**
    - Performance vs data freshness
 
+No. 
+
 #### Tier 3: Deferrable
 
 1. **Q: Multi-language support?**
+
+No.
+
 2. **Q: Voice input/output?**
+
+No. 
+
 3. **Q: Conversation export?**
+
+No. 
 
 ### 1.14 Risk Mitigation
 
@@ -554,6 +621,8 @@ export const createMockMcpServer = () => {
 | Gemini API costs | Medium | High | Use flash model, implement quotas |
 | MCP tool changes break AI | Medium | Medium | Version tool descriptions, regression tests |
 | Security: Unauthorized MCP access | Low | Critical | Strict PAT validation, audit logging |
+
+MWK: Not worried about these. 
 
 ### 1.15 Success Metrics
 
@@ -572,6 +641,8 @@ export const createMockMcpServer = () => {
    - Action accuracy (did AI use correct MCP tool?)
    - Context relevance score
 
+MWK: Not worried about these. 
+
 ### 1.16 Comparison: Direct API vs MCP Approach
 
 | Aspect | Direct API | MCP Integration |
@@ -588,14 +659,13 @@ export const createMockMcpServer = () => {
 ### 1.17 Expert Review Results
 
 **Date**: January 10, 2025  
-**Models Consulted**: Gemini-2.5-Pro (neutral), O3 (against), GPT-5 (neutral)
+**Models Consulted**: Gemini-2.5-Pro (neutral stance), O3 (against stance)
 
 #### Consensus Summary
 
-All three expert models **endorsed the architecture** with high confidence:
+Both expert models **endorsed the architecture** with high confidence:
 - **Gemini-2.5-Pro**: 8/10 confidence - "Technically sound and strategically aligned"
 - **O3**: 7.5/10 confidence - "Strong user value proposition with manageable technical risks"
-- **GPT-5**: Strong endorsement with critical implementation corrections needed
 
 #### Key Points of Agreement
 
@@ -640,35 +710,6 @@ All three expert models **endorsed the architecture** with high confidence:
 3. Provider abstraction from day one
 4. Internal beta first
 5. Focus on 2-3 killer use cases
-
-#### GPT-5 Critical Corrections
-
-**CRITICAL IMPLEMENTATION ISSUES IDENTIFIED**:
-
-1. **PAT Storage Inconsistency** (MUST FIX):
-   - Design shows hashing PATs (one-way) but tries to decrypt them later
-   - Solution: Either use in-process tools (no PAT needed) OR store encrypted tokens
-
-2. **Streaming Implementation Gap**:
-   - Current design uses non-streaming `generateContent` call
-   - Solution: Use Vercel AI SDK's `streamText` like Event Assistant does
-
-3. **Tool Calling Pattern Mismatch**:
-   - AI Assistant plans manual JSON parsing + MCP HTTP calls
-   - Event Assistant uses Vercel AI SDK with in-process tools
-   - Solution: Align both assistants to same pattern
-
-**GPT-5 Simplification Recommendations**:
-- ✅ ACCEPT: Session-only, Single model, Fixed context, No explanations, No caching
-- ❌ REJECT: No streaming (already rejected), No rate limiting (need minimal quotas), No error recovery (need retry for reads)
-- ❌ REJECT: Accept ALL simplifications (use curated set above)
-
-**GPT-5 Implementation Priorities**:
-1. Clone Event Assistant route structure to `/api/ai/chat`
-2. Fix PAT inconsistency (in-process vs HTTP decision)
-3. Implement minimal quotas immediately ($300/month cap suggested)
-4. Add read-only scope guard for Phase 1
-5. Use sliding window for context management
 
 ---
 
