@@ -1,18 +1,22 @@
-import { DashboardLayout } from '@/components/layout/DashboardLayout'
+"use client"
+
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function TodosPage() {
+  const router = useRouter()
+
+  useEffect(() => {
+    // Redirect to the actual todos page
+    router.replace('/my-todos')
+  }, [router])
+
   return (
-    <DashboardLayout>
-      <div className="p-8">
-        <h1 className="text-3xl font-bold mb-4">My Todos</h1>
-        <p className="text-gray-600 mb-6">
-          Manage your tasks across all projects.
-        </p>
-        <div className="mt-8 p-8 bg-gray-100 rounded-lg text-center">
-          <p className="text-gray-500">Todo management will be migrated to new layout in Phase 4</p>
-          <p className="text-sm text-gray-400 mt-2">Currently available at /my-todos</p>
-        </div>
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+        <p className="mt-2 text-muted-foreground">Redirecting to My Todos...</p>
       </div>
-    </DashboardLayout>
+    </div>
   )
 }

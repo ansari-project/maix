@@ -1,21 +1,265 @@
+"use client"
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
+import { Input } from '@/components/ui/input'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Badge } from '@/components/ui/badge'
+import { Search, Users, FolderOpen, MessageCircle, Package } from 'lucide-react'
+import Link from 'next/link'
+
+interface SearchResult {
+  id: string
+  type: 'project' | 'product' | 'question' | 'user'
+  title: string
+  description: string
+  owner?: {
+    name: string
+    email: string
+  }
+  tags?: string[]
+  createdAt: string
+}
 
 export default function SearchPage() {
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState<SearchResult[]>([])
+  const [loading, setLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState('all')
+  const router = useRouter()
+
+  const performSearch = async (searchQuery: string) => {
+    if (!searchQuery.trim()) {
+      setResults([])
+      return
+    }
+
+    setLoading(true)
+    try {
+      const response = await fetch(`/api/public/search?q=${encodeURIComponent(searchQuery)}`)
+      if (response.ok) {
+        const data = await response.json()
+        setResults(data)
+      } else {
+        console.error('Search failed:', response.statusText)
+        setResults([])
+      }
+    } catch (error) {
+      console.error('Search error:', error)
+      setResults([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    performSearch(query)
+  }
+
+  const filteredResults = results.filter(result => 
+    activeTab === 'all' || result.type === activeTab
+  )
+
+  const getIcon = (type: string) => {
+    switch (type) {
+      case 'project': return <FolderOpen className="w-4 h-4" />
+      case 'product': return <Package className="w-4 h-4" />
+      case 'question': return <MessageCircle className="w-4 h-4" />
+      case 'user': return <Users className="w-4 h-4" />
+      default: return <Search className="w-4 h-4" />
+    }
+  }
+
+  const getResultLink = (result: SearchResult) => {
+    switch (result.type) {
+      case 'project': return `/public/projects/${result.id}`
+      case 'product': return `/public/products/${result.id}`
+      case 'question': return `/public/questions/${result.id}`
+      case 'user': return '#' // User profiles not implemented yet
+      default: return '#'
+    }
+  }
+
   return (
     <DashboardLayout>
-      <div className="p-8">
-        <h1 className="text-3xl font-bold mb-4">Search & Discovery</h1>
-        <div className="max-w-2xl mx-auto mt-8">
-          <input
-            type="text"
-            placeholder="Search projects, people, skills..."
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            disabled
-          />
-          <div className="mt-8 p-8 bg-gray-100 rounded-lg text-center">
-            <p className="text-gray-500">Search functionality will be implemented in Phase 4</p>
-          </div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Search & Discovery</h1>
+          <p className="text-muted-foreground">
+            Find projects, products, questions, and community members
+          </p>
         </div>
+
+        {/* Search Form */}
+        <Card className="mb-8">
+          <CardContent className="pt-6">
+            <form onSubmit={handleSearch} className="flex gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  type="text"
+                  placeholder="Search projects, products, questions..."
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Button type="submit" disabled={loading}>
+                {loading ? 'Searching...' : 'Search'}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Quick Actions */}
+        {!query && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <Link href="/public/projects">
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <FolderOpen className="w-5 h-5 text-blue-600" />
+                    Browse Projects
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription>
+                    Discover open projects looking for contributors
+                  </CardDescription>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link href="/public/products">
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Package className="w-5 h-5 text-green-600" />
+                    Explore Products
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription>
+                    Check out products built by the community
+                  </CardDescription>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link href="/public/questions">
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <MessageCircle className="w-5 h-5 text-purple-600" />
+                    Q&A Community
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription>
+                    Browse questions and knowledge shared by the community
+                  </CardDescription>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link href="/community">
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Users className="w-5 h-5 text-orange-600" />
+                    Community
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription>
+                    Connect with other community members
+                  </CardDescription>
+                </CardContent>
+              </Card>
+            </Link>
+          </div>
+        )}
+
+        {/* Search Results */}
+        {query && (
+          <div>
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList>
+                <TabsTrigger value="all">
+                  All ({results.length})
+                </TabsTrigger>
+                <TabsTrigger value="project">
+                  Projects ({results.filter(r => r.type === 'project').length})
+                </TabsTrigger>
+                <TabsTrigger value="product">
+                  Products ({results.filter(r => r.type === 'product').length})
+                </TabsTrigger>
+                <TabsTrigger value="question">
+                  Questions ({results.filter(r => r.type === 'question').length})
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value={activeTab} className="mt-6">
+                {loading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                    <p className="mt-2 text-muted-foreground">Searching...</p>
+                  </div>
+                ) : filteredResults.length === 0 ? (
+                  <Card>
+                    <CardContent className="text-center py-8">
+                      <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground">
+                        {query ? `No results found for "${query}"` : 'Start typing to search'}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="space-y-4">
+                    {filteredResults.map((result) => (
+                      <Link key={result.id} href={getResultLink(result)}>
+                        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                          <CardHeader>
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-center gap-2">
+                                {getIcon(result.type)}
+                                <CardTitle className="text-lg">{result.title}</CardTitle>
+                              </div>
+                              <Badge variant="outline">
+                                {result.type}
+                              </Badge>
+                            </div>
+                            {result.description && (
+                              <CardDescription className="mt-2">
+                                {result.description.length > 150 
+                                  ? `${result.description.substring(0, 150)}...` 
+                                  : result.description}
+                              </CardDescription>
+                            )}
+                          </CardHeader>
+                          <CardContent>
+                            <div className="flex items-center justify-between text-sm text-muted-foreground">
+                              {result.owner && (
+                                <span>By {result.owner.name || result.owner.email}</span>
+                              )}
+                              <span>
+                                {new Date(result.createdAt).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   )
