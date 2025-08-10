@@ -5,7 +5,7 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  // Since all authenticated pages now use DashboardLayout,
-  // AppLayout just passes through children without modification
+  // AppLayout is now a simple pass-through since all pages handle their own layouts
+  // Pages that need DashboardLayout import and use it directly
   return <>{children}</>
 }

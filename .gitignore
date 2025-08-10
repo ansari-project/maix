@@ -165,3 +165,4 @@ db_backups/
 
 # Claude Code task file - project-specific task tracking
 .claude-task
+.vercel
