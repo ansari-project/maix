@@ -1,0 +1,463 @@
+"use client"
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { 
+  MessageSquare, 
+  Send, 
+  Calendar, 
+  User, 
+  Folder, 
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  X
+} from "lucide-react"
+import { useState, useEffect, useRef } from "react"
+import { format, formatDistanceToNow } from "date-fns"
+import { Todo, Comment } from "../types"
+
+interface TodoDetailsPanelEnhancedProps {
+  todo: Todo | null
+  onUpdate: (todo: Todo) => Promise<void>
+  onCommentAdd: (todoId: string, comment: string) => Promise<void>
+  onDelete?: (todoId: string) => Promise<void>
+  projects?: Array<{ id: string; name: string }>
+  users?: Array<{ id: string; name: string; email: string }>
+  readonly?: boolean
+}
+
+export function TodoDetailsPanelEnhanced({ 
+  todo, 
+  onUpdate, 
+  onCommentAdd,
+  onDelete,
+  projects = [],
+  users = [],
+  readonly = false 
+}: TodoDetailsPanelEnhancedProps) {
+  const [editedTodo, setEditedTodo] = useState<Todo | null>(null)
+  const [newComment, setNewComment] = useState("")
+  const [isSaving, setIsSaving] = useState(false)
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false)
+  const [activeTab, setActiveTab] = useState("details")
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+  const saveTimeoutRef = useRef<NodeJS.Timeout>()
+
+  useEffect(() => {
+    if (todo) {
+      setEditedTodo({ ...todo })
+      setValidationErrors({})
+    } else {
+      setEditedTodo(null)
+    }
+  }, [todo])
+
+  useEffect(() => {
+    // Auto-save with 2-second debounce
+    if (editedTodo && todo && !readonly) {
+      clearTimeout(saveTimeoutRef.current)
+      
+      const hasChanges = 
+        editedTodo.title !== todo.title ||
+        editedTodo.description !== todo.description ||
+        editedTodo.status !== todo.status ||
+        editedTodo.dueDate !== todo.dueDate ||
+        editedTodo.projectId !== todo.projectId ||
+        editedTodo.assigneeId !== todo.assigneeId
+
+      if (hasChanges && validateFields()) {
+        setIsSaving(true)
+        saveTimeoutRef.current = setTimeout(async () => {
+          await onUpdate(editedTodo)
+          setIsSaving(false)
+        }, 2000)
+      }
+    }
+
+    return () => {
+      clearTimeout(saveTimeoutRef.current)
+    }
+  }, [editedTodo, todo, onUpdate, readonly])
+
+  const validateFields = () => {
+    const errors: Record<string, string> = {}
+    
+    if (!editedTodo?.title?.trim()) {
+      errors.title = "Title is required"
+    }
+    
+    if (editedTodo?.title && editedTodo.title.length > 200) {
+      errors.title = "Title must be less than 200 characters"
+    }
+    
+    if (editedTodo?.description && editedTodo.description.length > 2000) {
+      errors.description = "Description must be less than 2000 characters"
+    }
+    
+    setValidationErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
+  const handleFieldChange = (field: keyof Todo, value: any) => {
+    if (!editedTodo || readonly) return
+    setEditedTodo({ ...editedTodo, [field]: value })
+  }
+
+  const handleCommentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!todo || !newComment.trim()) return
+
+    setIsSubmittingComment(true)
+    try {
+      await onCommentAdd(todo.id, newComment)
+      setNewComment("")
+    } finally {
+      setIsSubmittingComment(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!todo || !onDelete) return
+    if (confirm("Are you sure you want to delete this todo?")) {
+      await onDelete(todo.id)
+    }
+  }
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "COMPLETED":
+        return <CheckCircle2 className="h-4 w-4 text-green-600" />
+      case "IN_PROGRESS":
+        return <Clock className="h-4 w-4 text-blue-600" />
+      case "WAITING_FOR":
+        return <AlertCircle className="h-4 w-4 text-yellow-600" />
+      default:
+        return <Clock className="h-4 w-4 text-gray-400" />
+    }
+  }
+
+  if (!todo || !editedTodo) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center">
+          <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground">Select a todo to view details</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="h-full flex flex-col">
+      {/* Header */}
+      <div className="border-b border-border p-4">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-2">
+            {getStatusIcon(editedTodo.status)}
+            <h2 className="text-lg font-semibold truncate max-w-[300px]">
+              {editedTodo.title}
+            </h2>
+          </div>
+          <div className="flex items-center gap-2">
+            {isSaving && (
+              <Badge variant="secondary" className="text-xs">
+                Saving...
+              </Badge>
+            )}
+            {onDelete && !readonly && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleDelete}
+                className="h-8 w-8"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+        
+        {/* Metadata */}
+        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+          <span>Created {formatDistanceToNow(new Date(todo.createdAt))} ago</span>
+          {todo.updatedAt && (
+            <span>• Updated {formatDistanceToNow(new Date(todo.updatedAt))} ago</span>
+          )}
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="details">Details</TabsTrigger>
+          <TabsTrigger value="comments">
+            Comments {todo.comments && todo.comments.length > 0 && `(${todo.comments.length})`}
+          </TabsTrigger>
+          <TabsTrigger value="activity">Activity</TabsTrigger>
+        </TabsList>
+
+        {/* Details Tab */}
+        <TabsContent value="details" className="flex-1 overflow-y-auto">
+          <div className="p-6 space-y-6">
+            <div className="space-y-4">
+              {/* Title */}
+              <div className="space-y-2">
+                <Label htmlFor="title">Title *</Label>
+                <Input
+                  id="title"
+                  value={editedTodo.title}
+                  onChange={(e) => handleFieldChange("title", e.target.value)}
+                  disabled={readonly}
+                  className={validationErrors.title ? "border-red-500" : ""}
+                />
+                {validationErrors.title && (
+                  <p className="text-xs text-red-500">{validationErrors.title}</p>
+                )}
+              </div>
+
+              {/* Description */}
+              <div className="space-y-2">
+                <Label htmlFor="description">
+                  Description 
+                  <span className="text-xs text-muted-foreground ml-2">
+                    ({editedTodo.description?.length || 0}/2000)
+                  </span>
+                </Label>
+                <Textarea
+                  id="description"
+                  value={editedTodo.description || ""}
+                  onChange={(e) => handleFieldChange("description", e.target.value)}
+                  disabled={readonly}
+                  rows={6}
+                  className={validationErrors.description ? "border-red-500" : ""}
+                />
+                {validationErrors.description && (
+                  <p className="text-xs text-red-500">{validationErrors.description}</p>
+                )}
+              </div>
+
+              {/* Status and Due Date */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <Select
+                    value={editedTodo.status}
+                    onValueChange={(value) => handleFieldChange("status", value)}
+                    disabled={readonly}
+                  >
+                    <SelectTrigger id="status">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="NOT_STARTED">Not Started</SelectItem>
+                      <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                      <SelectItem value="WAITING_FOR">Waiting For</SelectItem>
+                      <SelectItem value="COMPLETED">Completed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dueDate">
+                    <Calendar className="inline h-3 w-3 mr-1" />
+                    Due Date
+                  </Label>
+                  <Input
+                    id="dueDate"
+                    type="date"
+                    value={editedTodo.dueDate ? format(new Date(editedTodo.dueDate), "yyyy-MM-dd") : ""}
+                    onChange={(e) => handleFieldChange("dueDate", e.target.value ? new Date(e.target.value) : null)}
+                    disabled={readonly}
+                  />
+                </div>
+              </div>
+
+              {/* Project and Assignee */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="project">
+                    <Folder className="inline h-3 w-3 mr-1" />
+                    Project
+                  </Label>
+                  {projects.length > 0 ? (
+                    <Select
+                      value={editedTodo.projectId || "none"}
+                      onValueChange={(value) => handleFieldChange("projectId", value === "none" ? null : value)}
+                      disabled={readonly}
+                    >
+                      <SelectTrigger id="project">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No Project</SelectItem>
+                        {projects.map(project => (
+                          <SelectItem key={project.id} value={project.id}>
+                            {project.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <div className="p-2 bg-muted rounded-md text-sm">
+                      {editedTodo.project?.name || "No Project"}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="assignee">
+                    <User className="inline h-3 w-3 mr-1" />
+                    Assignee
+                  </Label>
+                  {users.length > 0 ? (
+                    <Select
+                      value={editedTodo.assigneeId || "none"}
+                      onValueChange={(value) => handleFieldChange("assigneeId", value === "none" ? null : value)}
+                      disabled={readonly}
+                    >
+                      <SelectTrigger id="assignee">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Unassigned</SelectItem>
+                        {users.map(user => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.name || user.email}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <div className="p-2 bg-muted rounded-md text-sm">
+                      {editedTodo.assignee?.name || editedTodo.assignee?.email || "Unassigned"}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Priority and Tags (future enhancement) */}
+              <div className="space-y-2">
+                <Label>Tags</Label>
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="secondary">Enhancement</Badge>
+                  <Badge variant="secondary">UI/UX</Badge>
+                  <Button variant="outline" size="sm" className="h-6 text-xs">
+                    + Add Tag
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* Comments Tab */}
+        <TabsContent value="comments" className="flex-1 flex flex-col">
+          <div className="flex-1 overflow-y-auto p-6">
+            {todo.comments && todo.comments.length > 0 ? (
+              <div className="space-y-4">
+                {todo.comments.map((comment) => (
+                  <div key={comment.id} className="flex gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <User className="h-4 w-4" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-medium text-sm">
+                          {comment.author?.name || comment.author?.email || "Unknown"}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(comment.createdAt))} ago
+                        </span>
+                      </div>
+                      <p className="text-sm">{comment.content}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <MessageSquare className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">No comments yet</p>
+              </div>
+            )}
+          </div>
+
+          {/* Comment Input */}
+          {!readonly && (
+            <div className="border-t border-border p-4">
+              <form onSubmit={handleCommentSubmit} className="flex gap-2">
+                <Input
+                  placeholder="Write a comment..."
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  className="flex-1"
+                />
+                <Button type="submit" size="icon" disabled={!newComment.trim() || isSubmittingComment}>
+                  {isSubmittingComment ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                </Button>
+              </form>
+            </div>
+          )}
+        </TabsContent>
+
+        {/* Activity Tab */}
+        <TabsContent value="activity" className="flex-1 overflow-y-auto">
+          <div className="p-6">
+            <div className="space-y-4">
+              <div className="flex gap-3">
+                <div className="w-2 h-2 rounded-full bg-blue-500 mt-2"></div>
+                <div>
+                  <p className="text-sm">
+                    <span className="font-medium">You</span> created this todo
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {format(new Date(todo.createdAt), "MMM d, yyyy 'at' h:mm a")}
+                  </p>
+                </div>
+              </div>
+              
+              {todo.updatedAt && todo.updatedAt !== todo.createdAt && (
+                <div className="flex gap-3">
+                  <div className="w-2 h-2 rounded-full bg-green-500 mt-2"></div>
+                  <div>
+                    <p className="text-sm">
+                      <span className="font-medium">You</span> updated this todo
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {format(new Date(todo.updatedAt), "MMM d, yyyy 'at' h:mm a")}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {todo.comments?.map((comment) => (
+                <div key={comment.id} className="flex gap-3">
+                  <div className="w-2 h-2 rounded-full bg-purple-500 mt-2"></div>
+                  <div>
+                    <p className="text-sm">
+                      <span className="font-medium">{comment.author?.name || "Someone"}</span> commented
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {format(new Date(comment.createdAt), "MMM d, yyyy 'at' h:mm a")}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  )
+}
