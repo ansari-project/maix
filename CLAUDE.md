@@ -357,18 +357,36 @@ After:  **[ACCEPTED]** - Simplicity outweighs audit granularity
 
 **Purpose**: Break aligned design into executable phases with structured ITRC sub-tasks
 
-**Process**: 
-- Convert design into sequential phases that each deliver working functionality
-- **MANDATORY**: Each phase MUST be broken down into ITRC sub-tasks:
-  - **I (Implement)**: Build the functionality
-  - **T (Test)**: Write and run tests
-  - **R (Review)**: Code review with mcp__zen__codereview
-  - **C (Commit & Push)**: Git commit and push after ITRC complete
-- Define clear success criteria for each ITRC step
-- **MANDATORY**: Get expert review from multiple models (see DAPPER Configuration above) before proceeding
-- Incorporate review feedback into final plan
+**Process**:
+1. **Plan Generation** (Claude Code does this):
+   - Generate `[feature-name]-plan-initial.md` - Clean implementation plan
+   - Convert design into sequential phases that deliver working functionality
+   - **MANDATORY**: Each phase MUST be broken down into ITRC sub-tasks:
+     - **I (Implement)**: Build the functionality
+     - **T (Test)**: Write and run tests
+     - **R (Review)**: Code review with mcp__zen__codereview
+     - **C (Commit & Push)**: Git commit and push after ITRC complete
+   - Define clear success criteria for each ITRC step
+   - **MANDATORY**: Get expert review from multiple models before proceeding
 
-**Output**: Phase plan with ITRC-structured todos, deliverables, dependencies, success criteria, and expert review confirmation
+2. **Human Plan Review**:
+   - Generate `[feature-name]-plan-comments.md` - Copy for human annotations
+   - Human adds comments directly (prefix with initials, e.g., "MWK:")
+   - Review phase structure and ITRC breakdown
+   - Adjust priorities, dependencies, success criteria
+   - Provide additional constraints or requirements
+
+3. **Plan Reconciliation** (Claude Code + Human):
+   - Work together to merge initial + comments into final `[feature-name]-plan.md`
+   - Resolve conflicts between initial plan and human feedback
+   - Ensure ITRC structure is maintained
+   - Incorporate expert review feedback
+   - Document final phase priorities and dependencies
+
+**Output**: 
+- `[feature-name]-plan.md` - Final reconciled implementation plan
+- Phase plan with ITRC-structured todos, deliverables, dependencies, success criteria
+- Expert review confirmation and human alignment documented
 
 **Example Phase Structure**:
 ```
