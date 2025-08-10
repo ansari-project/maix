@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { TodoListPane } from "./components/TodoListPane"
+import { TodoListPaneWithDnD } from "./components/TodoListPaneWithDnD"
 import { TodoDetailsPanel } from "./components/TodoDetailsPanel"
 import { Todo, parseTodo, serializeTodo } from "./types"
 
@@ -141,10 +141,11 @@ export default function TodosPage() {
       <div className="flex-1 grid grid-cols-2 gap-0">
         {/* Left Pane - Todo List */}
         <div className="border-r border-border overflow-hidden">
-        <TodoListPane 
+        <TodoListPaneWithDnD 
           todos={todos}
           selectedTodo={selectedTodo}
           onTodoSelect={handleTodoSelect}
+          onTodoUpdate={handleTodoUpdate}
         />
       </div>
 
