@@ -629,6 +629,29 @@ dev_docs/
 - **Auth**: NextAuth.js for protected routes, role-based access, validate sessions on API routes  
 - **UI/UX**: Clean design, WCAG 2.1 AA accessibility, semantic HTML, Markdown support via `<Markdown>` component
 
+### UI Patterns and Best Practices
+
+#### Progressive Disclosure Pattern
+For complex forms and inputs, use progressive disclosure to keep the interface simple while providing advanced options:
+- Start with minimal required fields
+- Expand to show advanced options on user action (click, keyboard shortcut)
+- Use smooth animations for expand/collapse transitions
+- Keyboard shortcuts: Tab to expand (when content exists), Escape to close
+
+**Example**: QuickAddTodo component - starts with title input, expands to show project/status/dates
+
+#### Form Component Patterns
+- **Adjacent Button Pattern**: Place action buttons next to inputs (not inside) for better accessibility
+- **Conditional Visibility**: Show buttons on focus/hover/content to reduce visual clutter
+- **Local State Management**: Manage form state locally, sync with global state only on submission
+- **Performance**: Use useCallback for event handlers to prevent unnecessary re-renders
+
+#### User Feedback
+- **Success Messages**: Show confirmation with auto-hide after 2 seconds
+- **Loading States**: Use inline spinners during async operations
+- **Error Handling**: Display specific error messages based on error type (validation vs server errors)
+- **Visual Feedback**: Focus rings, hover states, and transitions for better UX
+
 ### TypeScript Configuration Strategy
 
 Our project uses two separate TypeScript configuration files to ensure correctness for both development and production builds:
