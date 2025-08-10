@@ -135,6 +135,48 @@ export function TodoSection({ projectId, canManage = false }: TodoSectionProps) 
     }
   }
 
+  // Handle quick add todo
+  const handleQuickAdd = async (data: {
+    title: string
+    projectId?: string
+    status: any
+    dueDate?: Date
+    startDate?: Date
+  }) => {
+    try {
+      const response = await fetch(`/api/projects/${projectId}/todos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: data.title,
+          status: data.status,
+          dueDate: data.dueDate?.toISOString(),
+          startDate: data.startDate?.toISOString()
+        })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to create todo')
+      }
+
+      const result = await response.json()
+      setTodos([result.todo, ...todos])
+      
+      toast({
+        title: "Success",
+        description: "Todo created successfully"
+      })
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create todo",
+        variant: "destructive"
+      })
+      throw error // Re-throw to let QuickAddTodo handle the error
+    }
+  }
+
   // Calculate stats
   const stats = {
     total: todos.length,
@@ -173,9 +215,11 @@ export function TodoSection({ projectId, canManage = false }: TodoSectionProps) 
       {/* Todo List */}
       <TodoList
         todos={todos}
+        projectId={projectId}
         onStatusChange={canManage ? handleStatusChange : undefined}
         onAssigneeChange={canManage ? handleAssigneeChange : undefined}
         onCreateClick={() => setShowCreateDialog(true)}
+        onQuickAdd={canManage ? handleQuickAdd : undefined}
         canManage={canManage}
         loading={loading}
       />

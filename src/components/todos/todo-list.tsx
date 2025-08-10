@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { TodoCard } from "./todo-card"
+import { QuickAddTodo } from "./quick-add-todo"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { TodoWithRelations } from "@/types/todo"
@@ -10,9 +11,18 @@ import { Filter, Plus } from "lucide-react"
 
 interface TodoListProps {
   todos: TodoWithRelations[]
+  projectId?: string
+  projects?: Array<{ id: string; name: string }>
   onStatusChange?: (todoId: string, status: string) => void
   onAssigneeChange?: (todoId: string, assigneeId: string | null) => void
   onCreateClick?: () => void
+  onQuickAdd?: (data: {
+    title: string
+    projectId?: string
+    status: TodoStatus
+    dueDate?: Date
+    startDate?: Date
+  }) => Promise<void>
   showProject?: boolean
   canManage?: boolean
   loading?: boolean
@@ -20,9 +30,12 @@ interface TodoListProps {
 
 export function TodoList({
   todos,
+  projectId,
+  projects,
   onStatusChange,
   onAssigneeChange,
   onCreateClick,
+  onQuickAdd,
   showProject = false,
   canManage = false,
   loading = false
@@ -111,7 +124,7 @@ export function TodoList({
       </div>
 
       {/* Todo lists by status */}
-      {filteredTodos.length === 0 ? (
+      {filteredTodos.length === 0 && (!canManage || !onQuickAdd) ? (
         <div className="text-center py-8 border-2 border-dashed rounded-lg">
           <p className="text-muted-foreground">
             {todos.length === 0 ? "No todos yet" : "No todos match your filters"}
@@ -131,7 +144,7 @@ export function TodoList({
           {statusFilter === 'ALL' ? (
             // Show grouped by status
             <>
-              {todosByStatus.NOT_STARTED.length > 0 && (
+              {(todosByStatus.NOT_STARTED.length > 0 || canManage) && (
                 <div>
                   <h3 className="font-medium text-sm text-muted-foreground mb-2">
                     Not Started ({todosByStatus.NOT_STARTED.length})
@@ -146,11 +159,19 @@ export function TodoList({
                         showProject={showProject}
                       />
                     ))}
+                    {canManage && onQuickAdd && (
+                      <QuickAddTodo
+                        projectId={projectId}
+                        projects={projects}
+                        onSubmit={onQuickAdd}
+                        className="mt-2"
+                      />
+                    )}
                   </div>
                 </div>
               )}
 
-              {todosByStatus.IN_PROGRESS.length > 0 && (
+              {(todosByStatus.IN_PROGRESS.length > 0 || canManage) && (
                 <div>
                   <h3 className="font-medium text-sm text-muted-foreground mb-2">
                     In Progress ({todosByStatus.IN_PROGRESS.length})
@@ -165,11 +186,19 @@ export function TodoList({
                         showProject={showProject}
                       />
                     ))}
+                    {canManage && onQuickAdd && (
+                      <QuickAddTodo
+                        projectId={projectId}
+                        projects={projects}
+                        onSubmit={onQuickAdd}
+                        className="mt-2"
+                      />
+                    )}
                   </div>
                 </div>
               )}
 
-              {todosByStatus.WAITING_FOR.length > 0 && (
+              {(todosByStatus.WAITING_FOR.length > 0 || canManage) && (
                 <div>
                   <h3 className="font-medium text-sm text-muted-foreground mb-2">
                     Waiting For ({todosByStatus.WAITING_FOR.length})
@@ -184,11 +213,19 @@ export function TodoList({
                         showProject={showProject}
                       />
                     ))}
+                    {canManage && onQuickAdd && (
+                      <QuickAddTodo
+                        projectId={projectId}
+                        projects={projects}
+                        onSubmit={onQuickAdd}
+                        className="mt-2"
+                      />
+                    )}
                   </div>
                 </div>
               )}
 
-              {todosByStatus.COMPLETED.length > 0 && (
+              {(todosByStatus.COMPLETED.length > 0 || canManage) && (
                 <div>
                   <h3 className="font-medium text-sm text-muted-foreground mb-2">
                     Completed ({todosByStatus.COMPLETED.length})
@@ -203,6 +240,14 @@ export function TodoList({
                         showProject={showProject}
                       />
                     ))}
+                    {canManage && onQuickAdd && (
+                      <QuickAddTodo
+                        projectId={projectId}
+                        projects={projects}
+                        onSubmit={onQuickAdd}
+                        className="mt-2"
+                      />
+                    )}
                   </div>
                 </div>
               )}
