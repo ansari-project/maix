@@ -51,37 +51,15 @@ CRITICAL: Provide DETAILED, REGULAR updates at every step. The user wants to see
    - If tests fail, stop and report which tests failed
    - Report: "✅ All tests passing"
 
-5. **Branch Management**
-   - Report: "🌿 Checking branch..."
-   - Check current branch with `git branch --show-current`
-   - If on main/master:
-     - Generate branch name based on changes
-     - Report: "📝 Creating feature branch: <branch-name>"
-     - Create and switch to the new branch
-   - If already on a feature branch:
-     - Report: "✅ Already on feature branch: <branch-name>"
-
-6. **Commit**
+5. **Commit**
    - Report: "💾 Committing changes..."
+   - Check current branch with `git branch --show-current`
+   - Report: "📝 Current branch: <branch-name>"
    - Generate a meaningful commit message based on the changes
    - Follow conventional commits format (feat:, fix:, docs:, etc.)
    - Report the commit message you're using
-   - Execute the commit using `scripts/gcm.sh "commit message"`
-   - Report: "✅ Changes committed successfully"
-
-7. **Push and Create PR**
-   - Report: "📤 Pushing to remote..."
-   - Show the exact command: "Running: scripts/gps.sh <branch-name>"
-   - Push the branch using `scripts/gps.sh <branch-name>`
-   - Report: "✅ Branch pushed successfully"
-   - Report: "🔗 Creating pull request..."
-   - Show the PR title and body you're about to use
-   - Create PR using `scripts/gpr.sh "title" "body"` with meaningful title and body
-   - Include summary of changes, test results, and checklist in PR body
-   - IMPORTANT: Capture and display the PR URL prominently
-   - Report: "✅ Pull request created successfully!"
-   - Report: "🌟 PR URL: <PR-URL>"
-   - Report: "👉 You can view and merge the PR at: <PR-URL>"
+   - Execute the commit using `git commit -m "commit message"`
+   - Report: "✅ Changes committed successfully to <branch-name>"
 
 ## Decision Guidelines
 
@@ -132,7 +110,6 @@ Provide a summary at the end:
 - Tests: ✅ All passing
 - Branch: <branch-name>
 - Commit: <commit-message>
-- PR: <PR-URL>
 ```
 
 ## Important
