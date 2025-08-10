@@ -170,9 +170,23 @@ className={`grid ${showDetailsPanel ? 'grid-cols-2' : 'grid-cols-1'}`}
 - Document in help system
 - Test keyboard navigation in CI
 
+### Critical Process Insights
+
+#### 1. DAPPER Completion Discipline
+**Learning**: It's tempting to skip Evaluate and Revise phases when code is "done"
+- **What Happened**: Nearly marked E&R complete without actually doing them
+- **Impact**: Would have lost valuable retrospective insights and lessons
+- **Application**: Never skip documentation phases - they capture knowledge for the team
+
+#### 2. Session Continuity Through Structure
+**Learning**: DAPPER + todo list enables seamless handoffs between sessions
+- **Specific Benefit**: Picked up at Phase 2 from previous session without context loss
+- **Impact**: No time wasted remembering state or re-reading code
+- **Application**: Maintain detailed todos and phase documentation for all long-running projects
+
 ### Key Takeaway
 
-The combination of DAPPER methodology with strict ITRC cycles creates a powerful framework for delivering complex features with high quality. The todo redesign proved that accepting smart simplifications while maintaining discipline around testing and review cycles leads to successful outcomes.
+The combination of DAPPER methodology with strict ITRC cycles creates a powerful framework for delivering complex features with high quality. The todo redesign proved that accepting smart simplifications while maintaining discipline around testing and review cycles leads to successful outcomes. Most critically: **trust the process** - every phase has value, even when it feels like overhead.
 **Benefit**: Improved initial page load performance without sacrificing functionality
 **Pattern**: Use lazy loading for optional/advanced features that not all users will engage with
 
