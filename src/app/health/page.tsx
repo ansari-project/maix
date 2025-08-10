@@ -41,8 +41,6 @@ export default async function HealthPage() {
     
     // Other
     EMAIL_FROM: process.env.EMAIL_FROM || 'not set',
-    AXIOM_DATASET: process.env.AXIOM_DATASET || 'not set',
-    AXIOM_TOKEN: process.env.AXIOM_TOKEN ? '✅ Set' : '❌ Not set',
     CRON_SECRET: process.env.CRON_SECRET ? '✅ Set' : '❌ Not set',
   }
 

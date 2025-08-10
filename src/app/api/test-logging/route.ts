@@ -29,6 +29,6 @@ export async function GET() {
   await logger.flush()
   
   return NextResponse.json({ 
-    message: "Logging test complete! Check your console (dev) or Axiom dashboard (prod)" 
+    message: "Logging test complete! Check your console (dev) or Vercel logs (prod)" 
   })
 }

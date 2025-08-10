@@ -139,20 +139,17 @@ describe('logger', () => {
   })
 
   describe('configuration validation', () => {
-    it('should handle missing AXIOM credentials gracefully', () => {
-      // The logger should still work even without Axiom credentials
-      const originalToken = process.env.AXIOM_TOKEN
-      const originalDataset = process.env.AXIOM_DATASET
+    it('should handle logging in production environment', () => {
+      // The logger should work in production environment
+      const originalEnv = process.env.NODE_ENV
       
-      delete process.env.AXIOM_TOKEN
-      delete process.env.AXIOM_DATASET
+      process.env.NODE_ENV = 'production'
 
       // Logger should still work
-      expect(() => logger.info('Test without Axiom')).not.toThrow()
+      expect(() => logger.info('Test in production')).not.toThrow()
 
       // Restore env vars
-      if (originalToken) process.env.AXIOM_TOKEN = originalToken
-      if (originalDataset) process.env.AXIOM_DATASET = originalDataset
+      process.env.NODE_ENV = originalEnv
     })
   })
 })
