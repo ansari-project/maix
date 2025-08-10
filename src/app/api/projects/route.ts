@@ -244,7 +244,8 @@ const handlePost = withAuth(async (request: AuthenticatedRequest) => {
         visibility: validatedData.visibility || 'PUBLIC',
         productId: validatedData.productId,
         targetCompletionDate: validatedData.targetCompletionDate ? new Date(validatedData.targetCompletionDate) : null,
-        organizationId: validatedData.organizationId
+        organizationId: validatedData.organizationId,
+        ownerId: request.user.id
       }
     })
 
