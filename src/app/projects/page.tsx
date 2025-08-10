@@ -18,14 +18,14 @@ interface Project {
   name: string
   goal: string
   description: string
-  helpType: string
+  helpType?: string  // Made optional since it can be null
   webpage?: string
   targetCompletionDate?: string
   isActive: boolean
   createdAt: string
   visibility?: "PUBLIC" | "PRIVATE"  // Added visibility field
   owner: {
-    name: string
+    name?: string  // Made optional since it might not exist
     email: string
   }
   product?: {
@@ -72,15 +72,15 @@ export default function ProjectsPage() {
   }
 
   const filteredProjects = projects.filter(project => {
-    const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         project.goal.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         project.description.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = project.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         project.goal?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         project.description?.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesHelp = helpFilter === "all" || project.helpType === helpFilter
     
     return matchesSearch && matchesHelp
   })
 
-  if (status === "loading" || loading) {
+  if (status === "loading" || (status === "authenticated" && loading)) {
     return (
       <DashboardLayout>
         <div className="min-h-screen flex items-center justify-center">
@@ -90,7 +90,13 @@ export default function ProjectsPage() {
     )
   }
 
-  if (!session) return null
+  if (status === "unauthenticated") {
+    return null // Let useEffect handle redirect
+  }
+
+  if (!session) {
+    return null
+  }
 
   return (
     <DashboardLayout>
@@ -163,7 +169,7 @@ export default function ProjectsPage() {
                     </div>
                     <div className="flex gap-1">
                       <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-                        {project.helpType.replace('_', ' ')}
+                        {project.helpType?.replace('_', ' ') || 'No Type'}
                       </span>
                       {!project.isActive && (
                         <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">

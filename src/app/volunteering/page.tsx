@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { FileText, Plus, Calendar, User } from "lucide-react"
 import { format } from "date-fns"
+import { DashboardLayout } from "@/components/layout/DashboardLayout"
 
 interface Application {
   id: string
@@ -77,115 +78,119 @@ export default function VolunteeringPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-2 text-muted-foreground">Loading...</p>
+      <DashboardLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-2 text-muted-foreground">Loading...</p>
+          </div>
         </div>
-      </div>
+      </DashboardLayout>
     )
   }
 
   if (!session) return null
 
   return (
-    <div className="bg-gradient-to-br from-primary/5 to-accent/5 px-4 py-2">
-      <div className="container mx-auto">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-primary mb-2">My Volunteering</h1>
-            <p className="text-muted-foreground">
-              Track your volunteer applications and their status
-            </p>
-          </div>
+    <DashboardLayout>
+      <div className="bg-gradient-to-br from-primary/5 to-accent/5 px-4 py-2">
+        <div className="container mx-auto">
+          <div className="max-w-4xl mx-auto">
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-primary mb-2">My Volunteering</h1>
+              <p className="text-muted-foreground">
+                Track your volunteer applications and their status
+              </p>
+            </div>
 
-          {applications.length === 0 ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  No Applications Yet
-                </CardTitle>
-                <CardDescription>
-                  You haven&apos;t applied to any projects yet.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="text-center py-12">
-                <div className="space-y-4">
-                  <p className="text-muted-foreground">
-                    Start by browsing available projects and applying to ones that match your skills.
-                  </p>
-                  <Button asChild>
-                    <Link href="/projects">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Browse Projects
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {applications.map((application) => (
-                <Card key={application.id} className="hover:shadow-md transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-lg">
-                          <Link 
-                            href={`/projects/${application.project.id}`}
-                            className="hover:text-primary"
-                          >
-                            {application.project.name}
-                          </Link>
-                        </CardTitle>
-                        <CardDescription className="flex items-center gap-2 mt-1">
-                          <User className="h-4 w-4" />
-                          {application.project.owner.name || application.project.owner.email}
-                          <span className="text-xs">•</span>
-                          <span className="text-xs">{application.project.helpType.replace('_', ' ')}</span>
-                        </CardDescription>
+            {applications.length === 0 ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    No Applications Yet
+                  </CardTitle>
+                  <CardDescription>
+                    You haven&apos;t applied to any projects yet.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="text-center py-12">
+                  <div className="space-y-4">
+                    <p className="text-muted-foreground">
+                      Start by browsing available projects and applying to ones that match your skills.
+                    </p>
+                    <Button asChild>
+                      <Link href="/projects">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Browse Projects
+                      </Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {applications.map((application) => (
+                  <Card key={application.id} className="hover:shadow-md transition-shadow">
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <CardTitle className="text-lg">
+                            <Link 
+                              href={`/projects/${application.project.id}`}
+                              className="hover:text-primary"
+                            >
+                              {application.project.name}
+                            </Link>
+                          </CardTitle>
+                          <CardDescription className="flex items-center gap-2 mt-1">
+                            <User className="h-4 w-4" />
+                            {application.project.owner.name || application.project.owner.email}
+                            <span className="text-xs">•</span>
+                            <span className="text-xs">{application.project.helpType.replace('_', ' ')}</span>
+                          </CardDescription>
+                        </div>
+                        {getStatusBadge(application.status)}
                       </div>
-                      {getStatusBadge(application.status)}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div>
-                      <h4 className="font-semibold text-sm mb-1">Your Application Message:</h4>
-                      <p className="text-sm text-muted-foreground bg-muted rounded p-3">
-                        {application.message}
-                      </p>
-                    </div>
-                    
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        Applied {format(new Date(application.appliedAt), 'MMM dd, yyyy')}
-                      </span>
-                      {application.respondedAt && (
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div>
+                        <h4 className="font-semibold text-sm mb-1">Your Application Message:</h4>
+                        <p className="text-sm text-muted-foreground bg-muted rounded p-3">
+                          {application.message}
+                        </p>
+                      </div>
+                      
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-                          Responded {format(new Date(application.respondedAt), 'MMM dd, yyyy')}
+                          Applied {format(new Date(application.appliedAt), 'MMM dd, yyyy')}
                         </span>
-                      )}
-                    </div>
-
-                    {application.status === 'ACCEPTED' && (
-                      <div className="pt-2">
-                        <Button asChild size="sm">
-                          <Link href={`/projects/${application.project.id}`}>
-                            View Project Details
-                          </Link>
-                        </Button>
+                        {application.respondedAt && (
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            Responded {format(new Date(application.respondedAt), 'MMM dd, yyyy')}
+                          </span>
+                        )}
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+
+                      {application.status === 'ACCEPTED' && (
+                        <div className="pt-2">
+                          <Button asChild size="sm">
+                            <Link href={`/projects/${application.project.id}`}>
+                              View Project Details
+                            </Link>
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   )
 }

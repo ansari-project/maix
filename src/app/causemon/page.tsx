@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Trash2, Mail, Pause, Play, Search, Loader2, FileText } from 'lucide-react';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
 
 interface PublicFigure {
   id: string;
@@ -236,30 +237,33 @@ export default function CausemonPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto py-8">
-        <div className="animate-pulse">Loading...</div>
-      </div>
+      <DashboardLayout>
+        <div className="container mx-auto py-8">
+          <div className="animate-pulse">Loading...</div>
+        </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="container mx-auto py-8 max-w-4xl">
-      <div className="mb-8">
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Causemon</h1>
-            <p className="text-muted-foreground">
-              Track what public figures say about causes you care about
-            </p>
+    <DashboardLayout>
+      <div className="container mx-auto py-8 max-w-4xl">
+        <div className="mb-8">
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Causemon</h1>
+              <p className="text-muted-foreground">
+                Track what public figures say about causes you care about
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => router.push('/causemon/events')}
+            >
+              View Events
+            </Button>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => router.push('/causemon/events')}
-          >
-            View Events
-          </Button>
         </div>
-      </div>
 
       <Card className="mb-6">
         <CardHeader>
@@ -501,6 +505,7 @@ export default function CausemonPage() {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }

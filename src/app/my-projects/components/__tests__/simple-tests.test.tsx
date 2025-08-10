@@ -20,6 +20,11 @@ jest.mock('@/hooks/use-toast', () => ({
   useToast: jest.fn(),
 }))
 
+// Mock DashboardLayout to avoid rendering sidebar/navigation in tests
+jest.mock('@/components/layout/DashboardLayout', () => ({
+  DashboardLayout: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}))
+
 global.fetch = jest.fn()
 
 describe('Personal Projects Components', () => {

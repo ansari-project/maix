@@ -14,6 +14,7 @@ import { format } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
 import { CreateProjectDialog } from "./CreateProjectDialog"
 import { Markdown } from "@/components/ui/markdown"
+import { DashboardLayout } from "@/components/layout/DashboardLayout"
 
 interface PersonalProject {
   id: string
@@ -194,19 +195,22 @@ export function MyProjectsClient() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="h-64 bg-gray-200 rounded"></div>
+      <DashboardLayout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+            <div className="h-64 bg-gray-200 rounded"></div>
+          </div>
         </div>
-      </div>
+      </DashboardLayout>
     )
   }
 
   if (!session) return null
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <DashboardLayout>
+      <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <div className="flex justify-between items-start mb-4">
           <div>
@@ -513,5 +517,6 @@ export function MyProjectsClient() {
         }}
       />
     </div>
+    </DashboardLayout>
   )
 }
