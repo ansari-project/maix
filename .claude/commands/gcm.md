@@ -1,0 +1,1 @@
+Call scripts/gcm.sh with a one-line description of what the current work we've done since last commit does.
