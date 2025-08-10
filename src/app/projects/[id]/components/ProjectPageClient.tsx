@@ -216,7 +216,7 @@ export default function ProjectPageClient({
                 <CardHeader>
                   <div className="flex gap-2">
                     <span className="text-xs bg-accent/10 text-accent px-2 py-1 rounded">
-                      {project.helpType.replace('_', ' ')}
+                      {project.helpType?.replace('_', ' ') || 'No Type'}
                     </span>
                     <span className={`text-xs px-2 py-1 rounded ${formatProjectStatus(project.status).color}`}>
                       {formatProjectStatus(project.status).label}

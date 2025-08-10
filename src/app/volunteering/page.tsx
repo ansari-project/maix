@@ -147,7 +147,7 @@ export default function VolunteeringPage() {
                             <User className="h-4 w-4" />
                             {application.project.owner.name || application.project.owner.email}
                             <span className="text-xs">•</span>
-                            <span className="text-xs">{application.project.helpType.replace('_', ' ')}</span>
+                            <span className="text-xs">{application.project.helpType?.replace('_', ' ') || 'No Type'}</span>
                           </CardDescription>
                         </div>
                         {getStatusBadge(application.status)}

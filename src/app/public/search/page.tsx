@@ -166,7 +166,7 @@ function SearchContent() {
                               {formatProjectStatus(project.status).label}
                             </Badge>
                             <Badge variant="outline">
-                              {project.helpType.toLowerCase().replace('_', ' ')}
+                              {project.helpType?.toLowerCase().replace('_', ' ') || 'no type'}
                             </Badge>
                             {!project.isActive && (
                               <Badge variant="destructive" className="text-xs">
@@ -301,7 +301,7 @@ function SearchContent() {
                           {formatProjectStatus(project.status).label}
                         </Badge>
                         <Badge variant="outline">
-                          {project.helpType.toLowerCase().replace('_', ' ')}
+                          {project.helpType?.toLowerCase().replace('_', ' ') || 'no type'}
                         </Badge>
                         {!project.isActive && (
                           <Badge variant="destructive" className="text-xs">
