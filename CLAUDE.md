@@ -324,13 +324,28 @@ Would you like to continue with the current plan or revise it?"
 **Purpose**: Review AI proposals and make strategic decisions
 
 **Process**:
-- Review each proposed simplification OPTION
-- Choose which simplifications to accept or reject
-- Make decisions on all open questions
-- Provide additional constraints if needed
-- Document rationale for decisions
+1. **Document Preparation** (Claude Code does this):
+   - Generate `[feature-name]-design-initial.md` - Clean copy of original design
+   - Generate `[feature-name]-design-comments.md` - Version with human comments integrated
+   - Both files preserve complete design for reference
 
-**Output**: SAME document updated with decisions marked `[ACCEPTED]`, `[REJECTED]`, or `[DECIDED: choice + rationale]`, plus new "Alignment Outcomes" section
+2. **Human Review**:
+   - Add comments directly in original design document (prefix with initials, e.g., "MWK:")
+   - Review each proposed simplification OPTION
+   - Choose which simplifications to accept or reject
+   - Make decisions on all open questions
+   - Provide additional constraints if needed
+
+3. **Reconciliation** (Claude Code + Human):
+   - Work together to merge initial design + comments into final `[feature-name]-design.md`
+   - Resolve conflicts between original proposals and human feedback
+   - Document rationale for decisions
+   - Ensure all comments are addressed
+
+**Output**: 
+- `[feature-name]-design.md` - Final reconciled design with all decisions marked
+- Decisions marked as `[ACCEPTED]`, `[REJECTED]`, or `[DECIDED: choice + rationale]`
+- New "Alignment Outcomes" section documenting key decisions
 
 **Example transformation**:
 ```markdown
