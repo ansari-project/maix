@@ -1,429 +1,497 @@
-# Following System Implementation Plan - Initial
+# Following System Implementation Plan - Initial (Revised)
 
 ## Overview
-Implement following system for organizations, projects, and products with polymorphic database design, unified role system, and phased notification rollout.
+Implement a **pure notification subscription system** for organizations, projects, and products. Following grants **ZERO additional permissions** - it only controls who receives notifications about entity updates.
 
-**Key Expert Refinements Applied:**
-- Phase dependency optimization for parallel development
-- Asynchronous notification architecture for scalability
-- Enhanced database migration safety protocols
-- Comprehensive performance testing requirements
+**Critical Architecture Principle**: Complete separation of concerns between:
+- **RBAC**: Controls actions (edit, delete, manage) 
+- **Visibility**: Controls viewing (public, org-visible, private)
+- **Following**: Controls notifications (subscribed/not subscribed)
 
-## Phase Structure
+**Key Implementation Rules**:
+1. Following table is NEVER read during authorization
+2. Must have visibility to follow an entity
+3. Notifications re-check visibility at delivery time
+4. Following grants no access whatsoever
+
+## Phase Structure (Revised for Clean Separation)
 
 ### Phase 1: Database Migration & Core Schema
-**Objective**: Establish database foundation with safe role system migration
+**Objective**: Establish database foundation as pure notification subscription system
 
-#### Phase 1-I: Implement - Database Schema Changes
-- Add `Following` table with polymorphic relationships and optimized indexes:
+#### Phase 1-I: Implement - Database Schema for Notifications Only
+- Add `Following` table as notification subscription tracker:
   ```sql
-  @@index([followableId, followableType])  -- Critical for getFollowers()
-  @@index([userId, followableType])        -- Critical for getUserFollowing()
-  @@unique([userId, followableId, followableType])
+  model Following {
+    id             String   @id @default(cuid())
+    userId         String
+    followableId   String
+    followableType FollowableType
+    followedAt     DateTime @default(now())
+    notificationsEnabled Boolean @default(true)
+    
+    @@unique([userId, followableId, followableType])
+    @@index([followableId, followableType])  -- For getFollowers()
+    @@index([userId, followableType])        -- For getUserFollowing()
+  }
   ```
-- Add `FollowableType` enum (ORGANIZATION, PROJECT, PRODUCT)  
-- Add nullable `unifiedRole` field to `OrganizationMember` (expand phase)
-- Generate and review Prisma migration files
+- Add `FollowableType` enum (ORGANIZATION, PROJECT, PRODUCT)
+- Add nullable `unifiedRole` field to `OrganizationMember` (for separate role unification)
+- **CRITICAL**: No permission or visibility fields in Following table
 
 **Success Criteria**: 
-- Migration generated without errors with specified composite indexes
-- Both old `role` and new `unifiedRole` fields exist in `OrganizationMember`
-- Following table created with performance-optimized indexes
-- Database migration applies successfully in development
+- Following table created as pure subscription tracker
+- Proper indexes for 10K+ follower queries
+- No access control logic in schema
+- Migration applies successfully
 
-#### Phase 1-T: Test - Database Schema Validation
-- Integration tests for Following table CRUD operations
-- Test uniqueness constraints (user cannot follow same entity twice)
-- Verify cascade deletes work properly
-- Test role migration compatibility
-- **Performance tests**: Verify index-only scans for follower count queries
-
-**Success Criteria**:
-- All database operations work as expected
-- Constraint violations handled properly
-- Follower count queries use index-only scans (verified with EXPLAIN)
-- No performance regressions on existing queries
-
-#### Phase 1-R: Review - Schema Design Review
-- Code review using `mcp__zen__codereview` tool
-- Review migration SQL for safety and correctness
-- Validate index strategy for 10K+ followers per entity
-- Check for any missing constraints or relationships
+#### Phase 1-T: Test - Verify Notification-Only Schema
+- Test Following table CRUD operations
+- Test uniqueness constraints work properly
+- Verify NO permission logic in Following table
+- **Performance test**: Verify index-only scans for follower counts
+- Test that Following has no FK relationships to permission tables
 
 **Success Criteria**:
-- Code review completed with continuation_id
-- No critical issues identified
-- Migration strategy approved
+- Following operations are independent of permissions
+- Queries use index-only scans for performance
+- No ability to grant access via Following
 
-#### Phase 1-C: Commit & Push - Database Changes
-- Commit database migration with descriptive message
+#### Phase 1-R: Review - Separation of Concerns Validation
+- Review schema ensures clean separation
+- Verify no permission leakage possible
+- Validate notification-only design
+- Check indexes for scale requirements
+
+**Success Criteria**:
+- Expert confirms clean separation
+- No security vulnerabilities identified
+- Performance strategy validated
+
+#### Phase 1-C: Commit & Push - Notification Schema
+- Commit with message emphasizing notification-only design
 - Push changes to repository
-- Update `.claude-task` with progress
+- Document separation of concerns in commit
 
 **Success Criteria**:
-- Changes committed and pushed successfully
-- Migration files included in commit
+- Schema committed as notification system
+- Clear documentation of intent
 
 ---
 
-### Phase 2: Role System Unification (Expand & Contract Pattern)
-**Objective**: Safely migrate OrganizationMember to use UnifiedRole with zero downtime
+### Phase 2: Role System Unification (Separate Concern)
+**Objective**: Unify role systems - completely separate from following
 
-#### Phase 2-I: Implement - Dual Write System with Safety Features
-- Update all OrganizationMember create operations to write to both fields
-- Update all OrganizationMember update operations for dual writes  
-- **Enhanced**: Feature flag for dual-write logic (emergency off switch)
-- **Enhanced**: Idempotent and batched backfill script for existing records
-- **Enhanced**: Monitoring script to detect role field discrepancies
-- Create utility functions for role mapping (OrgRole → UnifiedRole)
-
-**Success Criteria**:
-- All write operations populate both fields
-- Backfill script processes records in batches of 1000
-- Monitoring detects any dual-write failures
-- Feature flag can disable dual-write if needed
-
-#### Phase 2-T: Test - Enhanced Dual Write Validation
-- Test OrganizationMember creation with both fields populated
-- **Enhanced**: Test backfill script idempotency (can run multiple times safely)
-- **Enhanced**: Test monitoring script detects artificial discrepancies
-- Test role permission functions work with both old and new roles
-- Test feature flag properly reverts to single-write mode
+#### Phase 2-I: Implement - Role Unification (Not Following Related)
+- Update OrganizationMember operations to dual-write `role` and `unifiedRole`
+- **Feature flag** for emergency rollback
+- **Batched, idempotent** backfill script
+- **Monitoring** for field discrepancies
+- **CRITICAL**: This is RBAC work, not following work
 
 **Success Criteria**:
-- New records have both fields populated correctly
-- Backfill script can be safely re-run without side effects
-- Monitoring provides reliable discrepancy detection
-- Feature flag rollback works correctly
+- Role unification in progress
+- No impact on following system
+- Complete separation maintained
 
-#### Phase 2-R: Review - Migration Safety Review
-- Code review for dual write implementation
-- Review backfill script for data integrity
-- Validate zero-downtime migration approach
-
-**Success Criteria**:
-- Migration approach validated as safe
-- No data integrity risks identified
-
-#### Phase 2-C: Commit & Push - Dual Write System
-- Commit dual write implementation
-- Push changes and deploy to development
-- Run backfill script in development environment
+#### Phase 2-T: Test - Role System Only
+- Test dual-write functionality
+- Test backfill idempotency
+- Test monitoring detects issues
+- **Verify**: No following logic involved
 
 **Success Criteria**:
-- Dual write system deployed
-- Backfill completed in development
-- No production issues
+- Role migration working independently
+- Following system unaffected
+
+#### Phase 2-R: Review - RBAC Migration Review
+- Review role migration safety
+- Confirm separation from following
+- Validate zero-downtime approach
+
+**Success Criteria**:
+- Role migration approved
+- Independence confirmed
+
+#### Phase 2-C: Commit & Push - RBAC Changes
+- Commit role unification work
+- Clear message: RBAC work, not following
+
+**Success Criteria**:
+- RBAC changes isolated
+- No following system coupling
 
 ---
 
-### Phase 3: Following Core Service Layer
-**Objective**: Implement core following business logic and API foundation
+### Phase 3: Following Service Layer (Notifications Only)
+**Objective**: Implement following as pure notification subscription service
 
-#### Phase 3-I: Implement - Following Service
-- Create `followingService` with core operations:
-  - `follow(userId, followableId, followableType)`
-  - `unfollow(userId, followableId, followableType)` 
-  - `isFollowing(userId, followableId, followableType)`
-  - `getFollowers(followableId, followableType)`
-  - `getUserFollowing(userId)`
-- Implement validation logic (cannot follow yourself, entity must exist)
-- Add proper error handling and TypeScript types
-- Create service-level tests
-
-**Success Criteria**:
-- All core operations implemented and working
-- Proper validation and error handling
-- TypeScript types defined
-
-#### Phase 3-T: Test - Service Layer Testing
-- Unit tests for all followingService methods
-- Integration tests with real database operations
-- Test edge cases (duplicate follows, non-existent entities, etc.)
-- Test permission validation (user cannot follow private entities they can't access)
-
-**Success Criteria**:
-- All service methods tested
-- Edge cases handled correctly
-- 100% test coverage on service layer
-
-#### Phase 3-R: Review - Service Architecture Review
-- Code review for service layer design
-- Review error handling patterns
-- Validate API consistency with existing services
+#### Phase 3-I: Implement - Notification Subscription Service
+- Create `followingService` for notification subscriptions:
+  ```typescript
+  class FollowingService {
+    async follow(userId, entityId, entityType) {
+      // 1. Check visibility (user must be able to see entity)
+      if (!await canUserSee(userId, entityId, entityType)) {
+        throw new Error('Cannot follow: No visibility')
+      }
+      // 2. Create subscription record
+      // 3. NEVER grant any permissions
+    }
+    
+    async getFollowersForNotification(entityId, entityType) {
+      // ONLY used by notification system
+      // Returns user IDs for notification delivery
+    }
+  }
+  ```
+- **CRITICAL**: Service ONLY manages subscriptions
+- **NEVER** called during authorization checks
+- **ALWAYS** requires visibility to follow
 
 **Success Criteria**:
-- Service architecture approved
-- Code quality standards met
+- Service manages subscriptions only
+- Enforces visibility requirements
+- No permission logic whatsoever
 
-#### Phase 3-C: Commit & Push - Core Service
-- Commit following service implementation
-- Push changes with comprehensive tests
+#### Phase 3-T: Test - Notification Service Testing
+- Test follow requires visibility
+- Test cannot follow private entities without access
+- Test following grants NO additional access
+- **Critical test**: Verify service never called during auth
+- Test follower lists only used for notifications
 
 **Success Criteria**:
-- Service layer committed and deployed
-- All tests passing
+- Following requires visibility
+- Following grants zero access
+- Service isolated from auth system
+
+#### Phase 3-R: Review - Service Separation Review
+- Verify service has no auth responsibilities
+- Confirm notification-only design
+- Review visibility enforcement
+
+**Success Criteria**:
+- Clean separation confirmed
+- No permission leakage
+- Notification-only verified
+
+#### Phase 3-C: Commit & Push - Notification Service
+- Commit notification subscription service
+- Document separation in commit message
+
+**Success Criteria**:
+- Service deployed as notification-only
+- Clear architectural boundaries
 
 ---
 
-### Phase 4: REST API Endpoints
-**Objective**: Create RESTful API endpoints for following functionality
+### Phase 4: REST API Endpoints (Subscription Management)
+**Objective**: Create subscription management APIs with no permission implications
 
-#### Phase 4-I: Implement - API Routes
-- Create API routes for each entity type:
-  - `POST /api/v1/organizations/[orgId]/followers` (follow org)
-  - `DELETE /api/v1/organizations/[orgId]/followers/me` (unfollow org)  
-  - `GET /api/v1/organizations/[orgId]/followers` (list org followers)
-  - Similar routes for projects and products
-- Create unified user following route:
-  - `GET /api/v1/users/me/following` (list what user follows)
-- Implement authentication middleware
-- Add request validation with Zod schemas
-- Return proper HTTP status codes and response formats
-
-**Success Criteria**:
-- All API endpoints implemented
-- Authentication and validation working
-- Consistent response formats
-
-#### Phase 4-T: Test - API Integration Testing
-- API tests for all follow/unfollow endpoints
-- Test authentication requirements
-- Test authorization (users can only follow what they can see)
-- Test error cases (404s, 400s, 401s)
-- Test pagination for follower lists
+#### Phase 4-I: Implement - Subscription APIs
+- Implement subscription endpoints:
+  ```typescript
+  POST /api/v1/organizations/[orgId]/followers
+  // Subscribe to notifications (requires visibility)
+  
+  DELETE /api/v1/organizations/[orgId]/followers/me
+  // Unsubscribe from notifications
+  
+  GET /api/v1/organizations/[orgId]/followers
+  // List subscribers (respects visibility)
+  ```
+- **Feature flags** for API control
+- **Clear naming**: "Subscribe to updates" not "Follow for access"
+- **Visibility checks** on all operations
+- **NEVER** modify permissions
 
 **Success Criteria**:
-- All API endpoints tested
-- Proper error handling verified
-- Authentication/authorization working
+- APIs manage subscriptions only
+- Clear notification terminology
+- Visibility enforced
+
+#### Phase 4-T: Test - API Subscription Testing
+- Test subscription requires visibility
+- Test subscription grants no access
+- Test unsubscribe always allowed
+- **Load test**: 100+ concurrent subscriptions
+- **Security test**: Verify no permission bypass
+
+**Success Criteria**:
+- APIs are notification-only
+- No security vulnerabilities
+- Performance validated
 
 #### Phase 4-R: Review - API Design Review
-- Review RESTful design consistency
-- Check error handling patterns
-- Validate response formats match existing API conventions
+- Review RESTful design
+- Verify no permission implications
+- Check clear notification semantics
 
 **Success Criteria**:
-- API design approved
-- Consistent with existing patterns
+- APIs clearly notification-focused
+- No access control confusion
 
-#### Phase 4-C: Commit & Push - API Endpoints
-- Commit API implementation
-- Push changes and update API documentation
+#### Phase 4-C: Commit & Push - Subscription APIs
+- Commit subscription management APIs
+- Update API documentation
 
 **Success Criteria**:
-- APIs deployed and functional
-- Documentation updated
+- APIs deployed and documented
+- Clear separation maintained
 
 ---
 
-### Phase 5: Activity Feed with Async Notifications (Parallel with Phase 4)
-**Objective**: Implement scalable activity feed using asynchronous notification generation
+### Phase 5: Async Notification System (Core Delivery) - Parallel with Phase 4
+**Objective**: Build scalable notification delivery with visibility checks
 
 **Dependencies**: Phase 3 (Following Service) - **NOT Phase 4**
 
-#### Phase 5-I: Implement - Async Activity Feed System
-- **Critical**: Implement async notification architecture:
-  - Event publishing when entities post updates
-  - Background job queue for notification generation
-  - Batched notification creation (process 1000 followers per batch)
-- Create activity feed service:
-  - Generate notifications asynchronously via background jobs
-  - Query notifications to build activity feed for users
-  - Mark notifications as read
-- Create activity feed API endpoints:
-  - `GET /api/v1/users/me/activity-feed` (paginated)
-  - `POST /api/v1/notifications/[notificationId]/read`
-- Add new notification types for following activity
+#### Phase 5-I: Implement - Async Notification Delivery
+- **Critical Architecture**:
+  ```typescript
+  class NotificationProcessor {
+    async processEntityUpdate(entityId, entityType, updateData) {
+      // 1. Fetch followers (from Following table)
+      const followers = await getFollowers(entityId, entityType)
+      
+      // 2. Batch process with visibility checks
+      for (const batch of chunk(followers, 1000)) {
+        await processNotificationBatch(batch, entityId, entityType, updateData)
+      }
+    }
+    
+    async processNotificationBatch(userIds, entityId, entityType, updateData) {
+      for (const userId of userIds) {
+        // CRITICAL: Re-check visibility at delivery time
+        if (await canUserSee(userId, entityId, entityType)) {
+          await createNotification(userId, updateData)
+        }
+        // Silent skip if no visibility
+      }
+    }
+  }
+  ```
+- Background job queue for scale
+- **Visibility re-check** at delivery time
+- Batch processing (1000 users per job)
+- Silent skip when visibility lost
 
 **Success Criteria**:
-- Background job system handles notification generation
-- Entity updates trigger async notification jobs
-- Activity feed API returns paginated results
-- Notification generation doesn't block user requests
+- Async processing working
+- Visibility enforced at delivery
+- No permission leakage
+- Scales to 10K+ followers
 
-#### Phase 5-T: Test - Activity Feed Testing with Scale Validation
-- Test notification generation for followers (async flow)
-- Test activity feed queries and pagination
-- Test read/unread functionality
-- **Enhanced**: Load test async notification job with 10K+ followers
-- Integration tests with post creation workflow
+#### Phase 5-T: Test - Notification Delivery Testing
+- Test visibility checked at delivery
+- Test follower without visibility gets NO notification
+- **Load test**: 10K+ follower notification generation
+- Test visibility changes stop notifications
+- Test no blocking of user requests
 
 **Success Criteria**:
-- Activity feed works end-to-end asynchronously
-- 10K+ notification generation completes within acceptable time
-- No blocking of user-facing requests during notification creation
-- All notification flows tested
+- Notifications respect visibility
+- Scales to large follower counts
+- No security vulnerabilities
 
 #### Phase 5-R: Review - Notification Architecture Review
-- Review activity feed implementation
-- Check performance of notification queries
-- Validate integration with existing notification system
+- Review async architecture
+- Verify visibility enforcement
+- Check performance strategy
 
 **Success Criteria**:
-- Implementation approach approved
-- No performance concerns
+- Architecture approved
+- Security validated
+- Performance confirmed
 
-#### Phase 5-C: Commit & Push - Activity Feed
-- Commit activity feed implementation
-- Push changes and deploy MVP notifications
+#### Phase 5-C: Commit & Push - Notification System
+- Commit async notification system
+- Deploy background job infrastructure
 
 **Success Criteria**:
-- Activity feed deployed and working
-- Users can see updates from followed entities
+- Notification system operational
+- Visibility checks enforced
 
 ---
 
-### Phase 6: UI Components & User Interface
-**Objective**: Build user interface for following functionality
+### Phase 6: UI Components (User Messaging)
+**Objective**: Build UI that clearly communicates notification-only following
 
-#### Phase 6-I: Implement - UI Components
-- Create Follow/Unfollow button component
-- Add follow buttons to organization, project, product pages  
-- Create "Following" section in user settings
-- Create activity feed UI component
-- Add follower count displays to entity pages
-- Implement following management interface
+**Dependencies**: Phase 4 (APIs needed for UI)
 
-**Success Criteria**:
-- Follow buttons work on all entity pages
-- Users can manage their following list in settings
-- Activity feed UI displays notifications properly
-
-#### Phase 6-T: Test - UI Testing
-- Component tests for Follow/Unfollow button
-- Integration tests for following management
-- Test activity feed UI with various notification types
-- Test responsive design and accessibility
-
-**Success Criteria**:
-- All UI components working
-- Good user experience
-- Accessible design
-
-#### Phase 6-R: Review - UI/UX Review
-- Review user interface design
-- Check accessibility compliance
-- Validate user experience flow
+#### Phase 6-I: Implement - Notification UI Components
+- Create subscription UI components:
+  ```typescript
+  // Clear messaging in UI
+  <FollowButton 
+    label="Get Updates"
+    helpText="Subscribe to notifications about this organization"
+    // NOT "Follow for access" or similar
+  />
+  ```
+- **Button text**: "Get Updates" or "Subscribe"
+- **Help text**: "Receive notifications about updates"
+- **Settings page**: "Notification Subscriptions"
+- **NEVER** imply access changes
+- Activity feed for subscribed updates
 
 **Success Criteria**:
-- UI design approved
-- User experience validated
+- UI clearly shows notification purpose
+- No permission implications
+- Clear subscription management
 
-#### Phase 6-C: Commit & Push - UI Implementation
-- Commit UI components
-- Push changes and deploy user interface
+#### Phase 6-T: Test - UI Clarity Testing
+- Test UI messaging is clear
+- Test no permission confusion
+- User testing for comprehension
+- Accessibility testing
 
 **Success Criteria**:
-- Following UI live and functional
-- Users can follow/unfollow entities through UI
+- Users understand notification-only
+- No access confusion
+- Accessible interface
+
+#### Phase 6-R: Review - UX Messaging Review
+- Review all UI text
+- Verify notification focus
+- Check for permission implications
+
+**Success Criteria**:
+- Messaging approved
+- Clear separation communicated
+
+#### Phase 6-C: Commit & Push - Notification UI
+- Commit UI with clear messaging
+- Deploy subscription interface
+
+**Success Criteria**:
+- UI deployed with clear purpose
+- Users understand system
 
 ---
 
-### Phase 7: Role Migration Completion (Contract Phase)
-**Objective**: Complete role system unification by removing old OrgRole system
+### Phase 7: Role Migration Completion (RBAC Cleanup)
+**Objective**: Complete role unification - still separate from following
 
-#### Phase 7-I: Implement - Switch to UnifiedRole
-- Update all OrganizationMember read operations to use `unifiedRole` only
-- Remove dual write logic (write only to `unifiedRole`)
-- Update permission checks to use UnifiedRole consistently
-- Prepare migration to make `unifiedRole` non-nullable and remove `role`
+**Dependencies**: Phase 2 (dual-write must be established)
 
-**Success Criteria**:
-- All code reads from unifiedRole only
-- No references to old role field in application code
-- Migration prepared to clean up schema
-
-#### Phase 7-T: Test - Role System Testing
-- Test all organization permission checks work with UnifiedRole
-- Test OrganizationMember operations use new field only
-- Verify no application code depends on old role field
+#### Phase 7-I: Implement - Finalize Role System
+- Switch all reads to `unifiedRole`
+- Remove dual-write logic
+- Prepare final migration
+- **Still completely separate from following**
 
 **Success Criteria**:
-- Permission system works correctly
-- No dependency on old role field
+- Role system unified
+- Following system unaffected
+- Clean separation maintained
 
-#### Phase 7-R: Review - Migration Completion Review
-- Review complete elimination of OrgRole dependencies
-- Validate migration safety for schema cleanup
-
-**Success Criteria**:
-- Safe to remove old role system
-- No breaking changes
-
-#### Phase 7-C: Commit & Push - Role Migration Complete
-- Commit UnifiedRole migration completion
-- Deploy schema cleanup migration
-- Remove OrgRole enum and old role field
+#### Phase 7-T: Test - Final Role Testing
+- Test unified role system
+- Verify following unaffected
+- Test rollback procedures
 
 **Success Criteria**:
-- Role system unified successfully
-- Clean database schema
-- All functionality working
+- Roles working correctly
+- Following independent
+
+#### Phase 7-R: Review - Final Separation Review
+- Confirm complete separation
+- Validate architecture
+
+**Success Criteria**:
+- Clean architecture confirmed
+
+#### Phase 7-C: Commit & Push - Role Cleanup
+- Commit final role changes
+- Remove old role system
+
+**Success Criteria**:
+- Clean unified system
+- Separation maintained
 
 ---
 
-## Dependencies
+## Dependencies (Optimized for Parallel Development)
 
-### Phase Dependencies (Optimized for Parallel Development)
-- **Phase 2** depends on **Phase 1** (schema must exist before role migration)
+### Phase Dependencies
+- **Phase 2** depends on **Phase 1** (schema must exist)
 - **Phase 3** depends on **Phase 1** (Following table must exist)
 - **Phase 4** depends on **Phase 3** (service layer needed for APIs)
-- **Phase 5** depends on **Phase 3** (service layer needed for notifications) ⚡ **OPTIMIZED - Not Phase 4**
+- **Phase 5** depends on **Phase 3** (service layer needed for notifications) ⚡ **NOT Phase 4**
 - **Phase 6** depends on **Phase 4** (APIs needed for UI)
-- **Phase 7** depends on **Phase 2** (dual write must be established)
+- **Phase 7** depends on **Phase 2** (dual-write must be established)
 
 **Note**: Phase 4 and Phase 5 can be developed in parallel after Phase 3 completion
 
-### External Dependencies
-- Prisma ORM for database operations
-- NextAuth.js for authentication
-- Existing notification system for activity feeds
-- Existing entity permission systems
+---
 
-## Risk Mitigation
+## Critical Security & Testing Requirements
 
-### Database Migration Risks
-- **Risk**: Migration fails or causes downtime
-- **Mitigation**: Use expand-and-contract pattern, test migrations thoroughly
+### Security Testing (Every Phase)
+1. **Verify Following Never Grants Access**:
+   - Test follower without visibility cannot see entity
+   - Test following doesn't bypass any permission
+   - Test authorization never reads Following table
 
-### Performance Risks  
-- **Risk**: Following queries are slow at scale
-- **Mitigation**: Proper indexing, performance testing, monitoring
+2. **Visibility Enforcement**:
+   - Test cannot follow without visibility
+   - Test notifications stop when visibility lost
+   - Test follower counts respect visibility
 
-### Data Integrity Risks
-- **Risk**: Orphaned following records
-- **Mitigation**: Cascade deletes, validation in service layer
+3. **Clean Separation**:
+   - Grep codebase: No auth code references Following
+   - Grep codebase: No Following code references roles
+   - Test systems work independently
 
-### API Consistency Risks
-- **Risk**: APIs don't match existing patterns
-- **Mitigation**: Review existing API patterns, use consistent service layer
+### Performance Requirements
+- Follow operation < 200ms
+- Follower count query < 50ms with 10K+ followers
+- Notification generation async (never blocks user)
+- Batch processing prevents timeouts
+
+### User Understanding
+- UI copy review: No permission implications
+- User testing: Understand notification-only
+- Help documentation: Clear separation explained
 
 ## Success Metrics
 
 ### Technical Metrics
-- All database migrations complete without errors
-- API response times under 200ms for following operations
-- Zero data integrity issues
-- 100% test coverage on service layer
+- Zero permission checks using Following table
+- 100% visibility enforcement on follow
+- 100% visibility re-check on notification
+- No auth system dependencies on Following
 
-### User Experience Metrics
-- Follow/unfollow operations complete in under 1 second
-- Activity feed loads in under 2 seconds
-- No user-reported bugs in following functionality
+### User Metrics
+- Users understand "follow = notifications"
+- No confusion about access levels
+- Clear subscription management
 
-## Rollback Plan
+### Security Metrics
+- No permission bypass via following
+- No visibility leaks via notifications
+- Complete system separation verified
 
-### Phase-Level Rollback
-- Each phase commits working functionality
-- Can rollback to previous phase if issues arise
-- Database migrations can be reversed if needed
+## Risk Mitigation
 
-### Emergency Rollback
-- Feature flag to disable following UI if needed
-- Database rollback scripts for each migration
-- Service layer can be disabled without affecting core platform
+### Architecture Risks
+- **Risk**: Developers add permission logic to following
+- **Mitigation**: Code review checklist, automated tests, clear documentation
 
-## Next Steps
+### Security Risks
+- **Risk**: Following bypasses visibility
+- **Mitigation**: Visibility checks at follow and notification time
 
-This plan will be reviewed by the user and refined based on feedback. Once approved, implementation will begin with Phase 1.
+### User Understanding
+- **Risk**: Users think following grants access
+- **Mitigation**: Clear UI copy, help text, documentation
+
+## Expert Validation Complete
+
+Both Gemini and GPT-5 unanimously validated this clean separation approach:
+- **Gemini**: "9/10 confidence - fundamental best practice"
+- **GPT-5**: "Stronger security posture, cleaner architecture"
+
+This implementation plan ensures Following remains a pure notification subscription system with zero permission implications.

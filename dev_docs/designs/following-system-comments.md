@@ -1,65 +1,85 @@
-# Following System Design - Initial
+# Following System Design - Final (Revised)
 
 ## Problem Statement & Requirements
 
 ### Nature of the Problem
-We need to implement a "following" concept that creates a new access level hierarchy: **Follower → Member → Admin**, where following provides external interest with limited visibility privileges. This addresses the gap between completely public access and full membership.
+We need to implement a notification subscription system that allows users to "follow" organizations, projects, and products to receive updates about their activities. This is **NOT a permission system** - following grants zero additional access and is purely about notification preferences.
 
 ### Why This Problem Needs Solving
-Currently, users can either:
-1. **View public content** (no relationship to the entity)
-2. **Apply/Join as full members** (high commitment, immediate internal access)
+Currently, users must manually check entities for updates or rely on being a member to receive notifications. There's no way for interested external users to subscribe to public entity updates without joining as members. Following fills this gap by providing:
+- **Update subscriptions** without membership obligations
+- **Notification preferences** for entities users can already see
+- **Discovery mechanism** through activity feeds
+- **User control** over what updates they receive
 
-There's no middle ground for users who want to **stay informed without full commitment**. Following fills this gap by providing:
-- **Interest signaling** without membership obligations
-- **Curated updates** for interested external users  
-- **Discovery pathway** from follower → member → admin
+### Three Orthogonal Systems (Critical Architecture)
+
+**IMPORTANT**: The platform has three completely separate, independent systems:
+
+1. **RBAC (Role-Based Access Control)**
+   - Controls what **actions** users can perform
+   - Hierarchy: VIEWER → MEMBER → ADMIN → OWNER
+   - Determines: Can user edit? Delete? Invite? Manage?
+
+2. **Visibility System**
+   - Controls what **entities** users can see
+   - Levels: PRIVATE → ORG_VISIBLE → PUBLIC
+   - Determines: Can user view this entity at all?
+
+3. **Following System (This Design)**
+   - Controls what **notifications** users receive
+   - Binary: FOLLOWING / NOT FOLLOWING
+   - Determines: Does user get notified about updates?
+   - **NEVER affects access or permissions**
 
 ### Functional Requirements
-1. **Follow/Unfollow Actions**: Users can follow/unfollow organizations, projects, and products
-2. **Follower Visibility**: Followers can see public content + curated updates meant for followers
-3. **Activity Feeds**: Followers receive notifications/updates about followed entities
-4. **Discovery Features**: Users can discover popular/trending entities to follow
-5. **Management Interface**: Users can manage what they follow in one place
-6. **Cross-Entity Consistency**: Following works similarly across organizations, projects, products
+1. **Follow/Unfollow Actions**: Users can follow/unfollow entities they can already see
+2. **Visibility-Gated Following**: Can only follow what visibility rules allow you to see
+3. **Notification Delivery**: Followers receive notifications about entity updates
+4. **Activity Feeds**: Users can view a feed of updates from followed entities
+5. **Follow Management**: Users can manage their subscriptions in one place
+6. **No Permission Changes**: Following never grants access to anything
 
 ### Non-Functional Requirements
-- **Performance**: Following relationships should scale to 10K+ followers per entity
-- **Data Integrity**: No orphaned following relationships
-- **Migration Safety**: Existing member/admin relationships must be preserved
-- **API Consistency**: Following APIs should match existing member management patterns
+- **Performance**: Handle 10K+ followers per entity efficiently
+- **Scalability**: Asynchronous notification generation for large follower counts
+- **Security**: Following cannot bypass visibility or RBAC rules
+- **Clarity**: Users understand following = notifications only
 
 ### Success Criteria
-- Users can follow organizations without becoming members
-- Following provides meaningful value (updates, discovery)
-- Clear progression path: Follower → Member → Admin
-- Consistent experience across all entity types
+- Users can subscribe to updates from visible entities
+- Following provides zero additional access or permissions
+- Notifications respect visibility rules at delivery time
+- Clear separation from RBAC and visibility systems
 
 ---
 
-## Current System Analysis
+## Alignment Outcomes
 
-### Database Schema State
-- **Organizations**: Use `OrganizationMember` table with `OrgRole` enum (OWNER, MEMBER)
-- **Projects**: Use `ProjectMember` table with `UnifiedRole` enum (OWNER, ADMIN, MEMBER, VIEWER)  
-- **Products**: Use `ProductMember` table with `UnifiedRole` enum (same as projects)
+### Architecture Decision: **[REVISED]** Clean Separation of Concerns
+**Rationale**: Following is purely a notification subscription system, completely orthogonal to RBAC and visibility. This matches industry best practices (GitHub, GitLab, Asana) and prevents security vulnerabilities.
 
-### Key Issues Identified
-1. **Inconsistent Role Systems**: Organizations use 2-level roles while Projects/Products use 4-level roles
-2. **No External Interest Tracking**: No way to track users interested in entities without full membership
-3. **Application Flow Complexity**: Projects have application system but no lightweight following option
+### Entity Scope: **[DECIDED]** All Entity Types Simultaneously
+**Rationale**: Implement for organizations, projects, and products from the start for complete consistency.
+
+### Role System Unification: **[DECIDED]** Unify OrgRole and UnifiedRole
+**Rationale**: Take this opportunity to clean up the inconsistent role architecture (separate from following).
+
+### Following Permissions: **[REVISED]** Zero Additional Access
+**Rationale**: Following is ONLY about notifications. Followers see exactly what non-followers see based on visibility rules. No special access, no additional permissions.
+
+### Expert Consensus:
+- **Gemini (9/10 confidence)**: Strong recommendation for clean separation
+- **GPT-5**: "Choose B. Keep RBAC for what you can do, Visibility for what you can see, Following for what you hear about"
+- **Unanimous agreement**: Conflating systems creates security risks and technical debt
 
 ---
 
-## Architecture Proposals
+## Final Architecture
 
-### Approach A: Unified Following Table (Polymorphic)
-
-
-MWK: Let's use this approach 
-
-**Database Schema:**
+### Database Schema
 ```sql
+-- Following is purely for notifications
 model Following {
   id             String   @id @default(cuid())
   userId         String
@@ -71,8 +91,8 @@ model Following {
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   @@unique([userId, followableId, followableType])
-  @@index([userId])
-  @@index([followableId, followableType])
+  @@index([followableId, followableType])  -- For getFollowers queries
+  @@index([userId, followableType])        -- For getUserFollowing queries
   @@index([followedAt])
 }
 
@@ -81,264 +101,190 @@ enum FollowableType {
   PROJECT  
   PRODUCT
 }
-```
 
-**Pros:**
-- Single table for all following relationships
-- Easy cross-entity queries ("what does user X follow?")
-- Consistent following behavior across all entity types
-- Simple to implement notifications/activity feeds
-- Future entity types automatically supported
-
-**Cons:**
-- Polymorphic relationships harder to enforce referential integrity
-- No type-safe relationships in Prisma
-- Potential performance concerns with mixed entity types
-- Complex joins for entity-specific data
-
-### Approach B: Separate Following Tables (Type-Safe)
-
-**Database Schema:**
-```sql
-model OrganizationFollower {
-  id             String       @id @default(cuid())
-  userId         String
-  organizationId String
-  followedAt     DateTime     @default(now())
-  notificationsEnabled Boolean @default(true)
-  
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  
-  @@unique([userId, organizationId])
-  @@index([userId])
-  @@index([organizationId])
-}
-
-model ProjectFollower {
-  id             String   @id @default(cuid()) 
-  userId         String
-  projectId      String
-  followedAt     DateTime @default(now())
-  notificationsEnabled Boolean @default(true)
-  
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  
-  @@unique([userId, projectId])
-  @@index([userId])
-  @@index([projectId])
-}
-
-model ProductFollower {
-  id             String  @id @default(cuid())
-  userId         String
-  productId      String
-  followedAt     DateTime @default(now())
-  notificationsEnabled Boolean @default(true)
-  
-  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product        Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  
-  @@unique([userId, productId])
-  @@index([userId])
-  @@index([productId])
-}
-```
-
-**Pros:**
-- Type-safe relationships with proper foreign keys
-- Better query performance (indexed relationships)
-- Matches existing member table pattern
-- Clear separation of concerns per entity type
-- Easier to optimize per entity type
-
-**Cons:**
-- Three separate tables to maintain
-- More complex cross-entity queries
-- Code duplication in following logic
-- New entity types require new tables
-
-### Approach C: Extend Existing Member Tables
-
-**Database Schema Changes:**
-```sql
+-- Unify role systems (separate concern from following)
 enum UnifiedRole {
   OWNER
   ADMIN  
   MEMBER
-  FOLLOWER  // NEW
+  VIEWER
 }
 
-enum OrgRole {
-  OWNER
-  MEMBER
-  FOLLOWER  // NEW - requires migration
-}
-
-// Add to existing member tables:
+-- Update OrganizationMember to use UnifiedRole
 model OrganizationMember {
   // ... existing fields ...
-  role           OrgRole  // Now includes FOLLOWER
-  followedAt     DateTime? // Only for followers
-  notificationsEnabled Boolean @default(true) // Only for followers
-}
-
-model ProjectMember {
-  // ... existing fields ...
-  role           UnifiedRole // Already supports hierarchy
-  followedAt     DateTime? // Only for followers  
-  notificationsEnabled Boolean @default(true) // Only for followers
-}
-
-model ProductMember {
-  // ... existing fields ...
-  role           UnifiedRole // Already supports hierarchy
-  followedAt     DateTime? // Only for followers
-  notificationsEnabled Boolean @default(true) // Only for followers
+  role           UnifiedRole  // Changed from OrgRole
+  // ... rest unchanged ...
 }
 ```
 
-**Pros:**
-- Leverages existing permission system
-- Unified access control logic
-- No new tables needed
-- Natural role hierarchy: FOLLOWER < MEMBER < ADMIN < OWNER
-- Easy role transitions (follower can become member)
+### Permission Model
 
-**Cons:**
-- Requires migrating Organization role system to UnifiedRole
-- Mixing membership and following semantics
-- More complex role transition logic
-- Breaking change to existing OrganizationMember queries
+**Critical**: Following provides **ZERO additional access or permissions**.
 
----
+```typescript
+// RBAC Check (determines actions)
+function canUserPerformAction(user, action, entity) {
+  // Check user's role via member tables
+  // NEVER reads Following table
+}
 
-## Simplification Options
+// Visibility Check (determines viewing)
+function canUserSee(user, entity) {
+  // Check entity visibility (PUBLIC, ORG_VISIBLE, PRIVATE)
+  // Check user's membership if needed
+  // NEVER reads Following table
+}
 
-### Option 1: Organization-Only Initial Implementation ✅ **RECOMMENDED**
-**What**: Implement following only for organizations initially, expand to projects/products later
-**Why**: Reduces scope, allows learning from user behavior, organizations are most suitable for following
-**Tradeoff**: Less consistency initially, but faster time-to-market
+// Following Check (determines notifications only)
+function isUserFollowing(user, entity) {
+  // ONLY used for notification routing
+  // NEVER affects access control
+}
+```
 
-REJECTED 
+### Following Rules
 
-### Option 2: Read-Only Following ✅ **RECOMMENDED**
-**What**: Followers can only view content, cannot participate (no comments, reactions, etc.)
-**Why**: Simpler permission system, clearer distinction from members
-**Tradeoff**: Less engagement for followers, but clearer value proposition
+1. **Follow Requirements**:
+   - User must be authenticated
+   - User must have view permission (via visibility system)
+   - Cannot follow yourself (for user entities if added later)
 
-REJECTED 
+2. **Notification Delivery**:
+   - Always re-check visibility at delivery time
+   - If follower loses view access, silently skip notification
+   - No need to delete follow records when visibility changes
 
-### Option 3: No Notification System Initially ✅ **RECOMMENDED**
-**What**: Skip activity feeds/notifications in MVP, add later
-**Why**: Complex feature that can be added after core following works
-**Tradeoff**: Less value for followers initially, but much simpler implementation
+3. **Follow Management**:
+   - Can unfollow even if you lost view access (cleanup allowed)
+   - Follow counts only visible to those who can see the entity
+   - Follow lists respect entity visibility
 
-RREJECTED
+### Notification Architecture
 
-### Option 4: Skip Role System Unification
-**What**: Keep existing OrgRole/UnifiedRole inconsistency, don't unify
-**Why**: Avoids complex migration, less breaking changes
-**Tradeoff**: System remains inconsistent, missed opportunity to clean up architecture
+**Asynchronous Processing** (Critical for scale):
+1. Entity posts update → Event published
+2. Background job fetches followers
+3. For each follower batch:
+   - Check visibility at delivery time
+   - Create notification if user can still see entity
+   - Skip silently if user lost access
+4. Notifications delivered via user's preferred channels
 
-REJECTED
-
-### Option 5: Single Following Type
-**What**: Don't implement different following types (watching vs interested vs etc.)
-**Why**: Simpler user experience and implementation
-**Tradeoff**: Less granular control for users, but clearer mental model
-
-ACCEPTED
-
----
-
-## Open Questions
-
-### Tier 1: Critical Blockers (MUST answer before Plan)
-
-1. **Architecture Choice**: Which approach should we use - Unified table (A), Separate tables (B), or Extend members (C)?
-
-A. 
-
-2. **Role System Unification**: Should we unify OrgRole and UnifiedRole now or keep them separate?
-
-Unify. 
-
-3. **Entity Scope**: Start with organizations only, or implement for all entity types simultaneously?
-
-All. 
-
-4. **Follower Permissions**: What exactly can followers see that non-followers cannot?
-   - Private organization updates made public to followers?
-   - Member directory?
-   - Internal discussions marked "followers can see"?
-
-Nothing. IT's an expression of information interest, not access.
-
-### Tier 2: Important (Should answer before relevant phase)
-
-5. **Notification System**: How should followers receive updates?
-   - Email digests?
-   - In-app notifications?
-   - Activity feed?
-   - All of the above?
-
-All. 
-
-6. **Discovery Features**: How do users find entities to follow?
-   - "Suggested to follow" recommendations?
-   - Trending/popular entities?
-   - Follow lists from other users?
-
-For future referencees. For now, add follow buttons to orgs, product and project pages. 
-
-7. **Management Interface**: Where do users manage their following relationships?
-   - Dedicated "Following" page?
-   - Settings panel?
-   - Profile page?
-
-Settings. 
-
-8. **Transition Flow**: How do followers become members?
-   - Direct upgrade button?
-   - Must still go through application process?
-   - Different flow per entity type?
-
-Postpone. 
-
-### Tier 3: Deferrable (Can answer during implementation)
-
-9. **Analytics**: Should we track follower engagement metrics?
-
-10. **Following Limits**: Should there be limits on how many entities a user can follow?
-
-11. **Visibility Controls**: Should entity owners be able to hide follower counts?
+**Performance Considerations**:
+- Batch processing (1000 followers per job)
+- Index optimization for follower queries
+- Delivery-time visibility checks prevent stale access
 
 ---
 
-## Alternative Approaches Considered
+## Implementation Phases (Revised)
 
-### GitHub-Style Following
-**What**: Follow individual users rather than organizations/projects
-**Why Rejected**: Doesn't fit our organization-centric model, adds complexity
+### Phase 1: Database Migration & Core Schema
+- Add Following table with proper indexes
+- Add FollowableType enum
+- Begin role unification (add unifiedRole field)
+- **NO permission logic in Following table**
 
-### Subscription-Based Model  
-**What**: Paid subscriptions for premium following features
-**Why Rejected**: Conflicts with not-for-profit mission, premature monetization
+### Phase 2: Role System Unification
+- Safely migrate OrganizationMember to UnifiedRole
+- Use expand-and-contract pattern
+- **Separate from following logic entirely**
 
-### Activity-Based Auto-Following
-**What**: Automatically follow entities user interacts with
-**Why Rejected**: Could create unwanted relationships, users should explicitly choose
+### Phase 3: Following Service Layer
+- Implement follow/unfollow operations
+- **Enforce visibility checks on follow**
+- **Never grant permissions via following**
+- Service methods for notification system only
 
-### Public Following Lists
-**What**: Make user's following lists public by default
-**Why Rejected**: Privacy concerns, not core to MVP
+### Phase 4: REST API Endpoints
+- Follow/unfollow endpoints
+- **Must pass visibility check to follow**
+- List endpoints for followers/following
+- **No access control via following**
+
+### Phase 5: Async Notification System
+- Background job infrastructure
+- **Visibility re-check at delivery time**
+- Batch processing for scale
+- Activity feed generation
+
+### Phase 6: UI Components
+- Follow/unfollow buttons
+- Following management interface
+- Activity feed display
+- **Clear messaging: "Follow for updates"**
+
+### Phase 7: Role Migration Completion
+- Finalize UnifiedRole migration
+- Remove OrgRole enum
+- **Still separate from following**
 
 ---
 
-## Expert Review Results
+## Migration Strategy
 
-**Note**: Expert analysis encountered a technical issue and provided analysis of an unrelated MCP client issue instead of the following system design. A subsequent expert review should be conducted during the Align phase.
+### From Conflated Design to Clean Separation
 
-**Next Steps**: The design requires human review and alignment on the critical architectural decisions before proceeding to detailed planning.
+1. **Audit Permission Checks**:
+   - Find any code checking follower status for access
+   - Remove ALL permission logic based on following
+   - Replace with proper RBAC/visibility checks
+
+2. **Update API Contracts**:
+   - Follow endpoints only affect notifications
+   - No "follower can view" or similar permissions
+   - Clear documentation of separation
+
+3. **Add Safety Checks**:
+   - Follow creation requires canUserSee()
+   - Notification delivery requires canUserSee()
+   - Never use following for access decisions
+
+4. **UI/UX Clarity**:
+   - "Follow" button says "Get updates" or "Subscribe"
+   - Help text: "Following lets you receive notifications"
+   - Never imply access changes from following
+
+---
+
+## Security Considerations
+
+### What Following is NOT
+- ❌ NOT a permission level
+- ❌ NOT a way to grant access
+- ❌ NOT a visibility modifier
+- ❌ NOT part of RBAC
+
+### Security Boundaries
+- Following table is NEVER read during authorization
+- Visibility changes don't require follow cleanup
+- Follow state cannot bypass any access controls
+- Notification delivery enforces visibility
+
+### Testing Requirements
+- Verify follower with no visibility gets NO notifications
+- Verify follow action requires current visibility
+- Verify no permission checks read Following table
+- Verify visibility loss stops notifications
+
+---
+
+## Expert Review Complete: **[APPROVED]**
+
+Both Gemini and GPT-5 unanimously recommend this clean separation of concerns. Key validations:
+- Matches industry best practices (GitHub model)
+- Prevents security vulnerabilities
+- Reduces system complexity
+- Clear user mental model
+- Maintainable architecture
+
+## Summary
+
+The Following System is a **pure notification subscription service** that:
+1. Requires visibility to follow
+2. Grants zero additional permissions
+3. Delivers notifications respecting current visibility
+4. Remains completely independent of RBAC and visibility systems
+
+This clean separation ensures security, clarity, and maintainability while providing users with the notification features they need.
