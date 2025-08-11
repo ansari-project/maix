@@ -44,7 +44,7 @@ async function checkCommentPermissions(commentId: string, userId: string): Promi
   }
 
   // Project admins can moderate comments on project-related posts
-  if (comment.post.projectId) {
+  if (comment.post?.projectId) {
     const projectMember = await prisma.projectMember.findFirst({
       where: {
         projectId: comment.post.projectId,
@@ -56,7 +56,7 @@ async function checkCommentPermissions(commentId: string, userId: string): Promi
   }
 
   // Product admins can moderate comments on product-related posts  
-  if (comment.post.productId) {
+  if (comment.post?.productId) {
     const productMember = await prisma.productMember.findFirst({
       where: {
         productId: comment.post.productId,
@@ -116,6 +116,12 @@ async function handleGetComment(params: ManageCommentParams) {
           product: { select: { name: true } }
         } 
       },
+      todo: {
+        select: {
+          id: true,
+          title: true
+        }
+      },
       _count: { select: { replies: true } }
     }
   });
@@ -127,13 +133,18 @@ async function handleGetComment(params: ManageCommentParams) {
   let description = `Comment: ${comment.content}\n`;
   description += `Author: ${comment.author?.name || 'Unknown'}\n`;
   description += `Created: ${comment.createdAt}\n`;
-  description += `Post: ${comment.post.type} - ${comment.post.content.substring(0, 100)}...\n`;
   
-  if (comment.post.project) {
-    description += `Project: ${comment.post.project.name}\n`;
-  }
-  if (comment.post.product) {
-    description += `Product: ${comment.post.product.name}\n`;
+  if (comment.post) {
+    description += `Post: ${comment.post.type} - ${comment.post.content.substring(0, 100)}...\n`;
+    
+    if (comment.post.project) {
+      description += `Project: ${comment.post.project.name}\n`;
+    }
+    if (comment.post.product) {
+      description += `Product: ${comment.post.product.name}\n`;
+    }
+  } else if (comment.todo) {
+    description += `Todo: ${comment.todo.title}\n`;
   }
   
   description += `Replies: ${comment._count.replies}`;

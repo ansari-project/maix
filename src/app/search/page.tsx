@@ -6,7 +6,6 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Search, Users, FolderOpen, MessageCircle, Package } from 'lucide-react'
 import Link from 'next/link'
@@ -28,7 +27,6 @@ export default function SearchPage() {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
   const [loading, setLoading] = useState(false)
-  const [activeTab, setActiveTab] = useState('all')
   const router = useRouter()
 
   const performSearch = async (searchQuery: string) => {
@@ -59,10 +57,6 @@ export default function SearchPage() {
     e.preventDefault()
     performSearch(query)
   }
-
-  const filteredResults = results.filter(result => 
-    activeTab === 'all' || result.type === activeTab
-  )
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -118,7 +112,7 @@ export default function SearchPage() {
         {/* Quick Actions */}
         {!query && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <Link href="/public/projects">
+            <Link href="/projects">
               <Card className="hover:shadow-lg transition-shadow cursor-pointer">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center gap-2">
@@ -187,77 +181,63 @@ export default function SearchPage() {
         {/* Search Results */}
         {query && (
           <div>
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList>
-                <TabsTrigger value="all">
-                  All ({results.length})
-                </TabsTrigger>
-                <TabsTrigger value="project">
-                  Projects ({results.filter(r => r.type === 'project').length})
-                </TabsTrigger>
-                <TabsTrigger value="product">
-                  Products ({results.filter(r => r.type === 'product').length})
-                </TabsTrigger>
-                <TabsTrigger value="question">
-                  Questions ({results.filter(r => r.type === 'question').length})
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value={activeTab} className="mt-6">
-                {loading ? (
-                  <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                    <p className="mt-2 text-muted-foreground">Searching...</p>
-                  </div>
-                ) : filteredResults.length === 0 ? (
-                  <Card>
-                    <CardContent className="text-center py-8">
-                      <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground">
-                        {query ? `No results found for "${query}"` : 'Start typing to search'}
-                      </p>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <div className="space-y-4">
-                    {filteredResults.map((result) => (
-                      <Link key={result.id} href={getResultLink(result)}>
-                        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                          <CardHeader>
-                            <div className="flex items-start justify-between">
-                              <div className="flex items-center gap-2">
-                                {getIcon(result.type)}
-                                <CardTitle className="text-lg">{result.title}</CardTitle>
-                              </div>
-                              <Badge variant="outline">
-                                {result.type}
-                              </Badge>
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                <p className="mt-2 text-muted-foreground">Searching...</p>
+              </div>
+            ) : results.length === 0 ? (
+              <Card>
+                <CardContent className="text-center py-8">
+                  <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">
+                    No results found for &ldquo;{query}&rdquo;
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div>
+                <h2 className="text-lg font-semibold mb-4">
+                  Found {results.length} result{results.length !== 1 ? 's' : ''}
+                </h2>
+                <div className="space-y-4">
+                  {results.map((result) => (
+                    <Link key={result.id} href={getResultLink(result)}>
+                      <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                        <CardHeader>
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-center gap-2">
+                              {getIcon(result.type)}
+                              <CardTitle className="text-lg">{result.title}</CardTitle>
                             </div>
-                            {result.description && (
-                              <CardDescription className="mt-2">
-                                {result.description.length > 150 
-                                  ? `${result.description.substring(0, 150)}...` 
-                                  : result.description}
-                              </CardDescription>
+                            <Badge variant="outline">
+                              {result.type}
+                            </Badge>
+                          </div>
+                          {result.description && (
+                            <CardDescription className="mt-2">
+                              {result.description.length > 150 
+                                ? `${result.description.substring(0, 150)}...` 
+                                : result.description}
+                            </CardDescription>
+                          )}
+                        </CardHeader>
+                        <CardContent>
+                          <div className="flex items-center justify-between text-sm text-muted-foreground">
+                            {result.owner && (
+                              <span>By {result.owner.name || result.owner.email}</span>
                             )}
-                          </CardHeader>
-                          <CardContent>
-                            <div className="flex items-center justify-between text-sm text-muted-foreground">
-                              {result.owner && (
-                                <span>By {result.owner.name || result.owner.email}</span>
-                              )}
-                              <span>
-                                {new Date(result.createdAt).toLocaleDateString()}
-                              </span>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
+                            <span>
+                              {new Date(result.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
