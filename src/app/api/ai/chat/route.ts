@@ -42,11 +42,21 @@ export async function POST(request: NextRequest) {
       tools = {} // Continue without MCP tools if retrieval fails
     }
 
-    // 6. Stream AI response using Gemini with MCP tools
+    // 6. Stream AI response using Gemini with MCP tools and Google Search grounding
     const hasTools = Object.keys(tools).length > 0
+    
+    // Add Google Search grounding as a built-in tool
+    // This enables the AI to search Google for real-time information
+    const allTools = {
+      ...tools,
+      // Enable Google Search grounding for real-time information
+      google_search: google.tools.googleSearch({})
+    }
+    
     const streamConfig: any = {
       model: google('gemini-2.0-flash'),
       messages: messages,
+      experimental_providerMetadata: true, // Enable to get grounding metadata
       onFinish: async (result: any) => {
         // Add turn to conversation after streaming completes
         const userMessage = messages[messages.length - 1]
@@ -68,12 +78,21 @@ export async function POST(request: NextRequest) {
         if (todoToolsCalled) {
           console.log('Todo-related MCP tools were called in this conversation')
         }
+        
+        // Log if Google Search was used
+        const googleSearchUsed = result.toolCalls?.some((tc: any) => 
+          tc.toolName === 'google_search'
+        )
+        
+        if (googleSearchUsed) {
+          console.log('Google Search grounding was used in this conversation')
+        }
       },
     }
     
-    // Only add tools if we have them
-    if (hasTools) {
-      streamConfig.tools = tools
+    // Add tools if we have any (MCP tools + Google Search)
+    if (Object.keys(allTools).length > 0) {
+      streamConfig.tools = allTools
       streamConfig.toolChoice = 'auto'
     }
     
@@ -83,7 +102,9 @@ export async function POST(request: NextRequest) {
       console.log('📝 Attempting to stream with config:', { 
         hasTools, 
         messageCount: messages.length,
-        toolCount: Object.keys(tools).length 
+        mcpToolCount: Object.keys(tools).length,
+        googleSearchEnabled: true,
+        totalToolCount: Object.keys(allTools).length 
       })
       stream = await streamText(streamConfig)
     } catch (streamError) {
