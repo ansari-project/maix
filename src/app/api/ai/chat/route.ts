@@ -65,12 +65,10 @@ export async function POST(request: NextRequest) {
     // 6. Stream AI response using Gemini with MCP tools and Google Search grounding
     const hasTools = Object.keys(tools).length > 0
     
-    // Add Google Search grounding as a built-in tool
-    // This enables the AI to search Google for real-time information
+    // Use only MCP tools to avoid mixing function tools with provider tools
+    // Gemini doesn't allow mixing custom function tools with provider-defined tools
     const allTools = {
-      ...tools,
-      // Enable Google Search grounding for real-time information
-      google_search: google.tools.googleSearch({})
+      ...tools
     }
     
     // Create a system message that describes available tools dynamically
@@ -98,12 +96,11 @@ You have access to ${toolNames.length} tools to help users manage their work on 
 
 ${toolDescriptions}
 
-When users ask you to perform actions like creating projects, managing todos, searching for information, or organizing their work, use these tools to help them. You can search Google for current events, facts, and real-time information when needed.
+When users ask you to perform actions like creating projects, managing todos, searching for information, or organizing their work, use these tools to help them.
 
 Be proactive in using tools when appropriate. For example:
 - If someone asks "What projects do I have?", use the search tools
 - If someone says "Create a todo for...", use the todo management tool
-- If someone asks about current events or facts, use google_search
 - If someone wants to create something, use the appropriate management tool
 
 **CRITICAL INSTRUCTION**: You MUST use the available tools to complete user requests. Never say you cannot fulfill a request if you have the appropriate tool available.
@@ -120,6 +117,19 @@ Be proactive in using tools when appropriate. For example:
    - For "mark as done/completed": set status to "COMPLETED"
    - For "start working on X": set status to "IN_PROGRESS"
 
+**TOOL RESULT HANDLING**: When you receive results from tools, ALWAYS format them into a clear, human-readable response. Do not just return raw tool output. Present the information in a helpful, conversational way.
+
+Example interaction:
+User: "What are my todos?"
+Assistant: (calls maix_manage_todo with action "list-all")
+Tool Result: {"todos": [{"id": "123", "title": "Review pull request", "status": "IN_PROGRESS"}, {"id": "124", "title": "Update documentation", "status": "NOT_STARTED"}]}
+Assistant: "Here are your current todos:
+
+1. **Review pull request** - In Progress
+2. **Update documentation** - Not Started
+
+You have 2 tasks total. Would you like to update any of these or add new ones?"
+
 When working with dates and times, be aware of the user's timezone and adjust accordingly. For todos and deadlines, consider the user's local time.
 
 Always confirm actions taken and provide clear feedback about what was done.`
@@ -131,27 +141,59 @@ Always confirm actions taken and provide clear feedback about what was done.`
       : [systemMessage, ...messages]
     
     const streamConfig: any = {
-      model: google('gemini-2.0-flash'),
+      model: google('gemini-2.5-flash'),
       messages: messagesWithSystem,
+      maxSteps: 10, // Allow multiple tool call steps
       experimental_providerMetadata: true, // Enable to get grounding metadata
       onFinish: async (result: any) => {
         // Add turn to conversation after streaming completes
         const userMessage = messages[messages.length - 1]
-        const assistantContent = result.text || 'Response generated with tool calls'
+        
+        // If tools were called but no text was generated, this means Gemini needs another round
+        // This shouldn't happen with proper SDK handling, but log it for debugging
+        let assistantContent = result.text
+        
+        if (!assistantContent && result.toolCalls && result.toolCalls.length > 0) {
+          console.warn('⚠️ Tools were called but no text response generated. This may indicate a continuation issue.')
+          // Try to extract content from tool results for logging
+          if (result.toolResults && result.toolResults.length > 0) {
+            const toolResultSummary = result.toolResults.map((tr: any) => 
+              `Tool ${tr.toolName || 'unknown'}: ${tr.result?.substring(0, 100) || 'no result'}`
+            ).join('; ')
+            assistantContent = `Processing tool results: ${toolResultSummary}`
+          } else {
+            assistantContent = 'Tool calls executed successfully'
+          }
+        } else if (!assistantContent) {
+          assistantContent = 'Response generated'
+        }
         
         console.log('════════════════════════════════════════')
         console.log('📥 GEMINI RESPONSE:')
         console.log('Text:', assistantContent.substring(0, 500))
         console.log('Tool Calls:', result.toolCalls?.length || 0)
+        console.log('Finish Reason:', result.finishReason)
+        console.log('Usage:', result.usage)
+        console.log('Warnings:', result.warnings)
         
         // Debug: Log all tool calls
         if (result.toolCalls && result.toolCalls.length > 0) {
           console.log('🛠️ Tool calls made:', result.toolCalls.map((tc: any) => ({
             name: tc.toolName,
-            args: tc.args
+            args: tc.args,
+            result: tc.result?.substring(0, 200) + '...' || 'NO RESULT'
           })))
         } else {
           console.log('⚠️ No tool calls made for message:', userMessage.content)
+        }
+        
+        // Check for tool call errors
+        if (result.toolResults && result.toolResults.length > 0) {
+          console.log('🔧 Tool Results:', result.toolResults.map((tr: any) => ({
+            toolCallId: tr.toolCallId,
+            result: tr.result?.substring(0, 200) + '...' || 'NO RESULT',
+            isError: tr.isError
+          })))
         }
         console.log('════════════════════════════════════════')
         
@@ -218,7 +260,6 @@ Always confirm actions taken and provide clear feedback about what was done.`
     console.log('════════════════════════════════════════')
     
     // Try to stream the response
-    let stream
     try {
       console.log('📝 Attempting to stream with config:', { 
         hasTools, 
@@ -228,7 +269,15 @@ Always confirm actions taken and provide clear feedback about what was done.`
         totalToolCount: Object.keys(allTools).length,
         toolChoice: streamConfig.toolChoice
       })
-      stream = streamText(streamConfig)
+      
+      const result = await streamText(streamConfig)
+      
+      // Add conversation ID to response headers
+      const response = result.toTextStreamResponse()
+      response.headers.set('X-Conversation-ID', conversation.id)
+      
+      return response
+      
     } catch (streamError) {
       console.error('🚨 StreamText failed:', streamError)
       // Fallback to a simple response without streaming
@@ -237,12 +286,6 @@ Always confirm actions taken and provide clear feedback about what was done.`
         error: true
       })
     }
-
-    // Add conversation ID to response headers
-    const response = stream.toTextStreamResponse()
-    response.headers.set('X-Conversation-ID', conversation.id)
-    
-    return response
 
   } catch (error) {
     console.error('AI Chat API Error:', error)
