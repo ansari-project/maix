@@ -1,6 +1,5 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
-import { jsonSchema } from 'ai'
 import type { Tool } from 'ai'
 
 /**
@@ -304,29 +303,25 @@ export class OfficialMcpClientService {
         inputSchema = this.zodToJsonSchema(inputSchema)
       }
       
-      // Sanitize the schema for Gemini compatibility
-      inputSchema = this.sanitizeSchemaForGemini(inputSchema)
-      
       // Create tool definition directly for streamText
       // streamText expects raw tool definitions, not the result of tool() function
       try {
+        // Sanitize the schema for Gemini compatibility
+        inputSchema = this.sanitizeSchemaForGemini(inputSchema)
         // Use the actual description from MCP tool, don't fall back to generic
         const toolDescription = mcpTool.description || this.getDefaultDescription(mcpTool.name)
-        
-        // Create jsonSchema and log what it produces
-        const wrappedSchema = jsonSchema(inputSchema)
         
         // Debug logging for schema structure
         if (mcpTool.name === 'maix_manage_todo') {
           console.log(`📋 SCHEMA DEBUG for ${mcpTool.name}:`)
           console.log('📋 Original inputSchema:', JSON.stringify(inputSchema, null, 2))
-          console.log('📋 After jsonSchema() wrapper:', JSON.stringify(wrappedSchema, null, 2))
+          console.log('📋 Using raw JSON schema (no wrapper):', JSON.stringify(inputSchema, null, 2))
           console.log('📋 Tool description:', toolDescription)
         }
         
         const aiTool = {
           description: toolDescription,
-          inputSchema: wrappedSchema, // Use jsonSchema wrapper for validation
+          parameters: inputSchema, // Use raw JSON schema for function tools
           execute: async (args: any) => {
             console.log(`🎯 Tool execution started for ${mcpTool.name} with args:`, args)
             
@@ -339,19 +334,34 @@ export class OfficialMcpClientService {
             }
             console.log('✅ PAT available for tool execution')
             
-            const client = await this.getClient(pat)
-            if (!client) {
-              console.error('❌ Failed to get MCP client for tool execution')
-              throw new Error('Failed to get MCP client for tool execution')
-            }
-            console.log('✅ MCP client obtained for tool execution')
-            
+            let client: Client | null = null
             try {
+              // Add timeout for client creation
+              console.log(`🔗 Creating MCP client for tool execution...`)
+              const clientPromise = this.getClient(pat)
+              const timeoutPromise = new Promise<null>((_, reject) => {
+                setTimeout(() => reject(new Error(`Tool execution client creation timeout after 10s for ${mcpTool.name}`)), 10000)
+              })
+              
+              client = await Promise.race([clientPromise, timeoutPromise])
+              
+              if (!client) {
+                console.error('❌ Failed to get MCP client for tool execution')
+                throw new Error('Failed to get MCP client for tool execution')
+              }
+              console.log('✅ MCP client obtained for tool execution')
+              
+              // Add timeout for tool execution
               console.log(`📡 Calling MCP tool ${mcpTool.name} via client.callTool`)
-              const result = await client.callTool({
+              const toolPromise = client.callTool({
                 name: mcpTool.name,
                 arguments: args
               })
+              const toolTimeoutPromise = new Promise<never>((_, reject) => {
+                setTimeout(() => reject(new Error(`Tool execution timeout after 15s for ${mcpTool.name}`)), 15000)
+              })
+              
+              const result = await Promise.race([toolPromise, toolTimeoutPromise])
               console.log(`✅ MCP tool ${mcpTool.name} execution completed, result:`, result)
               
               // Convert MCP tool result to AI SDK format
@@ -368,6 +378,17 @@ export class OfficialMcpClientService {
             } catch (error) {
               console.error(`❌ Tool execution failed for ${mcpTool.name}:`, error)
               throw error
+            } finally {
+              // CRITICAL: Always close the client after tool execution
+              if (client) {
+                try {
+                  console.log(`🔒 Closing MCP client after tool execution for ${mcpTool.name}`)
+                  await client.close()
+                  console.log(`✅ MCP client closed successfully for ${mcpTool.name}`)
+                } catch (closeError) {
+                  console.error(`⚠️ Error closing MCP client for ${mcpTool.name}:`, closeError)
+                }
+              }
             }
           }
         }
@@ -421,6 +442,8 @@ export class OfficialMcpClientService {
     }
 
     let client: Client | null = null
+    let toolsResult: any
+    
     try {
       client = await this.getClient(token)
       
@@ -435,37 +458,39 @@ export class OfficialMcpClientService {
         setTimeout(() => reject(new Error('Tool listing timeout after 5s')), 5000)
       })
       
-      const toolsResult = await Promise.race([listPromise, timeoutPromise])
-      
-      // Debug: Log the raw MCP tools before conversion
-      console.log('📋 RAW MCP TOOLS from listTools():')
-      console.log('📋 Number of tools:', toolsResult.tools.length)
-      
-      const todoTool = toolsResult.tools.find((t: any) => t.name === 'maix_manage_todo')
-      if (todoTool) {
-        console.log('📋 RAW maix_manage_todo tool:', JSON.stringify(todoTool, null, 2))
-      }
-
-      // Convert to AI SDK format
-      const tools = this.convertToAISdkTools(toolsResult.tools)
-      
-      // Cache tools for this PAT (safe to cache tools, just not clients)
-      this.toolsCache.set(token, tools)
-      return tools
+      toolsResult = await Promise.race([listPromise, timeoutPromise])
     } catch (error) {
       console.error('Failed to get MCP tools:', error)
-      return {}
-    } finally {
-      // CRITICAL: Always close the client to prevent connection leaks
-      if (client) {
-        try {
-          await client.close()
-          console.log('Closed MCP client after tool retrieval')
-        } catch (closeError) {
-          console.error('Error closing MCP client:', closeError)
-        }
+      // If client operations fail, use empty tools list for conversion
+      toolsResult = { tools: [] }
+    }
+    
+    // Debug: Log the raw MCP tools before conversion
+    console.log('📋 RAW MCP TOOLS from listTools():')
+    console.log('📋 Number of tools:', toolsResult.tools.length)
+    
+    const todoTool = toolsResult.tools.find((t: any) => t.name === 'maix_manage_todo')
+    if (todoTool) {
+      console.log('📋 RAW maix_manage_todo tool:', JSON.stringify(todoTool, null, 2))
+    }
+
+    // Convert to AI SDK format (outside try-catch to allow individual tool failures)
+    const tools = this.convertToAISdkTools(toolsResult.tools)
+    
+    // Cache tools for this PAT (safe to cache tools, just not clients)
+    this.toolsCache.set(token, tools)
+    
+    // CRITICAL: Always close the client to prevent connection leaks
+    if (client) {
+      try {
+        await client.close()
+        console.log('Closed MCP client after tool retrieval')
+      } catch (closeError) {
+        console.error('Error closing MCP client:', closeError)
       }
     }
+    
+    return tools
   }
 
   /**
