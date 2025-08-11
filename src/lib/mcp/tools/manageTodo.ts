@@ -6,7 +6,7 @@ import type { User } from "@prisma/client";
 
 // Zod schema for todo management parameters
 export const ManageTodoSchema = z.object({
-  action: z.enum(["create", "update", "delete", "get", "list", "list-standalone"]).describe("The operation to perform"),
+  action: z.enum(["create", "update", "delete", "get", "list", "list-standalone", "list-all"]).describe("The operation to perform"),
   todoId: z.string().optional().describe("The ID of the todo (required for update, delete, get actions)"),
   projectId: z.string().optional().describe("The ID of the project (optional for create, required for list actions - use list-standalone for personal todos)"),
   title: z.string().min(1).max(255).optional().describe("Todo title"),
@@ -155,6 +155,113 @@ export async function handleManageTodo(params: ManageTodoParams, context: Contex
       }).join("\n");
 
       return `Your standalone personal todos:\n${todoList}`;
+    }
+
+    case "list-all": {
+      // Get ALL user's todos - both personal and from projects
+      
+      // First get personal todos
+      const personalTodos = await prisma.todo.findMany({
+        where: { 
+          creatorId: user.id,
+          projectId: null // Standalone todos have no project
+        },
+        include: {
+          creator: { select: { name: true, email: true } },
+          assignee: { select: { name: true, email: true } },
+        },
+        orderBy: [
+          { status: "asc" },
+          { createdAt: "desc" }
+        ]
+      });
+
+      // Get project todos where user is creator, assignee, or project member
+      const projectTodos = await prisma.todo.findMany({
+        where: {
+          projectId: { not: null },
+          OR: [
+            { creatorId: user.id },
+            { assigneeId: user.id },
+            {
+              project: {
+                OR: [
+                  { ownerId: user.id },
+                  { 
+                    applications: {
+                      some: {
+                        userId: user.id,
+                        status: "ACCEPTED"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        include: {
+          creator: { select: { name: true, email: true } },
+          assignee: { select: { name: true, email: true } },
+          project: { select: { name: true } }
+        },
+        orderBy: [
+          { status: "asc" },
+          { createdAt: "desc" }
+        ]
+      });
+
+      if (personalTodos.length === 0 && projectTodos.length === 0) {
+        return "No todos found. You can create one by saying 'Create a todo for...'";
+      }
+
+      let result = "# All Your Todos\n\n";
+
+      // Add personal todos section
+      if (personalTodos.length > 0) {
+        result += "## Personal Todos\n";
+        const personalList = personalTodos.map(todo => {
+          const assigneeText = todo.assignee 
+            ? ` (assigned to ${todo.assignee.name || todo.assignee.email})`
+            : " (unassigned)";
+          
+          const dueDateText = todo.dueDate 
+            ? ` - Due: ${todo.dueDate.toLocaleDateString()}`
+            : "";
+          
+          const statusIcon = todo.status === "COMPLETED" ? "✅" : 
+                            todo.status === "IN_PROGRESS" ? "🔄" : 
+                            todo.status === "WAITING_FOR" ? "⏳" : "⭕";
+          
+          return `  ${statusIcon} ${todo.title}${assigneeText}${dueDateText}`;
+        }).join("\n");
+        result += personalList + "\n\n";
+      }
+
+      // Add project todos section
+      if (projectTodos.length > 0) {
+        result += "## Project Todos\n";
+        const projectList = projectTodos.map(todo => {
+          const assigneeText = todo.assignee 
+            ? ` (assigned to ${todo.assignee.name || todo.assignee.email})`
+            : " (unassigned)";
+          
+          const dueDateText = todo.dueDate 
+            ? ` - Due: ${todo.dueDate.toLocaleDateString()}`
+            : "";
+          
+          const statusIcon = todo.status === "COMPLETED" ? "✅" : 
+                            todo.status === "IN_PROGRESS" ? "🔄" : 
+                            todo.status === "WAITING_FOR" ? "⏳" : "⭕";
+          
+          const projectName = todo.project?.name || "Unknown Project";
+          
+          return `  ${statusIcon} ${todo.title} [${projectName}]${assigneeText}${dueDateText}`;
+        }).join("\n");
+        result += projectList;
+      }
+
+      return result;
     }
 
     case "get": {

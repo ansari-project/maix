@@ -491,7 +491,7 @@ const mcpHandler = createMcpHandler(
     // Tool: Manage todos
     server.tool(
       "maix_manage_todo",
-      "Manage todo items and tasks. Use this to create new todos, update existing ones, mark them complete, or list todos for yourself or a project. Actions: create (add new todo), update (modify todo), delete (remove todo), get (fetch single todo), list (project todos), list-standalone (personal todos)",
+      "Manage todo items and tasks. CRITICAL: When user asks for 'my todos' or 'show todos', use action 'list-all' to get ALL their todos (personal + project). Actions: create (add new todo), update (modify todo), delete (remove todo), get (fetch single todo), list (project todos - requires projectId), list-standalone (user's personal todos only), list-all (ALL user todos - personal + project)",
       ManageTodoSchema.shape,
       async (params, extra) => {
         try {
@@ -512,8 +512,8 @@ const mcpHandler = createMcpHandler(
 
     // Tool: Search todos
     server.tool(
-      "maix_search_todos",
-      "Search and find todos across all projects or filter by specific criteria. Use this to find todos by status (NOT_STARTED, IN_PROGRESS, WAITING_FOR, COMPLETED), assignee, project, or search term. Returns a list of matching todos with their details",
+      "maix_search_todos", 
+      "Search and find todos across ALL projects and assignments. CRITICAL: When user asks for 'my todos', use this AFTER list-standalone to get project-related todos assigned to the user. Use filters: status (NOT_STARTED, IN_PROGRESS, WAITING_FOR, COMPLETED), assignee, project, or search term. Returns todos from projects where user is assigned or member",
       SearchTodosSchema.shape,
       async (params, extra) => {
         try {
