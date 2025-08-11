@@ -1,6 +1,7 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
-import type { Tool } from '@ai-sdk/provider-utils'
+import { tool } from 'ai'
+import type { Tool } from 'ai'
 
 /**
  * Official MCP Client Service using @modelcontextprotocol/sdk
@@ -89,14 +90,14 @@ export class OfficialMcpClientService {
       console.log('MCP Tool being converted:', JSON.stringify(mcpTool, null, 2))
       
       // Convert MCP tool to AI SDK tool format
-      // Handle case where inputSchema might have a different structure
-      const inputSchema = mcpTool.inputSchema || mcpTool.parameters || { type: 'object', properties: {} }
+      // MCP tools have inputSchema that should be a JSON schema
+      const inputSchema = mcpTool.inputSchema || { type: 'object', properties: {} }
       
-      // Convert to AI SDK format with proper error handling
+      // Convert to AI SDK format using the tool() function
       try {
-        tools[mcpTool.name] = {
+        tools[mcpTool.name] = tool({
           description: mcpTool.description || `MCP tool: ${mcpTool.name}`,
-          inputSchema: inputSchema,
+          inputSchema: inputSchema, // AI SDK v5 uses 'inputSchema'
           execute: async (args: any) => {
             // This will be called by the AI SDK when the tool is invoked
             // We need to forward it to the MCP client
@@ -132,7 +133,7 @@ export class OfficialMcpClientService {
               throw error
             }
           }
-        }
+        })
       } catch (toolConversionError) {
         console.error(`Failed to convert MCP tool ${mcpTool.name}:`, toolConversionError)
         // Skip this tool if conversion fails
