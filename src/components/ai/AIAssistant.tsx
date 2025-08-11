@@ -123,6 +123,7 @@ export function AIAssistant() {
             content: msg.content
           })),
           conversationId: conversationId,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           // Include context about current page  
           context: {
             currentPath: currentPath || '/'

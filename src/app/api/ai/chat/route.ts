@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Parse request
-    const { messages, conversationId } = await request.json()
+    const { messages, conversationId, timezone } = await request.json()
 
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json({ error: 'Messages array is required' }, { status: 400 })
@@ -62,9 +62,17 @@ export async function POST(request: NextRequest) {
       return `- ${name}: ${description}`
     }).join('\n')
     
+    // Get current date and format timezone info
+    const currentDate = new Date().toISOString().split('T')[0]
+    const userTimezone = timezone || 'UTC'
+    const timezoneInfo = timezone ? `User's timezone: ${timezone}` : 'Timezone: UTC (default)'
+    
     const systemMessage = {
       role: 'system',
       content: `You are an AI assistant for Maix, a platform that connects skilled volunteers with meaningful AI/tech projects. 
+
+Current date: ${currentDate}
+${timezoneInfo}
       
 You have access to ${toolNames.length} tools to help users manage their work on the platform:
 
@@ -77,6 +85,8 @@ Be proactive in using tools when appropriate. For example:
 - If someone says "Create a todo for...", use the todo management tool
 - If someone asks about current events or facts, use google_search
 - If someone wants to create something, use the appropriate management tool
+
+When working with dates and times, be aware of the user's timezone and adjust accordingly. For todos and deadlines, consider the user's local time.
 
 Always confirm actions taken and provide clear feedback about what was done.`
     }
