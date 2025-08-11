@@ -9,10 +9,19 @@ import type { Tool } from 'ai'
  * This replaces the experimental Vercel AI SDK MCP client with the official SDK
  * which properly supports the Streamable HTTP transport (POST for messages, GET for SSE).
  */
+interface CachedClient {
+  client: Client
+  lastUsed: number
+  patHash: string
+}
+
 export class OfficialMcpClientService {
-  private clientCache: Map<string, Client> = new Map()
+  // Client caching DISABLED - causes timeouts in serverless
+  // private clientCache: Map<string, CachedClient> = new Map()
   private toolsCache: Map<string, Record<string, Tool>> = new Map()
   private baseUrl: string
+  // private readonly CLIENT_TTL_MS = 60000 // 60 seconds TTL for clients
+  // private cleanupInterval: NodeJS.Timeout | null = null
 
   constructor() {
     // In production, use the deployed URL; in development use localhost
@@ -26,17 +35,19 @@ export class OfficialMcpClientService {
     
     this.baseUrl = baseUrl
     console.log('Official MCP Client: Using base URL:', this.baseUrl)
+    
+    // Cleanup disabled - we don't cache clients anymore
+    // this.startCleanupInterval()
   }
 
   /**
    * Get or create MCP client for a specific PAT
+   * IMPORTANT: In serverless, we create fresh clients and close them immediately
    */
   private async getClient(pat: string): Promise<Client | null> {
-    // Check cache for this PAT
-    if (this.clientCache.has(pat)) {
-      return this.clientCache.get(pat)!
-    }
-
+    // DISABLED CACHING - Causes timeout issues in serverless
+    // Each request gets a fresh client that will be closed after use
+    
     try {
       if (!pat) {
         console.error('No PAT provided for MCP client')
@@ -44,7 +55,6 @@ export class OfficialMcpClientService {
       }
 
       // Create transport with authentication
-      // Now uses correct URL without redirect to preserve Authorization header
       const transport = new StreamableHTTPClientTransport(
         new URL(`${this.baseUrl}/api/mcp`),
         {
@@ -67,11 +77,15 @@ export class OfficialMcpClientService {
         }
       )
 
-      // Connect to the transport
-      await client.connect(transport)
+      // Add timeout to prevent hanging
+      const connectPromise = client.connect(transport)
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('MCP connection timeout after 5s')), 5000)
+      })
       
-      // Cache the client for this PAT
-      this.clientCache.set(pat, client)
+      await Promise.race([connectPromise, timeoutPromise])
+      
+      // Don't cache - will close after use
       return client
     } catch (error) {
       console.error('Failed to create MCP client:', error)
@@ -235,50 +249,55 @@ export class OfficialMcpClientService {
     // Set current PAT for tool execution
     this.currentPat = token
 
-    // Check tools cache for this PAT
+    // Still check tools cache (tools themselves are safe to cache)
     if (this.toolsCache.has(token)) {
       return this.toolsCache.get(token)!
     }
 
+    let client: Client | null = null
     try {
-      const client = await this.getClient(token)
+      client = await this.getClient(token)
       
       if (!client) {
         console.warn('MCP client unavailable, returning empty tools')
         return {}
       }
 
-      // List available tools from MCP server
-      const toolsResult = await client.listTools()
+      // List available tools from MCP server with timeout
+      const listPromise = client.listTools()
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Tool listing timeout after 5s')), 5000)
+      })
+      
+      const toolsResult = await Promise.race([listPromise, timeoutPromise])
       
       // Convert to AI SDK format
       const tools = this.convertToAISdkTools(toolsResult.tools)
       
-      // Cache tools for this PAT
+      // Cache tools for this PAT (safe to cache tools, just not clients)
       this.toolsCache.set(token, tools)
       return tools
     } catch (error) {
       console.error('Failed to get MCP tools:', error)
       return {}
+    } finally {
+      // CRITICAL: Always close the client to prevent connection leaks
+      if (client) {
+        try {
+          await client.close()
+          console.log('Closed MCP client after tool retrieval')
+        } catch (closeError) {
+          console.error('Error closing MCP client:', closeError)
+        }
+      }
     }
   }
 
   /**
-   * Clear the cache and close all clients
+   * Clear the cache
    */
   async clearCache() {
-    // Close all cached clients
-    const clients = Array.from(this.clientCache.entries())
-    for (const [pat, client] of clients) {
-      try {
-        await client.close()
-      } catch (error) {
-        console.error(`Error closing MCP client for PAT ${pat}:`, error)
-      }
-    }
-    
-    // Clear the caches
-    this.clientCache.clear()
+    // Only tools cache remains, clients are not cached
     this.toolsCache.clear()
     this.currentPat = undefined
   }
