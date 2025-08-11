@@ -29,12 +29,14 @@ export async function GET() {
     })
     const debugData = await debugResponse.json().catch(() => ({}))
     
-    // Then test actual MCP endpoint
+    // Then test both MCP endpoints
     const mcpUrl = `${baseUrl}/api/mcp`
+    const sseUrl = `${baseUrl}/api/mcp-sse`
     console.log('Testing MCP connection to:', mcpUrl)
+    console.log('Testing SSE connection to:', sseUrl)
     
     // Test with GET request (what the official SDK uses for SSE)
-    const response = await fetch(mcpUrl, {
+    const mcpResponse = await fetch(mcpUrl, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${pat}`,
@@ -43,16 +45,38 @@ export async function GET() {
       },
     })
     
-    const responseText = await response.text()
+    const mcpResponseText = await mcpResponse.text()
+    
+    // Also test our new SSE endpoint
+    const sseResponse = await fetch(sseUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${pat}`,
+        'Accept': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+      },
+    })
+    
+    const sseResponseText = await sseResponse.text()
     
     return NextResponse.json({
-      success: response.ok,
-      status: response.status,
-      statusText: response.statusText,
-      headers: Object.fromEntries(response.headers.entries()),
-      responsePreview: responseText.substring(0, 500),
       patPrefix: pat?.substring(0, 20) + '...',
-      mcpUrl,
+      mcpEndpoint: {
+        url: mcpUrl,
+        success: mcpResponse.ok,
+        status: mcpResponse.status,
+        statusText: mcpResponse.statusText,
+        headers: Object.fromEntries(mcpResponse.headers.entries()),
+        responsePreview: mcpResponseText.substring(0, 500),
+      },
+      sseEndpoint: {
+        url: sseUrl,
+        success: sseResponse.ok,
+        status: sseResponse.status,
+        statusText: sseResponse.statusText,
+        headers: Object.fromEntries(sseResponse.headers.entries()),
+        responsePreview: sseResponseText.substring(0, 500),
+      },
       debugEndpoint: {
         url: debugUrl,
         status: debugResponse.status,

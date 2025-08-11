@@ -35,8 +35,9 @@ export class OfficialMcpClientService {
       }
 
       // Create transport with authentication
+      // Use dedicated SSE endpoint that bypasses mcp-handler
       const transport = new StreamableHTTPClientTransport(
-        new URL(`${this.baseUrl}/api/mcp`),
+        new URL(`${this.baseUrl}/api/mcp-sse`),
         {
           requestInit: {
             headers: {
