@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { aiConversationService } from '@/lib/services/ai-conversation.service'
 import { officialMcpClientService } from '@/lib/services/official-mcp-client.service'
 import { getOrCreateEncryptedAIAssistantPat } from '@/lib/mcp/services/encrypted-pat.service'
-import { streamText } from 'ai'
+import { streamText, generateText } from 'ai'
 import { google } from '@ai-sdk/google'
 
 export async function POST(request: NextRequest) {
@@ -136,15 +136,119 @@ Always confirm actions taken and provide clear feedback about what was done.`
     }
     
     // Prepend system message to messages if not already present
-    const messagesWithSystem = messages[0]?.role === 'system' 
-      ? messages 
+    let workingMessages = messages[0]?.role === 'system' 
+      ? [...messages]
       : [systemMessage, ...messages]
+    
+    // Phase 1: Tool Execution Loop using generateText
+    const maxToolIterations = 5
+    let toolCallsExecuted = false
+    
+    for (let i = 0; i < maxToolIterations; i++) {
+      console.log(`🔄 Tool iteration ${i + 1}/${maxToolIterations}`)
+      
+      try {
+        const result = await generateText({
+          model: google('gemini-2.5-flash'),
+          messages: workingMessages,
+          tools: allTools,
+          system: systemMessage.content,
+        })
+        
+        console.log(`📊 Iteration ${i + 1} result:`, {
+          hasText: !!result.text,
+          textLength: result.text?.length || 0,
+          toolCallCount: result.toolCalls?.length || 0,
+          finishReason: result.finishReason
+        })
+        
+        // If we got text without tool calls, we're done with tools
+        if (result.text && (!result.toolCalls || result.toolCalls.length === 0)) {
+          console.log('✅ Got text response without tool calls, ending tool loop')
+          // Add the assistant's response to messages for final streaming
+          workingMessages.push({
+            role: 'assistant',
+            content: result.text
+          })
+          break
+        }
+        
+        // If we have tool calls, execute them
+        if (result.toolCalls && result.toolCalls.length > 0) {
+          toolCallsExecuted = true
+          console.log(`🛠️ Executing ${result.toolCalls.length} tool calls`)
+          
+          // Add assistant message with tool calls
+          workingMessages.push({
+            role: 'assistant',
+            content: result.toolCalls.map((tc: any) => ({
+              type: 'tool-call',
+              toolCallId: tc.toolCallId,
+              toolName: tc.toolName,
+              args: tc.arguments || tc.args || {}
+            }))
+          })
+          
+          // Execute tools and add results
+          for (const toolCall of result.toolCalls) {
+            console.log(`⚙️ Executing tool: ${toolCall.toolName}`)
+            
+            // Execute the tool manually using its execute function
+            const tool = (allTools as any)[toolCall.toolName]
+            if (tool && tool.execute) {
+              try {
+                const toolArgs = (toolCall as any).arguments || (toolCall as any).args || {}
+                const toolResult = await tool.execute(toolArgs)
+                console.log(`✅ Tool ${toolCall.toolName} executed successfully`)
+                
+                workingMessages.push({
+                  role: 'tool',
+                  content: [{
+                    type: 'tool-result',
+                    toolCallId: toolCall.toolCallId,
+                    toolName: toolCall.toolName,
+                    result: toolResult
+                  }]
+                })
+              } catch (toolError) {
+                console.error(`❌ Tool ${toolCall.toolName} execution failed:`, toolError)
+                // Add error result
+                const errorMessage = toolError instanceof Error ? toolError.message : String(toolError)
+                workingMessages.push({
+                  role: 'tool',
+                  content: [{
+                    type: 'tool-result',
+                    toolCallId: toolCall.toolCallId,
+                    toolName: toolCall.toolName,
+                    result: `Error: ${errorMessage}`
+                  }]
+                })
+              }
+            } else {
+              console.warn(`⚠️ Tool ${toolCall.toolName} not found in available tools`)
+            }
+          }
+        } else if (!result.text) {
+          console.log('⚠️ No text and no tool calls, may need to force text generation')
+          break
+        }
+      } catch (toolError) {
+        console.error(`❌ Error in tool iteration ${i + 1}:`, toolError)
+        break
+      }
+    }
+    
+    // Phase 2: Final Text Generation with streamText (tools disabled)
+    console.log('🎯 Starting final text generation phase')
+    console.log(`📝 Messages count: ${workingMessages.length}`)
+    console.log(`🛠️ Tool calls were executed: ${toolCallsExecuted}`)
     
     const streamConfig: any = {
       model: google('gemini-2.5-flash'),
-      messages: messagesWithSystem,
-      maxSteps: 10, // Allow multiple tool call steps
-      experimental_providerMetadata: true, // Enable to get grounding metadata
+      messages: workingMessages,
+      // Critical: Disable tools to force text generation
+      toolChoice: 'none',
+      experimental_providerMetadata: true,
       onFinish: async (result: any) => {
         // Add turn to conversation after streaming completes
         const userMessage = messages[messages.length - 1]
@@ -225,52 +329,28 @@ Always confirm actions taken and provide clear feedback about what was done.`
       },
     }
     
-    // Add tools if we have any (MCP tools + Google Search)
-    if (Object.keys(allTools).length > 0) {
-      streamConfig.tools = allTools
-      streamConfig.toolChoice = 'auto'
-      
-      // Debug: Log the actual tool being passed
-      const firstToolName = Object.keys(allTools)[0]
-      if (firstToolName) {
-        const firstTool = (allTools as any)[firstToolName]
-        console.log('🔧 First tool being passed to Gemini:', {
-          name: firstToolName,
-          hasExecute: typeof firstTool.execute === 'function',
-          hasInputSchema: !!firstTool.inputSchema,
-          hasParameters: !!firstTool.parameters,
-          keys: Object.keys(firstTool)
-        })
-        // Check if this is the correct structure for streamText
-        console.log('🔧 Tool validation for streamText:', {
-          isValidTool: typeof firstTool.execute === 'function' && (!!firstTool.inputSchema || !!firstTool.parameters)
-        })
-      }
-    }
+    // Note: Tools are disabled in final stream to force text generation
+    // They were already executed in the generateText loop above
     
     // Debug: Log FULL request to Gemini
     console.log('════════════════════════════════════════')
-    console.log('📤 FULL REQUEST TO GEMINI:')
-    console.log('Messages:', JSON.stringify(messagesWithSystem.map(m => ({
-      role: m.role,
-      content: m.content?.substring(0, 200) + (m.content?.length > 200 ? '...' : '')
-    })), null, 2))
-    console.log('Tool Names:', Object.keys(allTools))
+    console.log('📤 FINAL STREAMING REQUEST TO GEMINI:')
+    console.log('Messages count:', workingMessages.length)
+    console.log('Last message role:', workingMessages[workingMessages.length - 1]?.role)
     console.log('Tool Choice:', streamConfig.toolChoice)
+    console.log('Tools enabled:', streamConfig.toolChoice !== 'none' ? 'Yes' : 'No (forced text)')
     console.log('════════════════════════════════════════')
     
     // Try to stream the response
     try {
-      console.log('📝 Attempting to stream with config:', { 
-        hasTools, 
-        messageCount: messages.length,
-        mcpToolCount: Object.keys(tools).length,
-        googleSearchEnabled: true,
-        totalToolCount: Object.keys(allTools).length,
-        toolChoice: streamConfig.toolChoice
+      console.log('📝 Attempting final stream with config:', { 
+        messageCount: workingMessages.length,
+        toolsExecutedInLoop: toolCallsExecuted,
+        toolChoice: streamConfig.toolChoice,
+        forcingTextGeneration: true
       })
       
-      const result = await streamText(streamConfig)
+      const result = streamText(streamConfig)
       
       // Add conversation ID to response headers
       const response = result.toTextStreamResponse()
