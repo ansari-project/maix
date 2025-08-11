@@ -348,8 +348,11 @@ todos = [
 **Purpose**: Conduct a comprehensive review of all work completed through the phases
 
 **Key Review Areas**:
-1. **Feature Completeness**:
+1. **Feature Completeness & User Experience**:
    - Did we implement all features outlined in the original design?
+   - **CRITICAL: Have all changes required for a user to experience the feature been made?**
+   - Are UI components integrated and accessible in the application?
+   - Can users actually find and use the new functionality?
    - Are there any missing requirements or incomplete implementations?
    - Does the implementation match the design intent?
 
