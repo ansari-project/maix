@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useLayout } from '@/contexts/LayoutContext'
 import { cn } from '@/lib/utils'
+import { Markdown } from '@/components/ui/markdown'
 import { 
   Bot, 
   X, 
@@ -316,10 +317,17 @@ export function AIAssistant() {
                       'max-w-[70%] rounded-lg px-4 py-2',
                       message.role === 'user'
                         ? 'bg-blue-600 text-white'
-                        : 'bg-muted text-foreground'
+                        : 'bg-muted'
                     )}
                   >
-                    <p className="whitespace-pre-wrap">{message.content}</p>
+                    {message.role === 'user' ? (
+                      <p className="whitespace-pre-wrap">{message.content}</p>
+                    ) : (
+                      <Markdown 
+                        content={message.content} 
+                        className="prose-sm prose-p:text-foreground prose-headings:text-foreground prose-strong:text-foreground prose-ul:text-foreground prose-ol:text-foreground prose-li:text-foreground prose-code:text-xs"
+                      />
+                    )}
                   </div>
                 </div>
               ))
