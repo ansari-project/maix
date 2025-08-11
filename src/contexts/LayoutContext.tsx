@@ -33,7 +33,7 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
   // State
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [isAIExpanded, setIsAIExpanded] = useState(false)
-  const [aiHeight, setAiHeight] = useState(200) // Default AI height
+  const [aiHeight, setAiHeight] = useState(400) // Default AI height
   const [isMobile, setIsMobile] = useState(false)
   
   // Callbacks
