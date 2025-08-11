@@ -248,7 +248,7 @@ export function AIAssistant() {
 
   const loadConversation = async (convId: string) => {
     try {
-      const response = await fetch('/api/ai/chat', {
+      const response = await fetch(`/api/ai/chat?conversationId=${convId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -257,7 +257,7 @@ export function AIAssistant() {
 
       if (response.ok) {
         const data = await response.json()
-        const conversation = data.conversations.find((c: any) => c.id === convId)
+        const conversation = data.conversation
         
         if (conversation && Array.isArray(conversation.messages)) {
           setMessages(conversation.messages.map((msg: any, index: number) => ({

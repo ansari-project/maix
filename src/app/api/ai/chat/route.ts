@@ -192,7 +192,19 @@ export async function GET(request: NextRequest) {
       return new NextResponse('Unauthorized', { status: 401 })
     }
 
-    // Get recent conversations for user
+    const { searchParams } = new URL(request.url)
+    const conversationId = searchParams.get('conversationId')
+
+    // If requesting a specific conversation, return it with messages
+    if (conversationId) {
+      const conversation = await aiConversationService.findById(conversationId, session.user.id)
+      if (!conversation) {
+        return NextResponse.json({ error: 'Conversation not found' }, { status: 404 })
+      }
+      return NextResponse.json({ conversation })
+    }
+
+    // Otherwise, get recent conversations for user (list view)
     const conversations = await aiConversationService.getRecentForUser(session.user.id)
 
     return NextResponse.json({ conversations })
