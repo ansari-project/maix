@@ -12,6 +12,8 @@ import { ArrowLeft, ExternalLink, Edit3, Trash2, Plus, Package, Calendar, User, 
 import { format } from "date-fns"
 import { Markdown } from "@/components/ui/markdown"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
+import { FollowButton } from "@/components/following"
+import { FollowableType } from "@prisma/client"
 
 function formatProjectStatus(status: string): { label: string; color: string } {
   switch (status) {
@@ -190,6 +192,11 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               </div>
               
               <div className="flex items-center gap-2">
+                <FollowButton 
+                  entityId={product.id}
+                  entityType={FollowableType.PRODUCT}
+                  entityName={product.name}
+                />
                 {product.url && (
                   <Button variant="outline" asChild>
                     <Link href={product.url} target="_blank" rel="noopener noreferrer">

@@ -11,6 +11,8 @@ import OrganizationProjectsList from "./components/OrganizationProjectsList"
 import OrganizationMembersWithInvites from "./components/OrganizationMembersWithInvites"
 import LeaveOrganizationButton from "./components/LeaveOrganizationButton"
 import { getOrganizationBySlug } from "@/lib/organization-service"
+import { FollowButton } from "@/components/following"
+import { FollowableType } from "@prisma/client"
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -71,6 +73,11 @@ export default async function OrganizationPage({ params }: PageProps) {
             </div>
           </div>
           <div className="flex gap-2">
+            <FollowButton 
+              entityId={organization.id}
+              entityType={FollowableType.ORGANIZATION}
+              entityName={organization.name}
+            />
             {isOwner && (
               <Link href={`/organizations/${slug}/edit`}>
                 <Button variant="outline">

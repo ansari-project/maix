@@ -110,7 +110,7 @@ describe('UserSubscriptions', () => {
     })
 
     // Check API call
-    expect(fetch).toHaveBeenCalledWith('/api/v1/users/me/subscriptions')
+    expect(fetch).toHaveBeenCalledWith('/api/following/user')
   })
 
   it('should display notification status badges correctly', async () => {
@@ -170,7 +170,7 @@ describe('UserSubscriptions', () => {
     fireEvent.click(techFoundationSwitch)
 
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith('/api/v1/organizations/org-1/followers/me', {
+      expect(fetch).toHaveBeenCalledWith('/api/following/organizations/org-1/followers/me', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json'
@@ -238,7 +238,7 @@ describe('UserSubscriptions', () => {
     })
 
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith('/api/v1/organizations/org-1/followers/me', {
+      expect(fetch).toHaveBeenCalledWith('/api/following/organizations/org-1/followers/me', {
         method: 'DELETE'
       })
     })
