@@ -100,7 +100,7 @@ describe('TodoDetailsPanelEnhanced', () => {
     })
   })
 
-  it('shows character count for description', () => {
+  it('shows description without character limit', () => {
     render(
       <TodoDetailsPanelEnhanced
         todo={mockTodo}
@@ -109,10 +109,10 @@ describe('TodoDetailsPanelEnhanced', () => {
       />
     )
 
-    expect(screen.getByText(/16\/2000/)).toBeInTheDocument() // "Test Description" is 16 chars
+    expect(screen.getByDisplayValue('Test Description')).toBeInTheDocument()
   })
 
-  it('displays tabs correctly', () => {
+  it('displays sections correctly', () => {
     render(
       <TodoDetailsPanelEnhanced
         todo={mockTodo}
@@ -121,12 +121,11 @@ describe('TodoDetailsPanelEnhanced', () => {
       />
     )
 
-    expect(screen.getByRole('tab', { name: 'Details' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: /Comments \(1\)/ })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'Activity' })).toBeInTheDocument()
+    expect(screen.getByText('Details')).toBeInTheDocument()
+    expect(screen.getByText('Activity & Comments')).toBeInTheDocument()
   })
 
-  it('switches between tabs', () => {
+  it('displays unified timeline correctly', () => {
     render(
       <TodoDetailsPanelEnhanced
         todo={mockTodo}
@@ -135,16 +134,10 @@ describe('TodoDetailsPanelEnhanced', () => {
       />
     )
 
-    // Just verify tab buttons exist and are clickable
-    const commentsTab = screen.getByRole('tab', { name: /Comments/ })
-    const activityTab = screen.getByRole('tab', { name: 'Activity' })
-    
-    expect(commentsTab).toBeInTheDocument()
-    expect(activityTab).toBeInTheDocument()
-    
-    // Can click the tabs without errors
-    fireEvent.click(commentsTab)
-    fireEvent.click(activityTab)
+    // Verify timeline content is visible
+    expect(screen.getByText('Test comment')).toBeInTheDocument()
+    expect(screen.getByText(/commented/)).toBeInTheDocument()
+    expect(screen.getByText(/todo created/i)).toBeInTheDocument()
   })
 
   it('allows project selection when projects are provided', () => {
@@ -183,7 +176,12 @@ describe('TodoDetailsPanelEnhanced', () => {
       />
     )
 
-    const deleteButton = screen.getByRole('button', { name: '' }) // X icon button
+    // Look for a button with X icon (delete button)
+    const buttons = screen.getAllByRole('button')
+    const deleteButton = buttons.find(button => {
+      const svg = button.querySelector('svg')
+      return svg && button.className.includes('h-8 w-8')
+    })
     expect(deleteButton).toBeInTheDocument()
   })
 
@@ -236,7 +234,7 @@ describe('TodoDetailsPanelEnhanced', () => {
     expect(screen.getByText(/Updated.*ago/)).toBeInTheDocument()
   })
 
-  it('shows activity timeline in activity tab', () => {
+  it('shows activity timeline with creation events', () => {
     render(
       <TodoDetailsPanelEnhanced
         todo={mockTodo}
@@ -245,11 +243,7 @@ describe('TodoDetailsPanelEnhanced', () => {
       />
     )
 
-    // Just verify the activity tab exists and can be clicked
-    const activityTab = screen.getByRole('tab', { name: 'Activity' })
-    expect(activityTab).toBeInTheDocument()
-    
-    // Click to ensure no errors
-    fireEvent.click(activityTab)
+    // Verify creation event is shown in timeline (more specific text)
+    expect(screen.getByText(/todo created/i)).toBeInTheDocument()
   })
 })

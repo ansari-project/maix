@@ -37,12 +37,12 @@ const DashboardLayoutContent = memo(function DashboardLayoutContent({ children, 
         {/* Main Content - Account for AI Assistant height */}
         <main 
           className={cn(
-            'flex-1 overflow-auto transition-all duration-300',
+            'flex-1 overflow-hidden transition-all duration-300',
             className
           )}
           style={{
-            // Ensure the padding bottom accounts for AI height properly
-            paddingBottom: isAIExpanded ? `${aiHeight}px` : '48px'
+            // Ensure the height accounts for AI height properly
+            height: isAIExpanded ? `calc(100vh - ${aiHeight}px)` : 'calc(100vh - 48px)'
           }}
         >
           {children}

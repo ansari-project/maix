@@ -7,7 +7,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
   MessageSquare, 
   Send, 
@@ -46,7 +45,6 @@ export function TodoDetailsPanelEnhanced({
   const [newComment, setNewComment] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const [isSubmittingComment, setIsSubmittingComment] = useState(false)
-  const [activeTab, setActiveTab] = useState("details")
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const saveTimeoutRef = useRef<NodeJS.Timeout>()
 
@@ -97,9 +95,6 @@ export function TodoDetailsPanelEnhanced({
       errors.title = "Title must be less than 200 characters"
     }
     
-    if (editedTodo?.description && editedTodo.description.length > 2000) {
-      errors.description = "Description must be less than 2000 characters"
-    }
     
     setValidationErrors(errors)
     return Object.keys(errors).length === 0
@@ -140,6 +135,65 @@ export function TodoDetailsPanelEnhanced({
         return <AlertCircle className="h-4 w-4 text-yellow-600" />
       default:
         return <Clock className="h-4 w-4 text-gray-400" />
+    }
+  }
+
+  // Create unified timeline with comments and activity
+  const createTimeline = () => {
+    if (!todo) return []
+    
+    const timelineEvents = []
+
+    // Add creation event
+    timelineEvents.push({
+      id: 'created',
+      type: 'activity',
+      date: new Date(todo.createdAt),
+      title: 'Todo created',
+      author: 'You',
+      icon: 'created'
+    })
+
+    // Add update event if different from creation
+    if (todo.updatedAt && todo.updatedAt !== todo.createdAt) {
+      timelineEvents.push({
+        id: 'updated',
+        type: 'activity', 
+        date: new Date(todo.updatedAt),
+        title: 'Todo updated',
+        author: 'You',
+        icon: 'updated'
+      })
+    }
+
+    // Add comments
+    if (todo.comments) {
+      todo.comments.forEach(comment => {
+        timelineEvents.push({
+          id: comment.id,
+          type: 'comment',
+          date: new Date(comment.createdAt),
+          title: comment.content,
+          author: comment.author?.name || comment.author?.email || 'Unknown',
+          icon: 'comment'
+        })
+      })
+    }
+
+    // Sort by date (most recent first)
+    return timelineEvents.sort((a, b) => b.date.getTime() - a.date.getTime())
+  }
+
+  const getTimelineIcon = (type: string) => {
+    switch (type) {
+      case 'created':
+        return <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+      case 'updated':
+        return <div className="w-2 h-2 rounded-full bg-green-500"></div>
+      case 'comment':
+        return <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+      default:
+        return <div className="w-2 h-2 rounded-full bg-gray-500"></div>
     }
   }
 
@@ -193,271 +247,235 @@ export function TodoDetailsPanelEnhanced({
         </div>
       </div>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="details">Details</TabsTrigger>
-          <TabsTrigger value="comments">
-            Comments {todo.comments && todo.comments.length > 0 && `(${todo.comments.length})`}
-          </TabsTrigger>
-          <TabsTrigger value="activity">Activity</TabsTrigger>
-        </TabsList>
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Details Section */}
+        <div className="border-b border-border">
+          <h3 className="px-6 py-3 font-medium text-sm text-muted-foreground bg-muted/30">Details</h3>
+        </div>
 
-        {/* Details Tab */}
-        <TabsContent value="details" className="flex-1 overflow-y-auto">
-          <div className="p-6 space-y-6">
-            <div className="space-y-4">
-              {/* Title */}
+        {/* Details Section Content */}
+        <div className="p-6 space-y-6">
+          <div className="space-y-4">
+            {/* Title */}
+            <div className="space-y-2">
+              <Label htmlFor="title">Title *</Label>
+              <Input
+                id="title"
+                value={editedTodo.title}
+                onChange={(e) => handleFieldChange("title", e.target.value)}
+                disabled={readonly}
+                className={validationErrors.title ? "border-red-500" : ""}
+              />
+              {validationErrors.title && (
+                <p className="text-xs text-red-500">{validationErrors.title}</p>
+              )}
+            </div>
+
+            {/* Description */}
+            <div className="space-y-2">
+              <Label htmlFor="description">
+                Description
+              </Label>
+              <Textarea
+                id="description"
+                value={editedTodo.description || ""}
+                onChange={(e) => handleFieldChange("description", e.target.value)}
+                disabled={readonly}
+                rows={6}
+                className={validationErrors.description ? "border-red-500" : ""}
+              />
+              {validationErrors.description && (
+                <p className="text-xs text-red-500">{validationErrors.description}</p>
+              )}
+            </div>
+
+            {/* Status and Due Date */}
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="title">Title *</Label>
-                <Input
-                  id="title"
-                  value={editedTodo.title}
-                  onChange={(e) => handleFieldChange("title", e.target.value)}
+                <Label htmlFor="status">Status</Label>
+                <Select
+                  value={editedTodo.status}
+                  onValueChange={(value) => handleFieldChange("status", value)}
                   disabled={readonly}
-                  className={validationErrors.title ? "border-red-500" : ""}
-                />
-                {validationErrors.title && (
-                  <p className="text-xs text-red-500">{validationErrors.title}</p>
-                )}
+                >
+                  <SelectTrigger id="status">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NOT_STARTED">Not Started</SelectItem>
+                    <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                    <SelectItem value="WAITING_FOR">Waiting For</SelectItem>
+                    <SelectItem value="COMPLETED">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              {/* Description */}
               <div className="space-y-2">
-                <Label htmlFor="description">
-                  Description 
-                  <span className="text-xs text-muted-foreground ml-2">
-                    ({editedTodo.description?.length || 0}/2000)
-                  </span>
+                <Label htmlFor="dueDate">
+                  <Calendar className="inline h-3 w-3 mr-1" />
+                  Due Date
                 </Label>
-                <Textarea
-                  id="description"
-                  value={editedTodo.description || ""}
-                  onChange={(e) => handleFieldChange("description", e.target.value)}
+                <Input
+                  id="dueDate"
+                  type="date"
+                  value={editedTodo.dueDate ? format(new Date(editedTodo.dueDate), "yyyy-MM-dd") : ""}
+                  onChange={(e) => handleFieldChange("dueDate", e.target.value ? new Date(e.target.value) : null)}
                   disabled={readonly}
-                  rows={6}
-                  className={validationErrors.description ? "border-red-500" : ""}
                 />
-                {validationErrors.description && (
-                  <p className="text-xs text-red-500">{validationErrors.description}</p>
-                )}
               </div>
+            </div>
 
-              {/* Status and Due Date */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="status">Status</Label>
+            {/* Project and Assignee */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="project">
+                  <Folder className="inline h-3 w-3 mr-1" />
+                  Project
+                </Label>
+                {projects.length > 0 ? (
                   <Select
-                    value={editedTodo.status}
-                    onValueChange={(value) => handleFieldChange("status", value)}
+                    value={editedTodo.projectId || "none"}
+                    onValueChange={(value) => handleFieldChange("projectId", value === "none" ? null : value)}
                     disabled={readonly}
                   >
-                    <SelectTrigger id="status">
+                    <SelectTrigger id="project">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="NOT_STARTED">Not Started</SelectItem>
-                      <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                      <SelectItem value="WAITING_FOR">Waiting For</SelectItem>
-                      <SelectItem value="COMPLETED">Completed</SelectItem>
+                      <SelectItem value="none">No Project</SelectItem>
+                      {projects.map(project => (
+                        <SelectItem key={project.id} value={project.id}>
+                          {project.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="dueDate">
-                    <Calendar className="inline h-3 w-3 mr-1" />
-                    Due Date
-                  </Label>
-                  <Input
-                    id="dueDate"
-                    type="date"
-                    value={editedTodo.dueDate ? format(new Date(editedTodo.dueDate), "yyyy-MM-dd") : ""}
-                    onChange={(e) => handleFieldChange("dueDate", e.target.value ? new Date(e.target.value) : null)}
-                    disabled={readonly}
-                  />
-                </div>
-              </div>
-
-              {/* Project and Assignee */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="project">
-                    <Folder className="inline h-3 w-3 mr-1" />
-                    Project
-                  </Label>
-                  {projects.length > 0 ? (
-                    <Select
-                      value={editedTodo.projectId || "none"}
-                      onValueChange={(value) => handleFieldChange("projectId", value === "none" ? null : value)}
-                      disabled={readonly}
-                    >
-                      <SelectTrigger id="project">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">No Project</SelectItem>
-                        {projects.map(project => (
-                          <SelectItem key={project.id} value={project.id}>
-                            {project.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <div className="p-2 bg-muted rounded-md text-sm">
-                      {editedTodo.project?.name || "No Project"}
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="assignee">
-                    <User className="inline h-3 w-3 mr-1" />
-                    Assignee
-                  </Label>
-                  {users.length > 0 ? (
-                    <Select
-                      value={editedTodo.assigneeId || "none"}
-                      onValueChange={(value) => handleFieldChange("assigneeId", value === "none" ? null : value)}
-                      disabled={readonly}
-                    >
-                      <SelectTrigger id="assignee">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Unassigned</SelectItem>
-                        {users.map(user => (
-                          <SelectItem key={user.id} value={user.id}>
-                            {user.name || user.email}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <div className="p-2 bg-muted rounded-md text-sm">
-                      {editedTodo.assignee?.name || editedTodo.assignee?.email || "Unassigned"}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Priority and Tags (future enhancement) */}
-              <div className="space-y-2">
-                <Label>Tags</Label>
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary">Enhancement</Badge>
-                  <Badge variant="secondary">UI/UX</Badge>
-                  <Button variant="outline" size="sm" className="h-6 text-xs">
-                    + Add Tag
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </TabsContent>
-
-        {/* Comments Tab */}
-        <TabsContent value="comments" className="flex-1 flex flex-col">
-          <div className="flex-1 overflow-y-auto p-6">
-            {todo.comments && todo.comments.length > 0 ? (
-              <div className="space-y-4">
-                {todo.comments.map((comment) => (
-                  <div key={comment.id} className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <User className="h-4 w-4" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium text-sm">
-                          {comment.author?.name || comment.author?.email || "Unknown"}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(comment.createdAt))} ago
-                        </span>
-                      </div>
-                      <p className="text-sm">{comment.content}</p>
-                    </div>
+                ) : (
+                  <div className="p-2 bg-muted rounded-md text-sm">
+                    {editedTodo.project?.name || "No Project"}
                   </div>
-                ))}
+                )}
               </div>
-            ) : (
-              <div className="text-center py-8">
-                <MessageSquare className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">No comments yet</p>
-              </div>
-            )}
-          </div>
 
-          {/* Comment Input */}
-          {!readonly && (
-            <div className="border-t border-border p-4">
-              <form onSubmit={handleCommentSubmit} className="flex gap-2">
-                <Input
-                  placeholder="Write a comment..."
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  className="flex-1"
-                />
-                <Button type="submit" size="icon" disabled={!newComment.trim() || isSubmittingComment}>
-                  {isSubmittingComment ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  ) : (
-                    <Send className="h-4 w-4" />
-                  )}
-                </Button>
-              </form>
+              <div className="space-y-2">
+                <Label htmlFor="assignee">
+                  <User className="inline h-3 w-3 mr-1" />
+                  Assignee
+                </Label>
+                {users.length > 0 ? (
+                  <Select
+                    value={editedTodo.assigneeId || "none"}
+                    onValueChange={(value) => handleFieldChange("assigneeId", value === "none" ? null : value)}
+                    disabled={readonly}
+                  >
+                    <SelectTrigger id="assignee">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Unassigned</SelectItem>
+                      {users.map(user => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.name || user.email}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="p-2 bg-muted rounded-md text-sm">
+                    {editedTodo.assignee?.name || editedTodo.assignee?.email || "Unassigned"}
+                  </div>
+                )}
+              </div>
             </div>
-          )}
-        </TabsContent>
 
-        {/* Activity Tab */}
-        <TabsContent value="activity" className="flex-1 overflow-y-auto">
+            {/* Priority and Tags (future enhancement) */}
+            <div className="space-y-2">
+              <Label>Tags</Label>
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="secondary">Enhancement</Badge>
+                <Badge variant="secondary">UI/UX</Badge>
+                <Button variant="outline" size="sm" className="h-6 text-xs">
+                  + Add Tag
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Timeline Section */}
+        <div className="border-b border-border">
+          <h3 className="px-6 py-3 font-medium text-sm text-muted-foreground bg-muted/30">Activity & Comments</h3>
+        </div>
+
+        {/* Timeline Content */}
+        <div className="flex-1 overflow-y-auto">
           <div className="p-6">
             <div className="space-y-4">
-              <div className="flex gap-3">
-                <div className="w-2 h-2 rounded-full bg-blue-500 mt-2"></div>
-                <div>
-                  <p className="text-sm">
-                    <span className="font-medium">You</span> created this todo
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {format(new Date(todo.createdAt), "MMM d, yyyy 'at' h:mm a")}
-                  </p>
-                </div>
-              </div>
-              
-              {todo.updatedAt && todo.updatedAt !== todo.createdAt && (
-                <div className="flex gap-3">
-                  <div className="w-2 h-2 rounded-full bg-green-500 mt-2"></div>
-                  <div>
-                    <p className="text-sm">
-                      <span className="font-medium">You</span> updated this todo
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {format(new Date(todo.updatedAt), "MMM d, yyyy 'at' h:mm a")}
-                    </p>
+              {createTimeline().map((event) => (
+                <div key={event.id} className="flex gap-3">
+                  <div className="mt-2 flex-shrink-0">
+                    {getTimelineIcon(event.type)}
                   </div>
-                </div>
-              )}
-
-              {todo.comments?.map((comment) => (
-                <div key={comment.id} className="flex gap-3">
-                  <div className="w-2 h-2 rounded-full bg-purple-500 mt-2"></div>
-                  <div>
-                    <p className="text-sm">
-                      <span className="font-medium">{comment.author?.name || "Someone"}</span> commented
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {format(new Date(comment.createdAt), "MMM d, yyyy 'at' h:mm a")}
-                    </p>
+                  <div className="flex-1 min-w-0">
+                    {event.type === 'comment' ? (
+                      <>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-medium text-sm">{event.author}</span>
+                          <span className="text-xs text-muted-foreground">commented</span>
+                          <span className="text-xs text-muted-foreground">
+                            {formatDistanceToNow(event.date)} ago
+                          </span>
+                        </div>
+                        <div className="bg-muted/30 rounded-lg p-3">
+                          <p className="text-sm break-words">{event.title}</p>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-sm">
+                          <span className="font-medium">{event.author}</span> {event.title.toLowerCase()}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(event.date, "MMM d, yyyy 'at' h:mm a")}
+                        </p>
+                      </>
+                    )}
                   </div>
                 </div>
               ))}
+              
+              {createTimeline().length === 0 && (
+                <div className="text-center py-8">
+                  <MessageSquare className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">No activity yet</p>
+                </div>
+              )}
             </div>
           </div>
-        </TabsContent>
-      </Tabs>
+        </div>
+
+        {/* Comment Input */}
+        {!readonly && (
+          <div className="border-t border-border p-4">
+            <form onSubmit={handleCommentSubmit} className="flex gap-2">
+              <Input
+                placeholder="Write a comment..."
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                className="flex-1"
+              />
+              <Button type="submit" size="icon" disabled={!newComment.trim() || isSubmittingComment}>
+                {isSubmittingComment ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </Button>
+            </form>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
