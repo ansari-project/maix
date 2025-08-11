@@ -348,8 +348,11 @@ todos = [
 **Purpose**: Conduct a comprehensive review of all work completed through the phases
 
 **Key Review Areas**:
-1. **Feature Completeness**:
+1. **Feature Completeness & User Experience**:
    - Did we implement all features outlined in the original design?
+   - **CRITICAL: Have all changes required for a user to experience the feature been made?**
+   - Are UI components integrated and accessible in the application?
+   - Can users actually find and use the new functionality?
    - Are there any missing requirements or incomplete implementations?
    - Does the implementation match the design intent?
 
@@ -570,6 +573,36 @@ dev_docs/
 ---
 
 ## Development Guidelines
+
+### Architectural Patterns
+
+#### Separation of Concerns - Three Orthogonal Systems
+**Following System Implementation** demonstrated the importance of keeping systems completely independent:
+
+1. **RBAC System** - Controls what actions users can perform (OWNER → ADMIN → MEMBER → VIEWER)
+2. **Visibility System** - Controls what entities users can see (PUBLIC → PRIVATE → DRAFT)
+3. **Following System** - Controls notification subscriptions only (grants ZERO permissions)
+
+**Key Pattern**: Never mix concerns. Following should NEVER check permissions, RBAC should NEVER check following status.
+
+#### API Path Management
+Use centralized path utilities to prevent inconsistencies:
+```typescript
+// Good: Centralized API paths
+export const followingApiPaths = {
+  followers: (type: FollowableType, id: string) => 
+    `/api/following/${mapTypeToPath(type)}/${id}/followers`
+}
+
+// Bad: Hardcoded paths scattered throughout codebase
+fetch('/api/v1/organizations/...')  // Breaks when API structure changes
+```
+
+#### Clear User Messaging
+When implementing features that might be confused with permissions:
+- Use explicit language: "Get Updates" instead of "Follow"
+- Add disclaimers: "Following only subscribes you to notifications"
+- Never imply permission changes from actions
 
 ### Claude Commands
 

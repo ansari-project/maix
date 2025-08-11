@@ -12,6 +12,8 @@ import { Markdown } from "@/components/ui/markdown"
 import { MessageSquare } from "lucide-react"
 import { TodoSection } from "@/components/todos/todo-section"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
+import { FollowButton } from "@/components/following"
+import { FollowableType } from "@prisma/client"
 
 function formatProjectStatus(status: string): { label: string; color: string } {
   switch (status) {
@@ -178,6 +180,11 @@ export default function ProjectPageClient({
                 )}
               </div>
               <div className="flex gap-2">
+                <FollowButton 
+                  entityId={project.id}
+                  entityType={FollowableType.PROJECT}
+                  entityName={project.name}
+                />
                 {canApply && (
                   <Button 
                     size="lg" 
