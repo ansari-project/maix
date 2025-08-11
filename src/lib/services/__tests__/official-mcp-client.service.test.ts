@@ -8,11 +8,12 @@ jest.mock('@modelcontextprotocol/sdk/client/streamableHttp.js', () => ({
 
 import { officialMcpClientService, OfficialMcpClientService } from '../official-mcp-client.service'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
-import { tool } from 'ai'
+import { tool, jsonSchema } from 'ai'
 
-// Mock the AI SDK tool function
+// Mock the AI SDK tool and jsonSchema functions
 jest.mock('ai', () => ({
-  tool: jest.fn((config) => config) // Just return the config for testing
+  tool: jest.fn((config) => config), // Just return the config for testing
+  jsonSchema: jest.fn((schema) => schema) // Pass through the schema unchanged
 }))
 
 describe('OfficialMcpClientService', () => {

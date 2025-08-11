@@ -1,6 +1,6 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
-import { tool } from 'ai'
+import { tool, jsonSchema } from 'ai'
 import type { Tool } from 'ai'
 
 /**
@@ -93,11 +93,11 @@ export class OfficialMcpClientService {
       // MCP tools have inputSchema that should be a JSON schema
       const inputSchema = mcpTool.inputSchema || { type: 'object', properties: {} }
       
-      // Convert to AI SDK format using the tool() function
+      // Convert to AI SDK format using the tool() function with jsonSchema wrapper
       try {
         tools[mcpTool.name] = tool({
           description: mcpTool.description || `MCP tool: ${mcpTool.name}`,
-          inputSchema: inputSchema, // AI SDK v5 uses 'inputSchema'
+          inputSchema: jsonSchema(inputSchema), // Wrap JSON schema for AI SDK
           execute: async (args: any) => {
             // This will be called by the AI SDK when the tool is invoked
             // We need to forward it to the MCP client
