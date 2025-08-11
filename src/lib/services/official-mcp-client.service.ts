@@ -85,10 +85,16 @@ export class OfficialMcpClientService {
     const tools: Record<string, Tool> = {}
     
     for (const mcpTool of mcpTools) {
+      // DEBUG: Log the actual MCP tool structure to understand the issue
+      console.log('MCP Tool being converted:', JSON.stringify(mcpTool, null, 2))
+      
       // Convert MCP tool to AI SDK tool format
+      // Handle case where inputSchema might have a different structure
+      const inputSchema = mcpTool.inputSchema || mcpTool.parameters || { type: 'object', properties: {} }
+      
       tools[mcpTool.name] = {
         description: mcpTool.description || '',
-        inputSchema: mcpTool.inputSchema || { type: 'object', properties: {} },
+        inputSchema: inputSchema, // Keep as inputSchema for AI SDK compatibility
         execute: async (args: any) => {
           // This will be called by the AI SDK when the tool is invoked
           // We need to forward it to the MCP client
