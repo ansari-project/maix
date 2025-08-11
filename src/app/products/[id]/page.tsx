@@ -11,6 +11,7 @@ import Link from "next/link"
 import { ArrowLeft, ExternalLink, Edit3, Trash2, Plus, Package, Calendar, User, Users } from "lucide-react"
 import { format } from "date-fns"
 import { Markdown } from "@/components/ui/markdown"
+import { DashboardLayout } from "@/components/layout/DashboardLayout"
 
 function formatProjectStatus(status: string): { label: string; color: string } {
   switch (status) {
@@ -128,9 +129,10 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
   if (status === "loading" || loading) {
     return (
-      <div className="bg-gradient-to-br from-primary/5 to-accent/5 px-4 py-2">
-        <div className="container mx-auto">
-          <div className="max-w-4xl mx-auto">
+      <DashboardLayout>
+        <div className="bg-gradient-to-br from-primary/5 to-accent/5 px-4 py-2">
+          <div className="container mx-auto">
+            <div className="max-w-4xl mx-auto">
             <div className="mb-6">
               <div className="h-10 w-32 bg-gray-200 rounded animate-pulse mb-4"></div>
               <div className="h-8 w-64 bg-gray-200 rounded animate-pulse mb-2"></div>
@@ -161,6 +163,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           </div>
         </div>
       </div>
+      </DashboardLayout>
     )
   }
 
@@ -169,9 +172,10 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const isOwner = session.user?.email === product.owner.email
 
   return (
-    <div className="bg-gradient-to-br from-primary/5 to-accent/5 px-4 py-2">
-      <div className="container mx-auto">
-        <div className="max-w-4xl mx-auto">
+    <DashboardLayout>
+      <div className="bg-gradient-to-br from-primary/5 to-accent/5 px-4 py-2">
+        <div className="container mx-auto">
+          <div className="max-w-4xl mx-auto">
           <div className="mb-6">
             <Button variant="ghost" asChild className="mb-4">
               <Link href="/products">
@@ -398,5 +402,6 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         </div>
       </div>
     </div>
+    </DashboardLayout>
   )
 }

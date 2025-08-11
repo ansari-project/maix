@@ -55,6 +55,20 @@ interface PublicPost {
   parentId?: string | null
 }
 
+interface PublicOrganization {
+  id: string
+  name: string
+  slug: string
+  mission: string | null
+  description: string | null
+  createdAt: Date
+  _count?: {
+    members: number
+    projects: number
+    products: number
+  }
+}
+
 /**
  * Filter user data to remove sensitive information
  */
@@ -128,16 +142,32 @@ export function filterPublicPost(post: any): PublicPost {
 }
 
 /**
+ * Filter organization data for public access
+ */
+export function filterPublicOrganization(organization: any): PublicOrganization {
+  return {
+    id: organization.id,
+    name: organization.name,
+    slug: organization.slug,
+    mission: organization.mission,
+    description: organization.description,
+    createdAt: organization.createdAt,
+    _count: organization._count
+  }
+}
+
+/**
  * Filter an array of items using the appropriate filter function
  */
 export function filterPublicData<T>(
   items: any[],
-  type: 'project' | 'product' | 'post'
+  type: 'project' | 'product' | 'post' | 'organization'
 ): T[] {
   const filterMap = {
     project: filterPublicProject,
     product: filterPublicProduct,
-    post: filterPublicPost
+    post: filterPublicPost,
+    organization: filterPublicOrganization
   }
   
   const filterFn = filterMap[type]

@@ -12,6 +12,16 @@ jest.mock('@/components/feed/FeedContainer', () => ({
   FeedContainer: () => <div data-testid="feed-container">Feed Content</div>
 }))
 
+// Mock the TodosPreview component to avoid async state updates in tests
+jest.mock('../TodosPreview', () => ({
+  TodosPreview: () => (
+    <div data-testid="todos-preview">
+      <h3>My Todos</h3>
+      <p>Your current tasks</p>
+    </div>
+  )
+}))
+
 describe('Phase 2: Dual Panel Layout Tests', () => {
   describe('ActionsPanel', () => {
     it('renders without crashing', () => {
@@ -38,7 +48,7 @@ describe('Phase 2: Dual Panel Layout Tests', () => {
     it('displays My Todos section', () => {
       render(<ActionsPanel />)
       expect(screen.getByText('My Todos')).toBeInTheDocument()
-      expect(screen.getByText('Your tasks and priorities')).toBeInTheDocument()
+      expect(screen.getByText('Your current tasks')).toBeInTheDocument()
     })
 
     it('does not show removed sections', () => {

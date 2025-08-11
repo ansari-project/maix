@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2 } from "lucide-react"
+import { DashboardLayout } from "@/components/layout/DashboardLayout"
 
 const formSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters").max(100),
@@ -99,15 +100,16 @@ export default function NewOrganizationPage() {
   }
 
   return (
-    <div className="container max-w-2xl mx-auto px-4 py-8">
-      <Card>
-        <CardHeader>
-          <CardTitle>Create Organization</CardTitle>
-          <CardDescription>
-            Organizations allow you to collaborate with others on projects and products
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+    <DashboardLayout>
+      <div className="container max-w-2xl mx-auto px-4 py-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Create Organization</CardTitle>
+            <CardDescription>
+              Organizations allow you to collaborate with others on projects and products
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
@@ -257,5 +259,6 @@ export default function NewOrganizationPage() {
         </CardContent>
       </Card>
     </div>
+    </DashboardLayout>
   )
 }

@@ -11,6 +11,7 @@ import Link from "next/link"
 import { Markdown } from "@/components/ui/markdown"
 import { MessageSquare } from "lucide-react"
 import { TodoSection } from "@/components/todos/todo-section"
+import { DashboardLayout } from "@/components/layout/DashboardLayout"
 
 function formatProjectStatus(status: string): { label: string; color: string } {
   switch (status) {
@@ -157,9 +158,10 @@ export default function ProjectPageClient({
   const canPostUpdate = userRole && ['OWNER', 'ADMIN', 'MEMBER'].includes(userRole)
 
   return (
-    <div className="bg-gradient-to-br from-primary/5 to-accent/5 px-4 py-2">
-      <div className="container mx-auto">
-        <div className="max-w-4xl mx-auto">
+    <DashboardLayout>
+      <div className="bg-gradient-to-br from-primary/5 to-accent/5 px-4 py-2">
+        <div className="container mx-auto">
+          <div className="max-w-4xl mx-auto">
           {/* Header with Project Title and Action Button */}
           <div className="mb-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -462,5 +464,6 @@ export default function ProjectPageClient({
         </div>
       </div>
     </div>
+    </DashboardLayout>
   )
 }
