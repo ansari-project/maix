@@ -58,6 +58,16 @@ export async function POST(request: NextRequest) {
           assistantContent,
           result.toolCalls?.map((tc: any) => tc.toolName) || []
         )
+        
+        // Log if todo tools were called for debugging
+        const todoToolsCalled = result.toolCalls?.some(tc => 
+          tc.toolName === 'maix_manage_todo' || 
+          tc.toolName === 'maix_manage_personal_project'
+        )
+        
+        if (todoToolsCalled) {
+          console.log('Todo-related MCP tools were called in this conversation')
+        }
       },
     }
     

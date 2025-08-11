@@ -151,10 +151,35 @@ export function AIAssistant() {
           
           const chunk = decoder.decode(value)
           assistantContent += chunk
-          
-          // Update the message progressively (optional - for streaming effect)
-          // For now, we'll just accumulate and show at the end
         }
+      }
+      
+      // Check response for todo-related keywords that indicate MCP tool was used
+      // This is a simple heuristic approach
+      const todoIndicators = [
+        'Todo created successfully',
+        'Todo updated successfully',
+        'Todo deleted successfully',
+        'Personal project created',
+        'Task added to',
+        'created with ID'
+      ]
+      
+      const shouldInvalidateTodos = todoIndicators.some(indicator => 
+        assistantContent.includes(indicator)
+      )
+      
+      if (shouldInvalidateTodos) {
+        // Small delay to ensure the database write has completed
+        setTimeout(() => {
+          console.log('Todo operation detected, dispatching refresh event')
+          window.dispatchEvent(new CustomEvent('app:todos:invalidate', {
+            detail: { 
+              reason: 'mcp-tool-response',
+              timestamp: Date.now()
+            }
+          }))
+        }, 500)
       }
 
       const aiMessage: Message = {

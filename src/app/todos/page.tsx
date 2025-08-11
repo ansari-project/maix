@@ -19,6 +19,7 @@ export default function TodosPage() {
   const [error, setError] = useState<string | null>(null)
   const [showDetailsPanel, setShowDetailsPanel] = useState(true)
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -31,6 +32,33 @@ export default function TodosPage() {
       fetchTodos()
     }
   }, [status])
+
+  // Listen for todo update events from AI Assistant or other sources
+  useEffect(() => {
+    const handleTodoInvalidate = (event: CustomEvent) => {
+      // Clear any existing debounce timer
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+      }
+      
+      // Debounce the refresh to avoid multiple rapid fetches
+      debounceTimerRef.current = setTimeout(() => {
+        console.log('Todo invalidate event received:', event.detail)
+        fetchTodos()
+      }, 300)
+    }
+
+    // Add event listener with type assertion for CustomEvent
+    window.addEventListener('app:todos:invalidate', handleTodoInvalidate as EventListener)
+    
+    // Cleanup on unmount
+    return () => {
+      window.removeEventListener('app:todos:invalidate', handleTodoInvalidate as EventListener)
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+      }
+    }
+  }, [])
 
   const fetchTodos = async () => {
     try {
