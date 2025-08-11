@@ -80,6 +80,65 @@ export class OfficialMcpClientService {
   }
 
   /**
+   * Sanitize JSON schema for Gemini compatibility
+   * Gemini has stricter requirements for JSON schemas than standard JSON Schema
+   */
+  private sanitizeSchemaForGemini(schema: any): any {
+    if (!schema || typeof schema !== 'object') return schema
+    
+    const sanitized = { ...schema }
+    
+    // Process properties recursively
+    if (sanitized.properties) {
+      const newProperties: any = {}
+      for (const [key, value] of Object.entries(sanitized.properties)) {
+        newProperties[key] = this.sanitizeSchemaForGemini(value)
+      }
+      sanitized.properties = newProperties
+    }
+    
+    // Remove unsupported format values for strings
+    // Gemini only supports 'enum' and 'date-time' formats
+    if (sanitized.type === 'string' && sanitized.format) {
+      if (!['date-time', 'enum'].includes(sanitized.format)) {
+        // Remove unsupported formats like 'uri', 'email', etc.
+        delete sanitized.format
+      }
+    }
+    
+    // Handle anyOf patterns - remove empty string enums which Gemini rejects
+    if (sanitized.anyOf && Array.isArray(sanitized.anyOf)) {
+      sanitized.anyOf = sanitized.anyOf.filter((item: any) => {
+        // Filter out patterns with empty string enums
+        if (item.type === 'string' && item.const === '') {
+          return false
+        }
+        if (item.enum && Array.isArray(item.enum) && item.enum.includes('')) {
+          // Remove empty strings from enum
+          item.enum = item.enum.filter((e: any) => e !== '')
+          if (item.enum.length === 0) return false
+        }
+        return true
+      })
+      
+      // Recursively sanitize anyOf items
+      sanitized.anyOf = sanitized.anyOf.map((item: any) => this.sanitizeSchemaForGemini(item))
+      
+      // If anyOf only has one item left, replace with that item directly
+      if (sanitized.anyOf.length === 1) {
+        return sanitized.anyOf[0]
+      }
+    }
+    
+    // Handle items (for arrays)
+    if (sanitized.items) {
+      sanitized.items = this.sanitizeSchemaForGemini(sanitized.items)
+    }
+    
+    return sanitized
+  }
+
+  /**
    * Convert MCP tools to AI SDK format
    */
   private convertToAISdkTools(mcpTools: any[]): Record<string, Tool> {
@@ -91,13 +150,16 @@ export class OfficialMcpClientService {
       
       // Convert MCP tool to AI SDK tool format
       // MCP tools have inputSchema that should be a JSON schema
-      const inputSchema = mcpTool.inputSchema || { type: 'object', properties: {} }
+      let inputSchema = mcpTool.inputSchema || { type: 'object', properties: {} }
+      
+      // Sanitize the schema for Gemini compatibility
+      inputSchema = this.sanitizeSchemaForGemini(inputSchema)
       
       // Convert to AI SDK format using the tool() function with jsonSchema wrapper
       try {
         tools[mcpTool.name] = tool({
           description: mcpTool.description || `MCP tool: ${mcpTool.name}`,
-          inputSchema: jsonSchema(inputSchema), // Wrap JSON schema for AI SDK
+          inputSchema: jsonSchema(inputSchema), // Wrap sanitized JSON schema for AI SDK
           execute: async (args: any) => {
             // This will be called by the AI SDK when the tool is invoked
             // We need to forward it to the MCP client
