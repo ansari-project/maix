@@ -145,9 +145,6 @@ export class OfficialMcpClientService {
     const tools: Record<string, Tool> = {}
     
     for (const mcpTool of mcpTools) {
-      // DEBUG: Log the actual MCP tool structure to understand the issue
-      console.log('MCP Tool being converted:', JSON.stringify(mcpTool, null, 2))
-      
       // Convert MCP tool to AI SDK tool format
       // MCP tools have inputSchema that should be a JSON schema
       let inputSchema = mcpTool.inputSchema || { type: 'object', properties: {} }

@@ -53,9 +53,42 @@ export async function POST(request: NextRequest) {
       google_search: google.tools.googleSearch({})
     }
     
+    // Create a system message that describes available tools dynamically
+    const toolNames = Object.keys(allTools)
+    const toolDescriptions = toolNames.map(name => {
+      const tool = (allTools as any)[name]
+      // Get the actual description from the tool if available
+      const description = tool?.description || name.replace(/_/g, ' ')
+      return `- ${name}: ${description}`
+    }).join('\n')
+    
+    const systemMessage = {
+      role: 'system',
+      content: `You are an AI assistant for Maix, a platform that connects skilled volunteers with meaningful AI/tech projects. 
+      
+You have access to ${toolNames.length} tools to help users manage their work on the platform:
+
+${toolDescriptions}
+
+When users ask you to perform actions like creating projects, managing todos, searching for information, or organizing their work, use these tools to help them. You can search Google for current events, facts, and real-time information when needed.
+
+Be proactive in using tools when appropriate. For example:
+- If someone asks "What projects do I have?", use the search tools
+- If someone says "Create a todo for...", use the todo management tool
+- If someone asks about current events or facts, use google_search
+- If someone wants to create something, use the appropriate management tool
+
+Always confirm actions taken and provide clear feedback about what was done.`
+    }
+    
+    // Prepend system message to messages if not already present
+    const messagesWithSystem = messages[0]?.role === 'system' 
+      ? messages 
+      : [systemMessage, ...messages]
+    
     const streamConfig: any = {
       model: google('gemini-2.0-flash'),
-      messages: messages,
+      messages: messagesWithSystem,
       experimental_providerMetadata: true, // Enable to get grounding metadata
       onFinish: async (result: any) => {
         // Add turn to conversation after streaming completes
