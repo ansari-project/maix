@@ -651,7 +651,19 @@ export async function GET(req: Request): Promise<Response> {
     }
     
     const token = authHeader.slice(7); // Remove "Bearer " prefix
+    console.log('MCP: GET validating token', {
+      tokenPrefix: token.substring(0, 20) + '...',
+      tokenLength: token.length,
+      tokenStartsWith: token.startsWith('maix_pat_')
+    });
+    
     const user = await validatePersonalAccessToken(token);
+    
+    console.log('MCP: GET validation result', {
+      hasUser: !!user,
+      userId: user?.id,
+      userEmail: user?.email
+    });
     
     if (!user) {
       console.log('MCP: GET authentication failed - invalid token');

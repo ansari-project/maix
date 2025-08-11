@@ -27,8 +27,16 @@ export function hashToken(token: string): string {
  */
 export async function validatePersonalAccessToken(token: string): Promise<User | null> {
   try {
+    console.log('PAT: Validating token', {
+      tokenPrefix: token.substring(0, 20) + '...',
+      tokenLength: token.length
+    });
+    
     // Hash the provided token
     const tokenHash = hashToken(token);
+    console.log('PAT: Token hashed', {
+      hashPrefix: tokenHash.substring(0, 16) + '...'
+    });
     
     // Query the database for the hashed token
     const pat = await prisma.personalAccessToken.findUnique({
@@ -36,12 +44,21 @@ export async function validatePersonalAccessToken(token: string): Promise<User |
       include: { user: true },
     });
     
+    console.log('PAT: Database query result', {
+      found: !!pat,
+      patId: pat?.id,
+      userId: pat?.user?.id,
+      isExpired: pat?.expiresAt ? pat.expiresAt < new Date() : false
+    });
+    
     if (!pat) {
+      console.log('PAT: No matching token found in database');
       return null;
     }
     
     // Check if token is expired
     if (pat.expiresAt && pat.expiresAt < new Date()) {
+      console.log('PAT: Token is expired', { expiresAt: pat.expiresAt });
       return null;
     }
     
