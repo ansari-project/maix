@@ -16,7 +16,7 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
-  X
+  Trash2
 } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import { format, formatDistanceToNow } from "date-fns"
@@ -230,9 +230,10 @@ export function TodoDetailsPanelEnhanced({
                 variant="ghost"
                 size="icon"
                 onClick={handleDelete}
-                className="h-8 w-8"
+                className="h-8 w-8 hover:text-red-600 hover:bg-red-50"
+                title="Delete Todo"
               >
-                <X className="h-4 w-4" />
+                <Trash2 className="h-4 w-4" />
               </Button>
             )}
           </div>
@@ -249,13 +250,15 @@ export function TodoDetailsPanelEnhanced({
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Details Section */}
-        <div className="border-b border-border">
-          <h3 className="px-6 py-3 font-medium text-sm text-muted-foreground bg-muted/30">Details</h3>
-        </div>
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-y-auto">
+          {/* Details Section */}
+          <div className="border-b border-border sticky top-0 bg-background z-10">
+            <h3 className="px-6 py-3 font-medium text-sm text-muted-foreground bg-muted/30">Details</h3>
+          </div>
 
-        {/* Details Section Content */}
-        <div className="p-6 space-y-6">
+          {/* Details Section Content */}
+          <div className="p-6 space-y-6">
           <div className="space-y-4">
             {/* Title */}
             <div className="space-y-2">
@@ -403,13 +406,12 @@ export function TodoDetailsPanelEnhanced({
           </div>
         </div>
 
-        {/* Timeline Section */}
-        <div className="border-b border-border">
-          <h3 className="px-6 py-3 font-medium text-sm text-muted-foreground bg-muted/30">Activity & Comments</h3>
-        </div>
+          {/* Timeline Section */}
+          <div className="border-b border-t border-border sticky top-0 bg-background z-10">
+            <h3 className="px-6 py-3 font-medium text-sm text-muted-foreground bg-muted/30">Activity & Comments</h3>
+          </div>
 
-        {/* Timeline Content */}
-        <div className="flex-1 overflow-y-auto">
+          {/* Timeline Content */}
           <div className="p-6">
             <div className="space-y-4">
               {createTimeline().map((event) => (
@@ -453,11 +455,11 @@ export function TodoDetailsPanelEnhanced({
               )}
             </div>
           </div>
-        </div>
+        </div> {/* End of scrollable area */}
 
-        {/* Comment Input */}
+        {/* Comment Input - Fixed at bottom */}
         {!readonly && (
-          <div className="border-t border-border p-4">
+          <div className="border-t border-border p-4 bg-background">
             <form onSubmit={handleCommentSubmit} className="flex gap-2">
               <Input
                 placeholder="Write a comment..."
