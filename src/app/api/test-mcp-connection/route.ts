@@ -29,14 +29,14 @@ export async function GET() {
     })
     const debugData = await debugResponse.json().catch(() => ({}))
     
-    // Then test both MCP endpoints
-    const mcpUrl = `${baseUrl}/api/mcp`
-    const sseUrl = `${baseUrl}/api/mcp-sse`
-    console.log('Testing MCP connection to:', mcpUrl)
-    console.log('Testing SSE connection to:', sseUrl)
+    // Then test both URLs - with and without www redirect issue
+    const mcpUrlOld = 'https://maix.io/api/mcp' // This will redirect and drop auth
+    const mcpUrlFixed = 'https://www.maix.io/api/mcp' // This should work
+    console.log('Testing MCP connection - old URL (with redirect):', mcpUrlOld)
+    console.log('Testing MCP connection - fixed URL (no redirect):', mcpUrlFixed)
     
-    // Test with GET request (what the official SDK uses for SSE)
-    const mcpResponse = await fetch(mcpUrl, {
+    // Test old URL (will redirect and drop auth)
+    const mcpResponseOld = await fetch(mcpUrlOld, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${pat}`,
@@ -45,10 +45,10 @@ export async function GET() {
       },
     })
     
-    const mcpResponseText = await mcpResponse.text()
+    const mcpResponseOldText = await mcpResponseOld.text()
     
-    // Also test our new SSE endpoint
-    const sseResponse = await fetch(sseUrl, {
+    // Test fixed URL (no redirect, should preserve auth)
+    const mcpResponseFixed = await fetch(mcpUrlFixed, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${pat}`,
@@ -57,25 +57,27 @@ export async function GET() {
       },
     })
     
-    const sseResponseText = await sseResponse.text()
+    const mcpResponseFixedText = await mcpResponseFixed.text()
     
     return NextResponse.json({
       patPrefix: pat?.substring(0, 20) + '...',
-      mcpEndpoint: {
-        url: mcpUrl,
-        success: mcpResponse.ok,
-        status: mcpResponse.status,
-        statusText: mcpResponse.statusText,
-        headers: Object.fromEntries(mcpResponse.headers.entries()),
-        responsePreview: mcpResponseText.substring(0, 500),
+      mcpEndpointOld: {
+        url: mcpUrlOld,
+        success: mcpResponseOld.ok,
+        status: mcpResponseOld.status,
+        statusText: mcpResponseOld.statusText,
+        headers: Object.fromEntries(mcpResponseOld.headers.entries()),
+        responsePreview: mcpResponseOldText.substring(0, 500),
+        explanation: "This should fail with 401 due to redirect dropping Authorization header"
       },
-      sseEndpoint: {
-        url: sseUrl,
-        success: sseResponse.ok,
-        status: sseResponse.status,
-        statusText: sseResponse.statusText,
-        headers: Object.fromEntries(sseResponse.headers.entries()),
-        responsePreview: sseResponseText.substring(0, 500),
+      mcpEndpointFixed: {
+        url: mcpUrlFixed,
+        success: mcpResponseFixed.ok,
+        status: mcpResponseFixed.status,  
+        statusText: mcpResponseFixed.statusText,
+        headers: Object.fromEntries(mcpResponseFixed.headers.entries()),
+        responsePreview: mcpResponseFixedText.substring(0, 500),
+        explanation: "This should work with proper authentication"
       },
       debugEndpoint: {
         url: debugUrl,

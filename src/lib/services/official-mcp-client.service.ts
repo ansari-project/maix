@@ -15,7 +15,15 @@ export class OfficialMcpClientService {
 
   constructor() {
     // In production, use the deployed URL; in development use localhost
-    this.baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'
+    let baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'
+    
+    // Fix: Ensure we use www.maix.io to avoid 307 redirect that drops Authorization header
+    if (baseUrl === 'https://maix.io') {
+      baseUrl = 'https://www.maix.io'
+      console.log('Official MCP Client: Fixed redirect - using www.maix.io instead of maix.io')
+    }
+    
+    this.baseUrl = baseUrl
     console.log('Official MCP Client: Using base URL:', this.baseUrl)
   }
 
@@ -35,9 +43,9 @@ export class OfficialMcpClientService {
       }
 
       // Create transport with authentication
-      // Use dedicated SSE endpoint that bypasses mcp-handler
+      // Now uses correct URL without redirect to preserve Authorization header
       const transport = new StreamableHTTPClientTransport(
-        new URL(`${this.baseUrl}/api/mcp-sse`),
+        new URL(`${this.baseUrl}/api/mcp`),
         {
           requestInit: {
             headers: {
