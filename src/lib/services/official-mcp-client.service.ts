@@ -92,44 +92,51 @@ export class OfficialMcpClientService {
       // Handle case where inputSchema might have a different structure
       const inputSchema = mcpTool.inputSchema || mcpTool.parameters || { type: 'object', properties: {} }
       
-      tools[mcpTool.name] = {
-        description: mcpTool.description || '',
-        inputSchema: inputSchema, // Keep as inputSchema for AI SDK compatibility
-        execute: async (args: any) => {
-          // This will be called by the AI SDK when the tool is invoked
-          // We need to forward it to the MCP client
-          const pat = this.getCurrentPat()
-          if (!pat) {
-            throw new Error('No PAT available for tool execution')
-          }
-          
-          const client = await this.getClient(pat)
-          if (!client) {
-            throw new Error('Failed to get MCP client for tool execution')
-          }
-          
-          try {
-            const result = await client.callTool({
-              name: mcpTool.name,
-              arguments: args
-            })
-            
-            // Convert MCP tool result to AI SDK format
-            if (result.content && Array.isArray(result.content)) {
-              const textContent = result.content
-                .filter((c: any) => c.type === 'text')
-                .map((c: any) => c.text)
-                .join('\n')
-              
-              return textContent || JSON.stringify(result)
+      // Convert to AI SDK format with proper error handling
+      try {
+        tools[mcpTool.name] = {
+          description: mcpTool.description || `MCP tool: ${mcpTool.name}`,
+          inputSchema: inputSchema,
+          execute: async (args: any) => {
+            // This will be called by the AI SDK when the tool is invoked
+            // We need to forward it to the MCP client
+            const pat = this.getCurrentPat()
+            if (!pat) {
+              throw new Error('No PAT available for tool execution')
             }
             
-            return JSON.stringify(result)
-          } catch (error) {
-            console.error(`Tool execution failed for ${mcpTool.name}:`, error)
-            throw error
+            const client = await this.getClient(pat)
+            if (!client) {
+              throw new Error('Failed to get MCP client for tool execution')
+            }
+            
+            try {
+              const result = await client.callTool({
+                name: mcpTool.name,
+                arguments: args
+              })
+              
+              // Convert MCP tool result to AI SDK format
+              if (result.content && Array.isArray(result.content)) {
+                const textContent = result.content
+                  .filter((c: any) => c.type === 'text')
+                  .map((c: any) => c.text)
+                  .join('\n')
+                
+                return textContent || JSON.stringify(result)
+              }
+              
+              return JSON.stringify(result)
+            } catch (error) {
+              console.error(`Tool execution failed for ${mcpTool.name}:`, error)
+              throw error
+            }
           }
         }
+      } catch (toolConversionError) {
+        console.error(`Failed to convert MCP tool ${mcpTool.name}:`, toolConversionError)
+        // Skip this tool if conversion fails
+        continue
       }
     }
     
