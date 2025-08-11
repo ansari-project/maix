@@ -67,7 +67,23 @@ export async function POST(request: NextRequest) {
       streamConfig.toolChoice = 'auto'
     }
     
-    const stream = await streamText(streamConfig)
+    // Try to stream the response
+    let stream
+    try {
+      console.log('📝 Attempting to stream with config:', { 
+        hasTools, 
+        messageCount: messages.length,
+        toolCount: Object.keys(tools).length 
+      })
+      stream = await streamText(streamConfig)
+    } catch (streamError) {
+      console.error('🚨 StreamText failed:', streamError)
+      // Fallback to a simple response without streaming
+      return NextResponse.json({
+        message: "I'm having trouble connecting right now. The AI service is temporarily unavailable.",
+        error: true
+      })
+    }
 
     // Add conversation ID to response headers
     const response = stream.toTextStreamResponse()
