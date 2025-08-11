@@ -513,7 +513,7 @@ const mcpHandler = createMcpHandler(
     // Tool: Search todos
     server.tool(
       "maix_search_todos", 
-      "Search and find todos across ALL projects and assignments. CRITICAL: When user asks for 'my todos', use this AFTER list-standalone to get project-related todos assigned to the user. Use filters: status (NOT_STARTED, IN_PROGRESS, WAITING_FOR, COMPLETED), assignee, project, or search term. Returns todos from projects where user is assigned or member",
+      "Search and find todos across ALL projects and assignments. CRITICAL: Use this to find specific todos when user wants to update them (e.g., 'mark database task as done' - search for 'database' first). Also use to find todos by status, assignee, project, or search term. Returns todos from projects where user is assigned or member. Always include includePersonal: true to search both project and personal todos.",
       SearchTodosSchema.shape,
       async (params, extra) => {
         try {
