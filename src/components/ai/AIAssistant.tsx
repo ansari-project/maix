@@ -450,8 +450,8 @@ export function AIAssistant() {
                     <Markdown 
                       content={message.content} 
                       className={cn(
-                        "prose-sm prose-p:text-current prose-headings:text-current prose-strong:text-current prose-ul:text-current prose-ol:text-current prose-li:text-current prose-code:text-sm prose-pre:text-sm",
-                        message.role === 'user' ? "prose-invert" : ""
+                        "text-sm leading-relaxed [&>*]:mb-0 [&>p]:mb-2 [&>ul]:mb-2 [&>ol]:mb-2 [&>*:last-child]:mb-0",
+                        message.role === 'user' ? "text-white" : "text-foreground"
                       )}
                     />
                   </div>

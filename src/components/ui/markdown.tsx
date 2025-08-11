@@ -15,17 +15,18 @@ export function Markdown({ content, className }: MarkdownProps) {
     <ReactMarkdown
       rehypePlugins={[rehypeSanitize]}
       className={cn(
-        "prose prose-sm max-w-none",
-        "prose-headings:font-semibold prose-headings:text-foreground",
-        "prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-4",
-        "prose-a:text-primary prose-a:no-underline hover:prose-a:underline",
-        "prose-strong:text-foreground prose-strong:font-semibold",
-        "prose-code:text-foreground prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded",
-        "prose-pre:bg-muted prose-pre:border prose-pre:border-border prose-pre:my-4",
-        "prose-blockquote:text-muted-foreground prose-blockquote:border-l-primary prose-blockquote:my-4",
-        "prose-ul:text-muted-foreground prose-li:text-muted-foreground prose-ul:my-4",
-        "prose-ol:text-muted-foreground prose-ol:my-4",
-        "[&>*:last-child]:mb-0",
+        "max-w-none",
+        "[&>h1]:text-xl [&>h1]:font-semibold [&>h1]:mb-2",
+        "[&>h2]:text-lg [&>h2]:font-semibold [&>h2]:mb-2", 
+        "[&>h3]:text-base [&>h3]:font-semibold [&>h3]:mb-2",
+        "[&>p]:leading-relaxed",
+        "[&>a]:text-blue-600 [&>a]:underline hover:[&>a]:text-blue-800",
+        "[&>strong]:font-semibold",
+        "[&>code]:bg-gray-100 [&>code]:px-1 [&>code]:py-0.5 [&>code]:rounded [&>code]:text-sm",
+        "[&>pre]:bg-gray-100 [&>pre]:p-2 [&>pre]:rounded [&>pre]:overflow-x-auto",
+        "[&>ul]:list-disc [&>ul]:ml-4",
+        "[&>ol]:list-decimal [&>ol]:ml-4", 
+        "[&>li]:mb-1",
         className
       )}
       components={{
