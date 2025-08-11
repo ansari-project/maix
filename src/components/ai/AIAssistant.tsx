@@ -321,14 +321,13 @@ export function AIAssistant() {
                         : 'bg-muted'
                     )}
                   >
-                    {message.role === 'user' ? (
-                      <p className="whitespace-pre-wrap">{message.content}</p>
-                    ) : (
-                      <Markdown 
-                        content={message.content} 
-                        className="prose-sm prose-p:text-foreground prose-headings:text-foreground prose-strong:text-foreground prose-ul:text-foreground prose-ol:text-foreground prose-li:text-foreground prose-code:text-xs"
-                      />
-                    )}
+                    <Markdown 
+                      content={message.content} 
+                      className={cn(
+                        "prose-sm prose-p:text-current prose-headings:text-current prose-strong:text-current prose-ul:text-current prose-ol:text-current prose-li:text-current prose-code:text-sm prose-pre:text-sm",
+                        message.role === 'user' ? "prose-invert" : ""
+                      )}
+                    />
                   </div>
                 </div>
               ))
