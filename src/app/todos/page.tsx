@@ -237,10 +237,10 @@ export default function TodosPage() {
           </div>
         )}
         
-        {/* Main Grid */}
-        <div className={`flex-1 grid ${showDetailsPanel ? 'grid-cols-2' : 'grid-cols-1'} gap-0 transition-all duration-300`}>
+        {/* Main Grid - Full height with proper overflow handling */}
+        <div className={`flex-1 grid ${showDetailsPanel ? 'grid-cols-2' : 'grid-cols-1'} gap-0 transition-all duration-300 min-h-0`}>
           {/* Left Pane - Todo List */}
-          <div className={`${showDetailsPanel ? 'border-r border-border' : ''} overflow-hidden`}>
+          <div className={`${showDetailsPanel ? 'border-r border-border' : ''} h-full overflow-hidden`}>
             <TodoListPaneWithDnD 
               todos={todos}
               selectedTodo={selectedTodo}
@@ -251,7 +251,7 @@ export default function TodosPage() {
 
           {/* Right Pane - Todo Details (conditionally rendered) */}
           {showDetailsPanel && (
-            <div className="overflow-hidden">
+            <div className="h-full overflow-hidden">
               <TodoDetailsPanelEnhanced
                 todo={selectedTodo}
                 onUpdate={handleTodoUpdate}

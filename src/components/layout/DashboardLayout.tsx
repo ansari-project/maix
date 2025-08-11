@@ -25,7 +25,7 @@ interface DashboardLayoutProps {
 }
 
 const DashboardLayoutContent = memo(function DashboardLayoutContent({ children, className }: DashboardLayoutProps) {
-  const { isMobile, isAIExpanded } = useLayout()
+  const { isMobile, isAIExpanded, aiHeight } = useLayout()
   
   return (
     <div className="flex h-screen bg-background">
@@ -34,13 +34,16 @@ const DashboardLayoutContent = memo(function DashboardLayoutContent({ children, 
       
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Main Content */}
+        {/* Main Content - Account for AI Assistant height */}
         <main 
           className={cn(
-            'flex-1 overflow-auto',
-            isAIExpanded && 'pb-0', // Remove padding when AI is expanded
+            'flex-1 overflow-auto transition-all duration-300',
             className
           )}
+          style={{
+            // Ensure the padding bottom accounts for AI height properly
+            paddingBottom: isAIExpanded ? `${aiHeight}px` : '48px'
+          }}
         >
           {children}
         </main>

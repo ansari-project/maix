@@ -13,6 +13,8 @@ interface LayoutContextType {
   isAIExpanded: boolean
   toggleAI: () => void
   setAIExpanded: (expanded: boolean) => void
+  aiHeight: number
+  setAIHeight: (height: number) => void
   
   // Current page tracking
   currentPath: string
@@ -31,6 +33,7 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
   // State
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [isAIExpanded, setIsAIExpanded] = useState(false)
+  const [aiHeight, setAiHeight] = useState(200) // Default AI height
   const [isMobile, setIsMobile] = useState(false)
   
   // Callbacks
@@ -48,6 +51,10 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
   
   const setAIExpanded = useCallback((expanded: boolean) => {
     setIsAIExpanded(expanded)
+  }, [])
+
+  const setAIHeight = useCallback((height: number) => {
+    setAiHeight(height)
   }, [])
   
   const isActivePath = useCallback((path: string) => {
@@ -99,6 +106,8 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
     isAIExpanded,
     toggleAI,
     setAIExpanded,
+    aiHeight,
+    setAIHeight,
     currentPath: pathname,
     isActivePath,
     isMobile,
@@ -110,6 +119,8 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
     isAIExpanded,
     toggleAI,
     setAIExpanded,
+    aiHeight,
+    setAIHeight,
     pathname,
     isActivePath,
     isMobile,

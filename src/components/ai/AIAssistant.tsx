@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useLayout } from '@/contexts/LayoutContext'
 import { cn } from '@/lib/utils'
 import { 
@@ -8,7 +8,8 @@ import {
   X, 
   Minimize2, 
   Send,
-  Loader2
+  Loader2,
+  GripHorizontal
 } from 'lucide-react'
 
 interface Message {
@@ -19,13 +20,16 @@ interface Message {
 }
 
 export function AIAssistant() {
-  const { isAIExpanded, toggleAI, currentPath } = useLayout()
+  const { isAIExpanded, toggleAI, currentPath, aiHeight, setAIHeight } = useLayout()
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [conversationId, setConversationId] = useState<string | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragStart, setDragStart] = useState({ y: 0, height: 0 })
   const inputRef = useRef<HTMLInputElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -38,6 +42,41 @@ export function AIAssistant() {
       inputRef.current?.focus()
     }
   }, [isAIExpanded])
+
+  // Drag and resize functionality
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    setIsDragging(true)
+    setDragStart({
+      y: e.clientY,
+      height: aiHeight
+    })
+  }, [aiHeight])
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDragging) return
+    
+    const deltaY = dragStart.y - e.clientY // Inverted because we're dragging from bottom
+    const newHeight = Math.max(200, Math.min(window.innerHeight * 0.8, dragStart.height + deltaY))
+    setAIHeight(newHeight)
+  }, [isDragging, dragStart, setAIHeight])
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false)
+  }, [])
+
+  // Mouse event listeners for dragging
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove)
+      window.addEventListener('mouseup', handleMouseUp)
+      
+      return () => {
+        window.removeEventListener('mousemove', handleMouseMove)
+        window.removeEventListener('mouseup', handleMouseUp)
+      }
+    }
+  }, [isDragging, handleMouseMove, handleMouseUp])
 
   // Listen for Cmd+K keyboard shortcut
   useEffect(() => {
@@ -162,10 +201,13 @@ export function AIAssistant() {
 
   return (
     <div
+      ref={containerRef}
       className={cn(
         'fixed bottom-0 left-0 right-0 bg-background border-t border-border transition-all duration-300 z-40',
-        isAIExpanded ? 'h-[25vh] min-h-[200px]' : 'h-12'
+        isAIExpanded ? '' : 'h-12',
+        isDragging && 'transition-none' // Disable transitions while dragging
       )}
+      style={isAIExpanded ? { height: `${aiHeight}px` } : undefined}
     >
       {/* Collapsed State */}
       {!isAIExpanded && (
@@ -186,6 +228,17 @@ export function AIAssistant() {
       {/* Expanded State */}
       {isAIExpanded && (
         <div className="flex flex-col h-full">
+          {/* Drag Handle */}
+          <div 
+            className={cn(
+              "h-1 bg-muted/30 hover:bg-muted cursor-row-resize flex items-center justify-center group",
+              isDragging && "bg-blue-500"
+            )}
+            onMouseDown={handleMouseDown}
+          >
+            <GripHorizontal className="w-4 h-4 text-muted-foreground group-hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
+          
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-2 border-b border-border">
             <div className="flex items-center gap-2">
