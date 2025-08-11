@@ -630,6 +630,7 @@ export async function POST(req: Request): Promise<Response> {
 // mcp-handler v1.0.0 and v1.0.1 both return 405 for GET requests
 // We handle this manually as a workaround
 export async function GET(req: Request): Promise<Response> {
+  console.log('🚨 CUSTOM GET HANDLER CALLED - This should appear in logs!');
   try {
     console.log('MCP: GET request for SSE', {
       url: req.url,
