@@ -108,10 +108,12 @@ describe('Todo and Project Services Integration', () => {
     it('should include standalone tasks in My Tasks', async () => {
       await createStandaloneTask(testUser1.id, {
         title: 'Standalone 1',
+        status: TodoStatus.NOT_STARTED,
       })
 
       await createStandaloneTask(testUser1.id, {
         title: 'Standalone 2',
+        status: TodoStatus.NOT_STARTED,
         assigneeId: testUser1.id,
       })
 
@@ -150,6 +152,7 @@ describe('Todo and Project Services Integration', () => {
 
       const task = await createTodo(testUser1.id, {
         title: 'Mobile task',
+        status: TodoStatus.NOT_STARTED,
         projectId: project1.id,
       })
 
@@ -192,20 +195,24 @@ describe('Todo and Project Services Integration', () => {
       // Create standalone tasks
       await createStandaloneTask(testUser1.id, {
         title: 'Standalone 1',
+        status: TodoStatus.NOT_STARTED,
       })
 
       await createStandaloneTask(testUser1.id, {
         title: 'Standalone 2',
+        status: TodoStatus.NOT_STARTED,
       })
 
       // Create project tasks
       await createTodo(testUser1.id, {
         title: 'Project task 1',
+        status: TodoStatus.NOT_STARTED,
         projectId: project.id,
       })
 
       await createTodo(testUser1.id, {
         title: 'Project task 2',
+        status: TodoStatus.NOT_STARTED,
         projectId: project.id,
       })
 

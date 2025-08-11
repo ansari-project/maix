@@ -570,7 +570,7 @@ describe('/api/invitations/accept Integration Tests', () => {
       mockValidateInvitationToken.mockResolvedValue({
         valid: false,
         error: 'EXPIRED',
-        invitation: null
+        invitation: undefined
       })
 
       const request = createMockRequest({ 
@@ -612,7 +612,7 @@ describe('/api/invitations/accept Integration Tests', () => {
       mockValidateInvitationToken.mockResolvedValue({
         valid: false,
         error: 'ALREADY_PROCESSED',
-        invitation: null
+        invitation: undefined
       })
 
       const request = createMockRequest({ 
