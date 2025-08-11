@@ -1,7 +1,7 @@
 import { randomBytes, createHash, timingSafeEqual } from 'crypto';
 import { prisma } from '@/lib/prisma';
 import type { Invitation, InvitationStatus } from '@prisma/client';
-import { prepareDualWriteData } from './role-migration-utils';
+import { OrgRole } from '@prisma/client';
 
 /**
  * Generate a secure invitation token using crypto.randomBytes
@@ -170,14 +170,11 @@ export async function redeemInvitationToken(
       let membership;
       
       if (invitation.organizationId) {
-        const roleData = prepareDualWriteData(invitation.role, true)
-        
         membership = await tx.organizationMember.create({
           data: {
             userId,
             organizationId: invitation.organizationId,
-            role: roleData.role,
-            unifiedRole: roleData.unifiedRole, // Dual-write for safe migration
+            role: invitation.role as OrgRole,
             invitationId: invitation.id
           }
         });

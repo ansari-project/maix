@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import type { MaixMcpContext, MaixMcpResponse } from '../types';
-import { prepareDualWriteData } from '@/lib/role-migration-utils';
+import { OrgRole } from '@prisma/client';
 
 /**
  * Base schema for manageOrganizationMember tool parameters
@@ -215,14 +215,12 @@ async function inviteMember(
     };
   }
   
-  // Add member with dual-write for safe migration
-  const memberRoleData = prepareDualWriteData('MEMBER', false);
+  // Add member
   const newMember = await prisma.organizationMember.create({
     data: {
       organizationId,
       userId,
-      role: memberRoleData.role,
-      unifiedRole: memberRoleData.unifiedRole, // Dual-write for safe migration
+      role: 'MEMBER' as OrgRole
     },
     include: {
       user: {

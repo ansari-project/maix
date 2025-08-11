@@ -29,7 +29,6 @@ model Organization {
 model OrganizationMember {
   id             String       @id @default(cuid())
   role           OrgRole
-  unifiedRole    UnifiedRole? // For role unification migration (separate from following)
   joinedAt       DateTime     @default(now())
   organizationId String
   userId         String
