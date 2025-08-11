@@ -53,7 +53,7 @@ module.exports = {
   ],
   
   // Add roots to speed up file discovery
-  roots: ['<rootDir>/src'],
+  roots: ['<rootDir>/src', '<rootDir>/tests'],
   
   // Disable coverage collection during normal test runs (speeds up tests)
   collectCoverage: false,
