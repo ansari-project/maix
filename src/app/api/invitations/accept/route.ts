@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { acceptInvitationSchema } from '@/lib/validations/invitation';
 import { validateInvitationToken } from '@/lib/invitation-utils';
 import { prisma } from '@/lib/prisma';
+import { prepareDualWriteData } from '@/lib/role-migration-utils';
 
 // POST /api/invitations/accept - Accept invitation
 export async function POST(request: Request) {
@@ -125,11 +126,13 @@ async function acceptInvitationAtomically(invitation: any, userId: string) {
 
     if (invitation.organizationId) {
       // Organization invitation - simple case, no hierarchy
+      const roleData = prepareDualWriteData(invitation.role, true);
       membership = await tx.organizationMember.create({
         data: {
           organizationId: invitation.organizationId,
           userId,
-          role: invitation.role,
+          role: roleData.role,
+          unifiedRole: roleData.unifiedRole, // Dual-write for safe migration
           invitationId: invitation.id
         }
       });
@@ -163,11 +166,13 @@ async function acceptInvitationAtomically(invitation: any, userId: string) {
 
         if (!existingOrgMember) {
           // Create VIEWER membership for organization
+          const memberRoleData = prepareDualWriteData('MEMBER', false);
           const orgMembership = await tx.organizationMember.create({
             data: {
               organizationId: product.organizationId,
               userId,
-              role: 'MEMBER', // Use MEMBER as minimum role for orgs (no VIEWER)
+              role: memberRoleData.role,
+              unifiedRole: memberRoleData.unifiedRole, // Dual-write for safe migration
               invitationId: invitation.id
             }
           });
@@ -234,11 +239,13 @@ async function acceptInvitationAtomically(invitation: any, userId: string) {
         });
 
         if (!existingOrgMember) {
+          const memberRoleData = prepareDualWriteData('MEMBER', false);
           const orgMembership = await tx.organizationMember.create({
             data: {
               organizationId: orgId,
               userId,
-              role: 'MEMBER', // Use MEMBER as minimum role for orgs (no VIEWER)
+              role: memberRoleData.role,
+              unifiedRole: memberRoleData.unifiedRole, // Dual-write for safe migration
               invitationId: invitation.id
             }
           });

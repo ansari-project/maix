@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { inviteMemberSchema } from '@/lib/validations/organization'
 import { handleApiError, successResponse } from '@/lib/api-utils'
+import { prepareDualWriteData } from '@/lib/role-migration-utils'
 
 // Helper to check if user is an organization owner
 async function isOrgOwner(userId: string, organizationId: string) {
@@ -114,12 +115,14 @@ export async function POST(
       return NextResponse.json({ error: 'User is already a member' }, { status: 400 })
     }
 
-    // Add member
+    // Add member with dual-write for safe migration
+    const memberRoleData = prepareDualWriteData('MEMBER', false);
     const member = await prisma.organizationMember.create({
       data: {
         organizationId: id,
         userId,
-        role: 'MEMBER'
+        role: memberRoleData.role,
+        unifiedRole: memberRoleData.unifiedRole // Dual-write for safe migration
       },
       include: {
         user: {
