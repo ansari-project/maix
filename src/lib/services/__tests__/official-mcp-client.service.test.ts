@@ -8,13 +8,6 @@ jest.mock('@modelcontextprotocol/sdk/client/streamableHttp.js', () => ({
 
 import { officialMcpClientService, OfficialMcpClientService } from '../official-mcp-client.service'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
-import { tool, jsonSchema } from 'ai'
-
-// Mock the AI SDK tool and jsonSchema functions
-jest.mock('ai', () => ({
-  tool: jest.fn((config) => config), // Just return the config for testing
-  jsonSchema: jest.fn((schema) => schema) // Pass through the schema unchanged
-}))
 
 describe('OfficialMcpClientService', () => {
   let service: OfficialMcpClientService
@@ -77,9 +70,11 @@ describe('OfficialMcpClientService', () => {
       
       expect(mockClient.connect).toHaveBeenCalled()
       expect(mockClient.listTools).toHaveBeenCalled()
-      expect(tool).toHaveBeenCalledWith({
+      expect(tools).toHaveProperty('test_tool')
+      const testTool = tools['test_tool']
+      expect(testTool).toMatchObject({
         description: 'A test tool',
-        inputSchema: {
+        parameters: {
           type: 'object',
           properties: {
             param1: { type: 'string' }
@@ -87,7 +82,6 @@ describe('OfficialMcpClientService', () => {
         },
         execute: expect.any(Function)
       })
-      expect(tools).toHaveProperty('test_tool')
     })
 
     it('should handle tools without inputSchema', async () => {
@@ -103,12 +97,13 @@ describe('OfficialMcpClientService', () => {
       
       const tools = await service.getTools('test-pat-123')
       
-      expect(tool).toHaveBeenCalledWith({
+      expect(tools).toHaveProperty('simple_tool')
+      const simpleTool = tools['simple_tool']
+      expect(simpleTool).toMatchObject({
         description: 'A simple tool without schema',
-        inputSchema: { type: 'object', properties: {} }, // Default schema
+        parameters: { type: 'object', properties: {} }, // Default schema
         execute: expect.any(Function)
       })
-      expect(tools).toHaveProperty('simple_tool')
     })
 
     it('should skip tools that fail conversion', async () => {
@@ -127,18 +122,20 @@ describe('OfficialMcpClientService', () => {
       
       mockClient.listTools.mockResolvedValue({ tools: mockMcpTools })
       
-      // Make tool() throw an error for the second tool
-      const toolMock = tool as jest.MockedFunction<typeof tool>
-      toolMock
-        .mockImplementationOnce((config) => config as any) // First tool succeeds
+      // Spy on sanitizeSchemaForGemini and make it throw for bad_tool
+      const sanitizeSpy = jest.spyOn(service as any, 'sanitizeSchemaForGemini')
+      sanitizeSpy
+        .mockImplementationOnce((schema) => schema) // First tool succeeds
         .mockImplementationOnce(() => {
-          throw new Error('Conversion failed')
+          throw new Error('Schema sanitization failed')
         }) // Second tool fails
       
       const tools = await service.getTools('test-pat-123')
       
       expect(tools).toHaveProperty('good_tool')
       expect(tools).not.toHaveProperty('bad_tool')
+      
+      sanitizeSpy.mockRestore()
     })
 
     it('should cache tools for the same PAT', async () => {
@@ -205,10 +202,11 @@ describe('OfficialMcpClientService', () => {
       const tools = await service.getTools(pat)
       
       // Get the execute function from the tool
-      const executeFunc = (tool as jest.MockedFunction<typeof tool>).mock.calls[0][0].execute
+      const executableTool = tools['executable_tool']
+      expect(executableTool).toBeDefined()
       
       // Execute the tool
-      const result = await executeFunc({ message: 'Hello' })
+      const result = await executableTool.execute({ message: 'Hello' })
       
       expect(mockClient.callTool).toHaveBeenCalledWith({
         name: 'executable_tool',
@@ -230,9 +228,10 @@ describe('OfficialMcpClientService', () => {
       mockClient.callTool.mockRejectedValue(new Error('Execution failed'))
       
       const tools = await service.getTools('test-pat-fail')
-      const executeFunc = (tool as jest.MockedFunction<typeof tool>).mock.calls[0][0].execute
+      const failingTool = tools['failing_tool']
+      expect(failingTool).toBeDefined()
       
-      await expect(executeFunc({})).rejects.toThrow('Execution failed')
+      await expect(failingTool.execute({})).rejects.toThrow('Execution failed')
     })
 
     it('should handle non-text MCP tool results', async () => {
@@ -253,9 +252,10 @@ describe('OfficialMcpClientService', () => {
       })
       
       const tools = await service.getTools('test-pat-complex')
-      const executeFunc = (tool as jest.MockedFunction<typeof tool>).mock.calls[0][0].execute
+      const complexTool = tools['complex_tool']
+      expect(complexTool).toBeDefined()
       
-      const result = await executeFunc({})
+      const result = await complexTool.execute({})
       
       expect(result).toBe('Some text') // Only text content is returned
     })
