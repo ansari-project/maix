@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
         )
         
         // Log if todo tools were called for debugging
-        const todoToolsCalled = result.toolCalls?.some(tc => 
+        const todoToolsCalled = result.toolCalls?.some((tc: any) => 
           tc.toolName === 'maix_manage_todo' || 
           tc.toolName === 'maix_manage_personal_project'
         )
