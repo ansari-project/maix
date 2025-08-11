@@ -10,7 +10,9 @@ import {
   Minimize2, 
   Send,
   Loader2,
-  GripHorizontal
+  GripHorizontal,
+  History,
+  MessageSquare
 } from 'lucide-react'
 
 interface Message {
@@ -18,6 +20,13 @@ interface Message {
   role: 'user' | 'assistant'
   content: string
   timestamp: Date
+}
+
+interface ConversationSummary {
+  id: string
+  title: string | null
+  lastActiveAt: Date
+  messageCount: number
 }
 
 export function AIAssistant() {
@@ -28,6 +37,9 @@ export function AIAssistant() {
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ y: 0, height: 0 })
+  const [showHistory, setShowHistory] = useState(false)
+  const [conversations, setConversations] = useState<ConversationSummary[]>([])
+  const [loadingHistory, setLoadingHistory] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -208,6 +220,67 @@ export function AIAssistant() {
     }
   }
 
+  const loadConversationHistory = async () => {
+    setLoadingHistory(true)
+    try {
+      const response = await fetch('/api/ai/chat', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setConversations(data.conversations.map((conv: any) => ({
+          id: conv.id,
+          title: conv.title || 'Untitled Conversation',
+          lastActiveAt: new Date(conv.lastActiveAt),
+          messageCount: Array.isArray(conv.messages) ? conv.messages.length : 0
+        })))
+      }
+    } catch (error) {
+      console.error('Error loading conversation history:', error)
+    } finally {
+      setLoadingHistory(false)
+    }
+  }
+
+  const loadConversation = async (convId: string) => {
+    try {
+      const response = await fetch('/api/ai/chat', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        const conversation = data.conversations.find((c: any) => c.id === convId)
+        
+        if (conversation && Array.isArray(conversation.messages)) {
+          setMessages(conversation.messages.map((msg: any, index: number) => ({
+            id: `${convId}-${index}`,
+            role: msg.role,
+            content: msg.content,
+            timestamp: new Date(msg.timestamp || conversation.lastActiveAt)
+          })))
+          setConversationId(convId)
+          setShowHistory(false)
+        }
+      }
+    } catch (error) {
+      console.error('Error loading conversation:', error)
+    }
+  }
+
+  const startNewConversation = () => {
+    setMessages([])
+    setConversationId(null)
+    setShowHistory(false)
+  }
+
   // Context-aware placeholder based on current page
   const getPlaceholder = () => {
     if (!currentPath) {
@@ -275,6 +348,27 @@ export function AIAssistant() {
             </div>
             <div className="flex items-center gap-2">
               <button
+                onClick={() => {
+                  if (!showHistory) {
+                    loadConversationHistory()
+                  }
+                  setShowHistory(!showHistory)
+                }}
+                className="p-1 hover:bg-muted/50 rounded transition-colors"
+                aria-label="Conversation History"
+                title="Conversation History"
+              >
+                <History className="w-4 h-4" />
+              </button>
+              <button
+                onClick={startNewConversation}
+                className="p-1 hover:bg-muted/50 rounded transition-colors"
+                aria-label="New Conversation"
+                title="New Conversation"
+              >
+                <MessageSquare className="w-4 h-4" />
+              </button>
+              <button
                 onClick={toggleAI}
                 className="p-1 hover:bg-muted/50 rounded transition-colors"
                 aria-label="Minimize"
@@ -291,9 +385,41 @@ export function AIAssistant() {
             </div>
           </div>
 
-          {/* Messages */}
+          {/* Messages or History */}
           <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-            {messages.length === 0 ? (
+            {showHistory ? (
+              /* Conversation History Panel */
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-medium text-foreground">Recent Conversations</h3>
+                  {loadingHistory && <Loader2 className="w-4 h-4 animate-spin" />}
+                </div>
+                
+                {conversations.length === 0 && !loadingHistory ? (
+                  <p className="text-muted-foreground text-sm">No previous conversations found.</p>
+                ) : (
+                  conversations.map(conversation => (
+                    <div
+                      key={conversation.id}
+                      onClick={() => loadConversation(conversation.id)}
+                      className="p-3 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-sm text-foreground truncate">
+                            {conversation.title}
+                          </h4>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {conversation.messageCount} message{conversation.messageCount !== 1 ? 's' : ''} • {' '}
+                            {conversation.lastActiveAt.toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            ) : messages.length === 0 ? (
               <div className="text-muted-foreground text-sm">
                 <p>👋 Hi! I&apos;m your AI assistant. I can help you:</p>
                 <ul className="mt-2 space-y-1">
