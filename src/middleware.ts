@@ -15,8 +15,8 @@ export async function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set('x-request-id', requestId)
   
-  // DEBUG: Log headers after cloning and modification
-  console.log('🔍 MIDDLEWARE: Headers after cloning:', JSON.stringify(Object.fromEntries(requestHeaders.entries()), null, 2))
+  // Request ID will be available in response headers for tracing
+  console.log('🔍 MIDDLEWARE: Request ID assigned:', requestId)
   
   // Log the incoming request (be careful not to log sensitive headers)
   logger.info('Incoming request', {
@@ -30,12 +30,9 @@ export async function middleware(request: NextRequest) {
     // ip: process.env.LOG_IP === 'true' ? request.ip : undefined, // NextRequest doesn't have ip property
   })
   
-  // Create response with modified headers
-  const response = NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  })
+  // FIXED: Don't modify request headers, just pass through
+  // The header manipulation was stripping Authorization/Accept headers on Vercel Edge
+  const response = NextResponse.next()
   
   // Add request ID to response headers for client correlation
   response.headers.set('x-request-id', requestId)

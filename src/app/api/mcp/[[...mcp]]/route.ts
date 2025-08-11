@@ -634,6 +634,12 @@ export async function GET(req: Request): Promise<Response> {
   
   // DEBUG: Log ALL headers received by the handler
   console.log('🔍 GET HANDLER: All headers received:', JSON.stringify(Object.fromEntries(req.headers.entries()), null, 2));
+  console.log('🔍 GET HANDLER: Critical headers check:', {
+    hasAuthorization: !!req.headers.get('authorization'),
+    hasAccept: !!req.headers.get('accept'),
+    acceptValue: req.headers.get('accept'),
+    authValue: req.headers.get('authorization')?.substring(0, 20) + '...'
+  });
   
   try {
     console.log('MCP: GET request for SSE', {
