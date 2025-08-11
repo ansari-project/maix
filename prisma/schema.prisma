@@ -29,6 +29,7 @@ model Organization {
 model OrganizationMember {
   id             String       @id @default(cuid())
   role           OrgRole
+  unifiedRole    UnifiedRole? // For role unification migration (separate from following)
   joinedAt       DateTime     @default(now())
   organizationId String
   userId         String
@@ -119,6 +120,7 @@ model User {
   eventConversations      EventConversation[]
   aiConversations         AIConversation[]
   userPreferences         UserPreferences?
+  following               Following[]      // Pure notification subscriptions
 
   @@index([skills], type: Gin)
   @@map("users")
@@ -494,6 +496,30 @@ model Invitation {
   @@index([inviterId]) // Inviter's sent invitations
   @@index([expiresAt, status]) // Cleanup expired invitations
   @@map("invitations")
+}
+
+// Pure notification subscription system - grants ZERO permissions
+model Following {
+  id                   String         @id @default(cuid())
+  userId               String
+  followableId         String
+  followableType       FollowableType
+  followedAt           DateTime       @default(now())
+  notificationsEnabled Boolean        @default(true)
+  
+  user                 User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, followableId, followableType])
+  @@index([followableId, followableType]) // For getFollowers() queries
+  @@index([userId, followableType])       // For getUserFollowing() queries
+  @@index([followedAt])
+  @@map("following")
+}
+
+enum FollowableType {
+  ORGANIZATION
+  PROJECT
+  PRODUCT
 }
 
 enum InvitationStatus {
