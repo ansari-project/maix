@@ -12,13 +12,14 @@ import Link from 'next/link'
 
 interface SearchResult {
   id: string
-  type: 'project' | 'product' | 'question' | 'user'
+  type: 'project' | 'product' | 'question' | 'user' | 'organization'
   title: string
   description: string
   owner?: {
     name: string
     email: string
   }
+  slug?: string // For organizations
   tags?: string[]
   createdAt: string
 }
@@ -40,7 +41,41 @@ export default function SearchPage() {
       const response = await fetch(`/api/public/search?q=${encodeURIComponent(searchQuery)}`)
       if (response.ok) {
         const data = await response.json()
-        setResults(data)
+        // Transform API response into SearchResult format
+        const transformedResults: SearchResult[] = [
+          ...data.projects.map((project: any) => ({
+            id: project.id,
+            type: 'project' as const,
+            title: project.name,
+            description: project.description,
+            owner: project.owner,
+            createdAt: project.createdAt
+          })),
+          ...data.products.map((product: any) => ({
+            id: product.id,
+            type: 'product' as const,
+            title: product.name,
+            description: product.description,
+            owner: product.owner,
+            createdAt: product.createdAt
+          })),
+          ...data.questions.map((question: any) => ({
+            id: question.id,
+            type: 'question' as const,
+            title: question.content.substring(0, 100) + (question.content.length > 100 ? '...' : ''),
+            description: question.content,
+            owner: question.author,
+            createdAt: question.createdAt
+          })),
+          ...data.organizations.map((org: any) => ({
+            id: org.id,
+            type: 'organization' as const,
+            title: org.name,
+            description: org.mission || org.description || 'No description available',
+            createdAt: org.createdAt
+          }))
+        ]
+        setResults(transformedResults)
       } else {
         console.error('Search failed:', response.statusText)
         setResults([])
@@ -64,6 +99,7 @@ export default function SearchPage() {
       case 'product': return <Package className="w-4 h-4" />
       case 'question': return <MessageCircle className="w-4 h-4" />
       case 'user': return <Users className="w-4 h-4" />
+      case 'organization': return <Users className="w-4 h-4" />
       default: return <Search className="w-4 h-4" />
     }
   }
@@ -74,6 +110,7 @@ export default function SearchPage() {
       case 'product': return `/public/products/${result.id}`
       case 'question': return `/public/questions/${result.id}`
       case 'user': return '#' // User profiles not implemented yet
+      case 'organization': return `/organizations/${result.id}` // Using slug later if needed
       default: return '#'
     }
   }
@@ -84,7 +121,7 @@ export default function SearchPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Search & Discovery</h1>
           <p className="text-muted-foreground">
-            Find projects, products, questions, and community members
+            Find projects, products, questions, organizations, and community members
           </p>
         </div>
 
@@ -96,7 +133,7 @@ export default function SearchPage() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
                   type="text"
-                  placeholder="Search projects, products, questions..."
+                  placeholder="Search projects, products, questions, organizations..."
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   className="pl-10"
@@ -160,17 +197,17 @@ export default function SearchPage() {
               </Card>
             </Link>
 
-            <Link href="/community">
+            <Link href="/organizations">
               <Card className="hover:shadow-lg transition-shadow cursor-pointer">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Users className="w-5 h-5 text-orange-600" />
-                    Community
+                    Organizations
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <CardDescription>
-                    Connect with other community members
+                    Discover organizations building meaningful solutions
                   </CardDescription>
                 </CardContent>
               </Card>

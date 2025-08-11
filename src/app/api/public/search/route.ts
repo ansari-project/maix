@@ -9,13 +9,14 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const query = searchParams.get('q') || ''
-    const type = searchParams.get('type') // 'all' | 'projects' | 'products' | 'questions'
+    const type = searchParams.get('type') // 'all' | 'projects' | 'products' | 'questions' | 'organizations'
     
     if (!query) {
       return successResponse({
         projects: [],
         products: [],
         questions: [],
+        organizations: [],
         total: 0
       })
     }
@@ -29,8 +30,9 @@ export async function GET(request: Request) {
     const searchProjects = !type || type === 'all' || type === 'projects'
     const searchProducts = !type || type === 'all' || type === 'products'
     const searchQuestions = !type || type === 'all' || type === 'questions'
+    const searchOrganizations = !type || type === 'all' || type === 'organizations'
     
-    const [projects, products, questions] = await Promise.all([
+    const [projects, products, questions, organizations] = await Promise.all([
       searchProjects ? prisma.project.findMany({
         where: {
           isActive: true,
@@ -82,6 +84,33 @@ export async function GET(request: Request) {
             }
           }
         }
+      }) : [],
+
+      searchOrganizations ? prisma.organization.findMany({
+        where: {
+          OR: [
+            { name: searchFilter },
+            { mission: searchFilter },
+            { description: searchFilter }
+          ]
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          mission: true,
+          description: true,
+          createdAt: true,
+          _count: {
+            select: {
+              members: true,
+              projects: true,
+              products: true
+            }
+          }
+        }
       }) : []
     ])
     
@@ -89,12 +118,14 @@ export async function GET(request: Request) {
     const publicProjects = filterPublicData(projects, 'project')
     const publicProducts = filterPublicData(products, 'product')
     const publicQuestions = filterPublicData(questions, 'post')
+    const publicOrganizations = filterPublicData(organizations, 'organization')
     
     return successResponse({
       projects: publicProjects,
       products: publicProducts,
       questions: publicQuestions,
-      total: publicProjects.length + publicProducts.length + publicQuestions.length
+      organizations: publicOrganizations,
+      total: publicProjects.length + publicProducts.length + publicQuestions.length + publicOrganizations.length
     })
   } catch (error) {
     return handleApiError(error, "GET /api/public/search")
