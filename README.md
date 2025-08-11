@@ -344,6 +344,11 @@ Projects use a dual status system:
 - **`status`**: Tracks lifecycle (AWAITING_VOLUNTEERS → PLANNING → IN_PROGRESS → COMPLETED)
 - **`isActive`**: Controls volunteer recruitment (can be true even when IN_PROGRESS)
 
+### Notification System
+- **Following**: Users can follow organizations, projects, and products to receive updates
+- **Pure Subscriptions**: Following grants ZERO permissions - only controls notifications
+- **Clear Messaging**: "Get Updates" buttons make it clear this is for notifications only
+
 ## Contributing
 
 We welcome contributions from the global tech community! Here's how you can help:
