@@ -631,6 +631,10 @@ export async function POST(req: Request): Promise<Response> {
 // We handle this manually as a workaround
 export async function GET(req: Request): Promise<Response> {
   console.log('🚨 CUSTOM GET HANDLER CALLED - This should appear in logs!');
+  
+  // DEBUG: Log ALL headers received by the handler
+  console.log('🔍 GET HANDLER: All headers received:', JSON.stringify(Object.fromEntries(req.headers.entries()), null, 2));
+  
   try {
     console.log('MCP: GET request for SSE', {
       url: req.url,
