@@ -43,12 +43,11 @@ export async function POST(request: NextRequest) {
     }
 
     // 6. Stream AI response using Gemini with MCP tools
-    const stream = await streamText({
+    const hasTools = Object.keys(tools).length > 0
+    const streamConfig: any = {
       model: google('gemini-2.0-flash'),
       messages: messages,
-      tools: Object.keys(tools).length > 0 ? tools : undefined, // Only pass tools if we have them
-      toolChoice: Object.keys(tools).length > 0 ? 'auto' : 'none',
-      onFinish: async (result) => {
+      onFinish: async (result: any) => {
         // Add turn to conversation after streaming completes
         const userMessage = messages[messages.length - 1]
         const assistantContent = result.text || 'Response generated with tool calls'
@@ -57,10 +56,18 @@ export async function POST(request: NextRequest) {
           conversation.id,
           userMessage.content || '',
           assistantContent,
-          result.toolCalls?.map(tc => tc.toolName) || []
+          result.toolCalls?.map((tc: any) => tc.toolName) || []
         )
       },
-    })
+    }
+    
+    // Only add tools if we have them
+    if (hasTools) {
+      streamConfig.tools = tools
+      streamConfig.toolChoice = 'auto'
+    }
+    
+    const stream = await streamText(streamConfig)
 
     // Add conversation ID to response headers
     const response = stream.toTextStreamResponse()
