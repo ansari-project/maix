@@ -11,6 +11,7 @@ import {
   Users,
   Package
 } from "lucide-react"
+import { TodosPreview } from "./TodosPreview"
 
 export function ActionsPanel() {
   return (
@@ -37,7 +38,7 @@ export function ActionsPanel() {
                 Ask Question
               </Button>
             </Link>
-            <Link href="/my-todos">
+            <Link href="/todos">
               <Button variant="outline" className="w-full justify-start" size="sm">
                 <CheckSquare className="w-4 h-4 mr-2" />
                 Add Todo
@@ -65,26 +66,7 @@ export function ActionsPanel() {
         </Card>
 
         {/* My Todos Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>My Todos</CardTitle>
-            <CardDescription>Your tasks and priorities</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Link href="/my-todos" className="block">
-              <div className="flex items-center justify-between p-3 rounded-lg hover:bg-accent transition-colors">
-                <div className="flex items-center gap-3">
-                  <CheckSquare className="w-5 h-5 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">View All Tasks</p>
-                    <p className="text-sm text-muted-foreground">Manage your todos and priorities</p>
-                  </div>
-                </div>
-                <span className="text-sm text-muted-foreground">→</span>
-              </div>
-            </Link>
-          </CardContent>
-        </Card>
+        <TodosPreview />
       </div>
     </div>
   )

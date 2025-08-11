@@ -26,6 +26,8 @@ export async function GET(request: NextRequest) {
     const projectId = searchParams.get("projectId")
     const sortBy = searchParams.get("sortBy") || "createdAt"
     const sortOrder = searchParams.get("sortOrder") || "desc"
+    const limitParam = searchParams.get("limit")
+    const limit = limitParam ? parseInt(limitParam, 10) : undefined
 
     // Build where clause
     const where: any = {
@@ -67,6 +69,7 @@ export async function GET(request: NextRequest) {
       orderBy: {
         [sortBy]: sortOrder,
       },
+      ...(limit && { take: limit }),
     })
 
     // Get unique projects for filtering
