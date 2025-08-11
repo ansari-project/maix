@@ -309,6 +309,40 @@ feat: Phase X - [Description]
 
 **Output**: Working, tested, reviewed code with evidence trail, updated plan document, and committed to git
 
+##### SITRC - Lightweight Development Cycle for Smaller Features
+
+**SITRC** stands for **Sketch, Implement, Test, Review, Commit** - a lightweight alternative to full DAPPER for smaller features or complex bugfixes.
+
+**When to use SITRC instead of DAPPER**:
+- Small to medium features (< 1 day of work)
+- Complex bug fixes requiring design thought
+- Isolated improvements not needing full DAPPER overhead
+- Quick experiments or prototypes
+
+**SITRC Process**:
+1. **S - Sketch**: Brief design proposal with expert validation
+   - Quick solution outline (not full DAPPER design doc)
+   - Expert review via `mcp__zen__consensus` or `mcp__zen__thinkdeep`
+   - Incorporate feedback before proceeding
+2. **I - Implement**: Build based on validated sketch
+3. **T - Test**: Write and run tests immediately
+4. **R - Review**: Code review using `mcp__zen__codereview`
+5. **C - Commit & Push**: Git commit and push with evidence
+
+**Note**: In DAPPER's Produce stage, we use ITRC (without S) because the Plan stage already provides the sketch. SITRC is for standalone work outside DAPPER.
+
+**TodoWrite for SITRC**:
+```typescript
+todos = [
+  { content: "Fix complex race condition in auth flow", status: "pending" },
+  { content: "S: Sketch - Design fix approach with expert review", status: "pending" },
+  { content: "I: Implement - Apply the fix", status: "pending" },
+  { content: "T: Test - Write and run tests", status: "pending" },
+  { content: "R: Review - Code review", status: "pending" },
+  { content: "C: Commit & Push - Git commit and push", status: "pending" }
+]
+```
+
 #### 5. Evaluate - Holistic Review & Validation
 
 **Purpose**: Conduct a comprehensive review of all work completed through the phases
