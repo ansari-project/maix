@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { Plus, ExternalLink, Package, Users, Lock, Globe } from "lucide-react"
 import { Markdown } from "@/components/ui/markdown"
+import { usePolling } from "@/hooks/usePolling"
 
 interface Product {
   id: string
@@ -59,6 +60,9 @@ export default function ProductsPage() {
     }
     setLoading(false)
   }
+
+  // Enable polling every 5 seconds to catch updates from AI Assistant or other users
+  usePolling(fetchProducts, 5000, status === "authenticated")
 
   if (status === "loading" || loading) {
     return (

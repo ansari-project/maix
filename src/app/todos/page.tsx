@@ -8,6 +8,7 @@ import { TodoListPaneWithDnD } from "./components/TodoListPaneWithDnD"
 import { TodoDetailsPanelEnhanced } from "./components/TodoDetailsPanelEnhanced"
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts"
 import { Todo, parseTodo, serializeTodo } from "./types"
+import { usePolling } from "@/hooks/usePolling"
 
 export default function TodosPage() {
   const { data: session, status } = useSession()
@@ -80,6 +81,9 @@ export default function TodosPage() {
       setLoading(false)
     }
   }
+
+  // Enable polling every 5 seconds to catch updates from AI Assistant or other users
+  usePolling(fetchTodos, 5000, status === "authenticated")
 
   const handleTodoSelect = (todo: Todo) => {
     setSelectedTodo(todo)

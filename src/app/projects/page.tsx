@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Package, ExternalLink, Lock, Globe } from "lucide-react"
 import { Markdown } from "@/components/ui/markdown"
+import { usePolling } from "@/hooks/usePolling"
 
 interface Project {
   id: string
@@ -70,6 +71,9 @@ export default function ProjectsPage() {
     }
     setLoading(false)
   }
+
+  // Enable polling every 5 seconds to catch updates from AI Assistant or other users
+  usePolling(fetchProjects, 5000, status === "authenticated")
 
   const filteredProjects = projects.filter(project => {
     const matchesSearch = project.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||

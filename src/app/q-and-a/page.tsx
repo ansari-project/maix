@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { formatDistanceToNow } from "date-fns"
 import { MessageCircle, CheckCircle2, Plus, User } from "lucide-react"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
+import { usePolling } from "@/hooks/usePolling"
 
 interface Question {
   id: string
@@ -79,6 +80,9 @@ export default function QAndAPage() {
     }
     setLoading(false)
   }
+
+  // Enable polling every 5 seconds to catch updates from AI Assistant or other users
+  usePolling(fetchQuestions, 5000, status === "authenticated")
 
   if (status === "loading" || (status === "authenticated" && loading)) {
     return (
