@@ -37,6 +37,26 @@ export async function POST(request: NextRequest) {
       console.log('🔧 Attempting to get MCP tools for user:', session.user.id)
       tools = await officialMcpClientService.getTools(userPat)
       console.log('✅ MCP Tools retrieved successfully:', Object.keys(tools).length, 'tools')
+      console.log('📋 Available tool names:', Object.keys(tools))
+      
+      // Debug: Check if tools have proper structure
+      const sampleToolName = Object.keys(tools)[0]
+      if (sampleToolName) {
+        const sampleTool = (tools as any)[sampleToolName]
+        console.log('🔍 Sample tool structure for', sampleToolName, ':', {
+          hasDescription: !!sampleTool.description,
+          hasParameters: !!sampleTool.parameters,
+          hasInputSchema: !!sampleTool.inputSchema,
+          hasExecute: typeof sampleTool.execute === 'function',
+          actualKeys: Object.keys(sampleTool)
+        })
+        // Log the actual inputSchema if it exists
+        if (sampleTool.inputSchema) {
+          console.log('📋 InputSchema type:', typeof sampleTool.inputSchema)
+          console.log('📋 ACTUAL inputSchema content:', JSON.stringify(sampleTool.inputSchema, null, 2))
+        }
+        console.log('📋 Tool description:', sampleTool.description)
+      }
     } catch (toolError) {
       console.error('❌ Failed to get MCP tools, continuing without tools:', toolError)
       tools = {} // Continue without MCP tools if retrieval fails
@@ -86,10 +106,13 @@ Be proactive in using tools when appropriate. For example:
 - If someone asks about current events or facts, use google_search
 - If someone wants to create something, use the appropriate management tool
 
+**CRITICAL INSTRUCTION**: You MUST use the available tools to complete user requests. Never say you cannot fulfill a request if you have the appropriate tool available.
+
 **IMPORTANT TODO HANDLING**: 
-1. When users ask for "my todos" or "show todos":
-   - Use maix_manage_todo with action "list-all" - this gets ALL their todos (personal + project)
-   - Don't ask users to specify type - the tool handles everything automatically
+1. When users ask for "my todos", "show todos", "list todos", or similar:
+   - IMMEDIATELY use maix_manage_todo with action "list-all" - this gets ALL their todos (personal + project)
+   - Do NOT say you're having trouble or cannot retrieve todos
+   - The tool is available and working - USE IT
 
 2. When users want to update a todo status (e.g., "mark X as done", "complete the database task"):
    - First use maix_search_todos to find the todo by searching for keywords from their request
@@ -116,6 +139,22 @@ Always confirm actions taken and provide clear feedback about what was done.`
         const userMessage = messages[messages.length - 1]
         const assistantContent = result.text || 'Response generated with tool calls'
         
+        console.log('════════════════════════════════════════')
+        console.log('📥 GEMINI RESPONSE:')
+        console.log('Text:', assistantContent.substring(0, 500))
+        console.log('Tool Calls:', result.toolCalls?.length || 0)
+        
+        // Debug: Log all tool calls
+        if (result.toolCalls && result.toolCalls.length > 0) {
+          console.log('🛠️ Tool calls made:', result.toolCalls.map((tc: any) => ({
+            name: tc.toolName,
+            args: tc.args
+          })))
+        } else {
+          console.log('⚠️ No tool calls made for message:', userMessage.content)
+        }
+        console.log('════════════════════════════════════════')
+        
         await aiConversationService.addTurn(
           conversation.id,
           userMessage.content || '',
@@ -130,7 +169,7 @@ Always confirm actions taken and provide clear feedback about what was done.`
         )
         
         if (todoToolsCalled) {
-          console.log('Todo-related MCP tools were called in this conversation')
+          console.log('✅ Todo-related MCP tools were called in this conversation')
         }
         
         // Log if Google Search was used
@@ -139,7 +178,7 @@ Always confirm actions taken and provide clear feedback about what was done.`
         )
         
         if (googleSearchUsed) {
-          console.log('Google Search grounding was used in this conversation')
+          console.log('🔍 Google Search grounding was used in this conversation')
         }
       },
     }
@@ -148,7 +187,35 @@ Always confirm actions taken and provide clear feedback about what was done.`
     if (Object.keys(allTools).length > 0) {
       streamConfig.tools = allTools
       streamConfig.toolChoice = 'auto'
+      
+      // Debug: Log the actual tool being passed
+      const firstToolName = Object.keys(allTools)[0]
+      if (firstToolName) {
+        const firstTool = (allTools as any)[firstToolName]
+        console.log('🔧 First tool being passed to Gemini:', {
+          name: firstToolName,
+          hasExecute: typeof firstTool.execute === 'function',
+          hasInputSchema: !!firstTool.inputSchema,
+          hasParameters: !!firstTool.parameters,
+          keys: Object.keys(firstTool)
+        })
+        // Check if this is the correct structure for streamText
+        console.log('🔧 Tool validation for streamText:', {
+          isValidTool: typeof firstTool.execute === 'function' && (!!firstTool.inputSchema || !!firstTool.parameters)
+        })
+      }
     }
+    
+    // Debug: Log FULL request to Gemini
+    console.log('════════════════════════════════════════')
+    console.log('📤 FULL REQUEST TO GEMINI:')
+    console.log('Messages:', JSON.stringify(messagesWithSystem.map(m => ({
+      role: m.role,
+      content: m.content?.substring(0, 200) + (m.content?.length > 200 ? '...' : '')
+    })), null, 2))
+    console.log('Tool Names:', Object.keys(allTools))
+    console.log('Tool Choice:', streamConfig.toolChoice)
+    console.log('════════════════════════════════════════')
     
     // Try to stream the response
     let stream
@@ -158,9 +225,10 @@ Always confirm actions taken and provide clear feedback about what was done.`
         messageCount: messages.length,
         mcpToolCount: Object.keys(tools).length,
         googleSearchEnabled: true,
-        totalToolCount: Object.keys(allTools).length 
+        totalToolCount: Object.keys(allTools).length,
+        toolChoice: streamConfig.toolChoice
       })
-      stream = await streamText(streamConfig)
+      stream = streamText(streamConfig)
     } catch (streamError) {
       console.error('🚨 StreamText failed:', streamError)
       // Fallback to a simple response without streaming
