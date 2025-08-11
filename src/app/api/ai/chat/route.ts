@@ -32,14 +32,22 @@ export async function POST(request: NextRequest) {
     const userPat = await getOrCreateEncryptedAIAssistantPat(session.user.id)
 
     // 5. Get dynamic MCP tools with user's PAT using official SDK
-    const tools = await officialMcpClientService.getTools(userPat)
+    let tools = {}
+    try {
+      console.log('🔧 Attempting to get MCP tools for user:', session.user.id)
+      tools = await officialMcpClientService.getTools(userPat)
+      console.log('✅ MCP Tools retrieved successfully:', Object.keys(tools).length, 'tools')
+    } catch (toolError) {
+      console.error('❌ Failed to get MCP tools, continuing without tools:', toolError)
+      tools = {} // Continue without MCP tools if retrieval fails
+    }
 
     // 6. Stream AI response using Gemini with MCP tools
     const stream = await streamText({
       model: google('gemini-2.0-flash'),
       messages: messages,
-      tools,
-      toolChoice: 'auto',
+      tools: Object.keys(tools).length > 0 ? tools : undefined, // Only pass tools if we have them
+      toolChoice: Object.keys(tools).length > 0 ? 'auto' : 'none',
       onFinish: async (result) => {
         // Add turn to conversation after streaming completes
         const userMessage = messages[messages.length - 1]
