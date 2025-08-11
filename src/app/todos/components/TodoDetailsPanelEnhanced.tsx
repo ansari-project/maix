@@ -18,7 +18,7 @@ import {
   AlertCircle,
   Trash2
 } from "lucide-react"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { format, formatDistanceToNow } from "date-fns"
 import { Todo, Comment } from "../types"
 
@@ -47,6 +47,22 @@ export function TodoDetailsPanelEnhanced({
   const [isSubmittingComment, setIsSubmittingComment] = useState(false)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const saveTimeoutRef = useRef<NodeJS.Timeout>()
+
+  const validateFields = useCallback(() => {
+    const errors: Record<string, string> = {}
+    
+    if (!editedTodo?.title?.trim()) {
+      errors.title = "Title is required"
+    }
+    
+    if (editedTodo?.title && editedTodo.title.length > 200) {
+      errors.title = "Title must be less than 200 characters"
+    }
+    
+    
+    setValidationErrors(errors)
+    return Object.keys(errors).length === 0
+  }, [editedTodo])
 
   useEffect(() => {
     if (todo) {
@@ -82,23 +98,7 @@ export function TodoDetailsPanelEnhanced({
     return () => {
       clearTimeout(saveTimeoutRef.current)
     }
-  }, [editedTodo, todo, onUpdate, readonly])
-
-  const validateFields = () => {
-    const errors: Record<string, string> = {}
-    
-    if (!editedTodo?.title?.trim()) {
-      errors.title = "Title is required"
-    }
-    
-    if (editedTodo?.title && editedTodo.title.length > 200) {
-      errors.title = "Title must be less than 200 characters"
-    }
-    
-    
-    setValidationErrors(errors)
-    return Object.keys(errors).length === 0
-  }
+  }, [editedTodo, todo, onUpdate, readonly, validateFields])
 
   const handleFieldChange = (field: keyof Todo, value: any) => {
     if (!editedTodo || readonly) return

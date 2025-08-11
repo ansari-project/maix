@@ -25,7 +25,7 @@ export function TodoListPane({ todos, selectedTodo, onTodoSelect }: TodoListPane
   useEffect(() => {
     const allGroupIds = groupedTodos.map(g => g.id)
     setExpandedGroups(new Set(allGroupIds))
-  }, [groupBy])
+  }, [groupBy, groupedTodos])
 
   const toggleGroup = (groupId: string) => {
     setExpandedGroups(prev => {
