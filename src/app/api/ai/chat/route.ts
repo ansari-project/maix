@@ -6,12 +6,50 @@ import { officialMcpClientService } from '@/lib/services/official-mcp-client.ser
 import { getOrCreateEncryptedAIAssistantPat } from '@/lib/mcp/services/encrypted-pat.service'
 import { streamText, generateText } from 'ai'
 import { google } from '@ai-sdk/google'
+import { getToken } from 'next-auth/jwt'
+import { verify } from 'jsonwebtoken'
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. Authenticate user
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    // 1. Authenticate user - support both session cookies and Bearer tokens
+    let userId: string | undefined
+    let userEmail: string | undefined
+    
+    // First try Bearer token (for automated testing)
+    const authHeader = request.headers.get('authorization')
+    
+    if (authHeader?.startsWith('Bearer ')) {
+      const tokenString = authHeader.substring(7)
+      try {
+        // Verify the JWT manually for test tokens
+        const decoded = verify(tokenString, process.env.NEXTAUTH_SECRET!) as any
+        if (decoded?.sub) {
+          userId = decoded.sub
+          userEmail = decoded.email
+        }
+      } catch (err) {
+        // Try NextAuth's getToken for regular tokens
+        const token = await getToken({ 
+          req: request as any,
+          secret: process.env.NEXTAUTH_SECRET 
+        })
+        if (token?.sub) {
+          userId = token.sub as string
+          userEmail = token.email as string | undefined
+        }
+      }
+    }
+    
+    if (!userId) {
+      // Fall back to session cookie
+      const session = await getServerSession(authOptions)
+      if (session?.user?.id) {
+        userId = session.user.id
+        userEmail = session.user.email || undefined
+      }
+    }
+    
+    if (!userId) {
       return new NextResponse('Unauthorized', { status: 401 })
     }
 
@@ -25,16 +63,16 @@ export async function POST(request: NextRequest) {
     // 3. Load or create conversation
     const conversation = await aiConversationService.loadOrCreate(
       conversationId, 
-      session.user.id
+      userId
     )
 
     // 4. Get or create AI Assistant PAT for this user
-    const userPat = await getOrCreateEncryptedAIAssistantPat(session.user.id)
+    const userPat = await getOrCreateEncryptedAIAssistantPat(userId)
 
     // 5. Get dynamic MCP tools with user's PAT using official SDK
     let tools = {}
     try {
-      console.log('🔧 Attempting to get MCP tools for user:', session.user.id)
+      console.log('🔧 Attempting to get MCP tools for user:', userId)
       tools = await officialMcpClientService.getTools(userPat)
       console.log('✅ MCP Tools retrieved successfully:', Object.keys(tools).length, 'tools')
       console.log('📋 Available tool names:', Object.keys(tools))
@@ -445,8 +483,23 @@ Always confirm actions taken and provide clear feedback about what was done.`
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    // Support both session cookies and Bearer tokens
+    let userId: string | undefined
+    
+    const token = await getToken({ 
+      req: request as any,
+      secret: process.env.NEXTAUTH_SECRET 
+    })
+    if (token?.sub) {
+      userId = token.sub as string
+    } else {
+      const session = await getServerSession(authOptions)
+      if (session?.user?.id) {
+        userId = session.user.id
+      }
+    }
+    
+    if (!userId) {
       return new NextResponse('Unauthorized', { status: 401 })
     }
 
@@ -455,7 +508,7 @@ export async function GET(request: NextRequest) {
 
     // If requesting a specific conversation, return it with messages
     if (conversationId) {
-      const conversation = await aiConversationService.findById(conversationId, session.user.id)
+      const conversation = await aiConversationService.findById(conversationId, userId)
       if (!conversation) {
         return NextResponse.json({ error: 'Conversation not found' }, { status: 404 })
       }
@@ -463,7 +516,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Otherwise, get recent conversations for user (list view)
-    const conversations = await aiConversationService.getRecentForUser(session.user.id)
+    const conversations = await aiConversationService.getRecentForUser(userId)
 
     return NextResponse.json({ conversations })
 
