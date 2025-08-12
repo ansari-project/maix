@@ -288,8 +288,10 @@ export class OfficialMcpClientService {
 
   /**
    * Convert MCP tools to AI SDK format
+   * @param mcpTools - Array of MCP tool definitions
+   * @param pat - Personal Access Token to use for tool execution
    */
-  private convertToAISdkTools(mcpTools: any[]): Record<string, Tool> {
+  private convertToAISdkTools(mcpTools: any[], pat: string): Record<string, Tool> {
     const tools: Record<string, Tool> = {}
     
     for (const mcpTool of mcpTools) {
@@ -327,7 +329,7 @@ export class OfficialMcpClientService {
             
             // This will be called by the AI SDK when the tool is invoked
             // We need to forward it to the MCP client
-            const pat = this.getCurrentPat()
+            // PAT is now passed from the closure, not from shared state
             if (!pat) {
               console.error('❌ No PAT available for tool execution')
               throw new Error('No PAT available for tool execution')
@@ -404,21 +406,8 @@ export class OfficialMcpClientService {
     return tools
   }
 
-  /**
-   * Get the current PAT from somewhere (this needs to be set per request)
-   */
-  private currentPat: string | undefined
-  
-  private getCurrentPat(): string | undefined {
-    return this.currentPat
-  }
-
-  /**
-   * Set the PAT for the current request context
-   */
-  setCurrentPat(pat: string) {
-    this.currentPat = pat
-  }
+  // PAT handling removed - PATs are now passed explicitly to avoid concurrency issues
+  // In a multi-user environment, storing PAT as instance variable causes security vulnerabilities
 
   /**
    * Get MCP tools in AI SDK format
@@ -433,9 +422,7 @@ export class OfficialMcpClientService {
       return {}
     }
 
-    // Set current PAT for tool execution
-    this.currentPat = token
-
+    // PAT is passed to tool execution via closure, not stored as instance variable
     // Still check tools cache (tools themselves are safe to cache)
     if (this.toolsCache.has(token)) {
       return this.toolsCache.get(token)!
@@ -475,7 +462,8 @@ export class OfficialMcpClientService {
     }
 
     // Convert to AI SDK format (outside try-catch to allow individual tool failures)
-    const tools = this.convertToAISdkTools(toolsResult.tools)
+    // Pass the token to convertToAISdkTools so it can be used in execute closures
+    const tools = this.convertToAISdkTools(toolsResult.tools, token)
     
     // Cache tools for this PAT (safe to cache tools, just not clients)
     this.toolsCache.set(token, tools)
@@ -499,7 +487,6 @@ export class OfficialMcpClientService {
   async clearCache() {
     // Only tools cache remains, clients are not cached
     this.toolsCache.clear()
-    this.currentPat = undefined
   }
 }
 

@@ -143,6 +143,7 @@ Always confirm actions taken and provide clear feedback about what was done.`
     // Phase 1: Tool Execution Loop using generateText
     const maxToolIterations = 5
     let toolCallsExecuted = false
+    let finalAssistantText: string | undefined = undefined
     
     for (let i = 0; i < maxToolIterations; i++) {
       console.log(`🔄 Tool iteration ${i + 1}/${maxToolIterations}`)
@@ -165,11 +166,9 @@ Always confirm actions taken and provide clear feedback about what was done.`
         // If we got text without tool calls, we're done with tools
         if (result.text && (!result.toolCalls || result.toolCalls.length === 0)) {
           console.log('✅ Got text response without tool calls, ending tool loop')
-          // Add the assistant's response to messages for final streaming
-          workingMessages.push({
-            role: 'assistant',
-            content: result.text
-          })
+          console.log('📝 Assistant response received:', result.text.substring(0, 200))
+          // Store the final text to return
+          finalAssistantText = result.text
           break
         }
         
@@ -208,16 +207,20 @@ Always confirm actions taken and provide clear feedback about what was done.`
             if (tool && tool.execute) {
               try {
                 const toolArgs = (toolCall as any).input || (toolCall as any).arguments || (toolCall as any).args || {}
-                console.log(`📦 Tool arguments being passed:`, toolArgs)
+                console.log(`📦 Tool arguments being passed:`, JSON.stringify(toolArgs, null, 2))
                 const toolResult = await tool.execute(toolArgs)
                 console.log(`✅ Tool ${toolCall.toolName} executed successfully`)
+                console.log(`📊 Tool result:`, JSON.stringify(toolResult, null, 2))
                 
-                // Collect tool result with correct 'result' property
+                // Collect tool result with correct 'output' property and type wrapper
                 toolResultParts.push({
                   type: 'tool-result',
                   toolCallId: toolCall.toolCallId,
                   toolName: toolCall.toolName,
-                  result: toolResult  // Changed from 'output' to 'result'
+                  output: {
+                    type: 'json',
+                    value: toolResult
+                  }
                 })
               } catch (toolError) {
                 console.error(`❌ Tool ${toolCall.toolName} execution failed:`, toolError)
@@ -227,7 +230,10 @@ Always confirm actions taken and provide clear feedback about what was done.`
                   type: 'tool-result',
                   toolCallId: toolCall.toolCallId,
                   toolName: toolCall.toolName,
-                  result: { error: errorMessage }  // Changed from 'output' to 'result'
+                  output: {
+                    type: 'json',
+                    value: { error: errorMessage }
+                  }
                 })
               }
             } else {
@@ -237,7 +243,10 @@ Always confirm actions taken and provide clear feedback about what was done.`
                 type: 'tool-result',
                 toolCallId: toolCall.toolCallId,
                 toolName: toolCall.toolName,
-                result: { error: `Tool '${toolCall.toolName}' was not found.` }
+                output: {
+                  type: 'json',
+                  value: { error: `Tool '${toolCall.toolName}' was not found.` }
+                }
               })
             }
           }
@@ -251,6 +260,7 @@ Always confirm actions taken and provide clear feedback about what was done.`
           }
         } else if (!result.text) {
           console.log('⚠️ No text and no tool calls, may need to force text generation')
+          // Continue to streaming phase to force text generation
           break
         }
       } catch (toolError) {
@@ -259,16 +269,52 @@ Always confirm actions taken and provide clear feedback about what was done.`
       }
     }
     
-    // Phase 2: Final Text Generation with streamText (tools disabled)
-    console.log('🎯 Starting final text generation phase')
-    console.log(`📝 Messages count: ${workingMessages.length}`)
+    // Phase 2: Final Response - either stream or return the text we already have
+    console.log('🎯 Preparing final response')
+    console.log(`📝 Has final text from generateText: ${!!finalAssistantText}`)
     console.log(`🛠️ Tool calls were executed: ${toolCallsExecuted}`)
+    
+    // If we already have a final response from generateText, create a simple stream with it
+    if (finalAssistantText) {
+      console.log('✨ Using text response from generateText phase')
+      console.log('📊 Final assistant text:', finalAssistantText.substring(0, 500))
+      
+      // Create a simple text stream response
+      const encoder = new TextEncoder()
+      const stream = new ReadableStream({
+        async start(controller) {
+          // Send the response in SSE format
+          controller.enqueue(encoder.encode(`0:"${finalAssistantText.replace(/"/g, '\\"').replace(/\n/g, '\\n')}"\n`))
+          controller.enqueue(encoder.encode('e:{"finishReason":"stop"}\n'))
+          controller.close()
+        }
+      })
+      
+      // Save to conversation
+      const userMessage = messages[messages.length - 1]
+      await aiConversationService.addTurn(
+        conversation.id,
+        userMessage.content || '',
+        finalAssistantText,
+        [] // Tool names would go here if we tracked them
+      )
+      
+      return new Response(stream, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'X-Conversation-ID': conversation.id
+        }
+      })
+    }
+    
+    // Otherwise, we need to stream a new response
+    console.log('🎯 Starting streamText phase (no final text from generateText)')
     
     const streamConfig: any = {
       model: google('gemini-2.5-flash'),
       messages: workingMessages,
-      // Critical: Disable tools to force text generation
-      toolChoice: 'none',
+      // Don't disable tools, but don't provide them either for final response
       experimental_providerMetadata: true,
       onFinish: async (result: any) => {
         // Add turn to conversation after streaming completes
