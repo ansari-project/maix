@@ -412,14 +412,4 @@ describe('Following Schema - Notification-Only Tests', () => {
   })
 })
 
-describe('Role Unification Field', () => {
-  beforeAll(async () => {
-    await setupTestDatabase()
-  })
-
-  afterAll(async () => {
-    await cleanupTestDatabase()
-    await disconnectDatabase()
-  })
-
-})
+// Role Unification Field tests removed - feature not yet implemented
