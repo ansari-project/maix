@@ -14,10 +14,11 @@ export async function GET() {
     // Find all unique users who are members of the same projects as the current user
     const projects = await prisma.project.findMany({
       where: {
-        OR: [
-          { ownerId: session.user.id },
-          { members: { some: { userId: session.user.id } } }
-        ]
+        members: { 
+          some: { 
+            userId: session.user.id 
+          } 
+        }
       },
       include: {
         owner: {

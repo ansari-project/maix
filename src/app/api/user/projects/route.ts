@@ -11,13 +11,14 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Fetch all projects where the user is a member or owner
+    // Fetch only projects where the user is explicitly a member
     const projects = await prisma.project.findMany({
       where: {
-        OR: [
-          { ownerId: session.user.id },
-          { members: { some: { userId: session.user.id } } }
-        ]
+        members: { 
+          some: { 
+            userId: session.user.id 
+          } 
+        }
       },
       select: {
         id: true,
