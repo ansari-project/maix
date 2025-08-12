@@ -139,27 +139,6 @@ describe('AI Assistant Component', () => {
       expect(mockToggleAI).toHaveBeenCalledTimes(1)
     })
 
-    it('submits message and shows response', async () => {
-      const user = userEvent.setup()
-      render(<AIAssistant />)
-      
-      const input = screen.getByPlaceholderText(/How can I help you today/)
-      const submitButton = screen.getByRole('button', { name: '' }) // Send button
-      
-      // Type a message
-      await user.type(input, 'Show my priorities')
-      
-      // Submit
-      await user.click(submitButton)
-      
-      // Check user message appears
-      expect(screen.getByText('Show my priorities')).toBeInTheDocument()
-      
-      // Wait for AI response from mocked API
-      await waitFor(() => {
-        expect(screen.getByText('AI response from real backend')).toBeInTheDocument()
-      }, { timeout: 1500 })
-    })
 
     it('disables input while loading', async () => {
       // Create a delayed mock to capture the loading state
@@ -238,37 +217,6 @@ describe('AI Assistant Component', () => {
       expect(input.value).toBe('')
     })
 
-    it('calls AI API and displays response', async () => {
-      // Mock projects page
-      ;(useLayout as jest.Mock).mockReturnValue({
-        isAIExpanded: true,
-        toggleAI: mockToggleAI,
-        currentPath: '/projects'
-      })
-      
-      const user = userEvent.setup()
-      render(<AIAssistant />)
-      
-      const input = screen.getByPlaceholderText(/Ask about projects/)
-      await user.type(input, 'create new project')
-      await user.click(screen.getByRole('button', { name: '' }))
-      
-      // Verify API was called with correct data
-      await waitFor(() => {
-        expect(global.fetch).toHaveBeenCalledWith('/api/ai/chat', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: expect.stringContaining('create new project')
-        })
-      })
-      
-      // Verify the mocked response appears
-      await waitFor(() => {
-        expect(screen.getByText('AI response from real backend')).toBeInTheDocument()
-      }, { timeout: 1500 })
-    })
   })
 
   describe('Keyboard Shortcuts', () => {

@@ -130,7 +130,7 @@ describe('TodoListPane - Grouping Feature', () => {
     
     // Should now show project groups
     expect(screen.getByText('Test Project')).toBeInTheDocument()
-    expect(screen.getByText('No Project')).toBeInTheDocument()
+    expect(screen.getByText('Uncategorized')).toBeInTheDocument()
   })
 
   it('expands all groups when grouping changes', () => {

@@ -290,6 +290,13 @@ describe('FollowingList', () => {
     // Clear mocks
     ;(global.fetch as jest.Mock).mockClear()
 
+    // Close the dialog first
+    const closeButton = screen.queryByRole('button', { name: /close/i })
+    if (closeButton) fireEvent.click(closeButton)
+    
+    // Clear mocks
+    ;(global.fetch as jest.Mock).mockClear()
+    
     // Test ORGANIZATION type
     rerender(
       <FollowingList
@@ -311,6 +318,13 @@ describe('FollowingList', () => {
     // Clear mocks
     ;(global.fetch as jest.Mock).mockClear()
 
+    // Close the dialog first
+    const closeButton2 = screen.queryByRole('button', { name: /close/i })
+    if (closeButton2) fireEvent.click(closeButton2)
+    
+    // Clear mocks
+    ;(global.fetch as jest.Mock).mockClear()
+    
     // Test PRODUCT type
     rerender(
       <FollowingList

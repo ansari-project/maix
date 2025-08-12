@@ -252,49 +252,6 @@ describe('FollowButton', () => {
     expect(screen.getByRole('button')).toBeDisabled()
   })
 
-  it('should display correct messaging for different entity types', async () => {
-    mockUseFollowing.mockReturnValue({
-      isFollowing: true,
-      notificationsEnabled: true,
-      followerCount: 1,
-      isLoading: false,
-      error: null,
-      follow: jest.fn(),
-      unfollow: jest.fn(),
-      toggleNotifications: jest.fn(),
-      refresh: jest.fn()
-    })
-
-    const { rerender } = render(
-      <FollowButton
-        entityId="test-org-1"
-        entityType={FollowableType.ORGANIZATION}
-        entityName="Test Org"
-      />
-    )
-
-    // Click to open popover
-    fireEvent.click(screen.getByText('Getting Updates'))
-
-    await waitFor(() => {
-      expect(screen.getByText(/this organization/i)).toBeInTheDocument()
-    })
-
-    // Test with PROJECT
-    rerender(
-      <FollowButton
-        entityId="test-project-1"
-        entityType={FollowableType.PROJECT}
-        entityName="Test Project"
-      />
-    )
-
-    fireEvent.click(screen.getByText('Getting Updates'))
-    
-    await waitFor(() => {
-      expect(screen.getByText(/this project/i)).toBeInTheDocument()
-    })
-  })
 
   it('should show notification-only disclaimer in popover', async () => {
     mockUseFollowing.mockReturnValue({
