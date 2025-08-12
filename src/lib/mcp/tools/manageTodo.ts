@@ -13,7 +13,8 @@ export const ManageTodoSchema = z.object({
   description: z.string().optional().describe("Todo description"),
   status: z.enum(["NOT_STARTED", "IN_PROGRESS", "WAITING_FOR", "COMPLETED"]).optional().describe("Todo status"),
   assigneeId: z.string().nullable().optional().describe("ID of user to assign the todo to"),
-  dueDate: z.string().optional().describe("Due date in ISO format (YYYY-MM-DD)")
+  dueDate: z.string().optional().describe("Due date in ISO format (YYYY-MM-DD)"),
+  includeCompleted: z.boolean().optional().default(false).describe("Whether to include completed todos (default: false)")
 });
 
 export type ManageTodoParams = z.infer<typeof ManageTodoSchema>;
@@ -83,8 +84,18 @@ export async function handleManageTodo(params: ManageTodoParams, context: Contex
         throw new Error("You don't have permission to view todos for this project.");
       }
 
+      // Build the where clause based on includeCompleted parameter
+      const whereClause = params.includeCompleted 
+        ? { 
+            projectId: params.projectId 
+          }
+        : { 
+            projectId: params.projectId,
+            status: { not: TodoStatus.COMPLETED }
+          };
+
       const todos = await prisma.todo.findMany({
-        where: { projectId: params.projectId },
+        where: whereClause,
         include: {
           creator: { select: { name: true, email: true } },
           assignee: { select: { name: true, email: true } },
@@ -119,11 +130,20 @@ export async function handleManageTodo(params: ManageTodoParams, context: Contex
     }
 
     case "list-standalone": {
+      // Build the where clause based on includeCompleted parameter  
+      const whereClause = params.includeCompleted
+        ? {
+            creatorId: user.id,
+            projectId: null // Standalone todos have no project
+          }
+        : {
+            creatorId: user.id,
+            projectId: null, // Standalone todos have no project
+            status: { not: TodoStatus.COMPLETED }
+          };
+      
       const todos = await prisma.todo.findMany({
-        where: { 
-          creatorId: user.id,
-          projectId: null // Standalone todos have no project
-        },
+        where: whereClause,
         include: {
           creator: { select: { name: true, email: true } },
           assignee: { select: { name: true, email: true } },
@@ -159,12 +179,17 @@ export async function handleManageTodo(params: ManageTodoParams, context: Contex
 
     case "list-all": {
       // Get ALL user's todos - both personal and from projects
+      // Build the status filter based on includeCompleted parameter
+      const statusFilter = params.includeCompleted 
+        ? undefined // No filter - include all statuses
+        : { not: TodoStatus.COMPLETED }; // Exclude completed todos
       
       // First get personal todos
       const personalTodos = await prisma.todo.findMany({
         where: { 
           creatorId: user.id,
-          projectId: null // Standalone todos have no project
+          projectId: null, // Standalone todos have no project
+          ...(statusFilter && { status: statusFilter })
         },
         include: {
           creator: { select: { name: true, email: true } },
@@ -198,7 +223,8 @@ export async function handleManageTodo(params: ManageTodoParams, context: Contex
                 ]
               }
             }
-          ]
+          ],
+          ...(statusFilter && { status: statusFilter })
         },
         include: {
           creator: { select: { name: true, email: true } },

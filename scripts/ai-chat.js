@@ -56,6 +56,7 @@ function debug(message) {
   }
 }
 
+
 async function getAuthToken() {
   debug('Getting authentication token...');
   
@@ -118,12 +119,12 @@ async function sendMessage(message, token, showRaw = false) {
       console.log(colors.dim + '=== End Raw Response ===' + colors.reset + '\n');
     }
     
-    // Extract the actual message from SSE format
+    // Parse SSE format - extract plain text/markdown from stream
     const lines = fullResponse.split('\n');
     let aiResponse = '';
     
     for (const line of lines) {
-      // SSE format: "0:content" or "d:content" for data chunks
+      // SSE format: "0:content" or "d:content" or "8:content" for data chunks
       if (line.startsWith('0:') || line.startsWith('d:') || line.startsWith('8:')) {
         const content = line.substring(2);
         
@@ -140,6 +141,13 @@ async function sendMessage(message, token, showRaw = false) {
         }
       }
     }
+    
+    // Clean up escape sequences from JSON encoding
+    aiResponse = aiResponse
+      .replace(/\\n/g, '\n')
+      .replace(/\\"/g, '"')
+      .replace(/\\\\/g, '\\')
+      .trim();
     
     return aiResponse;
   } catch (err) {

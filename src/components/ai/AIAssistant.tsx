@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useLayout } from '@/contexts/LayoutContext'
 import { cn } from '@/lib/utils'
 import { Markdown } from '@/components/ui/markdown'
+import { SSEAccumulator, formatAIResponse } from '@/lib/ai/sse-parser'
 import { 
   Bot, 
   X, 
@@ -153,10 +154,10 @@ export function AIAssistant() {
         setConversationId(newConversationId)
       }
 
-      // Handle streaming response
+      // Handle streaming response with proper SSE parsing
       const reader = response.body?.getReader()
       const decoder = new TextDecoder()
-      let assistantContent = ''
+      const accumulator = new SSEAccumulator()
 
       if (reader) {
         while (true) {
@@ -164,9 +165,12 @@ export function AIAssistant() {
           if (done) break
           
           const chunk = decoder.decode(value)
-          assistantContent += chunk
+          accumulator.addChunk(chunk)
         }
       }
+      
+      // Format the accumulated content for display
+      const assistantContent = formatAIResponse(accumulator.getContent())
       
       // Check response for todo-related keywords that indicate MCP tool was used
       // This is a simple heuristic approach
