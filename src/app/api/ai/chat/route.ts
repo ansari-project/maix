@@ -179,54 +179,75 @@ Always confirm actions taken and provide clear feedback about what was done.`
           console.log(`🛠️ Executing ${result.toolCalls.length} tool calls`)
           
           // Add assistant message with tool calls
+          // For the generateText API, we need to add the assistant's message differently
+          // The tool calls are part of the result, not a separate message
           workingMessages.push({
             role: 'assistant',
-            content: result.toolCalls.map((tc: any) => ({
-              type: 'tool-call',
-              toolCallId: tc.toolCallId,
-              toolName: tc.toolName,
-              args: tc.arguments || tc.args || {}
-            }))
+            content: '',  // Empty content when there are only tool calls
+            toolCalls: result.toolCalls
           })
           
-          // Execute tools and add results
+          // Execute tools and collect all results
+          const toolResultParts = []
           for (const toolCall of result.toolCalls) {
             console.log(`⚙️ Executing tool: ${toolCall.toolName}`)
+            
+            // Debug: Log the complete toolCall structure
+            console.log('🔍 Tool call structure:', {
+              toolName: toolCall.toolName,
+              hasInput: !!(toolCall as any).input,
+              hasArguments: !!(toolCall as any).arguments,
+              hasArgs: !!(toolCall as any).args,
+              input: (toolCall as any).input,
+              arguments: (toolCall as any).arguments,
+              args: (toolCall as any).args
+            })
             
             // Execute the tool manually using its execute function
             const tool = (allTools as any)[toolCall.toolName]
             if (tool && tool.execute) {
               try {
-                const toolArgs = (toolCall as any).arguments || (toolCall as any).args || {}
+                const toolArgs = (toolCall as any).input || (toolCall as any).arguments || (toolCall as any).args || {}
+                console.log(`📦 Tool arguments being passed:`, toolArgs)
                 const toolResult = await tool.execute(toolArgs)
                 console.log(`✅ Tool ${toolCall.toolName} executed successfully`)
                 
-                workingMessages.push({
-                  role: 'tool',
-                  content: [{
-                    type: 'tool-result',
-                    toolCallId: toolCall.toolCallId,
-                    toolName: toolCall.toolName,
-                    result: toolResult
-                  }]
+                // Collect tool result with correct 'result' property
+                toolResultParts.push({
+                  type: 'tool-result',
+                  toolCallId: toolCall.toolCallId,
+                  toolName: toolCall.toolName,
+                  result: toolResult  // Changed from 'output' to 'result'
                 })
               } catch (toolError) {
                 console.error(`❌ Tool ${toolCall.toolName} execution failed:`, toolError)
                 // Add error result
                 const errorMessage = toolError instanceof Error ? toolError.message : String(toolError)
-                workingMessages.push({
-                  role: 'tool',
-                  content: [{
-                    type: 'tool-result',
-                    toolCallId: toolCall.toolCallId,
-                    toolName: toolCall.toolName,
-                    result: `Error: ${errorMessage}`
-                  }]
+                toolResultParts.push({
+                  type: 'tool-result',
+                  toolCallId: toolCall.toolCallId,
+                  toolName: toolCall.toolName,
+                  result: { error: errorMessage }  // Changed from 'output' to 'result'
                 })
               }
             } else {
               console.warn(`⚠️ Tool ${toolCall.toolName} not found in available tools`)
+              // Add error for missing tool
+              toolResultParts.push({
+                type: 'tool-result',
+                toolCallId: toolCall.toolCallId,
+                toolName: toolCall.toolName,
+                result: { error: `Tool '${toolCall.toolName}' was not found.` }
+              })
             }
+          }
+          
+          // Add a single tool message with all the results
+          if (toolResultParts.length > 0) {
+            workingMessages.push({
+              role: 'tool',
+              content: toolResultParts
+            })
           }
         } else if (!result.text) {
           console.log('⚠️ No text and no tool calls, may need to force text generation')
