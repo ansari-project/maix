@@ -5,8 +5,7 @@
  * to ensure the search-then-update patterns work with real data.
  */
 
-import { prismaTest } from '@/lib/test-utils/db-test-utils';
-import { createTestUser } from '@/lib/test-utils/auth-test-utils';
+import { prismaTest, createTestUser } from '@/lib/test/db-test-utils';
 import { handleManageTodo } from '@/lib/mcp/tools/manageTodo';
 import { handleSearchTodos } from '@/lib/mcp/tools/searchTodos';
 

@@ -8,12 +8,18 @@
  * - Search-then-update patterns for status changes
  */
 
-import { prismaTest } from '@/lib/test-utils/db-test-utils';
-import { createTestUser } from '@/lib/test-utils/auth-test-utils';
+import { prismaTest, createTestUser } from '@/lib/test/db-test-utils';
 import { streamText } from 'ai';
 import { google } from '@ai-sdk/google';
 import { officialMcpClientService } from '@/lib/services/official-mcp-client.service';
 import { getOrCreateEncryptedAIAssistantPat } from '@/lib/mcp/services/encrypted-pat.service';
+import { NextRequest } from 'next/server';
+import { POST } from '@/app/api/ai/chat/route';
+
+// Mock NextAuth
+jest.mock('next-auth', () => ({
+  getServerSession: jest.fn()
+}));
 
 // Mock AI SDK to control responses for testing
 jest.mock('ai', () => ({
@@ -110,8 +116,19 @@ describe('AI Todo Interactions Integration Tests', () => {
         text: 'Here are all your todos:'
       } as any);
 
-      // Make request to AI chat endpoint
-      const response = await fetch('/api/ai/chat', {
+      // Mock session
+      const { getServerSession } = require('next-auth');
+      getServerSession.mockResolvedValue({
+        user: { id: testUser.id, email: testUser.email }
+      });
+
+      // Mock streamText to return a response
+      mockStreamText.mockResolvedValueOnce({
+        toTextStreamResponse: () => new Response('AI response')
+      } as any);
+
+      // Create request
+      const request = new NextRequest('http://localhost:3000/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -119,7 +136,10 @@ describe('AI Todo Interactions Integration Tests', () => {
         })
       });
 
-      expect(response.ok).toBe(true);
+      // Call the route handler directly
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
       expect(mockStreamText).toHaveBeenCalledWith(
         expect.objectContaining({
           tools: expect.objectContaining({
@@ -149,7 +169,18 @@ describe('AI Todo Interactions Integration Tests', () => {
         text: 'Here are all your todos: personal and project'
       } as any);
 
-      const response = await fetch('/api/ai/chat', {
+      // Mock session
+      const { getServerSession } = require('next-auth');
+      getServerSession.mockResolvedValue({
+        user: { id: testUser.id, email: testUser.email }
+      });
+
+      // Mock streamText to return a response
+      mockStreamText.mockResolvedValueOnce({
+        toTextStreamResponse: () => new Response('AI response')
+      } as any);
+
+      const request = new NextRequest('http://localhost:3000/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -157,7 +188,8 @@ describe('AI Todo Interactions Integration Tests', () => {
         })
       });
 
-      expect(response.ok).toBe(true);
+      const response = await POST(request);
+      expect(response.status).toBe(200);
       
       // Verify system message tells AI not to ask for specification
       const systemMessage = mockStreamText.mock.calls[0][0].messages[0];
@@ -197,7 +229,18 @@ describe('AI Todo Interactions Integration Tests', () => {
         text: 'I found the database task and marked it as completed!'
       } as any);
 
-      const response = await fetch('/api/ai/chat', {
+      // Mock session
+      const { getServerSession } = require('next-auth');
+      getServerSession.mockResolvedValue({
+        user: { id: testUser.id, email: testUser.email }
+      });
+
+      // Mock streamText to return a response
+      mockStreamText.mockResolvedValueOnce({
+        toTextStreamResponse: () => new Response('AI response')
+      } as any);
+
+      const request = new NextRequest('http://localhost:3000/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -205,7 +248,8 @@ describe('AI Todo Interactions Integration Tests', () => {
         })
       });
 
-      expect(response.ok).toBe(true);
+      const response = await POST(request);
+      expect(response.status).toBe(200);
       
       // Verify system message instructs search-then-update pattern
       const systemMessage = mockStreamText.mock.calls[0][0].messages[0];
@@ -245,7 +289,8 @@ describe('AI Todo Interactions Integration Tests', () => {
         })
       });
 
-      expect(response.ok).toBe(true);
+      const response = await POST(request);
+      expect(response.status).toBe(200);
 
       // Verify instructions for IN_PROGRESS status
       const systemMessage = mockStreamText.mock.calls[0][0].messages[0];
@@ -279,7 +324,18 @@ describe('AI Todo Interactions Integration Tests', () => {
         text: 'Created a new todo for reviewing API documentation!'
       } as any);
 
-      const response = await fetch('/api/ai/chat', {
+      // Mock session
+      const { getServerSession } = require('next-auth');
+      getServerSession.mockResolvedValue({
+        user: { id: testUser.id, email: testUser.email }
+      });
+
+      // Mock streamText to return a response
+      mockStreamText.mockResolvedValueOnce({
+        toTextStreamResponse: () => new Response('AI response')
+      } as any);
+
+      const request = new NextRequest('http://localhost:3000/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -287,7 +343,8 @@ describe('AI Todo Interactions Integration Tests', () => {
         })
       });
 
-      expect(response.ok).toBe(true);
+      const response = await POST(request);
+      expect(response.status).toBe(200);
 
       // Verify system message encourages proactive tool usage
       const systemMessage = mockStreamText.mock.calls[0][0].messages[0];
@@ -329,7 +386,18 @@ describe('AI Todo Interactions Integration Tests', () => {
         text: 'I could not find any todos matching "nonexistent"'
       } as any);
 
-      const response = await fetch('/api/ai/chat', {
+      // Mock session
+      const { getServerSession } = require('next-auth');
+      getServerSession.mockResolvedValue({
+        user: { id: testUser.id, email: testUser.email }
+      });
+
+      // Mock streamText to return a response
+      mockStreamText.mockResolvedValueOnce({
+        toTextStreamResponse: () => new Response('AI response')
+      } as any);
+
+      const request = new NextRequest('http://localhost:3000/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -337,14 +405,26 @@ describe('AI Todo Interactions Integration Tests', () => {
         })
       });
 
-      expect(response.ok).toBe(true);
+      const response = await POST(request);
+      expect(response.status).toBe(200);
     });
 
     it('should handle MCP tool failures gracefully', async () => {
       // Mock MCP service to fail
       mockOfficialMcpClientService.getTools.mockRejectedValue(new Error('MCP connection failed'));
 
-      const response = await fetch('/api/ai/chat', {
+      // Mock session
+      const { getServerSession } = require('next-auth');
+      getServerSession.mockResolvedValue({
+        user: { id: testUser.id, email: testUser.email }
+      });
+
+      // Mock streamText to return a response
+      mockStreamText.mockResolvedValueOnce({
+        toTextStreamResponse: () => new Response('AI response')
+      } as any);
+
+      const request = new NextRequest('http://localhost:3000/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -352,7 +432,8 @@ describe('AI Todo Interactions Integration Tests', () => {
         })
       });
 
-      expect(response.ok).toBe(true);
+      const response = await POST(request);
+      expect(response.status).toBe(200);
       // Should continue without MCP tools
       expect(mockStreamText).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -375,7 +456,18 @@ describe('AI Todo Interactions Integration Tests', () => {
         text: 'Response with timezone awareness'
       } as any);
 
-      const response = await fetch('/api/ai/chat', {
+      // Mock session
+      const { getServerSession } = require('next-auth');
+      getServerSession.mockResolvedValue({
+        user: { id: testUser.id, email: testUser.email }
+      });
+
+      // Mock streamText to return a response
+      mockStreamText.mockResolvedValueOnce({
+        toTextStreamResponse: () => new Response('AI response')
+      } as any);
+
+      const request = new NextRequest('http://localhost:3000/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -384,7 +476,8 @@ describe('AI Todo Interactions Integration Tests', () => {
         })
       });
 
-      expect(response.ok).toBe(true);
+      const response = await POST(request);
+      expect(response.status).toBe(200);
 
       // Verify timezone is injected into system message
       const systemMessage = mockStreamText.mock.calls[0][0].messages[0];

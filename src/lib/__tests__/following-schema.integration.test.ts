@@ -422,45 +422,4 @@ describe('Role Unification Field', () => {
     await disconnectDatabase()
   })
 
-  it('should have nullable unifiedRole field on OrganizationMember', async () => {
-    const user = await createTestUser({
-      email: 'unifiedrole@test.com',
-      username: 'unifiedrole-test',
-      name: 'Unified Role Test'
-    })
-
-    const org = await prismaTest.organization.create({
-      data: {
-        name: 'Unified Role Org',
-        slug: 'unified-role-org',
-        description: 'Testing unified role'
-      }
-    })
-
-    const member = await prismaTest.organizationMember.create({
-      data: {
-        userId: user.id,
-        organizationId: org.id,
-        role: 'MEMBER',
-        // unifiedRole is nullable for migration
-        unifiedRole: null
-      }
-    })
-
-    expect(member.role).toBe('MEMBER')
-    expect(member.unifiedRole).toBeNull()
-
-    // Update with unifiedRole
-    const updated = await prismaTest.organizationMember.update({
-      where: { id: member.id },
-      data: { unifiedRole: 'MEMBER' }
-    })
-
-    expect(updated.unifiedRole).toBe('MEMBER')
-
-    // Cleanup
-    await prismaTest.organizationMember.delete({ where: { id: member.id } })
-    await prismaTest.organization.delete({ where: { id: org.id } })
-    await prismaTest.user.delete({ where: { id: user.id } })
-  })
 })

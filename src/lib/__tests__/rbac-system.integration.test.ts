@@ -298,45 +298,6 @@ describe('RBAC System Integration Tests', () => {
     })
   })
 
-  describe.skip('requirePermission', () => {
-    // Skipping these tests as they rely on mocking getServerSession which doesn't work well in integration tests
-    it('should pass for users with sufficient permissions', async () => {
-      ;(getServerSession as jest.Mock).mockResolvedValue({
-        user: { email: owner.email }
-      })
-      
-      const user = await requirePermission('project', testProject.id, 'MEMBER' as UnifiedRole)
-      expect(user.id).toBe(owner.id)
-    })
-
-    it('should throw AuthError for users without sufficient permissions', async () => {
-      ;(getServerSession as jest.Mock).mockResolvedValue({
-        user: { email: viewer.email }
-      })
-      
-      await expect(
-        requirePermission('project', testProject.id, 'ADMIN' as UnifiedRole)
-      ).rejects.toThrow(AuthError)
-    })
-
-    it('should throw AuthError for non-members', async () => {
-      ;(getServerSession as jest.Mock).mockResolvedValue({
-        user: { email: nonMember.email }
-      })
-      
-      await expect(
-        requirePermission('project', testProject.id, 'VIEWER' as UnifiedRole)
-      ).rejects.toThrow(AuthError)
-    })
-
-    it('should throw AuthError when no session exists', async () => {
-      ;(getServerSession as jest.Mock).mockResolvedValue(null)
-      
-      await expect(
-        requirePermission('project', testProject.id, 'VIEWER' as UnifiedRole)
-      ).rejects.toThrow(AuthError)
-    })
-  })
 
   describe('can helper function', () => {
     describe('Organization permissions', () => {

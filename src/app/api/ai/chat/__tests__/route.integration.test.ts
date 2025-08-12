@@ -9,8 +9,8 @@ jest.mock('next-auth', () => ({
 }))
 
 // Mock MCP client service to avoid external dependencies
-jest.mock('@/lib/services/mcp-client.service', () => ({
-  mcpClientService: {
+jest.mock('@/lib/services/official-mcp-client.service', () => ({
+  officialMcpClientService: {
     getTools: jest.fn().mockResolvedValue({
       'maix_update_profile': {
         description: 'Updates user profile',
@@ -183,7 +183,7 @@ describe('/api/ai/chat Integration Tests', () => {
     it('should integrate MCP tools in streaming response', async () => {
       // Verify MCP tools are loaded and passed to streamText
       const { streamText } = require('ai')
-      const { mcpClientService } = require('@/lib/services/mcp-client.service')
+      const { officialMcpClientService } = require('@/lib/services/official-mcp-client.service')
 
       const request = new NextRequest('http://localhost:3000/api/ai/chat', {
         method: 'POST',
@@ -196,7 +196,7 @@ describe('/api/ai/chat Integration Tests', () => {
       const response = await POST(request)
 
       expect(response.status).toBe(200)
-      expect(mcpClientService.getTools).toHaveBeenCalled()
+      expect(officialMcpClientService.getTools).toHaveBeenCalled()
       expect(streamText).toHaveBeenCalledWith(
         expect.objectContaining({
           tools: expect.objectContaining({
