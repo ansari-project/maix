@@ -145,7 +145,7 @@ Be proactive in using tools when appropriate. For example:
 
 **IMPORTANT TODO HANDLING**: 
 1. When users ask for "my todos", "show todos", "list todos", or similar:
-   - IMMEDIATELY use maix_manage_todo with action "list-all"
+   - IMMEDIATELY use maix_manage_todo with action "list-all" which gets ALL their todos
    - Set includeCompleted: false (this is the default) to only show active todos
    - Do NOT say you're having trouble or cannot retrieve todos
    - The tool is available and working - USE IT
