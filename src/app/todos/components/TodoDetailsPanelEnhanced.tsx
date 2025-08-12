@@ -28,7 +28,7 @@ interface TodoDetailsPanelEnhancedProps {
   onCommentAdd: (todoId: string, comment: string) => Promise<void>
   onDelete?: (todoId: string) => Promise<void>
   projects?: Array<{ id: string; name: string }>
-  users?: Array<{ id: string; name: string; email: string }>
+  users?: Array<{ id: string; name: string | null; email: string }>
   readonly?: boolean
 }
 
@@ -82,6 +82,7 @@ export function TodoDetailsPanelEnhanced({
         editedTodo.title !== todo.title ||
         editedTodo.description !== todo.description ||
         editedTodo.status !== todo.status ||
+        editedTodo.startDate !== todo.startDate ||
         editedTodo.dueDate !== todo.dueDate ||
         editedTodo.projectId !== todo.projectId ||
         editedTodo.assigneeId !== todo.assigneeId
@@ -293,25 +294,40 @@ export function TodoDetailsPanelEnhanced({
               )}
             </div>
 
-            {/* Status and Due Date */}
+            {/* Status */}
+            <div className="space-y-2">
+              <Label htmlFor="status">Status</Label>
+              <Select
+                value={editedTodo.status}
+                onValueChange={(value) => handleFieldChange("status", value)}
+                disabled={readonly}
+              >
+                <SelectTrigger id="status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="NOT_STARTED">Not Started</SelectItem>
+                  <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                  <SelectItem value="WAITING_FOR">Waiting For</SelectItem>
+                  <SelectItem value="COMPLETED">Completed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Start Date and Due Date */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select
-                  value={editedTodo.status}
-                  onValueChange={(value) => handleFieldChange("status", value)}
+                <Label htmlFor="startDate">
+                  <Calendar className="inline h-3 w-3 mr-1" />
+                  Start Date
+                </Label>
+                <Input
+                  id="startDate"
+                  type="date"
+                  value={editedTodo.startDate ? format(new Date(editedTodo.startDate), "yyyy-MM-dd") : ""}
+                  onChange={(e) => handleFieldChange("startDate", e.target.value ? new Date(e.target.value) : null)}
                   disabled={readonly}
-                >
-                  <SelectTrigger id="status">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="NOT_STARTED">Not Started</SelectItem>
-                    <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                    <SelectItem value="WAITING_FOR">Waiting For</SelectItem>
-                    <SelectItem value="COMPLETED">Completed</SelectItem>
-                  </SelectContent>
-                </Select>
+                />
               </div>
 
               <div className="space-y-2">

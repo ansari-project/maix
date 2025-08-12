@@ -19,6 +19,8 @@ export default function TodosPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showDetailsPanel, setShowDetailsPanel] = useState(true)
+  const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([])
+  const [users, setUsers] = useState<Array<{ id: string; name: string | null; email: string }>>([])
   const searchInputRef = useRef<HTMLInputElement>(null)
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -31,7 +33,10 @@ export default function TodosPage() {
   useEffect(() => {
     if (status === "authenticated") {
       fetchTodos()
+      fetchProjects()
+      fetchUsers()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status])
 
   // Listen for todo update events from AI Assistant or other sources
@@ -79,6 +84,51 @@ export default function TodosPage() {
       console.error("Error fetching todos:", error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchProjects = async () => {
+    try {
+      const response = await fetch("/api/user/projects")
+      if (response.ok) {
+        const data = await response.json()
+        setProjects(data.projects || [])
+      } else {
+        console.error("Failed to fetch projects:", response.statusText)
+      }
+    } catch (error) {
+      console.error("Error fetching projects:", error)
+    }
+  }
+
+  const fetchUsers = async () => {
+    try {
+      // For now, fetch team members from the user's projects
+      // In the future, this could be a dedicated endpoint
+      const response = await fetch("/api/user/team-members")
+      if (response.ok) {
+        const data = await response.json()
+        setUsers(data.users || [])
+      } else {
+        // Fallback to just the current user
+        if (session?.user) {
+          setUsers([{
+            id: session.user.id || '',
+            name: session.user.name || null,
+            email: session.user.email || ''
+          }])
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching users:", error)
+      // Fallback to just the current user
+      if (session?.user) {
+        setUsers([{
+          id: session.user.id || '',
+          name: session.user.name || null,
+          email: session.user.email || ''
+        }])
+      }
     }
   }
 
@@ -289,6 +339,8 @@ export default function TodosPage() {
                 onUpdate={handleTodoUpdate}
                 onCommentAdd={handleCommentAdd}
                 onDelete={handleTodoDelete}
+                projects={projects}
+                users={users}
               />
             </div>
           )}

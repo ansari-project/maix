@@ -5,6 +5,7 @@ export interface Todo {
   title: string
   description: string | null
   status: string
+  startDate: Date | null
   dueDate: Date | null
   createdAt: Date
   updatedAt: Date
@@ -39,6 +40,7 @@ export const parseTodo = (data: any): Todo => ({
   ...data,
   createdAt: new Date(data.createdAt),
   updatedAt: new Date(data.updatedAt),
+  startDate: data.startDate ? new Date(data.startDate) : null,
   dueDate: data.dueDate ? new Date(data.dueDate) : null,
   comments: data.comments?.map(parseComment) || []
 })
@@ -53,5 +55,6 @@ export const serializeTodo = (todo: Todo) => ({
   ...todo,
   createdAt: todo.createdAt.toISOString(),
   updatedAt: todo.updatedAt.toISOString(),
+  startDate: todo.startDate ? todo.startDate.toISOString() : null,
   dueDate: todo.dueDate ? todo.dueDate.toISOString() : null
 })

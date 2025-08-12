@@ -24,6 +24,33 @@ export function useGroupedTodos(todos: Todo[], groupBy: GroupBy): TodoGroup[] {
 
     const groups = new Map<string, TodoGroup>()
 
+    // Pre-populate groups based on groupBy type to ensure all groups are shown
+    switch (groupBy) {
+      case 'status':
+        // Always show all status groups
+        groups.set('NOT_STARTED', { id: 'NOT_STARTED', label: 'Not Started', todos: [], sortOrder: 1 })
+        groups.set('IN_PROGRESS', { id: 'IN_PROGRESS', label: 'In Progress', todos: [], sortOrder: 2 })
+        groups.set('WAITING_FOR', { id: 'WAITING_FOR', label: 'Waiting For', todos: [], sortOrder: 3 })
+        groups.set('COMPLETED', { id: 'COMPLETED', label: 'Completed', todos: [], sortOrder: 4 })
+        break
+
+      case 'dueDate':
+        // Always show all date groups
+        groups.set('overdue', { id: 'overdue', label: 'Overdue', todos: [], sortOrder: 0 })
+        groups.set('today', { id: 'today', label: 'Today', todos: [], sortOrder: 1 })
+        groups.set('this-week', { id: 'this-week', label: 'This Week', todos: [], sortOrder: 2 })
+        groups.set('this-month', { id: 'this-month', label: 'This Month', todos: [], sortOrder: 3 })
+        groups.set('beyond', { id: 'beyond', label: 'Beyond', todos: [], sortOrder: 4 })
+        groups.set('no-due-date', { id: 'no-due-date', label: 'No Due Date', todos: [], sortOrder: 5 })
+        break
+
+      case 'project':
+        // Add uncategorized group
+        groups.set('no-project', { id: 'no-project', label: 'Uncategorized', todos: [], sortOrder: 999 })
+        // Projects will be added as we encounter them
+        break
+    }
+
     todos.forEach(todo => {
       let groupKey: string
       let groupLabel: string
@@ -52,7 +79,7 @@ export function useGroupedTodos(todos: Todo[], groupBy: GroupBy): TodoGroup[] {
 
         case 'project':
           groupKey = todo.projectId || 'no-project'
-          groupLabel = todo.project?.name || 'No Project'
+          groupLabel = todo.project?.name || 'Uncategorized'
           sortOrder = todo.project ? 0 : 999
           break
 
@@ -125,7 +152,7 @@ function getStatusOrder(status: string): number {
 
 function getDueDateGroup(dueDate: Date | null): { key: string; label: string; sortOrder: number } {
   if (!dueDate) {
-    return { key: 'no-due-date', label: 'No Due Date', sortOrder: 999 }
+    return { key: 'no-due-date', label: 'No Due Date', sortOrder: 5 }
   }
 
   const date = new Date(dueDate)
@@ -137,16 +164,18 @@ function getDueDateGroup(dueDate: Date | null): { key: string; label: string; so
     return { key: 'today', label: 'Today', sortOrder: 1 }
   }
   if (isTomorrow(date)) {
-    return { key: 'tomorrow', label: 'Tomorrow', sortOrder: 2 }
+    // Tomorrow is part of "This Week"
+    return { key: 'this-week', label: 'This Week', sortOrder: 2 }
   }
   if (isThisWeek(date)) {
-    return { key: 'this-week', label: 'This Week', sortOrder: 3 }
+    return { key: 'this-week', label: 'This Week', sortOrder: 2 }
   }
   if (isThisMonth(date)) {
-    return { key: 'this-month', label: 'This Month', sortOrder: 4 }
+    return { key: 'this-month', label: 'This Month', sortOrder: 3 }
   }
   
-  return { key: 'later', label: 'Later', sortOrder: 5 }
+  // Everything else is "Beyond"
+  return { key: 'beyond', label: 'Beyond', sortOrder: 4 }
 }
 
 function getCreatedDateGroup(createdAt: Date): { key: string; label: string; sortOrder: number } {

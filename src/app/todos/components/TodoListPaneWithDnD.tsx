@@ -171,10 +171,12 @@ export function TodoListPaneWithDnD({
     updateHandlers
   )
 
-  // Initialize all groups as expanded when grouping changes
+  // Initialize groups as expanded when grouping changes (except Completed)
   useEffect(() => {
     const allGroupIds = groupedTodos.map(g => g.id)
-    setExpandedGroups(new Set(allGroupIds))
+    // Collapse the Completed group by default
+    const expandedIds = allGroupIds.filter(id => id !== 'COMPLETED')
+    setExpandedGroups(new Set(expandedIds))
   }, [groupBy, groupedTodos])
 
   const toggleGroup = (groupId: string) => {
