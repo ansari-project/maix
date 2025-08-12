@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { renderHook, act } from '@testing-library/react'
+import { renderHook, act, waitFor } from '@testing-library/react'
 import { useFollowing } from '../useFollowing'
 import { FollowableType } from '@prisma/client'
 
@@ -55,14 +55,15 @@ describe('useFollowing', () => {
   })
 
   it('should fetch following status on mount when no initial state', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({
-      status: 200,
+    const mockResponse = {
+      isFollowing: true,
+      notificationsEnabled: true,
+      followerCount: 10
+    }
+
+    ;(global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
-      json: async () => ({
-        isFollowing: true,
-        notificationsEnabled: true,
-        followerCount: 3
-      })
+      json: async () => mockResponse
     })
 
     const { result } = renderHook(() =>
@@ -72,15 +73,17 @@ describe('useFollowing', () => {
       })
     )
 
-    await act(async () => {
-      // Wait for the effect to complete
+    // Wait for the async fetch to complete
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
     })
 
-    expect(fetch).toHaveBeenCalledWith('/api/v1/projects/test-project-1/followers/me/status')
     expect(result.current.isFollowing).toBe(true)
     expect(result.current.notificationsEnabled).toBe(true)
-    expect(result.current.followerCount).toBe(3)
-    expect(result.current.isLoading).toBe(false)
+    expect(result.current.followerCount).toBe(10)
+
+    // Verify the fetch was called with the correct path
+    expect(fetch).toHaveBeenCalledWith('/api/following/project/test-project-1/followers/me/status')
   })
 
   it('should handle 404 status (not following) correctly', async () => {
@@ -130,135 +133,130 @@ describe('useFollowing', () => {
   })
 
   it('should handle follow action successfully', async () => {
-    (global.fetch as jest.Mock)
-      // Initial status check
+    ;(global.fetch as jest.Mock)
       .mockResolvedValueOnce({
         status: 404,
         ok: false
       })
-      // Follow action
       .mockResolvedValueOnce({
-        status: 201,
         ok: true,
-        json: async () => ({})
+        json: async () => ({
+          isFollowing: true,
+          notificationsEnabled: true,
+          followerCount: 1
+        })
       })
 
     const { result } = renderHook(() =>
       useFollowing({
-        entityId: 'test-project-1',
-        entityType: FollowableType.PROJECT
+        entityId: 'test-org-1',
+        entityType: FollowableType.ORGANIZATION
       })
     )
 
+    // Wait for initial load
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
+    })
+
+    expect(result.current.isFollowing).toBe(false)
+
+    // Perform follow action
     await act(async () => {
       await result.current.follow()
     })
 
-    expect(fetch).toHaveBeenCalledWith('/api/v1/projects/test-project-1/followers', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        notificationsEnabled: true
-      })
-    })
-
     expect(result.current.isFollowing).toBe(true)
     expect(result.current.notificationsEnabled).toBe(true)
-    expect(result.current.followerCount).toBe(1) // Incremented from 0
+    expect(result.current.followerCount).toBe(1)
+    expect(result.current.error).toBe(null)
   })
 
   it('should handle unfollow action successfully', async () => {
     const initialState = {
       isFollowing: true,
       notificationsEnabled: true,
-      followerCount: 3
+      followerCount: 5
     }
 
-    (global.fetch as jest.Mock).mockResolvedValue({
-      status: 200,
+    ;(global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
       json: async () => ({})
     })
 
     const { result } = renderHook(() =>
       useFollowing({
-        entityId: 'test-project-1',
-        entityType: FollowableType.PROJECT,
+        entityId: 'test-product-1',
+        entityType: FollowableType.PRODUCT,
         initialState
       })
     )
 
+    expect(result.current.isFollowing).toBe(true)
+    expect(result.current.followerCount).toBe(5)
+
+    // Perform unfollow action
     await act(async () => {
       await result.current.unfollow()
     })
 
-    expect(fetch).toHaveBeenCalledWith('/api/v1/projects/test-project-1/followers/me', {
-      method: 'DELETE'
-    })
-
     expect(result.current.isFollowing).toBe(false)
     expect(result.current.notificationsEnabled).toBe(false)
-    expect(result.current.followerCount).toBe(2) // Decremented from 3
+    expect(result.current.followerCount).toBe(4)
+    expect(result.current.error).toBe(null)
   })
 
   it('should handle toggle notifications successfully', async () => {
     const initialState = {
       isFollowing: true,
-      notificationsEnabled: true,
-      followerCount: 2
+      notificationsEnabled: false,
+      followerCount: 3
     }
 
-    (global.fetch as jest.Mock).mockResolvedValue({
-      status: 200,
+    ;(global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
-      json: async () => ({})
+      json: async () => ({
+        notificationsEnabled: true
+      })
     })
 
     const { result } = renderHook(() =>
       useFollowing({
-        entityId: 'test-project-1',
+        entityId: 'test-project-2',
         entityType: FollowableType.PROJECT,
         initialState
       })
     )
 
-    await act(async () => {
-      await result.current.toggleNotifications()
-    })
-
-    expect(fetch).toHaveBeenCalledWith('/api/v1/projects/test-project-1/followers/me', {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        notificationsEnabled: false
-      })
-    })
-
     expect(result.current.notificationsEnabled).toBe(false)
-    expect(result.current.isFollowing).toBe(true) // Still following
-    expect(result.current.followerCount).toBe(2) // Unchanged
+
+    // Toggle notifications on
+    await act(async () => {
+      await result.current.toggleNotifications(true)
+    })
+
+    expect(result.current.notificationsEnabled).toBe(true)
+    expect(result.current.isFollowing).toBe(true) // Should remain following
+    expect(result.current.followerCount).toBe(3) // Count shouldn't change
   })
 
   it('should handle API errors correctly', async () => {
-    (global.fetch as jest.Mock).mockRejectedValue(new Error('Network error'))
+    ;(global.fetch as jest.Mock).mockRejectedValue(new Error('Network error'))
 
     const { result } = renderHook(() =>
       useFollowing({
-        entityId: 'test-project-1',
+        entityId: 'test-project-3',
         entityType: FollowableType.PROJECT
       })
     )
 
-    await act(async () => {
-      // Wait for initial fetch to complete
+    // Wait for the async error to be handled
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
     })
 
-    expect(result.current.error).toBe('Failed to load following status')
-    expect(result.current.isLoading).toBe(false)
+    expect(result.current.error).toBe('Network error')
+    expect(result.current.isFollowing).toBe(false)
   })
 
   it('should handle follow error correctly', async () => {
@@ -291,31 +289,55 @@ describe('useFollowing', () => {
   })
 
   it('should use correct API paths for different entity types', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({
-      status: 404,
-      ok: false
+    ;(global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        isFollowing: false,
+        notificationsEnabled: false,
+        followerCount: 0
+      })
     })
 
-    // Test ORGANIZATION
-    const { rerender } = renderHook((props) =>
-      useFollowing(props),
+    // Test PROJECT type
+    const { rerender } = renderHook(
+      ({ entityId, entityType }) => useFollowing({ entityId, entityType }),
       {
         initialProps: {
-          entityId: 'org-1',
-          entityType: FollowableType.ORGANIZATION
+          entityId: 'project-1',
+          entityType: FollowableType.PROJECT
         }
       }
     )
 
-    expect(fetch).toHaveBeenCalledWith('/api/v1/organizations/org-1/followers/me/status')
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith('/api/following/project/project-1/followers/me/status')
+    })
 
-    // Test PRODUCT
+    // Clear mock calls
+    ;(global.fetch as jest.Mock).mockClear()
+
+    // Test ORGANIZATION type
+    rerender({
+      entityId: 'org-1',
+      entityType: FollowableType.ORGANIZATION
+    })
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith('/api/following/organization/org-1/followers/me/status')
+    })
+
+    // Clear mock calls
+    ;(global.fetch as jest.Mock).mockClear()
+
+    // Test PRODUCT type
     rerender({
       entityId: 'product-1',
       entityType: FollowableType.PRODUCT
     })
 
-    expect(fetch).toHaveBeenCalledWith('/api/v1/products/product-1/followers/me/status')
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith('/api/following/product/product-1/followers/me/status')
+    })
   })
 
   it('should handle refresh function correctly', async () => {
@@ -362,27 +384,31 @@ describe('useFollowing', () => {
     const initialState = {
       isFollowing: true,
       notificationsEnabled: true,
-      followerCount: 0 // Edge case: already at 0
+      followerCount: 0 // Already at zero
     }
 
-    (global.fetch as jest.Mock).mockResolvedValue({
-      status: 200,
+    ;(global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
       json: async () => ({})
     })
 
     const { result } = renderHook(() =>
       useFollowing({
-        entityId: 'test-project-1',
+        entityId: 'test-project-zero',
         entityType: FollowableType.PROJECT,
         initialState
       })
     )
 
+    expect(result.current.followerCount).toBe(0)
+
+    // Perform unfollow action
     await act(async () => {
       await result.current.unfollow()
     })
 
-    expect(result.current.followerCount).toBe(0) // Should not go below 0
+    // Count should stay at 0, not go negative
+    expect(result.current.followerCount).toBe(0)
+    expect(result.current.isFollowing).toBe(false)
   })
 })

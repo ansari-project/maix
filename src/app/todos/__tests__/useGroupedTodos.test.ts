@@ -53,24 +53,34 @@ describe('useGroupedTodos', () => {
   it('groups todos by status', () => {
     const { result } = renderHook(() => useGroupedTodos(mockTodos, 'status'))
     
-    expect(result.current).toHaveLength(3)
-    expect(result.current[0].label).toBe('Not Started')
-    expect(result.current[0].todos).toHaveLength(1)
-    expect(result.current[1].label).toBe('In Progress')
-    expect(result.current[1].todos).toHaveLength(1)
-    expect(result.current[2].label).toBe('Completed')
-    expect(result.current[2].todos).toHaveLength(1)
+    // Should have all 4 status groups even if some are empty
+    expect(result.current).toHaveLength(4)
+    
+    const notStartedGroup = result.current.find(g => g.label === 'Not Started')
+    const inProgressGroup = result.current.find(g => g.label === 'In Progress')
+    const waitingForGroup = result.current.find(g => g.label === 'Waiting For')
+    const completedGroup = result.current.find(g => g.label === 'Completed')
+    
+    expect(notStartedGroup?.todos).toHaveLength(1)
+    expect(inProgressGroup?.todos).toHaveLength(1)
+    expect(waitingForGroup?.todos).toHaveLength(0) // Empty group
+    expect(completedGroup?.todos).toHaveLength(1)
   })
 
   it('groups todos by project', () => {
     const { result } = renderHook(() => useGroupedTodos(mockTodos, 'project'))
     
     expect(result.current).toHaveLength(3)
-    const projectGroups = result.current.filter(g => g.label !== 'No Project')
-    const noProjectGroup = result.current.find(g => g.label === 'No Project')
+    // Should have 2 project groups plus 'Uncategorized' group
+    expect(result.current).toHaveLength(3)
     
-    expect(projectGroups).toHaveLength(2)
-    expect(noProjectGroup?.todos).toHaveLength(1)
+    const projectAGroup = result.current.find(g => g.label === 'Project A')
+    const projectBGroup = result.current.find(g => g.label === 'Project B')
+    const uncategorizedGroup = result.current.find(g => g.label === 'Uncategorized')
+    
+    expect(projectAGroup?.todos).toHaveLength(1)
+    expect(projectBGroup?.todos).toHaveLength(1)
+    expect(uncategorizedGroup?.todos).toHaveLength(1)
   })
 
   it('returns single group when groupBy is none', () => {
@@ -92,7 +102,9 @@ describe('useGroupedTodos', () => {
   it('handles empty todos array', () => {
     const { result } = renderHook(() => useGroupedTodos([], 'status'))
     
-    expect(result.current).toHaveLength(0)
+    // Should still have all 4 status groups, but they'll be empty
+    expect(result.current).toHaveLength(4)
+    expect(result.current.every(group => group.todos.length === 0)).toBe(true)
   })
 
   it('recalculates when groupBy changes', () => {

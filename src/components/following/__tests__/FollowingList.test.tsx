@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import React from 'react'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { FollowingList } from '../FollowingList'
 import { FollowableType } from '@prisma/client'
 
@@ -86,29 +86,59 @@ describe('FollowingList', () => {
   })
 
   it('should load and display followers when dialog opens', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({
+    const mockFollowers = [
+      {
+        id: 'follower-1',
+        userId: 'user-1',
+        notificationsEnabled: true,
+        followedAt: '2024-01-01T00:00:00Z',
+        user: {
+          id: 'user-1',
+          name: 'John Doe',
+          email: 'john@example.com'
+        }
+      },
+      {
+        id: 'follower-2',
+        userId: 'user-2',
+        notificationsEnabled: false,
+        followedAt: '2024-01-02T00:00:00Z',
+        user: {
+          id: 'user-2',
+          name: 'Jane Smith',
+          email: 'jane@example.com'
+        }
+      }
+    ]
+
+    ;(global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
       json: async () => ({ followers: mockFollowers })
     })
 
-    render(
-      <FollowingList
-        entityId="test-project-1"
-        entityType={FollowableType.PROJECT}
-        followerCount={2}
-      />
-    )
+    await act(async () => {
+      render(
+        <FollowingList
+          entityId="test-project-1"
+          entityType={FollowableType.PROJECT}
+          followerCount={2}
+        />
+      )
+    })
 
     const subscriberButton = screen.getByText('2 subscribers')
-    fireEvent.click(subscriberButton)
+    
+    await act(async () => {
+      fireEvent.click(subscriberButton)
+    })
 
     await waitFor(() => {
       expect(screen.getByText('John Doe')).toBeInTheDocument()
       expect(screen.getByText('Jane Smith')).toBeInTheDocument()
     })
-
-    // Check that API was called correctly
-    expect(fetch).toHaveBeenCalledWith('/api/v1/projects/test-project-1/followers')
+    
+    // Verify fetch was called with correct URL
+    expect(fetch).toHaveBeenCalledWith('/api/following/project/test-project-1/followers')
   })
 
   it('should display notification status badges correctly', async () => {
@@ -234,33 +264,70 @@ describe('FollowingList', () => {
   })
 
   it('should use correct API paths for different entity types', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({
+    ;(global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
       json: async () => ({ followers: [] })
     })
 
+    // Test PROJECT type
     const { rerender } = render(
       <FollowingList
-        entityId="org-1"
-        entityType={FollowableType.ORGANIZATION}
-        followerCount={0}
+        entityId="project-1"
+        entityType={FollowableType.PROJECT}
+        followerCount={1}
       />
     )
 
-    fireEvent.click(screen.getByText('0 subscribers'))
-    expect(fetch).toHaveBeenCalledWith('/api/v1/organizations/org-1/followers')
+    await act(async () => {
+      const button = screen.getByText('1 subscriber')
+      fireEvent.click(button)
+    })
 
-    // Test with PRODUCT
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith('/api/following/project/project-1/followers')
+    })
+
+    // Clear mocks
+    ;(global.fetch as jest.Mock).mockClear()
+
+    // Test ORGANIZATION type
+    rerender(
+      <FollowingList
+        entityId="org-1"
+        entityType={FollowableType.ORGANIZATION}
+        followerCount={1}
+      />
+    )
+
+    await act(async () => {
+      const button = screen.getByText('1 subscriber')
+      fireEvent.click(button)
+    })
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith('/api/following/organization/org-1/followers')
+    })
+
+    // Clear mocks
+    ;(global.fetch as jest.Mock).mockClear()
+
+    // Test PRODUCT type
     rerender(
       <FollowingList
         entityId="product-1"
         entityType={FollowableType.PRODUCT}
-        followerCount={0}
+        followerCount={1}
       />
     )
 
-    fireEvent.click(screen.getByText('0 subscribers'))
-    expect(fetch).toHaveBeenCalledWith('/api/v1/products/product-1/followers')
+    await act(async () => {
+      const button = screen.getByText('1 subscriber')
+      fireEvent.click(button)
+    })
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith('/api/following/product/product-1/followers')
+    })
   })
 
   it('should show notification-only disclaimer in dialog', async () => {
