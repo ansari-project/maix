@@ -34,15 +34,15 @@ const DashboardLayoutContent = memo(function DashboardLayoutContent({ children, 
       
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Main Content - Account for AI Assistant height */}
+        {/* Main Content - Dynamically adjust height for AI Assistant */}
         <main 
           className={cn(
             'flex-1 overflow-hidden transition-all duration-300',
             className
           )}
           style={{
-            // Ensure the height accounts for AI height properly
-            height: isAIExpanded ? `calc(100vh - ${aiHeight}px)` : 'calc(100vh - 48px)'
+            // Reduce the height of main content when AI Assistant is expanded
+            height: isAIExpanded ? `calc(100% - ${aiHeight}px)` : 'calc(100% - 48px)'
           }}
         >
           {children}
