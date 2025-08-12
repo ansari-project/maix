@@ -696,6 +696,29 @@ When implementing features that might be confused with permissions:
 - **Auth**: NextAuth.js for protected routes, role-based access, validate sessions on API routes  
 - **UI/UX**: Clean design, WCAG 2.1 AA accessibility, semantic HTML, Markdown support via `<Markdown>` component
 
+### MCP (Model Context Protocol) Tool Registration
+
+**IMPORTANT**: When registering MCP tools with `mcp-handler`, use the correct property names:
+- For tools with Zod schemas directly: Use the Zod schema object
+- For `manageProjectTool`: Use `parametersShape` (NOT `parameters` or `inputSchema`)
+- For `manageOrganizationTool`: Use `inputSchema`
+- For simple Zod schemas like `ManageTodoSchema`: Use the schema directly
+
+Example:
+```typescript
+// Correct for manageProjectTool:
+server.tool(
+  manageProjectTool.name,
+  manageProjectTool.description,
+  manageProjectTool.parametersShape, // ✅ Correct
+  async (params) => manageProjectTool.handler(params, { user })
+);
+
+// Wrong:
+// manageProjectTool.parameters ❌
+// manageProjectTool.inputSchema ❌
+```
+
 ### UI Patterns and Best Practices
 
 #### Progressive Disclosure Pattern

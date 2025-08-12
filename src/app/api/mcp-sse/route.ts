@@ -334,13 +334,286 @@ export async function GET(request: NextRequest): Promise<Response> {
   }
 }
 
+/**
+ * POST handler for StreamableHTTPClientTransport
+ * The official MCP SDK uses POST for JSON-RPC messages
+ */
+export async function POST(request: NextRequest): Promise<Response> {
+  console.log('🚀 MCP POST endpoint called');
+  
+  try {
+    // Extract and validate authorization
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      console.log('MCP POST: Missing or invalid authorization header');
+      return new Response('Unauthorized - Missing Bearer token', { status: 401 });
+    }
+
+    const token = authHeader.slice(7);
+    const user = await validatePersonalAccessToken(token);
+    
+    if (!user) {
+      console.log('MCP POST: Invalid token');
+      return new Response('Unauthorized - Invalid token', { status: 401 });
+    }
+
+    console.log('MCP POST: Authentication successful for user', user.id);
+
+    // Create the same MCP handler as GET
+    const postHandler = createMcpHandler(
+      (server) => {
+        console.log('MCP POST: Setting up MCP handler with tools');
+        
+        // Tool: Update user profile
+        server.tool(
+          "maix_update_profile",
+          "Updates the authenticated user's profile information",
+          {
+            name: z.string().min(1).optional().describe("The user's display name"),
+            bio: z.string().optional().describe("A short user biography"),
+            linkedinUrl: z.string().url().optional().describe("LinkedIn profile URL"),
+            githubUrl: z.string().url().optional().describe("GitHub profile URL"),
+            portfolioUrl: z.string().url().optional().describe("Portfolio website URL"),
+            availability: z.string().optional().describe("Availability in hours per week"),
+            skills: z.array(z.string()).optional().describe("List of skills"),
+          },
+          async (params) => {
+            try {
+              await prisma.user.update({
+                where: { id: user.id },
+                data: {
+                  name: params.name,
+                  bio: params.bio,
+                  linkedinUrl: params.linkedinUrl,
+                  githubUrl: params.githubUrl,
+                  portfolioUrl: params.portfolioUrl,
+                  availability: params.availability,
+                  skills: params.skills || undefined,
+                },
+              });
+
+              return {
+                content: [{ type: "text", text: "Profile updated successfully!" }],
+              };
+            } catch (error) {
+              console.error("Failed to update profile:", error);
+              return {
+                content: [{ type: "text", text: "An error occurred while updating the profile." }],
+              };
+            }
+          }
+        );
+
+        // Tool: Manage Projects
+        server.tool(
+          manageProjectTool.name,
+          manageProjectTool.description,
+          manageProjectTool.parametersShape,
+          async (params) => {
+            const result = await manageProjectTool.handler(params, { user });
+            // Convert MaixMcpResponse to MCP format
+            return {
+              content: [{ 
+                type: "text", 
+                text: result.message || JSON.stringify(result.data) || "Operation completed"
+              }]
+            };
+          }
+        );
+
+        // Tool: Search Projects
+        server.tool(
+          "maix_search_projects",
+          "Search and list projects with filters",
+          SearchProjectsSchema.shape,
+          async (params) => {
+            const result = await handleSearchProjects(params);
+            return {
+              content: [{ type: "text", text: result }]
+            };
+          }
+        );
+
+        // Tool: Manage Post
+        server.tool(
+          "maix_manage_post",
+          "Create, read, update, or delete posts (questions, answers, updates, discussions)",
+          ManagePostSchema.shape,
+          async (params) => {
+            const result = await handleManagePost(params, { user });
+            return {
+              content: [{ type: "text", text: result }]
+            };
+          }
+        );
+
+        // Tool: Search Posts
+        server.tool(
+          "maix_search_posts",
+          "Search and list posts with filters (questions, answers, updates, discussions)",
+          SearchPostsSchema.shape,
+          async (params) => {
+            const result = await handleSearchPosts(params);
+            return {
+              content: [{ type: "text", text: result }]
+            };
+          }
+        );
+
+        // Tool: Manage Comment
+        server.tool(
+          "maix_manage_comment",
+          "Create, read, update, or delete comments on posts",
+          ManageCommentSchema.shape,
+          async (params) => {
+            const result = await handleManageComment(params, { user });
+            return {
+              content: [{ type: "text", text: result }]
+            };
+          }
+        );
+
+        // Tool: Search Comments
+        server.tool(
+          "maix_search_comments",
+          "Search and list comments with filters",
+          SearchCommentsSchema.shape,
+          async (params) => {
+            const result = await handleSearchComments(params);
+            return {
+              content: [{ type: "text", text: result }]
+            };
+          }
+        );
+
+        // Tool: Manage Product
+        server.tool(
+          "maix_manage_product",
+          "Create, read, update, or delete products",
+          manageProductParameters.shape,
+          async (params) => {
+            const result = await handleManageProduct(params, { user });
+            return {
+              content: [{ type: "text", text: result }]
+            };
+          }
+        );
+
+        // Tool: Search Products
+        server.tool(
+          "maix_search_products",
+          "Search and list products with filters",
+          SearchProductsSchema.shape,
+          async (params) => {
+            const result = await handleSearchProducts(params);
+            return {
+              content: [{ type: "text", text: result }]
+            };
+          }
+        );
+
+        // Tool: Manage Organization
+        server.tool(
+          manageOrganizationTool.name,
+          manageOrganizationTool.description,
+          manageOrganizationTool.parametersShape,
+          async (params) => {
+            const result = await manageOrganizationTool.handler(params, { user });
+            // Convert MaixMcpResponse to MCP format
+            return {
+              content: [{ 
+                type: "text", 
+                text: result.message || JSON.stringify(result.data) || "Operation completed"
+              }]
+            };
+          }
+        );
+
+        // Tool: Manage Organization Member
+        server.tool(
+          manageOrganizationMemberTool.name,
+          manageOrganizationMemberTool.description,
+          manageOrganizationMemberTool.parametersShape,
+          async (params) => {
+            const result = await manageOrganizationMemberTool.handler(params, { user });
+            // Convert MaixMcpResponse to MCP format
+            return {
+              content: [{ 
+                type: "text", 
+                text: result.message || JSON.stringify(result.data) || "Operation completed"
+              }]
+            };
+          }
+        );
+
+        // Tool: Manage Todo
+        server.tool(
+          "maix_manage_todo",
+          "Manage todos - create, update, delete, list todo items. Use action 'list-all' to get all todos.",
+          ManageTodoSchema.shape,
+          async (params) => {
+            const result = await handleManageTodo(params, { user });
+            return {
+              content: [{ type: "text", text: result }]
+            };
+          }
+        );
+
+        // Tool: Search Todos
+        server.tool(
+          "maix_search_todos",
+          "Search and find todos across all projects and assignments. Use this to find specific todos before updating them.",
+          SearchTodosSchema.shape,
+          async (params) => {
+            const result = await handleSearchTodos(params, { user });
+            return {
+              content: [{ type: "text", text: result }]
+            };
+          }
+        );
+
+        // Tool: Manage Personal Project
+        server.tool(
+          "maix_manage_personal_project",
+          "Manage your personal projects and ideas. Use this to track private projects independently.",
+          ManagePersonalProjectSchema.shape,
+          async (params) => {
+            const result = await handleManagePersonalProject(params, { user });
+            return {
+              content: [{ type: "text", text: result }]
+            };
+          }
+        );
+
+        console.log('MCP POST: All tools registered');
+      },
+      {
+        // Server options
+      },
+      {
+        maxDuration: 60,
+        basePath: "/api/mcp-sse",
+        verboseLogs: true,
+      }
+    );
+
+    // Handle the request with our dedicated handler
+    console.log('MCP POST: Processing request with dedicated handler');
+    return await postHandler(request);
+
+  } catch (error) {
+    console.error('MCP POST: Error:', error);
+    return new Response('Internal Server Error', { status: 500 });
+  }
+}
+
 export async function OPTIONS(): Promise<Response> {
   return new Response(null, {
     status: 204,
     headers: {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'Authorization, Accept',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Authorization, Accept, Content-Type',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     }
   });
 }
