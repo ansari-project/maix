@@ -2,19 +2,9 @@
 
 ## Project Overview
 
-**Maix (Meaningful AI Exchange)** is an AI-accelerated not-for-profit action and collaboration platform built on Next.js 15. We connect skilled volunteers with meaningful AI/tech projects.
+> For full description and philosophy, see [README.md](README.md).
 
-### Technology Stack
-- **Framework**: Next.js 15 with App Router
-- **Database**: Neon PostgreSQL with Prisma ORM
-- **Auth**: NextAuth.js with Google OAuth
-- **AI**: Google Gemini via `@google/genai` package
-- **UI**: shadcn/ui components
-
-### Community Values
-- Community benefit over profit
-- Knowledge sharing and transparency
-- Collaborative innovation
+Maix is an AI-native volunteer platform built on Next.js 15, Neon PostgreSQL, and Google Gemini.
 
 ## Development Methodology
 

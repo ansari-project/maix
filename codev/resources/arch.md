@@ -4,23 +4,9 @@ High-level architecture documentation for Maix. Updated during implementation.
 
 ## Overview
 
-**Maix (Meaningful AI Exchange)** is an AI-accelerated not-for-profit action and collaboration platform built on Next.js 15. We connect skilled volunteers with meaningful AI/tech projects to advance communities through collaborative innovation.
+> For full project description and philosophy, see [README.md](../../README.md).
 
-### Core Focus Areas
-- **ACTION** - Getting things done efficiently with AI assistance
-- **COMMUNITY** - Doing it together, AI-facilitated collaboration
-- **AI ASSISTANCE** - Every workflow enhanced by intelligent automation
-
-### AI-Native Philosophy
-
-Maix is fundamentally AI-native - unlike platforms that retrofit AI features onto existing paradigms, we're built from the ground up with AI as the primary interface and collaboration mechanism.
-
-**What Makes Us AI-Native:**
-- AI-first navigation and discovery (not traditional menus + AI addon)
-- Intelligent project/task matching based on skills and context
-- AI-assisted onboarding, contribution guidance, and code reviews
-- Natural language interfaces for complex platform interactions
-- Proactive suggestions and contextual assistance throughout workflows
+Maix is an AI-native volunteer platform. This document covers technical architecture and implementation details.
 
 ## Technology Stack
 
