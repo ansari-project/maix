@@ -325,7 +325,7 @@ gh run view --log-failed --job=<ID> # Get error logs
 - Use `--log-failed` for relevant error information
 - Check status periodically while working on other tasks
 
-For comprehensive debugging strategies, see `docs/guides/debugging-playbook.md`.
+For comprehensive debugging strategies, see `docs/protocol/debugging-playbook.md`.
 
 ## Core Features
 
@@ -356,7 +356,7 @@ We welcome contributions from the global tech community! Here's how you can help
 
 ### Code Contributions
 1. **Fork the repository** and create a feature branch
-2. **Follow DAPPER methodology** for significant features
+2. **Follow Codev protocols** (SPIDER/TICK) for significant features
 3. **Write tests** following our integration-first strategy
 4. **Submit a pull request** with clear description
 

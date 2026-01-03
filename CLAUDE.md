@@ -101,4 +101,4 @@ npm run test:all          # Both unit and integration
 - **Architecture**: `codev/resources/arch.md`
 - **Lessons Learned**: `codev/resources/lessons-learned.md`
 - **Database Schema**: `prisma/schema.prisma`
-- **Test Strategy**: `codev/resources/ref/automated-testing-authentication.md`
+- **Testing Strategy**: `codev/resources/ref/testing-strategy.md`
