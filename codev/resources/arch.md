@@ -227,9 +227,10 @@ Pragmatic security for a community platform:
 
 ## Reference Documentation
 
-- **Testing Strategy**: `codev/resources/ref/testing-strategy.md` (when created)
+- **Testing Strategy**: `codev/resources/ref/testing-strategy.md`
 - **Database Schema**: `prisma/schema.prisma`
-- **AI SDK Usage**: `codev/resources/ref/google-genai-sdk-usage.md` (when migrated)
+- **AI SDK Usage**: `codev/resources/ref/google-genai-sdk-usage.md`
+- **Prisma Safety**: `codev/resources/ref/prisma.md`
 - **Lessons Learned**: `codev/resources/lessons-learned.md`
 
 ---

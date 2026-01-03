@@ -152,11 +152,12 @@ maix/
 ├── tests/                # Test files
 ├── scripts/              # Build and utility scripts
 │   └── tmp/             # Temporary/one-off scripts
-└── dev_docs/             # Development documentation (NOT user-facing)
-    ├── ref/              # Reference material (APIs, schemas, etc.)
-    ├── designs/          # Feature designs (DAPPER Design phase)
-    ├── plans/            # Implementation plans (DAPPER Plan phase)
-    └── lessons/          # Lessons learned from features
+└── codev/                # Development methodology (Codev)
+    ├── specs/            # Feature specifications
+    ├── plans/            # Implementation plans
+    ├── reviews/          # Post-implementation reviews
+    ├── protocols/        # Development protocols (SPIDER, TICK)
+    └── resources/        # Architecture, lessons, reference docs
 ```
 
 ## Development Methodology: DAPPER
@@ -184,7 +185,7 @@ Each development phase follows the **ITRC** structure:
 - **R (Review)**: Code review for quality
 - **C (Commit & Push)**: Version control with clear messages
 
-For detailed DAPPER documentation, see `CLAUDE.md` (for AI agents) or `dev_docs/ref/dapper-methodology.md` (for humans).
+For detailed methodology documentation, see `CLAUDE.md` (for AI agents) or `codev/protocols/` (for protocol details).
 
 ## Testing Strategy
 
@@ -324,7 +325,7 @@ gh run view --log-failed --job=<ID> # Get error logs
 - Use `--log-failed` for relevant error information
 - Check status periodically while working on other tasks
 
-For comprehensive debugging strategies, see `dev_docs/ref/debugging-playbook.md`.
+For comprehensive debugging strategies, see `docs/guides/debugging-playbook.md`.
 
 ## Core Features
 
@@ -385,12 +386,12 @@ MAIX is built on these core values:
 
 ### Key Documentation
 - **README.md** - This file, setup and overview
-- **CLAUDE.md** - AI agent instructions and enforcement rules
-- **dev_docs/ref/** - Technical reference documentation
-- **dev_docs/designs/** - Feature designs (DAPPER methodology)
-- **dev_docs/plans/** - Implementation plans
-- **dev_docs/lessons/** - Lessons learned from features
-- **lessons-learned.md** - Cumulative project insights
+- **CLAUDE.md** - AI agent instructions and safety protocols
+- **codev/specs/** - Feature specifications
+- **codev/plans/** - Implementation plans
+- **codev/reviews/** - Post-implementation reviews and lessons
+- **codev/resources/arch.md** - Architecture documentation
+- **codev/resources/lessons-learned.md** - Consolidated project insights
 
 ## License
 
