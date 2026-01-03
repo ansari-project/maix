@@ -9,6 +9,7 @@ describe('McpClientService', () => {
   let service: McpClientService
 
   beforeEach(() => {
+    jest.clearAllMocks()
     service = new McpClientService()
   })
 
