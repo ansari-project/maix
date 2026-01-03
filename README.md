@@ -187,101 +187,34 @@ Each development phase follows the **ITRC** structure:
 
 For detailed methodology documentation, see `CLAUDE.md` (for AI agents) or `codev/protocols/` (for protocol details).
 
-## Testing Strategy
+## Testing
 
-### Testing Philosophy
-**FUNDAMENTAL PRINCIPLE**: A small number of well-thought-out tests is better than a large number of poor tests. Focus on testing behavior, not implementation details.
+**Philosophy**: Integration-first (60%), real database for service tests. See `codev/resources/ref/testing-strategy.md` for complete guidelines.
 
-### Testing Priorities
-1. **Integration Tests (60%)** - Real database, real constraints
-2. **Unit Tests (30%)** - Only for pure business logic  
-3. **E2E Tests (10%)** - Critical user paths
-
-### Test Database Setup (Docker)
+**Quick start:**
 ```bash
-# Start test database (port 5433)
-npm run test:db:start
-
-# Run tests
-npm run test:integration  # Integration tests with real DB
-npm run test:unit        # Unit tests only
-npm run test:all         # Both suites
-
-# Stop test database
-npm run test:db:stop
+npm run test:db:start     # Start test database (port 5433)
+npm run test:integration  # Run integration tests
+npm run test:unit         # Run unit tests
+npm run test:db:stop      # Stop test database
 ```
-
-**Test Database Configuration:**
-- Runs on port 5433 (production uses 5432)
-- Database: `maix_test`, User: `testuser`, Password: `testpass`
-- Real database operations, not mocks
-- Database cleaned between tests
-
-### Available Test Commands
-- `npm test` - All tests (unit + integration if DB running)
-- `npm run test:unit` - Unit tests only
-- `npm run test:integration` - Integration tests with real database
-- `npm run test:watch` - Watch mode for development
-- `npm run test:db:start` - Start Docker test database
-- `npm run test:db:stop` - Stop Docker test database
 
 ## Development Guidelines
 
-### Development Principles
+See `codev/resources/arch.md` for detailed architecture, conventions, and patterns.
 
-#### Simplicity and Pragmatism
-- **Bias towards simple solutions**: Address current problems, not hypothetical future ones
-- **Avoid premature optimization**: Don't implement complex patterns for problems that don't exist
-- **Use straightforward Prisma queries**: Direct queries rather than complex abstraction layers
-- **Focus on current scale**: Design for today's usage patterns
-- **Iterative complexity**: Add complexity only when simple solutions prove insufficient
+**Key principles**: Simplicity, pragmatic security, integration-first testing.
 
-#### Security Model
-**Context**: Community platform for volunteer matching
-- **What we are**: A community platform, non-profit focused
-- **What we're NOT**: Financial service, healthcare system, or PII-heavy
-- **Security Approach**: 
-  - Focus on basics (input validation with Zod)
-  - Skip security theater (no complex CSRF, rate limiting)
-  - Pragmatic protection (Prisma prevents SQL injection, React prevents XSS)
-  - Basic session management with NextAuth
-
-### Database Management
-
-#### Safe Migration Workflow (AI-Compatible)
+**Database migrations** (see `codev/resources/ref/prisma.md`):
 ```bash
-# Step 1: Create migration (non-interactive)
-npm run db:migrate:new descriptive_name
-
-# Step 2: Review generated SQL
-cat prisma/migrations/*/migration.sql
-
-# Step 3: Apply when ready
-npm run db:migrate:apply
+npm run db:migrate:new name   # Create migration
+npm run db:migrate:apply      # Apply migrations
+npm run db:backup             # Backup first!
 ```
 
-**NEVER use:**
-- `npx prisma db push` - Destructive, drops/recreates tables
-- `npx prisma migrate dev` - Interactive, breaks AI agents
-
-**Safe Commands:**
-- `db:migrate:new` - Create migration via migrate diff
-- `db:migrate:apply` - Apply migrations via deploy
-- `db:migrate:status` - Check migration status
-- `db:backup` - Backup database
-- `db:health` - Health check
-- `db:studio` - Prisma Studio (read-only recommended)
-
-### Code Quality
-
-**Quick health check:**
+**Code quality:**
 ```bash
-npm audit --audit-level=moderate  # Fix Critical/High only
-grep -r "console\." src/ | wc -l  # Should trend down
-npm outdated                       # Update only if needed
-npm run lint                       # ESLint checks
-npm run type-check                # TypeScript validation
-npm run build                     # Build validation
+npm run lint && npm run type-check && npm run build
 ```
 
 ### Git Best Practices
