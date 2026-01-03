@@ -1,0 +1,12 @@
+{
+  "project": "maix",
+  "shell": {
+    "architect": "claude --dangerously-skip-permissions",
+    "builder": "claude --dangerously-skip-permissions",
+    "shell": "zsh"
+  },
+  "consultation": {
+    "default_models": ["gemini", "codex"],
+    "require_review": true
+  }
+}
