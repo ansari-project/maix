@@ -24,35 +24,21 @@
 - Mock only external services (email, payments, third-party APIs)
 - Never mock Prisma or internal database operations
 
-## Architecture
+## Architecture Learnings
 
-### Separation of Concerns - Three Orthogonal Systems
-1. **RBAC System** - Controls what actions users can perform (OWNER → ADMIN → MEMBER → VIEWER)
-2. **Visibility System** - Controls what entities users can see (PUBLIC → PRIVATE → DRAFT)
-3. **Following System** - Controls notification subscriptions only (grants ZERO permissions)
+> For current architecture, see `arch.md`. These are lessons learned during implementation.
 
-**Key Pattern**: Never mix concerns. Following should NEVER check permissions, RBAC should NEVER check following status.
+### Keep Systems Orthogonal
+The Following System implementation taught us to keep RBAC, Visibility, and Following completely independent. Mixing concerns creates permission confusion. See `arch.md` for the Three Orthogonal Systems pattern.
 
-### Component Design
-- Design components for reusability from the start with clear props interfaces
-- Same component can be reused across different contexts (e.g., TodoDetailsPanel in event manager)
-- Reduces duplication and ensures consistent UX across features
+### Design for Reusability Early
+Design components with clear props interfaces from the start. The TodoDetailsPanel was reused across contexts with minimal changes.
 
-### Performance Patterns
-- **Lazy Loading**: Load optional/advanced features only when user engages
-- **React.memo**: Apply to layout components that re-render frequently
-- **useMemo for Context Values**: Memoize context provider values to prevent cascade re-renders
-- **useMemo for Calculations**: Memoize grouped/derived state calculations
+### Optimize During Development
+Apply performance patterns (lazy loading, React.memo, useMemo) during implementation, not as afterthoughts. Retrofitting performance is harder.
 
-### API Design Patterns
-- Centralized path utilities prevent inconsistencies across codebase
-- RESTful patterns work well for CRUD operations
-- Batch endpoints reduce network calls
-
-### Database Design
-- Composite unique indexes prevent duplicate records
-- Proper foreign keys ensure data integrity
-- Indexes on query patterns improve performance
+### Centralize Configuration
+Scattered API paths and hardcoded values lead to inconsistencies. Use centralized utilities for paths, constants, and configuration.
 
 ## Process
 
