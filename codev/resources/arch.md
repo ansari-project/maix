@@ -228,9 +228,12 @@ Pragmatic security for a community platform:
 ## Reference Documentation
 
 - **Testing Strategy**: `codev/resources/ref/testing-strategy.md`
+- **Integration Testing**: `codev/resources/ref/integration-testing.md`
 - **Database Schema**: `prisma/schema.prisma`
+- **Data Model**: `codev/resources/ref/maix-data-model.md`
 - **AI SDK Usage**: `codev/resources/ref/google-genai-sdk-usage.md`
 - **Prisma Safety**: `codev/resources/ref/prisma.md`
+- **Debugging Playbook**: `codev/resources/ref/debugging-playbook.md`
 - **Lessons Learned**: `codev/resources/lessons-learned.md`
 
 ---

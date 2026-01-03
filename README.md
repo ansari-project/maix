@@ -325,7 +325,7 @@ gh run view --log-failed --job=<ID> # Get error logs
 - Use `--log-failed` for relevant error information
 - Check status periodically while working on other tasks
 
-For comprehensive debugging strategies, see `docs/protocol/debugging-playbook.md`.
+For comprehensive debugging strategies, see `codev/resources/ref/debugging-playbook.md`.
 
 ## Core Features
 
