@@ -10,21 +10,20 @@ This guide outlines Maix's pragmatic approach to testing, focusing on what provi
 
 1. **Test What Matters**: Focus on business logic that could break user flows
 2. **Skip the Boilerplate**: Don't test framework functionality or simple getters/setters
-3. **Prefer Unit Tests**: They're fast, reliable, and easy to debug
+3. **Integration-First**: Use real database for service/API tests, mock only externals
 4. **Extract Complex Logic**: If UI testing gets complex, extract the logic instead
 
 ### Testing Priority
 
-1. **Unit Tests** - Primary choice for business logic and utilities
-2. **API Route Tests** - Test endpoints with mocked database
-3. **Component Tests** - Basic rendering and simple interactions only
-4. **E2E Tests** - Reserve for critical user workflows
+1. **Integration Tests (60%)** - Real database, real constraints, service layer
+2. **Unit Tests (30%)** - Pure business logic and utilities
+3. **E2E Tests (10%)** - Critical user workflows only
 
 ## When to Use Each Test Type
 
-### Unit Tests - PRIMARY CHOICE
+### Unit Tests
 
-**Perfect for:**
+**Use for:**
 - Business logic functions
 - Utility functions
 - Data transformations

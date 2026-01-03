@@ -160,32 +160,18 @@ maix/
     └── resources/        # Architecture, lessons, reference docs
 ```
 
-## Development Methodology: DAPPER
+## Development Methodology
 
-MAIX follows the **DAPPER** methodology for structured development:
+MAIX uses **Codev** for structured development. See `codev/protocols/` for details.
 
-### DAPPER Overview
-```
-D - Design    : AI explores and proposes multiple approaches
-A - Align     : Human decides and aligns on direction
-P - Plan      : Break into executable phases with ITRC structure
-P - Produce   : Build, test, review, commit & push
-E - Evaluate  : Comprehensive review of all work
-R - Revise    : Update docs and capture lessons learned
-```
+### Protocol Selection
 
-### When to Use DAPPER
-**Use for:** New features, complex refactoring, architecture changes, significant complexity  
-**Skip for:** Simple bug fixes, text changes, configuration updates, straightforward dependencies
+| Task Type | Protocol | When to Use |
+|-----------|----------|-------------|
+| Complex features | SPIDER | Multi-phase, needs design/review |
+| Simple changes | TICK | Quick fixes, single-file changes |
 
-### ITRC Development Cycle
-Each development phase follows the **ITRC** structure:
-- **I (Implement)**: Build the functionality
-- **T (Test)**: Write and run tests immediately
-- **R (Review)**: Code review for quality
-- **C (Commit & Push)**: Version control with clear messages
-
-For detailed methodology documentation, see `CLAUDE.md` (for AI agents) or `codev/protocols/` (for protocol details).
+For AI agents, see `CLAUDE.md`. For full protocol documentation, see `codev/protocols/`.
 
 ## Testing
 
