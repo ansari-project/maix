@@ -10,6 +10,7 @@ describe('McpClientService', () => {
   const testPat = 'test-pat-token'
 
   beforeEach(() => {
+    jest.clearAllMocks()
     service = new McpClientService()
     jest.clearAllMocks()
   })

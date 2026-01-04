@@ -1,77 +1,104 @@
-# maix - AI Agent Instructions
-
-> **Note**: This file follows the [AGENTS.md standard](https://agents.md/) for cross-tool compatibility with Cursor, GitHub Copilot, and other AI coding assistants. A Claude Code-specific version is maintained in `CLAUDE.md`.
+# Maix - Claude Code Instructions
 
 ## Project Overview
 
-This project uses **Codev** for AI-assisted development.
+**Maix (Meaningful AI Exchange)** is an AI-accelerated not-for-profit action and collaboration platform built on Next.js 15. We connect skilled volunteers with meaningful AI/tech projects.
 
-## Available Protocols
+### Technology Stack
+- **Framework**: Next.js 15 with App Router
+- **Database**: Neon PostgreSQL with Prisma ORM
+- **Auth**: NextAuth.js with Google OAuth
+- **AI**: Google Gemini via `@google/genai` package
+- **UI**: shadcn/ui components
 
-- **SPIDER**: Multi-phase development with consultation (`codev/protocols/spider/protocol.md`)
-- **TICK**: Fast autonomous implementation (`codev/protocols/tick/protocol.md`)
-- **EXPERIMENT**: Disciplined experimentation (`codev/protocols/experiment/protocol.md`)
-- **MAINTAIN**: Codebase maintenance (`codev/protocols/maintain/protocol.md`)
+### Community Values
+- Community benefit over profit
+- Knowledge sharing and transparency
+- Collaborative innovation
 
-## Key Locations
+## Development Methodology
 
-- **Specs**: `codev/specs/` - Feature specifications (WHAT to build)
-- **Plans**: `codev/plans/` - Implementation plans (HOW to build)
-- **Reviews**: `codev/reviews/` - Reviews and lessons learned
-- **Protocols**: `codev/protocols/` - Development protocols
+This project uses **Codev** for structured development. See `codev/protocols/` for details.
 
-## Quick Start
+### Protocol Selection
 
-1. For new features, start with the Specification phase
-2. Create exactly THREE documents per feature: spec, plan, and review
-3. Follow the protocol phases as defined in the protocol files
-4. Use multi-agent consultation when specified
+| Task Type | Protocol | When to Use |
+|-----------|----------|-------------|
+| Complex features | SPIDER | Multi-phase, needs design/review |
+| Simple changes | TICK | Quick fixes, single-file changes |
 
-## File Naming Convention
+### Key Locations
 
-Use sequential numbering with descriptive names:
-- Specification: `codev/specs/0001-feature-name.md`
-- Plan: `codev/plans/0001-feature-name.md`
-- Review: `codev/reviews/0001-feature-name.md`
+| Purpose | Location |
+|---------|----------|
+| Specs | `codev/specs/` |
+| Plans | `codev/plans/` |
+| Reviews | `codev/reviews/` |
+| Architecture | `codev/resources/arch.md` |
+| Lessons | `codev/resources/lessons-learned.md` |
+| Project list | `codev/projectlist.md` |
 
-## Git Workflow
+## Quick Reference
 
-**NEVER use `git add -A` or `git add .`** - Always add files explicitly.
+### Custom Commands
 
-Commit messages format:
+- `/gcm <message>` - Git commit with message (uses `scripts/gcm.sh`)
+- `/slt <task>` - Set statusline task (or auto-summarize if no argument)
+
+### Key Patterns
+
+- **Separation of Concerns**: RBAC, Visibility, and Following are orthogonal systems
+- **Progressive Disclosure**: Start simple, expand on user action
+- **Integration-First Testing**: Real database for service/API tests
+
+For architecture details, conventions, and component documentation, see `codev/resources/arch.md`.
+
+## Critical Safety Protocols
+
+### Git Safety
+
+1. **NEVER force push** - Protects collaborative work
+2. **NEVER use `git add -A` or `git add .`** - Always use specific file paths
+3. **Always fetch before push**: `git fetch origin && git status`
+4. **If push fails**: STOP and ask user - don't proceed independently
+
+### Database Safety
+
+1. **NEVER use `npx prisma db push`** - Destructive, drops/recreates tables
+2. **NEVER use `npx prisma migrate dev`** - Interactive, breaks AI agents
+
+**Safe commands only:**
+```bash
+npm run db:migrate:new migration_name  # Create migration
+npm run db:migrate:apply               # Apply migrations
+npm run db:migrate:status              # Check status
+npm run db:backup                      # Backup first!
 ```
-[Spec 0001] Description of change
-[Spec 0001][Phase: implement] feat: Add feature
+
+See `codev/resources/ref/prisma.md` for comprehensive database safety guidelines.
+
+## Testing
+
+```bash
+npm run test:db:start     # Start test database (port 5433)
+npm run test:integration  # Run integration tests
+npm run test:unit         # Run unit tests
+npm run test:all          # Both unit and integration
 ```
 
-## CLI Commands
+**Philosophy**: Integration-first (60%), real database for service tests, mock only external services.
 
-Codev provides three CLI tools:
+## Key Reminders
 
-- **codev**: Project management (init, adopt, update, doctor)
-- **af**: Agent Farm orchestration (start, spawn, status, cleanup)
-- **consult**: AI consultation for reviews (pr, spec, plan)
+1. **Keep It Simple** - Bias towards simple solutions for current problems
+2. **Track Progress** - Use TodoWrite tool for task management
+3. **No Claude Suffixes** - Never add "Generated with Claude Code" to commits
+4. **Test Pragmatically** - Integration-first with real database
+5. **Follow Protocols** - Use SPIDER or TICK as appropriate
 
-For complete reference, see `codev/resources/commands/`:
-- `codev/resources/commands/overview.md` - Quick start
-- `codev/resources/commands/codev.md` - Project commands
-- `codev/resources/commands/agent-farm.md` - Agent Farm commands
-- `codev/resources/commands/consult.md` - Consultation commands
+## For More Details
 
-## Configuration
-
-Customize Agent Farm behavior in `codev/config.json`:
-
-```json
-{
-  "shell": {
-    "architect": "claude",
-    "builder": "claude",
-    "shell": "bash"
-  }
-}
-```
-
-## For More Info
-
-Read the full protocol documentation in `codev/protocols/`.
+- **Architecture**: `codev/resources/arch.md`
+- **Lessons Learned**: `codev/resources/lessons-learned.md`
+- **Database Schema**: `prisma/schema.prisma`
+- **Testing Strategy**: `codev/resources/ref/testing-strategy.md`

@@ -152,135 +152,55 @@ maix/
 ├── tests/                # Test files
 ├── scripts/              # Build and utility scripts
 │   └── tmp/             # Temporary/one-off scripts
-└── dev_docs/             # Development documentation (NOT user-facing)
-    ├── ref/              # Reference material (APIs, schemas, etc.)
-    ├── designs/          # Feature designs (DAPPER Design phase)
-    ├── plans/            # Implementation plans (DAPPER Plan phase)
-    └── lessons/          # Lessons learned from features
+└── codev/                # Development methodology (Codev)
+    ├── specs/            # Feature specifications
+    ├── plans/            # Implementation plans
+    ├── reviews/          # Post-implementation reviews
+    ├── protocols/        # Development protocols (SPIDER, TICK)
+    └── resources/        # Architecture, lessons, reference docs
 ```
 
-## Development Methodology: DAPPER
+## Development Methodology
 
-MAIX follows the **DAPPER** methodology for structured development:
+MAIX uses **Codev** for structured development. See `codev/protocols/` for details.
 
-### DAPPER Overview
-```
-D - Design    : AI explores and proposes multiple approaches
-A - Align     : Human decides and aligns on direction
-P - Plan      : Break into executable phases with ITRC structure
-P - Produce   : Build, test, review, commit & push
-E - Evaluate  : Comprehensive review of all work
-R - Revise    : Update docs and capture lessons learned
-```
+### Protocol Selection
 
-### When to Use DAPPER
-**Use for:** New features, complex refactoring, architecture changes, significant complexity  
-**Skip for:** Simple bug fixes, text changes, configuration updates, straightforward dependencies
+| Task Type | Protocol | When to Use |
+|-----------|----------|-------------|
+| Complex features | SPIDER | Multi-phase, needs design/review |
+| Simple changes | TICK | Quick fixes, single-file changes |
 
-### ITRC Development Cycle
-Each development phase follows the **ITRC** structure:
-- **I (Implement)**: Build the functionality
-- **T (Test)**: Write and run tests immediately
-- **R (Review)**: Code review for quality
-- **C (Commit & Push)**: Version control with clear messages
+For AI agents, see `CLAUDE.md`. For full protocol documentation, see `codev/protocols/`.
 
-For detailed DAPPER documentation, see `CLAUDE.md` (for AI agents) or `dev_docs/ref/dapper-methodology.md` (for humans).
+## Testing
 
-## Testing Strategy
+**Philosophy**: Integration-first (60%), real database for service tests. See `codev/resources/ref/testing-strategy.md` for complete guidelines.
 
-### Testing Philosophy
-**FUNDAMENTAL PRINCIPLE**: A small number of well-thought-out tests is better than a large number of poor tests. Focus on testing behavior, not implementation details.
-
-### Testing Priorities
-1. **Integration Tests (60%)** - Real database, real constraints
-2. **Unit Tests (30%)** - Only for pure business logic  
-3. **E2E Tests (10%)** - Critical user paths
-
-### Test Database Setup (Docker)
+**Quick start:**
 ```bash
-# Start test database (port 5433)
-npm run test:db:start
-
-# Run tests
-npm run test:integration  # Integration tests with real DB
-npm run test:unit        # Unit tests only
-npm run test:all         # Both suites
-
-# Stop test database
-npm run test:db:stop
+npm run test:db:start     # Start test database (port 5433)
+npm run test:integration  # Run integration tests
+npm run test:unit         # Run unit tests
+npm run test:db:stop      # Stop test database
 ```
-
-**Test Database Configuration:**
-- Runs on port 5433 (production uses 5432)
-- Database: `maix_test`, User: `testuser`, Password: `testpass`
-- Real database operations, not mocks
-- Database cleaned between tests
-
-### Available Test Commands
-- `npm test` - All tests (unit + integration if DB running)
-- `npm run test:unit` - Unit tests only
-- `npm run test:integration` - Integration tests with real database
-- `npm run test:watch` - Watch mode for development
-- `npm run test:db:start` - Start Docker test database
-- `npm run test:db:stop` - Stop Docker test database
 
 ## Development Guidelines
 
-### Development Principles
+See `codev/resources/arch.md` for detailed architecture, conventions, and patterns.
 
-#### Simplicity and Pragmatism
-- **Bias towards simple solutions**: Address current problems, not hypothetical future ones
-- **Avoid premature optimization**: Don't implement complex patterns for problems that don't exist
-- **Use straightforward Prisma queries**: Direct queries rather than complex abstraction layers
-- **Focus on current scale**: Design for today's usage patterns
-- **Iterative complexity**: Add complexity only when simple solutions prove insufficient
+**Key principles**: Simplicity, pragmatic security, integration-first testing.
 
-#### Security Model
-**Context**: Community platform for volunteer matching
-- **What we are**: A community platform, non-profit focused
-- **What we're NOT**: Financial service, healthcare system, or PII-heavy
-- **Security Approach**: 
-  - Focus on basics (input validation with Zod)
-  - Skip security theater (no complex CSRF, rate limiting)
-  - Pragmatic protection (Prisma prevents SQL injection, React prevents XSS)
-  - Basic session management with NextAuth
-
-### Database Management
-
-#### Safe Migration Workflow (AI-Compatible)
+**Database migrations** (see `codev/resources/ref/prisma.md`):
 ```bash
-# Step 1: Create migration (non-interactive)
-npm run db:migrate:new descriptive_name
-
-# Step 2: Review generated SQL
-cat prisma/migrations/*/migration.sql
-
-# Step 3: Apply when ready
-npm run db:migrate:apply
+npm run db:migrate:new name   # Create migration
+npm run db:migrate:apply      # Apply migrations
+npm run db:backup             # Backup first!
 ```
 
-**NEVER use:**
-- `npx prisma db push` - Destructive, drops/recreates tables
-- `npx prisma migrate dev` - Interactive, breaks AI agents
-
-**Safe Commands:**
-- `db:migrate:new` - Create migration via migrate diff
-- `db:migrate:apply` - Apply migrations via deploy
-- `db:migrate:status` - Check migration status
-- `db:backup` - Backup database
-- `db:health` - Health check
-- `db:studio` - Prisma Studio (read-only recommended)
-
-### Code Quality
-
-**Quick health check:**
+**Code quality:**
 ```bash
-npm audit --audit-level=moderate  # Fix Critical/High only
-grep -r "console\." src/ | wc -l  # Should trend down
-npm outdated                       # Update only if needed
-npm run lint                       # ESLint checks
-npm run type-check                # TypeScript validation
-npm run build                     # Build validation
+npm run lint && npm run type-check && npm run build
 ```
 
 ### Git Best Practices
@@ -324,7 +244,7 @@ gh run view --log-failed --job=<ID> # Get error logs
 - Use `--log-failed` for relevant error information
 - Check status periodically while working on other tasks
 
-For comprehensive debugging strategies, see `dev_docs/ref/debugging-playbook.md`.
+For comprehensive debugging strategies, see `codev/resources/ref/debugging-playbook.md`.
 
 ## Core Features
 
@@ -355,7 +275,7 @@ We welcome contributions from the global tech community! Here's how you can help
 
 ### Code Contributions
 1. **Fork the repository** and create a feature branch
-2. **Follow DAPPER methodology** for significant features
+2. **Follow Codev protocols** (SPIDER/TICK) for significant features
 3. **Write tests** following our integration-first strategy
 4. **Submit a pull request** with clear description
 
@@ -385,12 +305,12 @@ MAIX is built on these core values:
 
 ### Key Documentation
 - **README.md** - This file, setup and overview
-- **CLAUDE.md** - AI agent instructions and enforcement rules
-- **dev_docs/ref/** - Technical reference documentation
-- **dev_docs/designs/** - Feature designs (DAPPER methodology)
-- **dev_docs/plans/** - Implementation plans
-- **dev_docs/lessons/** - Lessons learned from features
-- **lessons-learned.md** - Cumulative project insights
+- **CLAUDE.md** - AI agent instructions and safety protocols
+- **codev/specs/** - Feature specifications
+- **codev/plans/** - Implementation plans
+- **codev/reviews/** - Post-implementation reviews and lessons
+- **codev/resources/arch.md** - Architecture documentation
+- **codev/resources/lessons-learned.md** - Consolidated project insights
 
 ## License
 

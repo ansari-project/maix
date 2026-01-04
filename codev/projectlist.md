@@ -113,7 +113,7 @@ projects:
   - id: "0001"
     title: "Full Codev Adoption"
     summary: "Migrate Maix from partial codev to full adoption - simplify CLAUDE.md, populate arch.md, consolidate docs"
-    status: specified
+    status: implementing
     priority: high
     files:
       spec: codev/specs/0001-codev-adoption.md
@@ -126,7 +126,7 @@ projects:
 
 ## Next Available Number
 
-**0002** - Reserve this number for your next project
+**0004** - Reserve this number for your next project
 
 ---
 
